@@ -1,0 +1,36 @@
+/* Global resets */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* -webkit-fill-available fixes 100vh on iOS Safari */
+html { height: -webkit-fill-available; }
+body {
+  margin: 0;
+  padding: 0;
+  background: #0D0B09;
+  /* Prevent pull-to-refresh and elastic scroll leaking */
+  overscroll-behavior: none;
+  /* Kill the 300ms tap delay and blue highlight on all taps */
+  -webkit-tap-highlight-color: transparent;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+button {
+  /* Eliminates 300ms double-tap-to-zoom delay on buttons */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  /* Prevent accidental text selection on long-press */
+  user-select: none;
+  -webkit-user-select: none;
+}
+button:active { opacity: 0.72; }
+/* Keyboard-nav focus ring (accessibility) */
+button:focus-visible {
+  outline: 2px solid rgba(213,78,27,0.6);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; }

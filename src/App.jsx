@@ -1,0 +1,1330 @@
+import { useState, useRef, useEffect } from "react";
+import { initPlayer, playStream, pauseStream } from "./player.js";
+import { isMobile, C, F, ibtn, row, kicker } from "./theme.js";
+import { ic } from "./icons.jsx";
+import { ALBUMS, ART, ARTIST, TRACK, HOSTS, SHOWS } from "./data.js";
+import { fetchConcerts, useSavedConcerts, monthLabel } from "./concerts.js";
+
+
+/* ─── PHONE WRAPPER ───
+   Mobile: full viewport (100vw × 100dvh) — no fake frame
+   Desktop: 375×812 mockup with rounded corners + dynamic island
+   100dvh = "dynamic viewport height" — the correct 2026 unit for mobile
+   browsers (avoids the iOS Safari bottom bar overlap that 100vh causes) */
+const Phone = ({ children }) => {
+  const bg = `radial-gradient(120% 90% at 50% -10%, ${C.accentGlow} 0%, rgba(18,16,14,0) 60%), radial-gradient(80% 60% at 80% 100%, ${C.greenDim} 0%, transparent 70%), linear-gradient(180deg, ${C.bg} 0%, #0D0B09 100%)`;
+  if (isMobile) {
+    return (
+      <div style={{
+        width: "100vw", height: "100dvh",
+        background: bg, position: "relative",
+        fontFamily: F.body, color: C.text,
+        display: "flex", flexDirection: "column",
+        overflow: "hidden",
+      }}>
+        {children}
+      </div>
+    );
+  }
+  return (
+    <div style={{
+      width: 375, height: 812, borderRadius: 48, overflow: "hidden",
+      background: bg, position: "relative",
+      boxShadow: "0 40px 100px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.03)",
+      fontFamily: F.body, color: C.text,
+    }}>
+      {/* Dynamic Island notch */}
+      <div style={{
+        position: "absolute", top: 0, left: 0, right: 0, height: 50, zIndex: 100,
+        display: "flex", alignItems: "center", justifyContent: "center", paddingTop: 8,
+      }}>
+        <div style={{ width: 126, height: 34, borderRadius: 17, background: "#000" }} />
+      </div>
+      <div style={{ height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+/* ─── HEADER ───
+   paddingTop on mobile uses env(safe-area-inset-top) so the header
+   content clears the Dynamic Island / notch on real devices.
+   Hamburger moved to footer "More" tab — header stays clean. */
+const Header = ({ showBack, onBack }) => (
+  <div style={{
+    paddingTop: isMobile ? "calc(env(safe-area-inset-top, 44px) + 4px)" : "58px",
+    paddingRight: 10, paddingBottom: 6, paddingLeft: 14,
+    background: "rgba(18,16,14,0.92)",
+    flexShrink: 0,
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    display: "flex", alignItems: "center", gap: 4,
+  }}>
+    {showBack && (
+      <button aria-label="Back" onClick={onBack} style={{
+        background: "none", border: "none", cursor: "pointer",
+        width: 36, height: 44,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        touchAction: "manipulation", marginRight: 2, flexShrink: 0,
+      }}>
+        {ic.back(22, C.accent)}
+      </button>
+    )}
+    <img
+      src="/icons/wxpn%20logo.png"
+      alt="WXPN"
+      style={{ height: 26, width: "auto", display: "block", flexShrink: 0 }}
+    />
+    <span style={{ flex: 1 }} />
+    {/* Right: Donate */}
+    <button style={{
+      background: "none", border: `1.5px solid ${C.accentBorder}`, borderRadius: 8,
+      padding: "0 14px", minHeight: 36, cursor: "pointer",
+      fontSize: 13.5, fontWeight: 600, color: C.accentDim, fontFamily: F.body,
+      touchAction: "manipulation",
+    }}>
+      Donate
+    </button>
+  </div>
+);
+
+/* ─── BOTTOM NAV ───
+   paddingBottom uses env(safe-area-inset-bottom) on mobile so the
+   nav labels sit above the iPhone home indicator bar.
+   "More" tab replaces the top-left hamburger — keeps the header clean. */
+const Nav = ({ active, onNav }) => {
+  const tabs = [
+    { id: "live", label: "Live", icon: ic.navLive },
+    { id: "shows", label: "Shows", icon: ic.navShows },
+    { id: "concerts", label: "Concerts", icon: ic.navConcerts },
+    { id: "favorites", label: "Favorites", icon: ic.navFav },
+    { id: "more", label: "More", icon: ic.menu },
+  ];
+  return (
+    <div style={{
+      display: "flex", justifyContent: "space-around", alignItems: "center",
+      paddingTop: 6,
+      paddingBottom: isMobile ? "calc(env(safe-area-inset-bottom, 0px) + 8px)" : "34px",
+      paddingLeft: 10, paddingRight: 10,
+      background: "linear-gradient(180deg, rgba(18,16,14,0.35) 0%, rgba(18,16,14,0.98) 100%)",
+      borderTop: `1px solid ${C.divider}`,
+      flexShrink: 0,
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+    }}>
+      {tabs.map(t => {
+        const on = active === t.id;
+        return (
+          <button key={t.id} onClick={() => onNav(t.id)} style={{
+            background: "none",
+            border: "none",
+            borderRadius: 10, cursor: "pointer", display: "flex",
+            flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2,
+            padding: "6px 4px",
+            minWidth: 60,
+            minHeight: 48,  // WCAG 2.5.8 minimum target size
+            touchAction: "manipulation",
+          }}>
+            <span style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: "4px 16px", borderRadius: 14,
+              background: on ? C.accentGlow : "none",
+            }}>{t.icon(20, on ? C.accent : C.textDim)}</span>
+            <span style={{ fontSize: 11, fontWeight: on ? 700 : 500, color: on ? C.accent : C.textDim }}>
+              {t.label}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+/* ─── MORE MENU — bottom sheet ─── */
+const MenuDrawer = ({ open, onClose, items }) => {
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  return (
+    <div style={{
+      position: "absolute", inset: 0, zIndex: 200,
+      pointerEvents: open ? "auto" : "none",
+    }}>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: "absolute", inset: 0,
+          background: "rgba(14,12,10,0.72)",
+          opacity: open ? 1 : 0,
+          transition: "opacity 0.25s ease",
+          backdropFilter: open ? "blur(3px)" : "none",
+          WebkitBackdropFilter: open ? "blur(3px)" : "none",
+        }}
+      />
+      {/* Bottom sheet */}
+      <div style={{
+        position: "absolute", left: 0, right: 0, bottom: 0,
+        maxHeight: "72%",
+        background: C.card,
+        borderRadius: "20px 20px 0 0",
+        transform: open ? "translateY(0)" : "translateY(102%)",
+        transition: "transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
+        boxShadow: "0 -8px 48px rgba(0,0,0,0.55)",
+        border: `1px solid ${C.divider}`,
+        borderBottom: "none",
+        display: "flex", flexDirection: "column",
+        willChange: "transform",
+      }}>
+        <div style={{
+          display: "flex", justifyContent: "center", alignItems: "center",
+          padding: "10px 0 4px", flexShrink: 0,
+        }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: C.textDim, opacity: 0.45 }} />
+        </div>
+        <div style={{
+          padding: "4px 18px 12px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          borderBottom: `1px solid ${C.divider}`, flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: C.cream, fontFamily: F.display, letterSpacing: "0.1em" }}>MORE</span>
+          <button aria-label="Close" onClick={onClose} style={{
+            background: "none", border: "none", cursor: "pointer",
+            width: 44, height: 44,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            touchAction: "manipulation",
+          }}>
+            {ic.close(20, C.textMut)}
+          </button>
+        </div>
+        <div style={{
+          overflow: "auto", overscrollBehaviorY: "contain", flex: 1,
+          paddingBottom: isMobile ? "calc(env(safe-area-inset-bottom, 0px) + 12px)" : "16px",
+        }}>
+          {items.map((item, i) => (
+            <button
+              key={`${item.label}-${i}`}
+              onClick={() => { item.action?.(); onClose(); }}
+              style={{
+                width: "100%", background: "none", border: "none", cursor: "pointer",
+                padding: "0 18px",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                color: C.cream, fontSize: 16, fontWeight: 500, textAlign: "left", fontFamily: F.display,
+                borderBottom: `1px solid ${C.divider}`,
+                minHeight: 52,
+                touchAction: "manipulation",
+              }}
+            >
+              <span>{item.label}</span>
+              {item.note && <span style={{ fontSize: 11, color: C.textDim, letterSpacing: "0.14em", fontFamily: F.mono }}>{item.note}</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─── MINI PLAYER ─── */
+const Mini = ({ onTap, playing }) => (
+  <div style={{
+    margin: "0 6px 3px",
+    borderRadius: 10,
+    background: C.surface,
+    border: `1px solid ${C.divider}`,
+    flexShrink: 0,
+    overflow: "hidden",
+    boxShadow: "0 -2px 16px rgba(0,0,0,0.25)",
+  }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px 6px 6px" }}>
+      <img
+        onClick={onTap}
+        src={ART} alt=""
+        style={{ width: 50, height: 50, borderRadius: 8, objectFit: "cover", cursor: "pointer", flexShrink: 0 }}
+        loading="lazy"
+        decoding="async"
+      />
+      <div onClick={onTap} style={{ flex: 1, minWidth: 0, cursor: "pointer" }}>
+        {/* Live dot + label */}
+        <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.accentSoft, letterSpacing: "0.08em", fontFamily: F.display }}>LIVE</div>
+        </div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: C.cream, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Returning to Myself</div>
+        <div style={{ fontSize: 13, color: C.textMut }}>Brandi Carlile</div>
+      </div>
+      <button style={{ ...ibtn, border: `1px solid ${C.divider}`, background: C.card }}>
+        {ic.cast(20, C.textMut)}
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); }}
+        style={{
+          width: 44, height: 44, borderRadius: 22, border: "none", cursor: "pointer",
+          background: C.accent, display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 2px 12px rgba(217,64,0,0.3)", touchAction: "manipulation", flexShrink: 0,
+        }}
+      >
+        {playing ? ic.pause(26, C.bg) : ic.play(26, C.bg)}
+      </button>
+    </div>
+  </div>
+);
+
+/* ═══════════════ LIVE SCREEN ═══════════════ */
+const LiveScreen = ({ playing, setPlaying, onExpand }) => {
+  const tracks = [
+    { title: "Right Back to It", artist: "Waxahatchee", time: "2:30 PM", img: ALBUMS.tigersBlood },
+    { title: "Favourite", artist: "Fontaines D.C.", time: "2:26 PM", img: ALBUMS.romance },
+    { title: "Oceans of Darkness", artist: "The War on Drugs", time: "2:22 PM", img: ALBUMS.idlha },
+    { title: "Coast", artist: "Kim Deal", time: "2:17 PM", img: ALBUMS.nobody },
+  ];
+  const onAir = SHOWS.middays;
+  return (
+    <div style={{ flex: 1, overflow: "auto", overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" }}>
+
+      {/* ── Live show band — full-width strip, KEXP-style ── */}
+      <div style={{
+        background: `linear-gradient(90deg, ${C.heroA} 0%, ${C.green}33 100%)`,
+        padding: "12px 16px",
+        display: "flex", alignItems: "center", gap: 12,
+        borderBottom: `1px solid ${C.divider}`,
+      }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ ...kicker, color: C.accentDim }}>Live</div>
+          <div style={{ fontSize: 19, fontWeight: 700, color: C.cream, lineHeight: 1.2, fontFamily: F.display, marginTop: 2 }}>{onAir.name}</div>
+          <div style={{ fontSize: 14, color: C.textSec, marginTop: 1 }}>{onAir.host}</div>
+        </div>
+        <button aria-label="Chat with the studio" style={ibtn}>
+          {ic.chat(21, C.accentDim)}
+        </button>
+      </div>
+
+      {/* ── Now Playing — big centered art with a vertical action rail ── */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, padding: "22px 16px 0" }}>
+        <div style={{ width: 44, flexShrink: 0 }} />
+        <img onClick={onExpand} src={ART} alt="" loading="eager" style={{
+          width: "min(264px, 62vw)", height: "min(264px, 62vw)",
+          borderRadius: 6, objectFit: "cover", cursor: "pointer",
+          boxShadow: "0 16px 44px rgba(0,0,0,0.5)",
+        }} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
+          <button aria-label="Save this song" style={ibtn}>{ic.heart(22, C.accentDim)}</button>
+          <button aria-label="Cast to a device" style={ibtn}>{ic.cast(20, C.accentDim)}</button>
+          <button aria-label="Share this song" style={ibtn}>{ic.shareAlt(22, C.accentDim)}</button>
+          <button aria-label="Song details" onClick={onExpand} style={ibtn}>{ic.chev(22, C.accentDim)}</button>
+        </div>
+      </div>
+      <div style={{ textAlign: "center", padding: "14px 24px 0" }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: C.cream, lineHeight: 1.15, fontFamily: F.display }}>Returning to Myself</div>
+        <div style={{ fontSize: 15.5, color: C.peach, marginTop: 4 }}>Brandi Carlile</div>
+      </div>
+
+      <div style={{ padding: "10px 16px 16px" }}>
+        <button
+          aria-label={playing ? "Pause live stream" : "Play live stream"}
+          onClick={() => setPlaying(!playing)}
+          style={{
+            width: "100%",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+            background: C.accent, border: "none", borderRadius: 10,
+            padding: "11px 16px", minHeight: 44, cursor: "pointer",
+            touchAction: "manipulation",
+            boxShadow: "0 4px 18px rgba(213,78,27,0.28)",
+          }}
+        >
+          {playing ? ic.pause(18, C.bg) : ic.play(18, C.bg)}
+          <span style={{ fontSize: 15, fontWeight: 700, color: C.bg, fontFamily: F.display, letterSpacing: "0.04em" }}>
+            {playing ? "Listening Live" : "Listen Live"}
+          </span>
+        </button>
+      </div>
+
+      {/* ── Recently Played — program-guide rows ── */}
+      <div style={{ padding: "4px 16px 2px", borderBottom: `1px solid ${C.divider}` }}>
+        <div style={{ ...kicker, paddingBottom: 8 }}>Recently Played</div>
+      </div>
+      {tracks.map((t, i) => (
+        <div key={i} style={{ ...row, minHeight: 64 }}>
+          <img src={t.img || TRACK} alt="" loading="lazy" decoding="async"
+            style={{ width: 48, height: 48, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: C.cream, lineHeight: 1.3, fontFamily: F.display }}>{t.title}</div>
+            <div style={{ fontSize: 14, color: C.textMut }}>{t.artist}</div>
+          </div>
+          <span style={{ fontSize: 12, color: C.textDim, fontFamily: F.mono, flexShrink: 0 }}>{t.time}</span>
+          <button aria-label={`Save ${t.title}`} style={ibtn}>{ic.heart(19, C.accentDim)}</button>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/* ═══════════════ SHOWS ═══════════════ */
+const ShowsScreen = ({ onShow }) => {
+  const [tab, setTab] = useState("archive");
+  const tabs = ["Archive", "Hosts", "Schedule"];
+  const shows = [
+    { ...SHOWS.morning, meta: SHOWS.morning.time },
+    { ...SHOWS.middays, meta: SHOWS.middays.time },
+    { ...SHOWS.worldcafe, meta: SHOWS.worldcafe.time },
+    { ...SHOWS.afternoons, meta: SHOWS.afternoons.time },
+  ];
+  const sched = [
+    { time: "6–10a", show: SHOWS.morning },
+    { time: "10a–2p", show: SHOWS.middays, on: true },
+    { time: "2–4p", show: SHOWS.worldcafe },
+    { time: "4–7p", show: SHOWS.afternoons },
+    { time: "8–11p", show: SHOWS.funky, note: "Fri" },
+  ];
+  return (
+    <div style={{ flex: 1, overflow: "auto", overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" }}>
+      {/* Sub-tabs — 48px tall for easy tap */}
+      <div style={{ display: "flex", borderBottom: `2px solid ${C.divider}`, flexShrink: 0 }}>
+        {tabs.map(t => {
+          const k = t.toLowerCase();
+          const on = tab === k;
+          return (
+            <button key={t} onClick={() => setTab(k)} style={{
+              flex: 1, padding: "14px 0", fontSize: 15, fontWeight: on ? 600 : 400,
+              cursor: "pointer", background: "none", fontFamily: F.body, textAlign: "center",
+              color: on ? C.cream : C.textMut,
+              borderBottom: on ? `3px solid ${C.accent}` : "3px solid transparent",
+              borderTop: "none", borderLeft: "none", borderRight: "none", marginBottom: -2,
+              minHeight: 50, touchAction: "manipulation",
+            }}>{t}</button>
+          );
+        })}
+      </div>
+
+      {tab === "schedule" ? (
+        <div style={{ padding: "6px 0" }}>
+          {sched.map((s, i) => (
+            <div key={i} onClick={() => s.on && onShow?.(s.show)} style={{
+              display: "flex", alignItems: "center", gap: 12, padding: "14px 16px",
+              borderBottom: `1px solid ${C.divider}`, cursor: s.on ? "pointer" : "default",
+              background: s.on ? C.accentGlow : "transparent",
+              minHeight: 64,
+            }}>
+              <div style={{ width: 68, flexShrink: 0 }}>
+                <span style={{ fontSize: 13, fontFamily: F.mono, color: s.on ? C.accent : C.textDim }}>{s.time}</span>
+                {s.note && <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>{s.note}</div>}
+              </div>
+              <img src={s.show.img} alt="" loading="lazy" decoding="async"
+                style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 16, fontWeight: 600, color: s.on ? C.cream : C.text, fontFamily: F.display }}>{s.show.name}</div>
+                <div style={{ fontSize: 13, color: C.textMut, marginTop: 2 }}>{s.show.host}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : tab === "hosts" ? (
+        <div>
+          {HOSTS.map((h, i) => h.group ? (
+            <div key={i} style={{ padding: "13px 16px", borderBottom: `1px solid ${C.divider}` }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ fontSize: 14, color: C.accentDim, fontWeight: 600 }}>{h.show}</div>
+                  {h.time && <div style={{ fontSize: 11.5, color: C.textDim, fontFamily: F.mono, marginTop: 3 }}>{h.time}</div>}
+                </div>
+                {ic.chev(18, C.textDim)}
+              </div>
+              <div style={{ display: "flex", gap: 18, marginTop: 12 }}>
+                {h.hosts.map((co, j) => (
+                  <div key={j} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <img src={co.img} alt="" loading="lazy" decoding="async"
+                      style={{ width: 44, height: 44, borderRadius: 22, objectFit: "cover" }} />
+                    <div style={{ fontSize: 15, fontWeight: 600, color: C.cream, fontFamily: F.display }}>{co.name}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div key={i} style={{ ...row, minHeight: 72 }}>
+              <img src={h.img} alt="" loading="lazy" decoding="async"
+                style={{ width: 50, height: 50, borderRadius: 25, objectFit: "cover", flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 17, fontWeight: 600, color: C.cream, fontFamily: F.display }}>{h.name}</div>
+                <div style={{ fontSize: 13.5, color: C.accentDim }}>{h.show}</div>
+                {h.time && <div style={{ fontSize: 11.5, color: C.textDim, fontFamily: F.mono, marginTop: 2 }}>{h.time}</div>}
+              </div>
+              {ic.chev(18, C.textDim)}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <>
+          {/* Sort line */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "13px 16px", borderBottom: `1px solid ${C.divider}`, minHeight: 48,
+          }}>
+            <span style={{ fontSize: 13, color: C.textMut, fontFamily: F.mono }}>A–Z by show</span>
+            {ic.chevD(16, C.textMut)}
+          </div>
+
+          {/* Show list */}
+          {shows.map((s, i) => (
+            <div key={i} onClick={() => onShow?.(s)} style={{ ...row, cursor: "pointer", minHeight: 84 }}>
+              <img src={s.img} alt="" loading="lazy" decoding="async"
+                style={{ width: 60, height: 60, borderRadius: 5, objectFit: "cover", flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 17, fontWeight: 600, color: C.cream, fontFamily: F.display }}>{s.name}</div>
+                <div style={{ fontSize: 14, color: C.textMut, marginTop: 2 }}>{s.host}</div>
+                <div style={{ fontSize: 11.5, color: C.textDim, marginTop: 4, fontFamily: F.mono }}>{s.meta}</div>
+              </div>
+              <button aria-label={`Save ${s.name}`} style={ibtn} onClick={(e) => e.stopPropagation()}>{ic.heart(20, C.accentDim)}</button>
+              {ic.chev(18, C.textDim)}
+            </div>
+          ))}
+        </>
+      )}
+      <div style={{ height: 24 }} />
+    </div>
+  );
+};
+
+/* ═══════════════ SHOW DETAIL ═══════════════ */
+const ShowDetail = ({ show, onBack, onEp }) => {
+  const s = show || SHOWS.worldcafe;
+  return (
+    <div style={{ flex: 1, overflow: "auto", overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" }}>
+      {/* Hero image */}
+      <div style={{ position: "relative", height: 170, overflow: "hidden", flexShrink: 0 }}>
+        <img src={s.img} alt="" loading="eager" style={{ width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.35)" }} />
+        <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, transparent 20%, ${C.bg})` }} />
+        <div style={{ position: "absolute", bottom: 14, left: 16, display: "flex", gap: 14, alignItems: "flex-end" }}>
+          <img src={s.img} alt="" style={{ width: 78, height: 78, borderRadius: 10, objectFit: "cover", border: `2px solid ${C.bg}` }} />
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: C.cream, fontFamily: F.display, letterSpacing: "0.01em" }}>{s.name}</div>
+            <div style={{ fontSize: 15, color: C.accent }}>{s.host}</div>
+            <div style={{ fontSize: 12, color: C.textDim, fontFamily: F.mono, marginTop: 4 }}>{s.time}</div>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: "14px 16px" }}>
+        <p style={{ fontSize: 16, color: C.textMut, lineHeight: 1.65, margin: 0 }}>
+          {s.desc}
+        </p>
+      </div>
+      {/* Action buttons — 52px tall, full pill */}
+      <div style={{ display: "flex", gap: 10, padding: "0 16px 14px" }}>
+        <button onClick={() => onEp?.()} style={{
+          flex: 1,
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          background: C.accent, border: "none", borderRadius: 26,
+          padding: "8px 16px", cursor: "pointer", minHeight: 44,
+          boxShadow: "0 4px 14px rgba(217,64,0,0.28)",
+          touchAction: "manipulation",
+        }}>
+          {ic.play(18, C.bg)}
+          <span style={{ fontSize: 15, fontWeight: 700, color: C.bg, fontFamily: F.display }}>Play Latest</span>
+        </button>
+        <button style={{
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          background: "none",
+          border: `1.5px solid ${C.accent}`,
+          borderRadius: 26,
+          padding: "8px 22px", cursor: "pointer", minHeight: 44,
+          touchAction: "manipulation",
+        }}>
+          {ic.heart(18, C.accent)}
+          <span style={{ fontSize: 15, fontWeight: 600, color: C.accent, fontFamily: F.display }}>Follow</span>
+        </button>
+      </div>
+      <div style={{ height: 1, background: C.divider, margin: "0 16px" }} />
+      {/* Episode list */}
+      {(s.episodes || []).map((ep, i) => (
+        <div key={i} onClick={() => onEp?.()} style={{ ...row, cursor: "pointer", minHeight: 68 }}>
+          <img src={ep.img || s.img} alt="" loading="lazy" decoding="async"
+            style={{ width: 50, height: 50, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 16, fontWeight: 500, color: C.cream }}>{ep.title}</div>
+            <div style={{ fontSize: 12.5, color: C.textDim, marginTop: 3, fontFamily: F.mono }}>{ep.date} · {ep.dur}</div>
+          </div>
+          <button aria-label={`Save ${ep.title}`} style={ibtn} onClick={(e) => e.stopPropagation()}>{ic.heart(19, C.accentDim)}</button>
+          {ic.chev(18, C.textDim)}
+        </div>
+      ))}
+      <div style={{ height: 16 }} />
+    </div>
+  );
+};
+
+/* ═══════════════ ARCHIVE PLAYER ═══════════════ */
+const ArchivePlayer = ({ show }) => {
+  const s = show || SHOWS.worldcafe;
+  return (
+    <div style={{ flex: 1, overflow: "auto", overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" }}>
+      {/* Album art */}
+      <div style={{ display: "flex", justifyContent: "center", padding: "18px 16px 20px" }}>
+        <div style={{ width: 220, height: 220, borderRadius: 12, overflow: "hidden", boxShadow: "0 16px 48px rgba(0,0,0,0.55)" }}>
+          <img src={ARTIST} alt="" loading="eager" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        </div>
+      </div>
+      {/* Track metadata */}
+      <div style={{ textAlign: "center", padding: "0 24px 18px" }}>
+        <div style={{ fontSize: 23, fontWeight: 600, color: C.cream, fontFamily: F.display, lineHeight: 1.2 }}>Adia Victoria Session</div>
+        <div style={{ fontSize: 16, color: C.peach, marginTop: 6 }}>{s.name}</div>
+        <div style={{ fontSize: 14, color: C.textMut, marginTop: 3 }}>Feb 9, 2026 — 52 min</div>
+      </div>
+      {/* Progress scrubber — 36px tall hit area so it's easy to grab */}
+      <div style={{ padding: "0 28px 8px" }}>
+        <div style={{ height: 36, display: "flex", alignItems: "center", cursor: "pointer", touchAction: "none" }}>
+          <div style={{ flex: 1, height: 5, borderRadius: 2.5, background: C.surface, position: "relative" }}>
+            <div style={{ width: "35%", height: "100%", borderRadius: 2.5, background: C.accent }} />
+            <div style={{
+              width: 18, height: 18, borderRadius: 9, background: C.cream,
+              position: "absolute", top: "50%", left: "35%",
+              transform: "translate(-50%, -50%)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+            }} />
+          </div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
+          <span style={{ fontSize: 13, color: C.textMut, fontFamily: F.mono }}>18:12</span>
+          <span style={{ fontSize: 13, color: C.textMut, fontFamily: F.mono }}>52:00</span>
+        </div>
+      </div>
+      {/* Playback controls */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, padding: "10px 24px 22px" }}>
+        <button style={{
+          width: 52, height: 52, borderRadius: 26,
+          background: "none", border: "none", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          touchAction: "manipulation",
+        }}>
+          {ic.skipBack(30, C.textSec)}
+        </button>
+        <button style={{
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+          background: C.accent, border: "none", borderRadius: 30,
+          padding: "12px 28px", cursor: "pointer", minHeight: 56,
+          boxShadow: "0 6px 18px rgba(217,64,0,0.3)",
+          touchAction: "manipulation",
+        }}>
+          {ic.pause(26, C.bg)}
+          <span style={{ fontSize: 17, fontWeight: 700, color: C.bg, fontFamily: F.display }}>Playing</span>
+        </button>
+        <button style={{
+          width: 52, height: 52, borderRadius: 26,
+          background: "none", border: "none", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          touchAction: "manipulation",
+        }}>
+          {ic.skipFwd(30, C.textSec)}
+        </button>
+        <button style={{
+          ...ibtn,
+          background: C.card, border: `1px solid ${C.divider}`,
+        }}>
+          {ic.cast(22, C.textMut)}
+        </button>
+      </div>
+      <div style={{ height: 1, background: C.divider, margin: "0 16px" }} />
+      <div style={{ padding: "16px 16px 6px" }}>
+        <div style={{ fontSize: 19, fontWeight: 600, color: C.cream, fontFamily: F.display }}>In This Episode</div>
+      </div>
+      {[
+        { song: "Sleepy Hollow", artist: "Echoes", at: "5:00" },
+        { song: "Echoes", artist: "Archive Program", at: "10:30" },
+        { song: "Mean", artist: "Adia Victoria", at: "2:15" },
+        { song: "Magnolia Blues", artist: "Adia Victoria", at: "12:30" },
+        { song: "Different Kind of Love", artist: "Adia Victoria", at: "24:45" },
+      ].map((t, i) => (
+        <div key={i} style={{ ...row, minHeight: 62 }}>
+            <img src={ARTIST} alt="" loading="lazy" decoding="async"
+              style={{ width: 46, height: 46, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 15, fontWeight: 500, color: C.cream }}>{t.song}</div>
+              <div style={{ fontSize: 13, color: C.textMut, marginTop: 2 }}>{t.artist}</div>
+            </div>
+            <span style={{ fontSize: 12, color: C.textDim, fontFamily: F.mono, flexShrink: 0 }}>{t.at}</span>
+            <button aria-label={`Save ${t.song}`} style={ibtn}>{ic.heart(19, C.accentDim)}</button>
+        </div>
+      ))}
+      <div style={{ height: 24 }} />
+    </div>
+  );
+};
+
+/* ═══════════════ CONCERTS ═══════════════
+   In-app version of xpn.org/concert-and-events/. Data comes from
+   concerts.js — live feed when the endpoint is wired, samples until
+   then. Hearts persist to device storage and surface in Favorites. */
+const ConcertRow = ({ c, saved, onToggle }) => {
+  const d = new Date(c.date + "T12:00:00");
+  return (
+    <div style={{ ...row, padding: "12px 8px 12px 16px", minHeight: 70 }}>
+      {/* Date spine */}
+      <div style={{ width: 40, textAlign: "center", flexShrink: 0 }}>
+        <div style={{ fontSize: 10.5, color: C.textDim, fontFamily: F.mono, letterSpacing: "0.1em" }}>{c.day}</div>
+        <div style={{ fontSize: 23, fontWeight: 700, color: saved ? C.accentDim : C.cream, fontFamily: F.display, lineHeight: 1.1 }}>{d.getDate()}</div>
+      </div>
+      {/* Artist / venue */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 16.5, fontWeight: 600, color: C.cream, fontFamily: F.display, lineHeight: 1.25 }}>{c.artist}</div>
+        <div style={{ fontSize: 13.5, color: C.textMut, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {c.venue}{c.region ? ` · ${c.region}` : ""}
+        </div>
+        {(c.xpnWelcomes || c.age) && (
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 4, fontSize: 11.5 }}>
+            {c.xpnWelcomes && <span style={{ color: C.accentSoft, fontWeight: 700, fontFamily: F.body }}>WXPN Welcomes</span>}
+            {c.age && <span style={{ color: C.textDim }}>{c.age}</span>}
+          </div>
+        )}
+      </div>
+      {/* Heart */}
+      <button
+        aria-label={saved ? `Remove ${c.artist} from saved concerts` : `Save ${c.artist} concert`}
+        onClick={() => onToggle(c.id)}
+        style={ibtn}
+      >
+        {saved ? ic.heartF(21, C.accent) : ic.heart(21, C.accentDim)}
+      </button>
+    </div>
+  );
+};
+
+/* Native <select> in app clothes: dark surface, chevron, Figtree.
+   Native pickers are the right mobile pattern — they open the real
+   iOS/Android wheel — they just need to look like they belong. */
+const SelectBox = ({ value, onChange, ariaLabel, children }) => (
+  <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center" }}>
+    <select value={value} onChange={onChange} aria-label={ariaLabel} style={{
+      width: "100%", minHeight: 44, borderRadius: 8, border: "none",
+      background: C.surface, color: C.cream,
+      padding: "10px 34px 10px 12px", fontSize: 14, fontFamily: F.body, fontWeight: 500,
+      outline: "none", appearance: "none", WebkitAppearance: "none", cursor: "pointer",
+    }}>
+      {children}
+    </select>
+    <span style={{ position: "absolute", right: 11, pointerEvents: "none", display: "flex" }}>
+      {ic.chevD(15, C.textMut)}
+    </span>
+  </div>
+);
+
+const ConcertsScreen = () => {
+  const [concerts, setConcerts] = useState(null);
+  const [query, setQuery] = useState("");
+  const [dateRange, setDateRange] = useState("next7");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [category, setCategory] = useState("all");
+  const [saved, toggleSaved] = useSavedConcerts();
+  useEffect(() => { fetchConcerts().then(setConcerts); }, []);
+
+  const today = new Date();
+  const todayIso = today.toISOString().slice(0, 10);
+
+  const addDays = (iso, days) => {
+    const d = new Date(`${iso}T12:00:00`);
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+  };
+
+  const currentMonthBounds = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = d.getMonth();
+    const start = new Date(y, m, 1).toISOString().slice(0, 10);
+    const end = new Date(y, m + 1, 0).toISOString().slice(0, 10);
+    return { start, end };
+  };
+
+  const rangeBounds = () => {
+    if (dateRange === "next7") return { start: todayIso, end: addDays(todayIso, 7) };
+    if (dateRange === "next30") return { start: todayIso, end: addDays(todayIso, 30) };
+    if (dateRange === "next90") return { start: todayIso, end: addDays(todayIso, 90) };
+    if (dateRange === "month") return currentMonthBounds();
+    if (dateRange === "custom") return { start: startDate || "", end: endDate || "" };
+    return { start: "", end: "" };
+  };
+
+  const { start: effectiveStart, end: effectiveEnd } = rangeBounds();
+
+  const regionMatch = (c) => {
+    const region = (c.region || "").toLowerCase();
+    if (category === "welcomes") return c.xpnWelcomes;
+    if (category === "philly") return region === "philadelphia" || region === "suburbs" || region.includes("philadelphia");
+    if (category === "newjersey") return region === "new jersey" || region.includes("new jersey");
+    if (category === "lehigh") return region === "lehigh valley" || region.includes("lehigh valley");
+    if (category === "centralpa") return region === "central pa" || region.includes("central pa");
+    return true;
+  };
+  const list = (concerts || []).filter((c) => {
+    const q = query.trim().toLowerCase();
+    const matchesQuery = !q ||
+      c.artist.toLowerCase().includes(q) ||
+      c.venue.toLowerCase().includes(q);
+    const matchesStart = !effectiveStart || c.date >= effectiveStart;
+    const matchesEnd = !effectiveEnd || c.date <= effectiveEnd;
+    return matchesQuery && matchesStart && matchesEnd && regionMatch(c);
+  });
+
+  // Group by month, preserving date order
+  const groups = [];
+  for (const c of list) {
+    const label = monthLabel(c.date);
+    const g = groups[groups.length - 1];
+    if (g && g.label === label) g.items.push(c);
+    else groups.push({ label, items: [c] });
+  }
+
+  return (
+    <div style={{ flex: 1, overflow: "auto", overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" }}>
+      <div style={{ padding: "18px 16px 6px" }}>
+        <div style={{ fontSize: 26, fontWeight: 700, color: C.cream, fontFamily: F.display, letterSpacing: "-0.01em" }}>Concert Calendar</div>
+      </div>
+      {/* Search */}
+      <div style={{ padding: "10px 16px 2px" }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10,
+          background: C.surface, borderRadius: 8, padding: "0 12px", minHeight: 44,
+        }}>
+          {ic.search(17, C.textDim)}
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search artist or venue"
+            aria-label="Search concerts by artist or venue"
+            style={{
+              flex: 1, minHeight: 44, border: "none", background: "none",
+              color: C.cream, fontSize: 14.5, fontFamily: F.body, outline: "none",
+            }}
+          />
+          {query && (
+            <button aria-label="Clear search" onClick={() => setQuery("")} style={{ ...ibtn, width: 36, height: 36 }}>
+              {ic.close(15, C.textMut)}
+            </button>
+          )}
+        </div>
+      </div>
+      {/* Filters — native pickers, dressed for the app */}
+      <div style={{ display: "flex", gap: 8, padding: "8px 16px 12px", borderBottom: `1px solid ${C.divider}` }}>
+        <SelectBox value={category} onChange={(e) => setCategory(e.target.value)} ariaLabel="Filter by category">
+          <option value="all">All categories</option>
+          <option value="welcomes">WXPN Welcomes</option>
+          <option value="philly">Philadelphia area</option>
+          <option value="newjersey">New Jersey</option>
+          <option value="lehigh">Lehigh Valley</option>
+          <option value="centralpa">Central PA</option>
+        </SelectBox>
+        <SelectBox value={dateRange} onChange={(e) => setDateRange(e.target.value)} ariaLabel="Filter by date range">
+          <option value="any">Any date</option>
+          <option value="next7">Next 7 days</option>
+          <option value="next30">Next 30 days</option>
+          <option value="next90">Next 90 days</option>
+          <option value="month">This month</option>
+          <option value="custom">Custom range</option>
+        </SelectBox>
+      </div>
+      {dateRange === "custom" && (
+        <div style={{ display: "flex", gap: 8, padding: "10px 16px 12px", borderBottom: `1px solid ${C.divider}`, marginTop: -1 }}>
+          {[
+            { v: startDate, set: setStartDate, label: "Start date" },
+            { v: endDate, set: setEndDate, label: "End date" },
+          ].map(({ v, set, label }) => (
+            <input
+              key={label} type="date" value={v} aria-label={label}
+              onChange={(e) => set(e.target.value)}
+              style={{
+                flex: 1, minHeight: 42, borderRadius: 8, border: "none",
+                background: C.surface, color: C.cream,
+                padding: "8px 10px", fontSize: 13, fontFamily: F.body,
+                outline: "none", colorScheme: "dark",
+              }}
+            />
+          ))}
+        </div>
+      )}
+      {/* Result count — broadcast-data voice */}
+      {concerts !== null && list.length > 0 && (
+        <div style={{
+          padding: "10px 16px 0", fontSize: 10.5, fontFamily: F.mono,
+          color: C.textDim, letterSpacing: "0.14em",
+        }}>{list.length} SHOW{list.length === 1 ? "" : "S"}</div>
+      )}
+
+      {/* List */}
+      {concerts === null ? (
+        <div style={{ padding: "40px 16px", textAlign: "center", color: C.textMut, fontSize: 14 }}>
+          Loading shows…
+        </div>
+      ) : list.length === 0 ? (
+        <div style={{ padding: "44px 32px", textAlign: "center" }}>
+          <div style={{ marginBottom: 10 }}>{ic.heart(28, C.textDim)}</div>
+          <div style={{ fontSize: 15, color: C.textSec, fontFamily: F.display, fontWeight: 600 }}>
+            No shows found
+          </div>
+          <div style={{ fontSize: 13.5, color: C.textMut, marginTop: 6, lineHeight: 1.5 }}>
+            Try broadening your search, date range, or category filter.
+          </div>
+        </div>
+      ) : groups.map(g => (
+        <div key={g.label}>
+          {/* Month header — the typographic spine of the calendar */}
+          <div style={{
+            display: "flex", alignItems: "baseline", gap: 8,
+            padding: "20px 16px 8px", borderBottom: `1px solid ${C.divider}`,
+          }}>
+            <span style={{ fontSize: 21, fontWeight: 700, color: C.cream, fontFamily: F.display }}>{g.label.split(" ")[0]}</span>
+            <span style={{ fontSize: 11.5, fontFamily: F.mono, color: C.textDim, letterSpacing: "0.1em" }}>{g.label.split(" ")[1]}</span>
+          </div>
+          {g.items.map(c => (
+            <ConcertRow key={c.id} c={c} saved={saved.has(c.id)} onToggle={toggleSaved} />
+          ))}
+        </div>
+      ))}
+      <div style={{ height: 24 }} />
+    </div>
+  );
+};
+
+/* ═══════════════ FAVORITES ═══════════════ */
+const FavScreen = ({ onShow, onConcerts }) => {
+  const [tab, setTab] = useState("songs");
+  const [saved, toggleSaved] = useSavedConcerts();
+  const [concerts, setConcerts] = useState([]);
+  useEffect(() => { fetchConcerts().then(setConcerts); }, []);
+  const savedConcerts = concerts.filter(c => saved.has(c.id));
+  const songs = [
+    { title: "Right Back to It", artist: "Waxahatchee", date: "Feb 9", img: ALBUMS.tigersBlood },
+    { title: "Favourite", artist: "Fontaines D.C.", date: "Feb 8", img: ALBUMS.romance },
+    { title: "Oceans of Darkness", artist: "The War on Drugs", date: "Feb 7", img: ALBUMS.idlha },
+    { title: "Coast", artist: "Kim Deal", date: "Feb 6", img: ALBUMS.nobody },
+    { title: "Savage Good Boy", artist: "Japanese Breakfast", date: "Feb 5", img: ALBUMS.jubilee },
+  ];
+  const favShows = [SHOWS.worldcafe, SHOWS.funky, SHOWS.morning];
+  return (
+    <div style={{ flex: 1, overflow: "auto", overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" }}>
+      {/* Tabs */}
+      <div style={{ display: "flex", borderBottom: `2px solid ${C.divider}`, flexShrink: 0 }}>
+        {["Songs", "Shows", "Concerts"].map(t => {
+          const on = tab === t.toLowerCase();
+          return (
+            <button key={t} onClick={() => setTab(t.toLowerCase())} style={{
+              flex: 1, padding: "14px 0", fontSize: 15, fontWeight: on ? 600 : 400, cursor: "pointer",
+              background: "none", fontFamily: F.body, textAlign: "center",
+              color: on ? C.cream : C.textMut,
+              borderBottom: on ? `3px solid ${C.accent}` : "3px solid transparent",
+              borderTop: "none", borderLeft: "none", borderRight: "none", marginBottom: -2,
+              minHeight: 50, touchAction: "manipulation",
+            }}>{t}</button>
+          );
+        })}
+      </div>
+      {tab === "songs" ? songs.map((t, i) => (
+        <div key={i} style={{ ...row, minHeight: 64 }}>
+          <img src={t.img || TRACK} alt="" loading="lazy" decoding="async"
+            style={{ width: 48, height: 48, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: C.cream, fontFamily: F.display }}>{t.title}</div>
+            <div style={{ fontSize: 14, color: C.textMut, marginTop: 2 }}>{t.artist}</div>
+          </div>
+          <span style={{ fontSize: 12, color: C.textDim, fontFamily: F.mono, flexShrink: 0 }}>{t.date}</span>
+          <button aria-label={`Remove ${t.title} from favorites`} style={ibtn}>{ic.heartF(20, C.accent)}</button>
+        </div>
+      )) : tab === "shows" ? favShows.map((s, i) => (
+        <div key={i} onClick={() => onShow?.(s)} style={{ ...row, cursor: "pointer", minHeight: 76 }}>
+          <img src={s.img} alt="" loading="lazy" decoding="async"
+            style={{ width: 56, height: 56, borderRadius: 5, objectFit: "cover", flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 17, fontWeight: 600, color: C.cream, fontFamily: F.display }}>{s.name}</div>
+            <div style={{ fontSize: 14, color: C.textMut, marginTop: 2 }}>{s.host}</div>
+          </div>
+          <button aria-label={`Remove ${s.name} from favorites`} style={ibtn} onClick={(e) => e.stopPropagation()}>{ic.heartF(21, C.accent)}</button>
+          {ic.chev(18, C.textDim)}
+        </div>
+      )) : savedConcerts.length === 0 ? (
+        <div style={{ padding: "44px 32px", textAlign: "center" }}>
+          <div style={{ marginBottom: 10 }}>{ic.heart(28, C.textDim)}</div>
+          <div style={{ fontSize: 15, color: C.textSec, fontFamily: F.display, fontWeight: 600 }}>No saved concerts yet</div>
+          <div style={{ fontSize: 13.5, color: C.textMut, marginTop: 6, lineHeight: 1.5 }}>
+            Browse the Concert Calendar and heart the shows you want to catch.
+          </div>
+          <button onClick={() => onConcerts?.()} style={{
+            marginTop: 16, padding: "10px 20px", minHeight: 44, borderRadius: 22,
+            background: C.accentGlow, border: `1.5px solid ${C.accentBorder}`,
+            color: C.cream, fontSize: 14, fontWeight: 600, fontFamily: F.body,
+            cursor: "pointer", touchAction: "manipulation",
+          }}>Open Concert Calendar</button>
+        </div>
+      ) : savedConcerts.map(c => (
+        <ConcertRow key={c.id} c={c} saved={true} onToggle={toggleSaved} />
+      ))}
+      <div style={{ height: 24 }} />
+    </div>
+  );
+};
+
+/* ═══════════════ SETTINGS ═══════════════ */
+const SettingsScreen = () => {
+  const [cp, setCp] = useState(false);
+  return (
+    <div style={{ flex: 1, overflow: "auto", overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" }}>
+      <div style={{ height: 1, background: C.divider, margin: "0 16px" }} />
+      <div style={{ padding: "20px 16px 12px" }}>
+        <div style={{ fontSize: 18, color: C.cream, marginBottom: 14, fontFamily: F.display }}>Favorites</div>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "16px 0", borderTop: `1px solid ${C.divider}`, borderBottom: `1px solid ${C.divider}`,
+          minHeight: 64,
+        }}>
+          <div>
+            <div style={{ fontSize: 16, color: C.accent }}>Share Favorites</div>
+            <div style={{ fontSize: 14, color: C.textMut, marginTop: 3 }}>Share all Favorites in a text or csv file</div>
+          </div>
+          {ic.shareAlt(22, C.textMut)}
+        </div>
+      </div>
+      <div style={{ height: 1, background: C.divider, margin: "0 16px" }} />
+      <div style={{ padding: "20px 16px 12px" }}>
+        <div style={{ fontSize: 18, color: C.cream, marginBottom: 14, fontFamily: F.display }}>CarPlay Settings</div>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "0 0", borderTop: `1px solid ${C.divider}`, borderBottom: `1px solid ${C.divider}`,
+          minHeight: 68,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div>
+              <div style={{ fontSize: 16, color: C.cream }}>Time Skip Controls</div>
+              <div style={{ fontSize: 13, color: C.textMut, marginTop: 2 }}>Make visible in CarPlay</div>
+            </div>
+            <div style={{ width: 22, height: 22, borderRadius: 11, border: `1.5px solid ${C.accent}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: C.accent }}>i</span>
+            </div>
+          </div>
+          {/* Toggle — 54×32 pill with extended tap wrapper for accessibility */}
+          <button
+            onClick={() => setCp(!cp)}
+            style={{
+              padding: "8px 0 8px 12px",  // enlarged tap area
+              background: "none", border: "none", cursor: "pointer",
+              display: "flex", alignItems: "center",
+              touchAction: "manipulation",
+            }}
+          >
+            <div style={{
+              width: 54, height: 32, borderRadius: 16, padding: 2, border: `1px solid ${C.divider}`,
+              background: cp ? C.accent : C.surface,
+              display: "flex", justifyContent: cp ? "flex-end" : "flex-start", alignItems: "center",
+              transition: "background 0.2s",
+            }}>
+              <div style={{ width: 28, height: 28, borderRadius: 14, background: cp ? C.bg : C.textDim, transition: "all 0.2s" }} />
+            </div>
+          </button>
+        </div>
+      </div>
+      <div style={{ height: 1, background: C.divider, margin: "0 16px" }} />
+      <div style={{ padding: "20px 16px 12px" }}>
+        <div style={{ fontSize: 18, color: C.cream, marginBottom: 10, fontFamily: F.display }}>Contact</div>
+        {["Technical Support", "Contact WXPN"].map((item, i) => (
+          <div key={i} style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "0", borderBottom: `1px solid ${C.divider}`,
+            minHeight: 58,
+          }}>
+            <span style={{ fontSize: 16, color: C.textSec }}>{item}</span>
+            {ic.chev(20, C.textDim)}
+          </div>
+        ))}
+      </div>
+      <div style={{ height: 6, background: C.divider, margin: "8px 0" }} />
+      <div style={{ padding: "12px 16px" }}>
+        {["About WXPN", "Terms of Use", "Privacy Policy"].map((item, i) => (
+          <div key={i} style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "0", borderBottom: `1px solid ${C.divider}`,
+            minHeight: 58,
+          }}>
+            <span style={{ fontSize: 16, color: C.textSec }}>{item}</span>
+            {ic.chev(20, C.textDim)}
+          </div>
+        ))}
+      </div>
+      <div style={{ height: 32 }} />
+    </div>
+  );
+};
+
+/* ═══════════════ EXPANDED NOW PLAYING ═══════════════
+   Swipe-down-to-dismiss: track touch start Y, compute delta,
+   visually translate the sheet, dismiss if delta > 90px.
+   willChange: "transform" hints the browser to promote to its own
+   compositing layer so the animation stays on the GPU.
+   Safe-area-inset is applied top + bottom on real mobile devices. */
+const NowPlaying = ({ open, onClose, playing, setPlaying }) => {
+  const touchStartY = useRef(null);
+  const [dragY, setDragY] = useState(0);
+
+  useEffect(() => {
+    if (!open) {
+      setDragY(0);
+      touchStartY.current = null;
+    }
+  }, [open]);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape" && open) onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const handleTouchMove = (e) => {
+    if (touchStartY.current === null) return;
+    const dy = e.touches[0].clientY - touchStartY.current;
+    if (dy > 0) setDragY(dy);
+  };
+  const handleTouchEnd = () => {
+    if (dragY > 90) {
+      onClose();
+    } else {
+      setDragY(0);
+    }
+    touchStartY.current = null;
+  };
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        position: "absolute", inset: 0, zIndex: 300,
+        background: `linear-gradient(180deg, ${C.card} 0%, ${C.bg} 50%)`,
+        transform: open ? `translateY(${dragY}px)` : "translateY(100%)",
+        transition: dragY > 0 ? "none" : "transform 0.36s cubic-bezier(0.32, 0.72, 0, 1)",
+        display: "flex", flexDirection: "column",
+        overflow: "hidden",
+        willChange: "transform",
+        opacity: open ? 1 : 0,
+        pointerEvents: open ? "auto" : "none",
+      }}
+    >
+      {/* Drag handle + collapse button */}
+      <div style={{
+        paddingTop: isMobile ? "calc(env(safe-area-inset-top, 44px) + 10px)" : "14px",
+        paddingBottom: 0,
+        display: "flex", flexDirection: "column", alignItems: "center",
+        flexShrink: 0,
+      }}>
+        {/* Wider pill = easier to see as a grab target */}
+        <div style={{ width: 48, height: 5, borderRadius: 2.5, background: C.textDim, opacity: 0.45, marginBottom: 8 }} />
+        <button aria-label="Close" onClick={onClose} style={{
+          background: "none", border: "none", cursor: "pointer",
+          width: 44, height: 44,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          touchAction: "manipulation",
+        }}>
+          {ic.chevD(28, C.textMut)}
+        </button>
+      </div>
+
+      {/* Center: art, track info, controls */}
+      <div style={{
+        flex: 1, display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        padding: "0 32px", gap: 24,
+      }}>
+        {/* Album art — responsive size on mobile */}
+        <div style={{
+          width: isMobile ? "min(260px, 72vw)" : 240,
+          height: isMobile ? "min(260px, 72vw)" : 240,
+          borderRadius: 18, overflow: "hidden",
+          boxShadow: "0 20px 64px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04)",
+          flexShrink: 0,
+        }}>
+          <img src={ART} alt="Album art" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        </div>
+
+        {/* Track info */}
+        <div style={{ textAlign: "center", width: "100%" }}>
+          <div style={{ fontSize: isMobile ? 26 : 24, fontWeight: 700, color: C.cream, fontFamily: F.display, lineHeight: 1.2 }}>
+            Returning to Myself
+          </div>
+          <div style={{ fontSize: 18, color: C.peach, marginTop: 8 }}>Brandi Carlile</div>
+        </div>
+
+        {/* Live badge */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 8, height: 8, borderRadius: 4, background: C.accent, boxShadow: "0 0 8px rgba(213,78,27,0.6)" }} />
+          <span style={{ fontSize: 13, fontWeight: 700, color: C.accentSoft, letterSpacing: "0.18em", fontFamily: F.display }}>
+            LIVE ON 88.5
+          </span>
+        </div>
+
+        {/* Playback controls — heart | play | cast */}
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <button style={{
+            ...ibtn, width: 52, height: 52, borderRadius: 26,
+            background: C.card, border: `1px solid ${C.divider}`,
+          }}>
+            {ic.heart(24, C.accent)}
+          </button>
+          <button aria-label={playing ? "Pause live stream" : "Play live stream"} onClick={() => setPlaying(!playing)} style={{
+            width: 76, height: 76, borderRadius: 38,
+            background: C.accent, border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 8px 28px rgba(213,78,27,0.42)",
+            touchAction: "manipulation",
+          }}>
+            {playing ? ic.pause(34, C.bg) : ic.play(34, C.bg)}
+          </button>
+          <button style={{
+            ...ibtn, width: 52, height: 52, borderRadius: 26,
+            background: C.card, border: `1px solid ${C.divider}`,
+          }}>
+            {ic.cast(24, C.textMut)}
+          </button>
+        </div>
+      </div>
+
+      {/* Donate banner — bottom safe area on mobile */}
+      <div style={{
+        padding: `12px 20px`,
+        paddingBottom: isMobile ? "calc(env(safe-area-inset-bottom, 0px) + 24px)" : "44px",
+        flexShrink: 0,
+      }}>
+        <button style={{
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          padding: "13px 16px", borderRadius: 14, cursor: "pointer",
+          background: "linear-gradient(135deg, rgba(213,78,27,0.14) 0%, rgba(58,90,58,0.08) 100%)",
+          border: `1px solid rgba(213,78,27,0.25)`,
+          minHeight: 50, touchAction: "manipulation",
+        }}>
+          {ic.heartF(16, C.accent)}
+          <span style={{ fontSize: 13, fontWeight: 700, color: C.accent, letterSpacing: "0.1em", fontFamily: F.display }}>SUPPORT WXPN</span>
+          <span style={{ fontSize: 13, color: C.textDim }}>—</span>
+          <span style={{ fontSize: 13, color: C.cream, fontWeight: 500 }}>Donate Now</span>
+          {ic.chev(16, C.accentDim)}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════ MAIN APP ═══════════════ */
+export default function WXPNApp() {
+  const [screen, setScreen] = useState("live");
+  const [sub, setSub] = useState(null);
+  const [settings, setSettings] = useState(false);
+  const [selectedShow, setSelectedShow] = useState(SHOWS.worldcafe);
+  const [menuOpen, setMenuOpen] = useState(false);
+  // Start paused — browsers block autoplay with sound, and on first launch
+  // the user should tap play deliberately anyway.
+  const [playing, setPlaying] = useState(false);
+  const [npOpen, setNpOpen] = useState(false);
+
+  // Real audio. initPlayer wires up the <audio> element and Media Session
+  // (lock screen / control center play-pause) once on mount. The Media Session
+  // handlers call setPlaying so hardware/lock-screen controls stay in sync
+  // with the UI.
+  useEffect(() => { initPlayer(setPlaying); }, []);
+  useEffect(() => { playing ? playStream() : pauseStream(); }, [playing]);
+
+  const nav = (id) => {
+    setMenuOpen(false);
+    if (id === "more") {
+      setMenuOpen(true);
+      return;
+    }
+    if (id === "settings") {
+      setSettings(true);
+    } else {
+      setSettings(false);
+      setScreen(id);
+    }
+    setSub(null);
+    setNpOpen(false);
+  };
+  const showBack = settings || !!sub;
+  const showMini = screen !== "live" && sub !== "archive" && !settings;
+  const menuItems = [
+    { label: "Home", action: () => nav("live") },
+    { label: "XPN.org", note: "WEB" },
+    { label: "Donate", note: "WEB" },
+    { label: "Alarm Clock" },
+    { label: "XPN fest", note: "WEB" },
+    { label: "Concert Calendar", action: () => nav("concerts") },
+    { label: "Settings", action: () => { setSettings(true); setSub(null); } },
+  ];
+
+  const content = () => {
+    if (settings) return <SettingsScreen />;
+    if (sub === "show") return <ShowDetail show={selectedShow} onBack={() => setSub(null)} onEp={() => setSub("archive")} />;
+    if (sub === "archive") return <ArchivePlayer show={selectedShow} />;
+    if (screen === "shows") return <ShowsScreen onShow={(show) => { setSelectedShow(show); setSub("show"); }} />;
+    if (screen === "concerts") return <ConcertsScreen />;
+    if (screen === "favorites") return <FavScreen onConcerts={() => nav("concerts")} onShow={(show) => { setSelectedShow(show); setScreen("shows"); setSub("show"); }} />;
+    return <LiveScreen playing={playing} setPlaying={setPlaying} onExpand={() => setNpOpen(true)} />;
+  };
+
+  const phoneContent = (
+    <>
+      <MenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} items={menuItems} />
+      <Header
+        showBack={showBack}
+        onBack={() => {
+          if (settings) setSettings(false);
+          else if (sub === "archive") setSub("show");
+          else setSub(null);
+        }}
+      />
+      {content()}
+      {showMini && <Mini onTap={() => setNpOpen(true)} playing={playing} />}
+      <Nav active={screen} onNav={nav} />
+      <NowPlaying open={npOpen} onClose={() => setNpOpen(false)} playing={playing} setPlaying={setPlaying} />
+    </>
+  );
+
+  // On real mobile: just the full-screen app, no outer wrapper
+  if (isMobile) {
+    return <Phone>{phoneContent}</Phone>;
+  }
+
+  // On desktop: centered mockup with screen-switcher debug buttons below
+  return (
+    <div style={{
+      minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center",
+      justifyContent: "center", padding: "40px 20px", background: "#0D0B09",
+    }}>
+      <Phone>{phoneContent}</Phone>
+      <div style={{ marginTop: 20, display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", maxWidth: 420 }}>
+        {[
+          { id: "live", label: "Live" },
+          { id: "shows", label: "Shows" },
+          { id: "favorites", label: "Favorites" },
+        ].map((s, i) => {
+          const on = screen === s.id && !sub && !settings;
+          return (
+            <button key={i} onClick={() => {
+              nav(s.id);
+            }} style={{
+              padding: "7px 18px", borderRadius: 20, fontSize: 13, cursor: "pointer",
+              fontFamily: F.body, fontWeight: 500,
+              background: on ? C.accent : "rgba(18,16,14,0.92)",
+              color: on ? C.bg : C.textMut,
+              border: `1px solid ${on ? "transparent" : C.divider}`,
+              touchAction: "manipulation",
+            }}>{s.label}</button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
