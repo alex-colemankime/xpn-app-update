@@ -9,8 +9,9 @@ export default defineConfig({
         // React in its own chunk: it never changes between app updates,
         // so the PWA cache (and returning browsers) keep it while only
         // the small app chunk re-downloads on each release.
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
+        // (Function form — required by Vite 8's rolldown bundler.)
+        manualChunks(id) {
+          if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return "vendor";
         },
       },
     },

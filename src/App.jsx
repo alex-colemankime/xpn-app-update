@@ -3,6 +3,7 @@ import { initPlayer, playStream, pauseStream } from "./player.js";
 import { isMobile, C, F, ibtn } from "./theme.js";
 import { ic } from "./icons.jsx";
 import { ALBUMS, ART, ARTIST, TRACK, HOSTS, SHOWS } from "./data.js";
+import { fetchConcerts, useSavedConcerts, monthLabel } from "./concerts.js";
 
 
 /* ─── PHONE WRAPPER ───
@@ -751,9 +752,145 @@ const ArchivePlayer = ({ show }) => {
   );
 };
 
+/* ═══════════════ CONCERTS ═══════════════
+   In-app version of xpn.org/concert-and-events/. Data comes from
+   concerts.js — live feed when the endpoint is wired, samples until
+   then. Hearts persist to device storage and surface in Favorites. */
+const ConcertRow = ({ c, saved, onToggle }) => {
+  const d = new Date(c.date + "T12:00:00");
+  return (
+    <div style={{
+      margin: "6px 12px", borderRadius: 12, background: C.card,
+      border: `1px solid ${saved ? C.accentBorder : C.divider}`,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 8px 12px 12px", minHeight: 72 }}>
+        {/* Date block */}
+        <div style={{ width: 46, textAlign: "center", flexShrink: 0 }}>
+          <div style={{ fontSize: 11, color: C.textMut, fontFamily: F.mono, letterSpacing: "0.08em" }}>{c.day}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: C.cream, fontFamily: F.display, lineHeight: 1.15 }}>{d.getDate()}</div>
+        </div>
+        <div style={{ width: 1, alignSelf: "stretch", background: C.divider, flexShrink: 0 }} />
+        {/* Artist / venue / badges */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: C.cream, fontFamily: F.display, lineHeight: 1.25 }}>{c.artist}</div>
+          <div style={{ fontSize: 13.5, color: C.textMut, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {c.venue}{c.region ? ` · ${c.region}` : ""}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 5 }}>
+            {c.xpnWelcomes && (
+              <span style={{
+                fontSize: 10, fontWeight: 700, color: C.accentSoft, fontFamily: F.mono,
+                letterSpacing: "0.08em", padding: "2px 7px", borderRadius: 4,
+                border: `1px solid ${C.accentBorder}`, background: C.accentGlow,
+              }}>XPN WELCOMES</span>
+            )}
+            {c.age && <span style={{ fontSize: 11, color: C.textDim, fontFamily: F.mono }}>{c.age}</span>}
+          </div>
+        </div>
+        {/* Heart */}
+        <button
+          aria-label={saved ? `Remove ${c.artist} from saved concerts` : `Save ${c.artist} concert`}
+          onClick={() => onToggle(c.id)}
+          style={ibtn}
+        >
+          {saved ? ic.heartF(22, C.accent) : ic.heart(22, C.textMut)}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const ConcertsScreen = () => {
+  const [concerts, setConcerts] = useState(null);
+  const [filter, setFilter] = useState("all");
+  const [saved, toggleSaved] = useSavedConcerts();
+  useEffect(() => { fetchConcerts().then(setConcerts); }, []);
+
+  const chips = [
+    { id: "all", label: "All" },
+    { id: "welcomes", label: "XPN Welcomes" },
+    { id: "saved", label: "Saved" },
+  ];
+  const list = (concerts || []).filter(c =>
+    filter === "welcomes" ? c.xpnWelcomes :
+    filter === "saved" ? saved.has(c.id) : true
+  );
+
+  // Group by month, preserving date order
+  const groups = [];
+  for (const c of list) {
+    const label = monthLabel(c.date);
+    const g = groups[groups.length - 1];
+    if (g && g.label === label) g.items.push(c);
+    else groups.push({ label, items: [c] });
+  }
+
+  return (
+    <div style={{ flex: 1, overflow: "auto", overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" }}>
+      <div style={{ padding: "16px 16px 4px" }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: C.cream, fontFamily: F.display }}>Concert Calendar</div>
+        <div style={{ fontSize: 13.5, color: C.textMut, marginTop: 4, lineHeight: 1.45 }}>
+          Shows coming through Philly and beyond, curated by WXPN. Tap the heart to save one.
+        </div>
+      </div>
+      {/* Filter chips */}
+      <div style={{ display: "flex", gap: 8, padding: "12px 16px 6px", flexWrap: "wrap" }}>
+        {chips.map(ch => {
+          const on = filter === ch.id;
+          return (
+            <button key={ch.id} onClick={() => setFilter(ch.id)} style={{
+              padding: "8px 16px", minHeight: 38, borderRadius: 20, cursor: "pointer",
+              fontSize: 13.5, fontWeight: on ? 600 : 400, fontFamily: F.body,
+              color: on ? C.cream : C.textMut,
+              background: on ? C.accentGlow : "none",
+              border: on ? `1.5px solid ${C.accentBorder}` : `1.5px solid ${C.divider}`,
+              touchAction: "manipulation",
+            }}>
+              {ch.label}{ch.id === "saved" && saved.size > 0 ? ` (${saved.size})` : ""}
+            </button>
+          );
+        })}
+      </div>
+      {/* List */}
+      {concerts === null ? (
+        <div style={{ padding: "40px 16px", textAlign: "center", color: C.textMut, fontSize: 14 }}>
+          Loading shows…
+        </div>
+      ) : list.length === 0 ? (
+        <div style={{ padding: "44px 32px", textAlign: "center" }}>
+          <div style={{ marginBottom: 10 }}>{ic.heart(28, C.textDim)}</div>
+          <div style={{ fontSize: 15, color: C.textSec, fontFamily: F.display, fontWeight: 600 }}>
+            {filter === "saved" ? "No saved concerts yet" : "No shows found"}
+          </div>
+          {filter === "saved" && (
+            <div style={{ fontSize: 13.5, color: C.textMut, marginTop: 6, lineHeight: 1.5 }}>
+              Heart a show on the calendar and it'll be waiting here and in Favorites.
+            </div>
+          )}
+        </div>
+      ) : groups.map(g => (
+        <div key={g.label}>
+          <div style={{
+            padding: "14px 16px 6px", fontSize: 12, fontWeight: 700, color: C.peach,
+            fontFamily: F.mono, letterSpacing: "0.12em", textTransform: "uppercase",
+          }}>{g.label}</div>
+          {g.items.map(c => (
+            <ConcertRow key={c.id} c={c} saved={saved.has(c.id)} onToggle={toggleSaved} />
+          ))}
+        </div>
+      ))}
+      <div style={{ height: 24 }} />
+    </div>
+  );
+};
+
 /* ═══════════════ FAVORITES ═══════════════ */
-const FavScreen = ({ onShow }) => {
+const FavScreen = ({ onShow, onConcerts }) => {
   const [tab, setTab] = useState("songs");
+  const [saved, toggleSaved] = useSavedConcerts();
+  const [concerts, setConcerts] = useState([]);
+  useEffect(() => { fetchConcerts().then(setConcerts); }, []);
+  const savedConcerts = concerts.filter(c => saved.has(c.id));
   const songs = [
     { title: "Right Back to It", artist: "Waxahatchee", date: "Feb 9", img: ALBUMS.tigersBlood },
     { title: "Favourite", artist: "Fontaines D.C.", date: "Feb 8", img: ALBUMS.romance },
@@ -766,7 +903,7 @@ const FavScreen = ({ onShow }) => {
     <div style={{ flex: 1, overflow: "auto", overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" }}>
       {/* Tabs */}
       <div style={{ display: "flex", borderBottom: `2px solid ${C.divider}`, flexShrink: 0 }}>
-        {["Songs", "Shows"].map(t => {
+        {["Songs", "Shows", "Concerts"].map(t => {
           const on = tab === t.toLowerCase();
           return (
             <button key={t} onClick={() => setTab(t.toLowerCase())} style={{
@@ -801,7 +938,7 @@ const FavScreen = ({ onShow }) => {
             </div>
           </div>
         </div>
-      )) : favShows.map((s, i) => (
+      )) : tab === "shows" ? favShows.map((s, i) => (
         <div key={i} style={{
           margin: "8px 12px", borderRadius: 14, background: C.card,
           border: `1px solid ${C.divider}`,
@@ -819,6 +956,22 @@ const FavScreen = ({ onShow }) => {
             </div>
           </div>
         </div>
+      )) : savedConcerts.length === 0 ? (
+        <div style={{ padding: "44px 32px", textAlign: "center" }}>
+          <div style={{ marginBottom: 10 }}>{ic.heart(28, C.textDim)}</div>
+          <div style={{ fontSize: 15, color: C.textSec, fontFamily: F.display, fontWeight: 600 }}>No saved concerts yet</div>
+          <div style={{ fontSize: 13.5, color: C.textMut, marginTop: 6, lineHeight: 1.5 }}>
+            Browse the Concert Calendar and heart the shows you want to catch.
+          </div>
+          <button onClick={() => onConcerts?.()} style={{
+            marginTop: 16, padding: "10px 20px", minHeight: 44, borderRadius: 22,
+            background: C.accentGlow, border: `1.5px solid ${C.accentBorder}`,
+            color: C.cream, fontSize: 14, fontWeight: 600, fontFamily: F.body,
+            cursor: "pointer", touchAction: "manipulation",
+          }}>Open Concert Calendar</button>
+        </div>
+      ) : savedConcerts.map(c => (
+        <ConcertRow key={c.id} c={c} saved={true} onToggle={toggleSaved} />
       ))}
       <div style={{ height: 24 }} />
     </div>
@@ -1122,7 +1275,7 @@ export default function WXPNApp() {
     { label: "Alarm Clock" },
     { label: "Festival", note: "WEB" },
     { label: "Music News", note: "WEB" },
-    { label: "Concert Calendar", note: "WEB" },
+    { label: "Concert Calendar", action: () => nav("concerts") },
     {
       label: "World Cafe",
       action: () => {
@@ -1141,7 +1294,8 @@ export default function WXPNApp() {
     if (sub === "show") return <ShowDetail show={selectedShow} onBack={() => setSub(null)} onEp={() => setSub("archive")} />;
     if (sub === "archive") return <ArchivePlayer show={selectedShow} />;
     if (screen === "shows") return <ShowsScreen onShow={(show) => { setSelectedShow(show); setSub("show"); }} />;
-    if (screen === "favorites") return <FavScreen onShow={(show) => { setSelectedShow(show); setScreen("shows"); setSub("show"); }} />;
+    if (screen === "concerts") return <ConcertsScreen />;
+    if (screen === "favorites") return <FavScreen onConcerts={() => nav("concerts")} onShow={(show) => { setSelectedShow(show); setScreen("shows"); setSub("show"); }} />;
     return <LiveScreen playing={playing} setPlaying={setPlaying} onExpand={() => setNpOpen(true)} />;
   };
 

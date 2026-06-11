@@ -40,6 +40,25 @@ simulators fake those poorly.
   file that gets replaced by live API data when that gets wired up.
 - `src/player.js` — audio + media session
 
+
+## Concert calendar
+
+The in-app version of xpn.org/concert-and-events/, opened from the menu.
+People can heart shows to save them; saved concerts persist on the device
+and appear under Favorites → Concerts.
+
+The data layer is `src/concerts.js`. It currently serves sample listings
+shaped exactly like the real calendar (date, artist, venue, age, region,
+WXPN Welcomes). To wire the live feed: the calendar page is client-side
+rendered, so the rows already come from an API — open the page, DevTools →
+Network → Fetch/XHR, reload, and the request returning event rows is the
+one. Paste that URL into `CONCERTS_ENDPOINT` and adjust the field paths in
+`normalizeWpEvent()` to match its shape. Inside the native app there's no
+CORS restriction; the web/PWA build needs the feed to send CORS headers
+(or a proxy). This same pattern — module with `fetchX()` + sample
+fallback — is the template for feeding the rest of the site's content
+(music news, playlists, schedule) into the app.
+
 ## Audio architecture
 
 One `<audio>` element does playback on every platform (the stream is plain

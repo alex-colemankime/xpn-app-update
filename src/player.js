@@ -16,7 +16,19 @@
 //   1. UIBackgroundModes: audio in Info.plist
 //   2. AVAudioSession category .playback in AppDelegate
 
-import { MediaSession } from '@capgo/capacitor-media-session';
+import { MediaSession as MS } from '@capgo/capacitor-media-session';
+
+// A media-controls failure should degrade silently (no lock screen
+// metadata), never crash audio or the app.
+const MediaSession = new Proxy({}, {
+  get: (_, method) => (...args) => {
+    try {
+      const r = MS[method]?.(...args);
+      if (r?.catch) r.catch(() => {});
+      return r;
+    } catch { /* unsupported platform — ignore */ }
+  },
+});
 
 export const STREAMS = {
   xpn: {
