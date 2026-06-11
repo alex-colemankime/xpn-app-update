@@ -14,12 +14,10 @@ export const ARTIST = "https://images.unsplash.com/photo-1493225457124-a3eb161ff
 export const TRACK = "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=100&h=100&fit=crop&q=60";
 
 export const HOSTS = [
-  { group: true, show: "Morning Show", time: "Weekdays 6–10a", hosts: [
-    { name: "Kristen Kurtis", img: "https://backend.xpn.org/app/uploads/2022/01/Kristen_Portrait-350x350.jpg" },
-    { name: "Bob Bumbera", img: "https://backend.xpn.org/app/uploads/2022/01/Bob_Portrait-350x350.jpg" },
-  ]},
+  { name: "Kristen Kurtis", show: "WXPN Morning Show", time: "Weekdays 6–10a", img: "https://backend.xpn.org/app/uploads/2022/01/Kristen_Portrait-350x350.jpg" },
+  { name: "Bob Bumbera", show: "WXPN Morning Show", time: "Weekdays 6–10a", img: "https://backend.xpn.org/app/uploads/2022/01/Bob_Portrait-350x350.jpg" },
   { name: "Mike Vasilikos", show: "WXPN Middays", time: "Weekdays 10a–2p", img: "https://backend.xpn.org/app/uploads/2022/01/DSC1315-350x350.jpg" },
-  { name: "Raina Douris", show: "World Cafe", time: "Weekdays 2–4p", img: "https://backend.xpn.org/app/uploads/2022/01/Raina_Portrait-350x350.jpg" },
+  { name: "Raina Douris & Stephen Kallao", show: "World Cafe", time: "Weekdays 2–4p", img: "https://backend.xpn.org/app/uploads/2022/01/Raina_Portrait-350x350.jpg" },
   { name: "Dan Reed", show: "WXPN Afternoons", time: "Weekdays 4–7p", img: "https://backend.xpn.org/app/uploads/2022/01/Dan_Portrait-350x350.jpg" },
   { name: "Robert Drake", show: "Funky Friday", time: "Fridays 8–11p", img: "https://backend.xpn.org/app/uploads/2022/01/Robert_Portrait-350x350.jpg" },
   { name: "Jim McGuinn", show: "Program Director", time: "", img: "https://backend.xpn.org/app/uploads/2023/02/Jim_Portrait2-350x350.jpg" },
@@ -59,7 +57,7 @@ export const SHOWS = {
   worldcafe: {
     id: "worldcafe",
     name: "World Cafe",
-    host: "Raina Douris",
+    host: "Raina Douris & Stephen Kallao",
     time: "Weekdays • 2–4p",
     img: "https://backend.xpn.org/app/uploads/2022/01/wc_npr_logo_og_image-350x350.jpg",
     desc: "Live sessions, deep interviews, and a daily look at artists shaping the sound of now.",

@@ -105,6 +105,7 @@ const Nav = ({ active, onNav }) => {
   const tabs = [
     { id: "live", label: "Live", icon: ic.navLive },
     { id: "shows", label: "Shows", icon: ic.navShows },
+    { id: "concerts", label: "Concerts", icon: ic.navConcerts },
     { id: "favorites", label: "Favorites", icon: ic.navFav },
   ];
   return (
@@ -123,16 +124,17 @@ const Nav = ({ active, onNav }) => {
         const on = active === t.id;
         return (
           <button key={t.id} onClick={() => onNav(t.id)} style={{
-            background: on ? C.accentGlow : "none",
-            border: on ? `1.5px solid ${C.accentBorder}` : "1.5px solid transparent",
-            borderRadius: 24, cursor: "pointer", display: "flex",
-            alignItems: "center", gap: 6,
-            padding: "10px 18px",
+            background: "none",
+            border: "none",
+            borderRadius: 10, cursor: "pointer", display: "flex",
+            flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2,
+            padding: "6px 4px",
+            minWidth: 60,
             minHeight: 48,  // WCAG 2.5.8 minimum target size
             touchAction: "manipulation",
           }}>
-            {t.icon(22, on ? C.accent : C.textDim)}
-            <span style={{ fontSize: 14, fontWeight: on ? 600 : 400, color: on ? C.accent : C.textDim }}>
+            {t.icon(20, on ? C.accent : C.textDim)}
+            <span style={{ fontSize: 11, fontWeight: on ? 700 : 500, color: on ? C.accent : C.textDim }}>
               {t.label}
             </span>
           </button>
@@ -802,19 +804,61 @@ const ConcertRow = ({ c, saved, onToggle }) => {
 
 const ConcertsScreen = () => {
   const [concerts, setConcerts] = useState(null);
-  const [filter, setFilter] = useState("all");
+  const [query, setQuery] = useState("");
+  const [dateRange, setDateRange] = useState("next30");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [category, setCategory] = useState("all");
   const [saved, toggleSaved] = useSavedConcerts();
   useEffect(() => { fetchConcerts().then(setConcerts); }, []);
 
-  const chips = [
-    { id: "all", label: "All" },
-    { id: "welcomes", label: "XPN Welcomes" },
-    { id: "saved", label: "Saved" },
-  ];
-  const list = (concerts || []).filter(c =>
-    filter === "welcomes" ? c.xpnWelcomes :
-    filter === "saved" ? saved.has(c.id) : true
-  );
+  const today = new Date();
+  const todayIso = today.toISOString().slice(0, 10);
+
+  const addDays = (iso, days) => {
+    const d = new Date(`${iso}T12:00:00`);
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+  };
+
+  const currentMonthBounds = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = d.getMonth();
+    const start = new Date(y, m, 1).toISOString().slice(0, 10);
+    const end = new Date(y, m + 1, 0).toISOString().slice(0, 10);
+    return { start, end };
+  };
+
+  const rangeBounds = () => {
+    if (dateRange === "next7") return { start: todayIso, end: addDays(todayIso, 7) };
+    if (dateRange === "next30") return { start: todayIso, end: addDays(todayIso, 30) };
+    if (dateRange === "next90") return { start: todayIso, end: addDays(todayIso, 90) };
+    if (dateRange === "month") return currentMonthBounds();
+    if (dateRange === "custom") return { start: startDate || "", end: endDate || "" };
+    return { start: "", end: "" };
+  };
+
+  const { start: effectiveStart, end: effectiveEnd } = rangeBounds();
+
+  const regionMatch = (c) => {
+    const region = (c.region || "").toLowerCase();
+    if (category === "welcomes") return c.xpnWelcomes;
+    if (category === "philly") return region === "philadelphia" || region === "suburbs" || region.includes("philadelphia");
+    if (category === "newjersey") return region === "new jersey" || region.includes("new jersey");
+    if (category === "lehigh") return region === "lehigh valley" || region.includes("lehigh valley");
+    if (category === "centralpa") return region === "central pa" || region.includes("central pa");
+    return true;
+  };
+  const list = (concerts || []).filter((c) => {
+    const q = query.trim().toLowerCase();
+    const matchesQuery = !q ||
+      c.artist.toLowerCase().includes(q) ||
+      c.venue.toLowerCase().includes(q);
+    const matchesStart = !effectiveStart || c.date >= effectiveStart;
+    const matchesEnd = !effectiveEnd || c.date <= effectiveEnd;
+    return matchesQuery && matchesStart && matchesEnd && regionMatch(c);
+  });
 
   // Group by month, preserving date order
   const groups = [];
@@ -829,28 +873,108 @@ const ConcertsScreen = () => {
     <div style={{ flex: 1, overflow: "auto", overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" }}>
       <div style={{ padding: "16px 16px 4px" }}>
         <div style={{ fontSize: 22, fontWeight: 700, color: C.cream, fontFamily: F.display }}>Concert Calendar</div>
-        <div style={{ fontSize: 13.5, color: C.textMut, marginTop: 4, lineHeight: 1.45 }}>
-          Shows coming through Philly and beyond, curated by WXPN. Tap the heart to save one.
+      </div>
+      {/* Search + compact filters */}
+      <div style={{ padding: "12px 16px 2px" }}>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search artist or venue"
+          style={{
+            width: "100%",
+            minHeight: 44,
+            borderRadius: 10,
+            border: `1px solid ${C.divider}`,
+            background: C.surface,
+            color: C.cream,
+            padding: "10px 12px",
+            fontSize: 14,
+            outline: "none",
+          }}
+        />
+      </div>
+      <div style={{ display: "flex", gap: 8, padding: "8px 16px 8px" }}>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          style={{
+            flex: 1,
+            minHeight: 40,
+            borderRadius: 10,
+            border: `1px solid ${C.divider}`,
+            background: C.surface,
+            color: C.cream,
+            padding: "8px 10px",
+            fontSize: 13,
+            outline: "none",
+          }}
+        >
+          <option value="all">All Categories</option>
+          <option value="welcomes">WXPN Welcomes</option>
+          <option value="philly">Philadelphia Area</option>
+          <option value="newjersey">New Jersey</option>
+          <option value="lehigh">Lehigh Valley</option>
+          <option value="centralpa">Central PA</option>
+        </select>
+        <select
+          value={dateRange}
+          onChange={(e) => setDateRange(e.target.value)}
+          style={{
+            flex: 1,
+            minHeight: 40,
+            borderRadius: 10,
+            border: `1px solid ${C.divider}`,
+            background: C.surface,
+            color: C.cream,
+            padding: "8px 10px",
+            fontSize: 13,
+            outline: "none",
+          }}
+        >
+          <option value="any">Any Date</option>
+          <option value="next7">Next 7 Days</option>
+          <option value="next30">Next 30 Days</option>
+          <option value="next90">Next 90 Days</option>
+          <option value="month">This Month</option>
+          <option value="custom">Custom Range</option>
+        </select>
+      </div>
+      {dateRange === "custom" && (
+        <div style={{ display: "flex", gap: 8, padding: "0 16px 8px" }}>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            style={{
+              flex: 1,
+              minHeight: 40,
+              borderRadius: 10,
+              border: `1px solid ${C.divider}`,
+              background: C.surface,
+              color: C.cream,
+              padding: "8px 10px",
+              fontSize: 13,
+              outline: "none",
+            }}
+          />
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            style={{
+              flex: 1,
+              minHeight: 40,
+              borderRadius: 10,
+              border: `1px solid ${C.divider}`,
+              background: C.surface,
+              color: C.cream,
+              padding: "8px 10px",
+              fontSize: 13,
+              outline: "none",
+            }}
+          />
         </div>
-      </div>
-      {/* Filter chips */}
-      <div style={{ display: "flex", gap: 8, padding: "12px 16px 6px", flexWrap: "wrap" }}>
-        {chips.map(ch => {
-          const on = filter === ch.id;
-          return (
-            <button key={ch.id} onClick={() => setFilter(ch.id)} style={{
-              padding: "8px 16px", minHeight: 38, borderRadius: 20, cursor: "pointer",
-              fontSize: 13.5, fontWeight: on ? 600 : 400, fontFamily: F.body,
-              color: on ? C.cream : C.textMut,
-              background: on ? C.accentGlow : "none",
-              border: on ? `1.5px solid ${C.accentBorder}` : `1.5px solid ${C.divider}`,
-              touchAction: "manipulation",
-            }}>
-              {ch.label}{ch.id === "saved" && saved.size > 0 ? ` (${saved.size})` : ""}
-            </button>
-          );
-        })}
-      </div>
+      )}
       {/* List */}
       {concerts === null ? (
         <div style={{ padding: "40px 16px", textAlign: "center", color: C.textMut, fontSize: 14 }}>
@@ -860,13 +984,11 @@ const ConcertsScreen = () => {
         <div style={{ padding: "44px 32px", textAlign: "center" }}>
           <div style={{ marginBottom: 10 }}>{ic.heart(28, C.textDim)}</div>
           <div style={{ fontSize: 15, color: C.textSec, fontFamily: F.display, fontWeight: 600 }}>
-            {filter === "saved" ? "No saved concerts yet" : "No shows found"}
+            No shows found
           </div>
-          {filter === "saved" && (
-            <div style={{ fontSize: 13.5, color: C.textMut, marginTop: 6, lineHeight: 1.5 }}>
-              Heart a show on the calendar and it'll be waiting here and in Favorites.
-            </div>
-          )}
+          <div style={{ fontSize: 13.5, color: C.textMut, marginTop: 6, lineHeight: 1.5 }}>
+            Try broadening your search, date range, or category filter.
+          </div>
         </div>
       ) : groups.map(g => (
         <div key={g.label}>
@@ -1263,7 +1385,16 @@ export default function WXPNApp() {
   useEffect(() => { initPlayer(setPlaying); }, []);
   useEffect(() => { playing ? playStream() : pauseStream(); }, [playing]);
 
-  const nav = id => { setScreen(id); setSub(null); setSettings(false); setNpOpen(false); };
+  const nav = (id) => {
+    if (id === "settings") {
+      setSettings(true);
+    } else {
+      setSettings(false);
+      setScreen(id);
+    }
+    setSub(null);
+    setNpOpen(false);
+  };
   const showBack = settings || !!sub;
   const showMini = screen !== "live" && sub !== "archive" && !settings;
   const menuItems = [
@@ -1335,12 +1466,11 @@ export default function WXPNApp() {
           { id: "live", label: "Live" },
           { id: "shows", label: "Shows" },
           { id: "favorites", label: "Favorites" },
-          { id: "_s", label: "Settings" },
         ].map((s, i) => {
-          const on = s.id === "_s" ? settings : (screen === s.id && !sub && !settings);
+          const on = screen === s.id && !sub && !settings;
           return (
             <button key={i} onClick={() => {
-              if (s.id === "_s") { setSettings(true); setSub(null); } else nav(s.id);
+              nav(s.id);
             }} style={{
               padding: "7px 18px", borderRadius: 20, fontSize: 13, cursor: "pointer",
               fontFamily: F.body, fontWeight: 500,
