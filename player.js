@@ -52,8 +52,8 @@ export const STREAMS = {
   },
   kids: {
     id: 'kids',
-    label: 'KidsCorner 24/7',
-    short: 'KidsCorner',
+    label: 'Kids Corner',
+    short: 'Kids Corner',
     tagline: 'Family music, all day',
     // Verified 2026-06-15 from kidscorner.org playlist 6107.
     url: 'https://wxpnhi.xpn.org/kidscornermp3hi',

@@ -9,7 +9,7 @@ import { DAY_LABELS, useAlarmSettings, dateKey, timeKey, formatAlarmTime } from 
 
 /* Placeholder "now playing" per stream, so switching streams visibly
    changes the hero and mini player instead of showing WXPN's song over
-   KidsCorner. The live metadata feed (player.js setMetadata hook /
+   Kids Corner. The live metadata feed (player.js setMetadata hook /
    the per-stream now-playing API) replaces these once wired. */
 const STREAM_NOW = {
   xpn:  { title: "Returning to Myself", artist: "Brandi Carlile", img: ART },
@@ -22,7 +22,6 @@ const STREAM_NOW = {
 const LINKS = {
   donate: "https://xpn.org/donate/",
   xpn: "https://xpn.org/",
-  fest: "https://xponentialmusicfestival.org/",
   contactEmail: "wxpndesk@xpn.org",
   privacy: "https://xpn.org/privacy-policy/",
 };
@@ -37,6 +36,27 @@ const shareSong = async (song) => {
     await navigator.clipboard?.writeText(text);
   } catch { /* user cancelled or unsupported — no-op */ }
 };
+
+const episodeFavoriteId = (show, episode) => songId({ title: episode.title, artist: show.name });
+const episodeFavoriteItem = (show, episode, savedAt) => ({
+  id: episodeFavoriteId(show, episode),
+  title: episode.title,
+  showId: show.id,
+  showName: show.name,
+  host: show.host,
+  date: episode.date,
+  dur: episode.dur,
+  img: episode.img || show.img,
+  savedAt,
+});
+const ARCHIVE_EPISODES = new Map(
+  Object.values(SHOWS).flatMap((show) =>
+    (show.episodes || []).map((episode) => {
+      const item = episodeFavoriteItem(show, episode);
+      return [item.id, item];
+    })
+  )
+);
 
 /* Neutral placeholder shown if a remote image fails to load — far better
    than a broken-image glyph once live album art / portraits are wired,
@@ -394,7 +414,7 @@ const StreamTabs = ({ current, onPick }) => {
               display: "flex", alignItems: "center", justifyContent: "center",
             }}
           >
-            {s.id === "kids" ? "Kids" : s.short}
+            {s.short}
           </button>
         );
       })}
@@ -726,7 +746,8 @@ const ShowsScreen = ({ onShow }) => {
 const ShowDetail = ({ show, onEp }) => {
   const s = show || SHOWS.worldcafe;
   const { isSaved: showSaved, toggle: toggleShow } = useFavorites("shows");
-  const { isSaved: songSavedFn, toggle: toggleSong } = useFavorites("songs");
+  const { isSaved: legacySongSaved, toggle: toggleLegacySong } = useFavorites("songs");
+  const { isSaved: episodeSavedFn, toggle: toggleEpisode } = useFavorites("episodes");
   const followed = showSaved(s.id);
   return (
     <div style={{ flex: 1, overflow: "auto", overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" }}>
@@ -779,8 +800,17 @@ const ShowDetail = ({ show, onEp }) => {
         </button>
       </div>
       {(s.episodes || []).map((ep) => {
-        const epItem = { title: ep.title, artist: s.name, img: ep.img || s.img };
-        const epSaved = songSavedFn(songId(epItem));
+        const epItem = episodeFavoriteItem(s, ep);
+        const legacyItem = { title: ep.title, artist: s.name, img: ep.img || s.img };
+        const savedAsEpisode = episodeSavedFn(epItem.id);
+        const savedAsLegacySong = legacySongSaved(epItem.id);
+        const epSaved = savedAsEpisode || savedAsLegacySong;
+        const toggleEpisodeSave = (e) => {
+          e.stopPropagation();
+          if (savedAsEpisode) toggleEpisode(epItem);
+          if (savedAsLegacySong) toggleLegacySong(legacyItem);
+          if (!epSaved) toggleEpisode(epItem);
+        };
         return (
         <Pressable key={`${ep.title}-${ep.date}`} onClick={() => onEp?.()} ariaLabel={`Play episode ${ep.title}, ${ep.date}`} style={{ ...row, cursor: "pointer", minHeight: 68 }}>
           <SmartImg src={ep.img || s.img}
@@ -793,7 +823,7 @@ const ShowDetail = ({ show, onEp }) => {
             aria-label={epSaved ? `Remove ${ep.title} from favorites` : `Save ${ep.title}`}
             aria-pressed={epSaved}
             style={ibtn}
-            onClick={(e) => { e.stopPropagation(); toggleSong(epItem); }}
+            onClick={toggleEpisodeSave}
           >
             {epSaved ? ic.heartF(19, C.accent) : ic.heart(19, C.textMut)}
           </button>
@@ -1142,10 +1172,33 @@ const FavScreen = ({ onShow, onShows, onConcerts }) => {
   const [tab, setTab] = useState("songs");
   const [saved, toggleSaved] = useSavedConcerts();
   const { items: savedSongs, toggle: toggleSong } = useFavorites("songs");
+  const { items: savedEpisodeItems, toggle: toggleEpisode } = useFavorites("episodes");
   const { items: savedShows, toggle: toggleShow } = useFavorites("shows");
   const [concerts, setConcerts] = useState([]);
   useEffect(() => { fetchConcerts().then(setConcerts); }, []);
   const savedConcerts = useMemo(() => concerts.filter(c => saved.has(c.id)), [concerts, saved]);
+  const legacyEpisodeItems = useMemo(() =>
+    savedSongs
+      .map((song) => {
+        const id = song.id || songId(song);
+        const episode = ARCHIVE_EPISODES.get(id);
+        return episode ? { ...episode, savedAt: song.savedAt, legacySong: song } : null;
+      })
+      .filter(Boolean),
+    [savedSongs]
+  );
+  const savedEpisodes = useMemo(() => {
+    const byId = new Map();
+    legacyEpisodeItems.forEach((episode) => byId.set(episode.id, episode));
+    savedEpisodeItems.forEach((episode) => byId.set(episode.id, episode));
+    return Array.from(byId.values()).sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+  }, [legacyEpisodeItems, savedEpisodeItems]);
+  const savedEpisodeIds = useMemo(() => new Set(savedEpisodeItems.map((episode) => episode.id)), [savedEpisodeItems]);
+  const legacyEpisodeIds = useMemo(() => new Set(legacyEpisodeItems.map((episode) => episode.id)), [legacyEpisodeItems]);
+  const visibleSongs = useMemo(
+    () => savedSongs.filter((song) => !legacyEpisodeIds.has(song.id || songId(song))),
+    [savedSongs, legacyEpisodeIds]
+  );
 
   // "Feb 9" style label from a savedAt timestamp
   const savedLabel = (ts) => ts ? new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
@@ -1190,14 +1243,15 @@ const FavScreen = ({ onShow, onShows, onConcerts }) => {
       {/* Tabs — each shows a live count once you've saved anything */}
       <div style={{ display: "flex", borderBottom: `2px solid ${C.divider}`, flexShrink: 0 }}>
         {[
-          { label: "Songs", count: savedSongs.length },
+          { label: "Songs", count: visibleSongs.length },
+          { label: "Episodes", count: savedEpisodes.length },
           { label: "Shows", count: savedShows.length },
           { label: "Concerts", count: savedConcerts.length },
         ].map(t => {
           const on = tab === t.label.toLowerCase();
           return (
             <button key={t.label} onClick={() => setTab(t.label.toLowerCase())} style={{
-              flex: 1, padding: "13px 0", fontSize: 15, fontWeight: on ? 600 : 400, cursor: "pointer",
+              flex: 1, padding: "12px 0", fontSize: 14, fontWeight: on ? 700 : 500, cursor: "pointer",
               background: "none", fontFamily: F.body, textAlign: "center",
               color: on ? C.ink : C.textMut,
               borderBottom: on ? `3px solid ${C.accent}` : "3px solid transparent",
@@ -1209,9 +1263,9 @@ const FavScreen = ({ onShow, onShows, onConcerts }) => {
       </div>
 
       {tab === "songs" ? (
-        savedSongs.length === 0 ? (
-          <Empty label="No saved songs yet" hint="Tap the heart on any song — on the Live screen or in an episode — to save it here." />
-        ) : savedSongs.map((t) => (
+        visibleSongs.length === 0 ? (
+          <Empty label="No saved songs yet" hint="Tap the heart on any song from the Live screen or episode track list to save it here." />
+        ) : visibleSongs.map((t) => (
           <div key={t.id} style={{ ...row, minHeight: 64 }}>
             <SmartImg src={t.img || TRACK}
               style={{ width: 48, height: 48, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
@@ -1223,6 +1277,32 @@ const FavScreen = ({ onShow, onShows, onConcerts }) => {
             <button aria-label={`Remove ${t.title} from favorites`} aria-pressed={true} onClick={() => toggleSong(t)} style={ibtn}>{ic.heartF(20, C.accent)}</button>
           </div>
         ))
+      ) : tab === "episodes" ? (
+        savedEpisodes.length === 0 ? (
+          <Empty label="No saved episodes yet" hint="Tap the heart on a show archive episode to save it here." cta="Browse Shows" onCta={() => onShows?.()} />
+        ) : savedEpisodes.map((ep) => {
+          const show = SHOWS[ep.showId];
+          const removeEpisode = (e) => {
+            e.stopPropagation();
+            if (savedEpisodeIds.has(ep.id)) toggleEpisode(ep);
+            if (ep.legacySong) toggleSong(ep.legacySong);
+          };
+          return (
+            <Pressable key={ep.id} onClick={() => show && onShow?.(show)} ariaLabel={`${ep.title}, ${ep.showName}. Open show`} style={{ ...row, cursor: show ? "pointer" : "default", minHeight: 72 }}>
+              <SmartImg src={ep.img || show?.img}
+                style={{ width: 50, height: 50, borderRadius: 5, objectFit: "cover", flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 16, fontWeight: 600, color: C.ink, fontFamily: F.display }}>{ep.title}</div>
+                <div style={{ fontSize: 13, color: C.textMut, marginTop: 2 }}>
+                  {ep.showName}{ep.date ? ` · ${ep.date}` : ""}{ep.dur ? ` · ${ep.dur}` : ""}
+                </div>
+              </div>
+              <span style={{ fontSize: 12, color: C.textMut, fontFamily: F.mono, flexShrink: 0 }}>{savedLabel(ep.savedAt)}</span>
+              <button aria-label={`Remove ${ep.title} from favorites`} aria-pressed={true} onClick={removeEpisode} style={ibtn}>{ic.heartF(20, C.accent)}</button>
+              {show && ic.chev(18, C.textDim)}
+            </Pressable>
+          );
+        })
       ) : tab === "shows" ? (
         savedShows.length === 0 ? (
           <Empty label="No followed shows yet" hint="Follow a show from its page or the On Demand list to keep it here." cta="Browse Shows" onCta={() => onShows?.()} />
@@ -1766,7 +1846,6 @@ export default function WXPNApp() {
     { label: "Settings", action: () => push({ type: "settings" }) },
     { label: "Alarm Clock", note: alarm.enabled ? "ON" : "", action: () => push({ type: "alarm" }) },
     { label: "XPN.org", note: "WEB", action: () => openExternal(LINKS.xpn) },
-    { label: "XPoNential Fest", note: "WEB", action: () => openExternal(LINKS.fest) },
   ];
 
   const content = () => {

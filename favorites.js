@@ -2,10 +2,11 @@ import { useCallback, useMemo } from "react";
 import { createLocalStore, useLocalStore } from "./storage.js";
 
 const FAVORITES_KEY = "xpn.favorites.v1";
-const EMPTY_FAVORITES = { songs: {}, shows: {} };
+const EMPTY_FAVORITES = { songs: {}, episodes: {}, shows: {} };
 
 const normalizeFavorites = (value) => ({
   songs: value?.songs && typeof value.songs === "object" ? value.songs : {},
+  episodes: value?.episodes && typeof value.episodes === "object" ? value.episodes : {},
   shows: value?.shows && typeof value.shows === "object" ? value.shows : {},
 });
 
