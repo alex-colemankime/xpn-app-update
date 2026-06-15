@@ -19,6 +19,7 @@
 import { MediaSession as MS } from '@capgo/capacitor-media-session';
 
 const noop = () => {};
+const publicAsset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
 
 // A media-controls failure should degrade silently (no lock screen
 // metadata), never crash audio or the app.
@@ -60,8 +61,8 @@ export const STREAMS = {
 };
 
 const ARTWORK = [
-  { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-  { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+  { src: publicAsset('icons/icon-192.png'), sizes: '192x192', type: 'image/png' },
+  { src: publicAsset('icons/icon-512.png'), sizes: '512x512', type: 'image/png' },
 ];
 
 let audio = null;

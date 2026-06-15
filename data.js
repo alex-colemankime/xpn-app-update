@@ -1,8 +1,10 @@
 // Static content for design review. Replace these records with xpn.org API data
 // as each feed is wired.
 
+export const publicAsset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
+
 export const ALBUMS = {
-  returning: "/icons/Returning_to_Myself_(album).jpg",
+  returning: publicAsset("icons/Returning_to_Myself_(album).jpg"),
   tigersBlood: "https://coverartarchive.org/release/6217d90e-9517-445c-9396-c7862ed2a143/37729521341-500.jpg",
   romance: "https://coverartarchive.org/release/6e0aa1d9-17ce-4423-87bc-4fec3d0b5f34/38796403938-500.jpg",
   idlha: "https://coverartarchive.org/release/351ba6b9-5b66-489c-b05e-71eff016c752/30629111338-500.jpg",

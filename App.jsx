@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { initPlayer, playStream, pauseStream, setStream, setPlayerVolume, STREAMS } from "./player.js";
 import { isMobile, C, F, ibtn, row, kicker, screenTitle } from "./theme.js";
 import { ic } from "./icons.jsx";
-import { ALBUMS, ART, ARTIST, TRACK, HOSTS, SHOWS } from "./data.js";
+import { ALBUMS, ART, ARTIST, TRACK, HOSTS, SHOWS, publicAsset } from "./data.js";
 import { fetchConcerts, useSavedConcerts, monthLabel } from "./concerts.js";
 import { useFavorites, songId } from "./favorites.js";
 import { DAY_LABELS, useAlarmSettings, dateKey, timeKey, formatAlarmTime } from "./alarm.js";
@@ -216,7 +216,7 @@ const Header = ({ showBack, onBack }) => (
       </button>
     )}
     <img
-      src="/icons/WXPN_88.5_logo.png"
+      src={publicAsset("icons/WXPN_88.5_logo.png")}
       alt="WXPN"
       style={{ height: 31, width: "auto", display: "block", flexShrink: 0 }}
     />
