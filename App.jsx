@@ -26,13 +26,20 @@ const LINKS = {
   privacy: "https://xpn.org/privacy-policy/",
 };
 const openExternal = (url) => { try { window.open(url, "_blank", "noopener,noreferrer"); } catch { /* no-op */ } };
-const PROMO_BANNER = {
-  active: true,
-  label: "WXPN Update",
-  text: "Support independent music at WXPN.",
-  cta: "Donate",
-  href: LINKS.donate,
-};
+const PROMO_BANNERS = [
+  {
+    active: true,
+    label: "Watch Live",
+    text: "Low Cut Connie Plays Free At Noon",
+    href: LINKS.xpn,
+  },
+  {
+    active: true,
+    label: "Fall Drive 2026",
+    text: "Become a member today",
+    href: LINKS.donate,
+  },
+];
 
 /* Share a song via the OS share sheet (native on iOS/Android through the
    WebView), falling back to copying text if Web Share isn't available. */
@@ -259,21 +266,30 @@ const Header = ({ showBack, onBack }) => (
   </div>
 );
 
-const PromoBanner = ({ banner = PROMO_BANNER }) => {
-  if (!banner?.active) return null;
+const PromoBanner = ({ banners = PROMO_BANNERS }) => {
+  const activeBanners = banners.filter((banner) => banner?.active);
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    if (activeBanners.length < 2) return undefined;
+    const timer = window.setInterval(() => setIndex((current) => (current + 1) % activeBanners.length), 6500);
+    return () => window.clearInterval(timer);
+  }, [activeBanners.length]);
+  if (!activeBanners.length) return null;
+  const banner = activeBanners[index % activeBanners.length];
   const clickable = Boolean(banner.href);
   const Tag = clickable ? "button" : "div";
   return (
     <Tag
       onClick={clickable ? () => openExternal(banner.href) : undefined}
+      aria-label={`${banner.label}: ${banner.text}`}
       style={{
         width: "100%",
-        minHeight: 46,
-        padding: "8px 14px",
-        background: "rgba(255,252,246,0.74)",
+        minHeight: 48,
+        padding: "8px 14px 8px 16px",
+        background: "linear-gradient(180deg, rgba(213,78,27,0.14) 0%, rgba(213,78,27,0.08) 100%)",
         border: "none",
-        borderTop: `1px solid rgba(233,221,201,0.68)`,
-        borderBottom: `1px solid ${C.divider}`,
+        borderTop: `1px solid rgba(213,78,27,0.18)`,
+        borderBottom: `1px solid rgba(213,78,27,0.24)`,
         cursor: clickable ? "pointer" : "default",
         touchAction: "manipulation",
         display: "flex",
@@ -285,18 +301,30 @@ const PromoBanner = ({ banner = PROMO_BANNER }) => {
       }}
     >
       <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: "block", fontSize: 10.5, fontWeight: 800, letterSpacing: "0.11em", textTransform: "uppercase", color: C.accentDim, fontFamily: F.display }}>
+        <span style={{ display: "block", fontSize: 10.5, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: C.accentDim, fontFamily: F.display }}>
           {banner.label}
         </span>
-        <span style={{ display: "block", fontSize: 13.5, color: C.textSec, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <span style={{ display: "block", fontSize: 13.5, fontWeight: 650, color: C.text, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {banner.text}
         </span>
       </span>
-      {banner.cta && (
-        <span style={{ fontSize: 12.5, fontWeight: 800, color: C.accentDim, fontFamily: F.display, flexShrink: 0 }}>
-          {banner.cta}
+      {activeBanners.length > 1 && (
+        <span aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+          {activeBanners.map((_, dotIndex) => (
+            <span
+              key={dotIndex}
+              style={{
+                width: dotIndex === index % activeBanners.length ? 12 : 4,
+                height: 4,
+                borderRadius: 3,
+                background: dotIndex === index % activeBanners.length ? C.accentDim : "rgba(169,59,13,0.28)",
+                transition: "width 0.18s ease, background 0.18s ease",
+              }}
+            />
+          ))}
         </span>
       )}
+      {clickable && ic.chev(16, C.accentDim)}
     </Tag>
   );
 };
@@ -576,14 +604,17 @@ const LiveScreen = ({ playing, setPlaying, onShow, streamId, onPickStream }) => 
           style={{
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             width: "min(216px, 56vw)", height: 42, padding: "0 20px", borderRadius: 6,
-            background: C.accent, border: "none", cursor: "pointer",
+            background: playing ? C.accentGlow : C.accent,
+            border: `1px solid ${playing ? C.accentBorder : "transparent"}`,
+            boxShadow: playing ? "none" : "0 6px 16px rgba(213,78,27,0.22)",
+            cursor: "pointer",
             touchAction: "manipulation",
           }}
         >
           {playing ? (
             <>
-              {ic.pause(20, C.white)}
-              <Equalizer color={C.white} height={16} />
+              {ic.pause(19, C.accentDim)}
+              <Equalizer color={C.accentDim} height={16} />
             </>
           ) : (
             <>
