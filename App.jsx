@@ -26,6 +26,13 @@ const LINKS = {
   privacy: "https://xpn.org/privacy-policy/",
 };
 const openExternal = (url) => { try { window.open(url, "_blank", "noopener,noreferrer"); } catch { /* no-op */ } };
+const PROMO_BANNER = {
+  active: true,
+  label: "WXPN Update",
+  text: "Support independent music at WXPN.",
+  cta: "Donate",
+  href: LINKS.donate,
+};
 
 /* Share a song via the OS share sheet (native on iOS/Android through the
    WebView), falling back to copying text if Web Share isn't available. */
@@ -251,6 +258,48 @@ const Header = ({ showBack, onBack }) => (
     </button>
   </div>
 );
+
+const PromoBanner = ({ banner = PROMO_BANNER }) => {
+  if (!banner?.active) return null;
+  const clickable = Boolean(banner.href);
+  const Tag = clickable ? "button" : "div";
+  return (
+    <Tag
+      onClick={clickable ? () => openExternal(banner.href) : undefined}
+      style={{
+        width: "100%",
+        minHeight: 46,
+        padding: "8px 14px",
+        background: "rgba(255,252,246,0.74)",
+        border: "none",
+        borderTop: `1px solid rgba(233,221,201,0.68)`,
+        borderBottom: `1px solid ${C.divider}`,
+        cursor: clickable ? "pointer" : "default",
+        touchAction: "manipulation",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        textAlign: "left",
+        fontFamily: F.body,
+        flexShrink: 0,
+      }}
+    >
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: "block", fontSize: 10.5, fontWeight: 800, letterSpacing: "0.11em", textTransform: "uppercase", color: C.accentDim, fontFamily: F.display }}>
+          {banner.label}
+        </span>
+        <span style={{ display: "block", fontSize: 13.5, color: C.textSec, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {banner.text}
+        </span>
+      </span>
+      {banner.cta && (
+        <span style={{ fontSize: 12.5, fontWeight: 800, color: C.accentDim, fontFamily: F.display, flexShrink: 0 }}>
+          {banner.cta}
+        </span>
+      )}
+    </Tag>
+  );
+};
 
 /* ─── BOTTOM NAV ─── */
 const Nav = ({ active, onNav }) => {
@@ -685,7 +734,7 @@ const ShowsScreen = ({ onShow }) => {
         <div style={{ padding: "6px 0" }}>
           {sched.map((s) => <SchedRow key={s.time} s={s} />)}
           <div style={{ padding: "18px 16px 6px" }}>
-            <span style={kicker}>Friday Specials</span>
+            <span style={kicker}>Upcoming Livestreams</span>
           </div>
           {friday.map((s, i) => <SchedRow key={`f${i}`} s={s} />)}
         </div>
@@ -777,7 +826,7 @@ const ShowDetail = ({ show, onEp }) => {
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
       }}>
-        <button onClick={() => onEp?.()} style={{
+        <button onClick={() => onEp?.((s.episodes || [])[0])} style={{
           minHeight: 44,
           background: "none", border: "none", borderRight: `1px solid ${C.divider}`,
           cursor: "pointer", touchAction: "manipulation",
@@ -813,7 +862,7 @@ const ShowDetail = ({ show, onEp }) => {
           if (!epSaved) toggleEpisode(epItem);
         };
         return (
-        <Pressable key={`${ep.title}-${ep.date}`} onClick={() => onEp?.()} ariaLabel={`Play episode ${ep.title}, ${ep.date}`} style={{ ...row, cursor: "pointer", minHeight: 68 }}>
+        <Pressable key={`${ep.title}-${ep.date}`} onClick={() => onEp?.(ep)} ariaLabel={`Play episode ${ep.title}, ${ep.date}`} style={{ ...row, cursor: "pointer", minHeight: 68 }}>
           <SmartImg src={ep.img || s.img}
             style={{ width: 50, height: 50, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -838,20 +887,66 @@ const ShowDetail = ({ show, onEp }) => {
 };
 
 /* ═══════════════ EPISODE PLAYER (on demand) ═══════════════ */
-const EpisodePlayer = ({ show }) => {
+const EpisodePlayer = ({ show, episode }) => {
   const s = show || SHOWS.worldcafe;
   const { isSaved: songSavedFn, toggle: toggleSong } = useFavorites("songs");
+  const { isSaved: legacySongSaved, toggle: toggleLegacySong } = useFavorites("songs");
+  const { isSaved: episodeSavedFn, toggle: toggleEpisode } = useFavorites("episodes");
+  const activeEpisode = episode || s.episodes?.[0] || {
+    title: "Adia Victoria Session",
+    date: "Feb 9, 2026",
+    dur: "52 min",
+    img: s.img,
+  };
+  const episodeItem = episodeFavoriteItem(s, activeEpisode);
+  const legacyEpisodeItem = { title: activeEpisode.title, artist: s.name, img: activeEpisode.img || s.img };
+  const savedAsEpisode = episodeSavedFn(episodeItem.id);
+  const savedAsLegacySong = legacySongSaved(episodeItem.id);
+  const episodeSaved = savedAsEpisode || savedAsLegacySong;
+  const toggleEpisodeSave = () => {
+    if (savedAsEpisode) toggleEpisode(episodeItem);
+    if (savedAsLegacySong) toggleLegacySong(legacyEpisodeItem);
+    if (!episodeSaved) toggleEpisode(episodeItem);
+  };
   return (
     <div style={{ flex: 1, overflow: "auto", overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" }}>
       <div style={{ display: "flex", justifyContent: "center", padding: "18px 16px 20px" }}>
         <div style={{ width: 220, height: 220, borderRadius: 12, overflow: "hidden", boxShadow: "0 16px 40px rgba(70,45,20,0.25)" }}>
-          <SmartImg src={ARTIST} eager style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <SmartImg src={activeEpisode.img || s.img || ARTIST} eager style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </div>
       </div>
-      <div style={{ textAlign: "center", padding: "0 24px 18px" }}>
-        <div style={{ fontSize: 23, fontWeight: 600, color: C.ink, fontFamily: F.display, lineHeight: 1.2 }}>Adia Victoria Session</div>
+      <div style={{ textAlign: "center", padding: "0 24px 12px" }}>
+        <div style={{ fontSize: 23, fontWeight: 600, color: C.ink, fontFamily: F.display, lineHeight: 1.2 }}>{activeEpisode.title}</div>
         <div style={{ fontSize: 16, color: C.textSec, marginTop: 6 }}>{s.name}</div>
-        <div style={{ fontSize: 14, color: C.textMut, marginTop: 3 }}>Feb 9, 2026 — 52 min</div>
+        <div style={{ fontSize: 14, color: C.textMut, marginTop: 3 }}>
+          {activeEpisode.date}{activeEpisode.dur ? ` · ${activeEpisode.dur}` : ""}
+        </div>
+        <button
+          aria-label={episodeSaved ? `Remove ${activeEpisode.title} from favorites` : `Save ${activeEpisode.title}`}
+          aria-pressed={episodeSaved}
+          onClick={toggleEpisodeSave}
+          style={{
+            marginTop: 13,
+            minHeight: 38,
+            padding: "0 14px",
+            borderRadius: 6,
+            border: `1px solid ${episodeSaved ? C.accentBorder : C.divider}`,
+            background: episodeSaved ? C.accentGlow : "rgba(255,252,246,0.45)",
+            color: episodeSaved ? C.accentDim : C.textSec,
+            cursor: "pointer",
+            touchAction: "manipulation",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            fontFamily: F.display,
+            fontSize: 13.5,
+            fontWeight: 800,
+          }}
+        >
+          {episodeSaved ? ic.heartF(16, C.accent) : ic.heart(16, C.accentDim)}
+          <span>{episodeSaved ? "Saved Episode" : "Save Episode"}</span>
+        </button>
       </div>
       {/* Progress scrubber — 36px tall hit area so it's easy to grab */}
       <div style={{ padding: "0 28px 8px" }}>
@@ -871,32 +966,32 @@ const EpisodePlayer = ({ show }) => {
           <span style={{ fontSize: 13, color: C.textMut, fontFamily: F.mono }}>52:00</span>
         </div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, padding: "10px 24px 22px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "8px 24px 18px" }}>
         <button style={{
-          width: 52, height: 52, borderRadius: 26,
+          width: 48, height: 48, borderRadius: 24,
           background: "none", border: "none", cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
-          touchAction: "manipulation",
+          touchAction: "manipulation", overflow: "visible",
         }}>
-          {ic.skipBack(30, C.textSec)}
+          {ic.skipBack(28, C.textSec)}
         </button>
         <button style={{
           display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-          background: C.accentDim, border: "none", borderRadius: 30,
-          padding: "12px 28px", cursor: "pointer", minHeight: 56,
-          boxShadow: "0 6px 18px rgba(213,78,27,0.3)",
+          background: C.accentGlow, border: `1px solid ${C.accentBorder}`, borderRadius: 6,
+          padding: "0 16px", cursor: "pointer", minHeight: 44,
+          boxShadow: "none",
           touchAction: "manipulation",
         }}>
-          {ic.pause(26, C.white)}
-          <span style={{ fontSize: 17, fontWeight: 700, color: C.white, fontFamily: F.display }}>Playing</span>
+          {ic.pause(19, C.accentDim)}
+          <span style={{ fontSize: 14.5, fontWeight: 800, color: C.accentDim, fontFamily: F.display }}>Playing</span>
         </button>
         <button style={{
-          width: 52, height: 52, borderRadius: 26,
+          width: 48, height: 48, borderRadius: 24,
           background: "none", border: "none", cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
-          touchAction: "manipulation",
+          touchAction: "manipulation", overflow: "visible",
         }}>
-          {ic.skipFwd(30, C.textSec)}
+          {ic.skipFwd(28, C.textSec)}
         </button>
       </div>
       <div style={{ height: 1, background: C.divider, margin: "0 16px" }} />
@@ -1207,12 +1302,12 @@ const FavScreen = ({ onShow, onShows, onConcerts }) => {
   const BrowseCta = ({ label, onClick }) => (
     <button onClick={onClick} style={{
       marginTop: 18,
-      minHeight: 46,
-      padding: "0 16px 0 18px",
+      minHeight: 42,
+      padding: "0 14px 0 16px",
       borderRadius: 6,
-      background: C.ink,
-      border: "none",
-      color: C.white,
+      background: C.accentGlow,
+      border: `1px solid ${C.accentBorder}`,
+      color: C.accentDim,
       fontSize: 14.5,
       fontWeight: 800,
       fontFamily: F.display,
@@ -1222,10 +1317,10 @@ const FavScreen = ({ onShow, onShows, onConcerts }) => {
       alignItems: "center",
       justifyContent: "center",
       gap: 10,
-      boxShadow: "0 8px 20px rgba(40,32,26,0.18)",
+      boxShadow: "none",
     }}>
       <span>{label}</span>
-      {ic.chev(16, C.white)}
+      {ic.chev(16, C.accentDim)}
     </button>
   );
 
@@ -1852,8 +1947,8 @@ export default function WXPNApp() {
   const content = () => {
     if (top?.type === "settings") return <SettingsScreen />;
     if (top?.type === "alarm") return <AlarmScreen alarm={alarm} updateAlarm={updateAlarm} onPreview={startAlarmStream} />;
-    if (top?.type === "episode") return <EpisodePlayer show={top.show} />;
-    if (top?.type === "show") return <ShowDetail show={top.show} onEp={() => push({ type: "episode", show: top.show })} />;
+    if (top?.type === "episode") return <EpisodePlayer show={top.show} episode={top.episode} />;
+    if (top?.type === "show") return <ShowDetail show={top.show} onEp={(episode) => push({ type: "episode", show: top.show, episode })} />;
     if (screen === "shows") return <ShowsScreen onShow={openShow} />;
     if (screen === "concerts") return <ConcertsScreen />;
     if (screen === "favorites") return <FavScreen onShows={() => nav("shows")} onConcerts={() => nav("concerts")} onShow={openShow} />;
@@ -1864,6 +1959,7 @@ export default function WXPNApp() {
     <>
       <MenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} items={menuItems} />
       <Header showBack={stack.length > 0} onBack={pop} />
+      <PromoBanner />
       {content()}
       {showMini && <Mini onTap={() => nav("live")} playing={playing} setPlaying={setPlaying} streamId={streamId} />}
       <Nav active={screen} onNav={nav} />
