@@ -296,7 +296,7 @@ const Title = ({ children }) => (
    duplicated Home (the Live tab), Concert Calendar (the Concerts
    tab), and Donate (the header) — every duplicate is gone. */
 const MenuDrawer = ({ open, onClose, items }) => (
-  <Sheet open={open} onClose={onClose} title="Menu">
+  <Sheet open={open} onClose={onClose} title="More">
     {items.map((item, i) => (
       <button
         key={`${item.label}-${i}`}
@@ -664,7 +664,7 @@ const ShowsScreen = ({ onShow }) => {
         <div style={{ padding: "6px 0" }}>
           {sched.map((s) => <SchedRow key={s.time} s={s} />)}
           <div style={{ padding: "18px 16px 6px" }}>
-            <span style={kicker}>Fridays</span>
+            <span style={kicker}>Friday Specials</span>
           </div>
           {friday.map((s, i) => <SchedRow key={`f${i}`} s={s} />)}
         </div>
@@ -749,14 +749,14 @@ const ShowDetail = ({ show, onEp }) => {
         </p>
       </div>
       <div style={{
-        margin: "0 16px 14px",
+        margin: "0 16px 8px",
         borderTop: `1px solid ${C.divider}`,
         borderBottom: `1px solid ${C.divider}`,
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
       }}>
         <button onClick={() => onEp?.()} style={{
-          minHeight: 54,
+          minHeight: 44,
           background: "none", border: "none", borderRight: `1px solid ${C.divider}`,
           cursor: "pointer", touchAction: "manipulation",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -769,7 +769,7 @@ const ShowDetail = ({ show, onEp }) => {
           onClick={() => toggleShow(s)}
           aria-pressed={followed}
           style={{
-            minHeight: 54,
+            minHeight: 44,
             background: "none", border: "none", cursor: "pointer", touchAction: "manipulation",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             color: followed ? C.accentDim : C.ink, fontFamily: F.display, fontSize: 14.5, fontWeight: 800,
@@ -778,7 +778,6 @@ const ShowDetail = ({ show, onEp }) => {
           <span>{followed ? "Following" : "Follow"}</span>
         </button>
       </div>
-      <div style={{ height: 1, background: C.divider, margin: "0 16px" }} />
       {(s.episodes || []).map((ep) => {
         const epItem = { title: ep.title, artist: s.name, img: ep.img || s.img };
         const epSaved = songSavedFn(songId(epItem));

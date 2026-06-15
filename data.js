@@ -37,7 +37,7 @@ export const SHOWS = {
     host: "Mike Vasilikos",
     time: "Weekdays - 10a-2p",
     img: "https://backend.xpn.org/app/uploads/2022/03/Middays-350x350.jpg",
-    desc: "A midday blend of new releases, staples, and local favorites with a relaxed, curious pace.",
+    desc: "Whether at work or at play, this special blend of established and emerging artists offers the perfect soundtrack for your day.",
     episodes: [
       { title: "New Music Tuesday", date: "Feb 11", dur: "4 hr", img: "https://backend.xpn.org/app/uploads/2022/03/Middays-350x350.jpg" },
       { title: "Midday Mix", date: "Feb 10", dur: "4 hr", img: "https://backend.xpn.org/app/uploads/2022/03/Middays-350x350.jpg" },
@@ -50,7 +50,7 @@ export const SHOWS = {
     host: "Kristen Kurtis & Bob Bumbera",
     time: "Weekdays - 6-10a",
     img: "https://backend.xpn.org/app/uploads/2021/11/morning_show_sq-350x350.jpg",
-    desc: "Start the day with a bright mix of music discovery, context, and the latest from the region.",
+    desc: "Wake up, tune in, and greet the weekday with a handcrafted mix of music, headline news, and special musical features!",
     episodes: [
       { title: "Tuesday Morning", date: "Feb 11", dur: "4 hr", img: "https://backend.xpn.org/app/uploads/2021/11/morning_show_sq-350x350.jpg" },
       { title: "Monday Morning", date: "Feb 10", dur: "4 hr", img: "https://backend.xpn.org/app/uploads/2021/11/morning_show_sq-350x350.jpg" },
@@ -63,7 +63,7 @@ export const SHOWS = {
     host: "Raina Douris & Stephen Kallao",
     time: "Weekdays - 2-4p",
     img: "https://backend.xpn.org/app/uploads/2022/01/wc_npr_logo_og_image-350x350.jpg",
-    desc: "Live sessions, deep interviews, and a daily look at artists shaping the sound of now.",
+    desc: "Get a \"before they were famous\" look at emerging musicians and connect with legendary performers through intimate interviews, exclusive live performances, and a curated music mix.",
     episodes: [
       { title: "Guerilla Toss Session", date: "Feb 9", dur: "52 min", img: "https://npr.brightspotcdn.com/dims3/default/strip/false/crop/960x540+0+0/resize/800/quality/85/format/jpeg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2Ffb%2F91%2F54f754ff4d53aebbc8b3d060b500%2Fguerillatoss-2025-promo-01-ebruyildiz-2500x1667-300.jpg" },
       { title: "This Is Lorelei on Holo Boy", date: "Feb 5", dur: "48 min", img: "https://npr.brightspotcdn.com/dims3/default/strip/false/crop/3600x2025+0+0/resize/800/quality/85/format/jpeg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2Fa1%2F38%2Fb27fa7f24f8e995f5eb0485d6888%2F709a40e4-6607-4373-9f1b-671bc6ea6465.jpg" },
@@ -78,7 +78,7 @@ export const SHOWS = {
     host: "Dan Reed",
     time: "Weekdays - 4-7p",
     img: "https://backend.xpn.org/app/uploads/2022/03/Afternoons-350x350.jpg",
-    desc: "A smart, energetic soundtrack for the drive home with daily features and context.",
+    desc: "An awesome blend of music served with a side of fun for your afternoon drive.",
     episodes: [
       { title: "Tuesday Drive", date: "Feb 11", dur: "3 hr", img: "https://backend.xpn.org/app/uploads/2022/03/Afternoons-350x350.jpg" },
       { title: "Monday Drive", date: "Feb 10", dur: "3 hr", img: "https://backend.xpn.org/app/uploads/2022/03/Afternoons-350x350.jpg" },
@@ -88,10 +88,10 @@ export const SHOWS = {
   funky: {
     id: "funky",
     name: "Funky Friday",
-    host: "Robert Drake",
+    host: "Dan Reed",
     time: "Fridays - 8-11p",
     img: "https://backend.xpn.org/app/uploads/2022/01/funky_friday_logo_screen-350x350.jpg",
-    desc: "Grooves, deep cuts, and dance-floor energy to kick off the weekend.",
+    desc: "Welcome the weekend with the ultimate dance party mix of booty-shaking tunes.",
     episodes: [
       { title: "Funk & Soul Classics", date: "Feb 7", dur: "3 hr", img: "https://backend.xpn.org/app/uploads/2022/01/funky_friday_logo_screen-350x350.jpg" },
       { title: "Disco Revival Night", date: "Jan 31", dur: "3 hr", img: "https://backend.xpn.org/app/uploads/2022/01/funky_friday_logo_screen-350x350.jpg" },
@@ -104,7 +104,7 @@ export const SHOWS = {
     host: "WXPN Live",
     time: "Fridays - Noon",
     img: "https://backend.xpn.org/app/uploads/2025/01/FAN_logo-green_sans-XPN-1-e1737491524361.png",
-    desc: "Weekly live sessions recorded at WXPN with standout artists and special guests.",
+    desc: "Weekly lunchtime broadcast of a free, live concert performance.",
     episodes: [
       { title: "Iron & Wine", date: "Feb 7", dur: "45 min", img: "https://backend.xpn.org/app/uploads/2025/01/FAN_logo-green_sans-XPN-1-e1737491524361.png" },
       { title: "Kashus Culpepper", date: "Jan 31", dur: "40 min", img: "https://backend.xpn.org/app/uploads/2025/01/FAN_logo-green_sans-XPN-1-e1737491524361.png" },
