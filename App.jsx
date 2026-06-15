@@ -394,10 +394,10 @@ const StreamTabs = ({ current, onPick }) => {
   const streams = [STREAMS.xpn, STREAMS.xpn2, STREAMS.kids];
   return (
     <div role="tablist" aria-label="Live streams" style={{
-      display: "flex", gap: 1, padding: 1, margin: "6px 16px 0",
+      display: "flex", gap: 0, padding: 1, margin: "6px 16px 0",
       background: C.surface, borderRadius: 5,
     }}>
-      {streams.map((s) => {
+      {streams.map((s, i) => {
         const on = s.id === current;
         return (
           <button
@@ -412,6 +412,7 @@ const StreamTabs = ({ current, onPick }) => {
               fontSize: 12.5, fontWeight: on ? 800 : 600, fontFamily: F.display,
               letterSpacing: "0.01em", touchAction: "manipulation",
               display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: i === 0 ? "none" : `inset 1px 0 0 ${on ? "rgba(255,252,246,0.22)" : "rgba(40,32,26,0.08)"}`,
             }}
           >
             {s.short}
