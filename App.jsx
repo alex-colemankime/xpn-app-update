@@ -423,12 +423,16 @@ const Mini = ({ onTap, playing, setPlaying, streamId }) => {
         aria-label={playing ? "Pause live stream" : "Play live stream"}
         onClick={(e) => { e.stopPropagation(); setPlaying(!playing); }}
         style={{
-          width: 50, height: 42, borderRadius: 6, border: "none", cursor: "pointer",
-          background: playing ? C.ink : C.accent, display: "flex", alignItems: "center", justifyContent: "center",
+          width: 48, height: 40, borderRadius: 6,
+          border: `1px solid ${playing ? C.accentBorder : "transparent"}`,
+          cursor: "pointer",
+          background: playing ? C.accentGlow : C.accent,
+          boxShadow: playing ? "none" : "0 5px 14px rgba(213,78,27,0.22)",
+          display: "flex", alignItems: "center", justifyContent: "center",
           touchAction: "manipulation", flexShrink: 0,
         }}
       >
-        {playing ? ic.pause(23, C.white) : ic.play(22, C.white)}
+        {playing ? ic.pause(21, C.accentDim) : ic.play(21, C.white)}
       </button>
     </div>
   </div>
