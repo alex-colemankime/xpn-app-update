@@ -144,7 +144,7 @@ test("Eastern date keys survive UTC midnight and daylight saving transitions", (
   const end = source.indexOf("export function clockLabel");
   const context = vm.createContext({ Intl, Date });
   vm.runInContext(
-    source.slice(start, end).replace("export ", "") + "\nthis.parts = easternParts;",
+    source.slice(start, end).replaceAll("export ", "") + "\nthis.parts = easternParts;",
     context,
   );
   assert.equal(context.parts(new Date("2026-09-08T01:00:00Z")).date, "2026-09-07");

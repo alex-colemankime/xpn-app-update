@@ -68,6 +68,16 @@ export function timeKey(date = new Date()) {
   return `${h}:${m}`;
 }
 
+// Minutes since today's alarm time (negative before it). A window rather
+// than an exact-minute match, so a throttled background tab that only gets
+// one timer callback a minute cannot skip past the alarm entirely.
+export const CATCHUP_MINUTES = 2;
+export function minutesSinceAlarm(value, now = new Date()) {
+  if (!isValidTime(value)) return null;
+  const [hour, minute] = value.split(":").map(Number);
+  return now.getHours() * 60 + now.getMinutes() - (hour * 60 + minute);
+}
+
 export function formatAlarmTime(value) {
   if (!isValidTime(value)) return "";
   const [hour, minute] = value.split(":").map(Number);

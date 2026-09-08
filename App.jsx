@@ -11,9 +11,9 @@ import {
   STREAMS,
 } from "./player.js";
 import { useNowPlaying } from "./nowplaying.js";
-import { SHOWS, easternParts, clockLabel } from "./catalog.js";
+import { SHOWS, easternParts, clockLabel, reportedMinutes } from "./catalog.js";
 import { useFavorites } from "./favorites.js";
-import { useAlarmSettings, dateKey, timeKey } from "./alarm.js";
+import { useAlarmSettings, dateKey, minutesSinceAlarm, CATCHUP_MINUTES } from "./alarm.js";
 import { readJson, writeJson } from "./storage.js";
 import { Icon, Art, Empty, shareText } from "./ui.jsx";
 import {
@@ -47,6 +47,7 @@ export default function App() {
   const [message, setMessage] = useState("");
   const [alarm, updateAlarm] = useAlarmSettings();
   const [ringing, setRinging] = useState(false);
+  const [castAvailable, setCastAvailable] = useState(false);
   const playlist = useNowPlaying(streamId);
   const favorites = useFavorites("songs");
   const concerts = useConcerts();
@@ -55,15 +56,14 @@ export default function App() {
   const station = STREAMS[streamId];
   const current = playlist.tracks[0];
   const eastern = easternParts(new Date(minute));
-  const minutes = (time) => {
-    const [h, m] = time.split(":").map(Number);
-    return h * 60 + m;
-  };
-  const fresh =
-    current?.date === eastern.date &&
-    minutes(eastern.time) - minutes(current.time) >= 0 &&
-    minutes(eastern.time) - minutes(current.time) < 15 &&
-    playlist.status === "ready";
+  // Age of the reported song in minutes. Both stamps are absolute, so a song
+  // reported at 23:58 is still current at 00:01.
+  const reportedAge = (() => {
+    const now = reportedMinutes(eastern.date, eastern.time);
+    const then = current && reportedMinutes(current.date, current.time);
+    return now === null || then === null || then === undefined ? null : now - then;
+  })();
+  const fresh = playlist.status === "ready" && reportedAge !== null && reportedAge >= 0 && reportedAge < 15;
   const playLabel =
     status === "loading"
       ? "Connecting…"
@@ -125,6 +125,9 @@ export default function App() {
   useEffect(() => {
     initPlayer(setPlaying, setStatus);
     setPlayerVolume(volume);
+    // canCast() reads the audio element, which only exists after initPlayer,
+    // so it cannot be evaluated during the first render.
+    setCastAvailable(canCast());
     return () => pauseStream();
   }, []);
   useEffect(() => {
@@ -139,25 +142,35 @@ export default function App() {
     const timer = setTimeout(() => setMessage(""), 5000);
     return () => clearTimeout(timer);
   }, [message]);
+  // The scheduler reads the latest alarm through a ref so that writing
+  // lastTriggeredDate does not tear down and rebuild the interval.
+  const alarmRef = useRef(null);
+  useEffect(() => {
+    alarmRef.current = { alarm, startAlarm, updateAlarm };
+  });
   useEffect(() => {
     if (!alarm.enabled) return;
     const tick = () => {
+      const { alarm: current, startAlarm: start, updateAlarm: update } = alarmRef.current;
       const now = new Date();
-      if (alarm.snoozeUntil && now.getTime() < alarm.snoozeUntil) return;
-      const snoozeDue = alarm.snoozeUntil > 0 && now.getTime() >= alarm.snoozeUntil;
+      if (current.snoozeUntil && now.getTime() < current.snoozeUntil) return;
+      const snoozeDue = current.snoozeUntil > 0 && now.getTime() >= current.snoozeUntil;
+      const since = minutesSinceAlarm(current.time, now);
       const due =
-        alarm.repeatDays.includes(now.getDay()) &&
-        timeKey(now) === alarm.time &&
-        alarm.lastTriggeredDate !== dateKey(now);
+        current.repeatDays.includes(now.getDay()) &&
+        current.lastTriggeredDate !== dateKey(now) &&
+        since !== null &&
+        since >= 0 &&
+        since < CATCHUP_MINUTES;
       if (!due && !snoozeDue) return;
-      startAlarm();
+      start();
       setRinging(true);
-      updateAlarm({ lastTriggeredDate: dateKey(now), snoozeUntil: 0 });
+      update({ lastTriggeredDate: dateKey(now), snoozeUntil: 0 });
     };
-    tick();
-    const timer = setInterval(tick, 1000);
+    // No immediate tick: enabling the alarm should not ring it.
+    const timer = setInterval(tick, 15000);
     return () => clearInterval(timer);
-  }, [alarm]);
+  }, [alarm.enabled]);
   const closeAlarm = (snooze) => {
     pauseStream();
     setRinging(false);
@@ -351,7 +364,7 @@ export default function App() {
                   <span>
                     {current?.time ? `Reported at ${clockLabel(current.time)} ET` : "Live radio"}
                   </span>
-                  {canCast() && (
+                  {castAvailable && (
                     <button className="text-button" onClick={cast}>
                       <Icon name="cast" size={16} />
                       Audio output
@@ -446,7 +459,7 @@ export default function App() {
               onPreviewAlarm={startAlarm}
               volume={volume}
               onVolume={changeVolume}
-              canCast={canCast()}
+              canCast={castAvailable}
               onCast={cast}
             />
           </section>
@@ -496,7 +509,7 @@ export default function App() {
             value={volume}
             onChange={(e) => changeVolume(+e.target.value)}
           />
-          {canCast() && (
+          {castAvailable && (
             <button className="icon-button" aria-label="Choose audio output" onClick={cast}>
               <Icon name="cast" size={19} />
             </button>

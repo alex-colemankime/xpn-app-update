@@ -3,7 +3,26 @@ import { createLocalStore, useLocalStore } from "./storage.js";
 
 const CONCERTS_ENDPOINT = import.meta.env?.VITE_XPN_CONCERTS_ENDPOINT || "";
 export const hasConcertFeed = Boolean(CONCERTS_ENDPOINT);
-const DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+// Feeds report local Eastern datetimes ("2026-06-12 20:00:00"). Parsing
+// those into a Date and taking toISOString() pushes evening events onto the
+// next day, so the calendar date is read textually when present and
+// otherwise formatted in the station's zone.
+const easternDate = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/New_York",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+const ZONED = /(?:Z|[+-]\d{2}:?\d{2})$/i;
+export function isoDate(value) {
+  const text = String(value ?? "").trim();
+  const literal = text.match(/^\d{4}-\d{2}-\d{2}/);
+  // No zone marker means the feed sent Eastern wall-clock time: keep the day
+  // it wrote. A zoned instant is converted into the station's day instead.
+  if (literal && !ZONED.test(text)) return literal[0];
+  const parsed = new Date(text);
+  return Number.isNaN(parsed.valueOf()) ? "" : easternDate.format(parsed);
+}
 
 const asText = (value) =>
   String(value || "")
@@ -14,13 +33,11 @@ const asText = (value) =>
 
 function normalizeWpEvent(event) {
   const rawDate = event.start_date || event.date || event.event_date || event.acf?.date;
-  const date = new Date(rawDate);
   const title = typeof event.title === "object" ? event.title?.rendered : event.title;
 
   return {
     id: String(event.id ?? `${title}-${rawDate}`),
-    date: Number.isNaN(date.valueOf()) ? "" : date.toISOString().slice(0, 10),
-    day: Number.isNaN(date.valueOf()) ? "" : DAYS[date.getDay()],
+    date: isoDate(rawDate),
     artist: asText(title),
     venue: asText(event.venue?.venue || event.venue || event.acf?.venue),
     region: asText(event.region || event.acf?.region),

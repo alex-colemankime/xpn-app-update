@@ -46,6 +46,15 @@ export function easternParts(date = new Date()) {
     time: `${obj.hour}:${obj.minute}`,
   };
 }
+// Minutes for a reported Eastern wall-clock date+time, comparable across
+// midnight. Both sides of a comparison are Eastern wall clock, so a fixed
+// zone is used purely to get a monotonic number.
+export function reportedMinutes(date, time) {
+  const [y, mo, d] = String(date || "").split("-").map(Number);
+  const [h, mi] = String(time || "").split(":").map(Number);
+  if ([y, mo, d, h, mi].some((n) => !Number.isFinite(n))) return null;
+  return Date.UTC(y, mo - 1, d, h, mi) / 60000;
+}
 export function clockLabel(time) {
   const [h, m] = time.split(":").map(Number);
   return `${h % 12 || 12}${m ? ":" + String(m).padStart(2, "0") : ""}${h < 12 ? "am" : "pm"}`;
