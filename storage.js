@@ -1,7 +1,12 @@
 import { useSyncExternalStore } from "react";
 
-const canUseStorage = () =>
-  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+const canUseStorage = () => {
+  try {
+    return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+  } catch {
+    return false;
+  }
+};
 
 export function readJson(key, fallback) {
   if (!canUseStorage()) return fallback;
