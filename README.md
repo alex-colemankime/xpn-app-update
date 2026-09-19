@@ -18,7 +18,7 @@ npm run build
 - **Favorites:** songs, followed shows, episodes, and concerts saved on the current device; search and song sharing.
 - **Shows:** searchable show directory, weekly schedule in Eastern Time, show details, follow/unfollow, and episode saves.
 - **Concerts:** search, region and month filters, WXPN Welcomes, and saved concerts.
-- **Settings:** output selection where supported, volume, local alarm, and station contact links.
+- **Settings:** Light, Dark, or device-based appearance; output selection where supported, volume, local alarm, and station contact links.
 
 The same audio element stays alive across screens. Play reconnects to the current broadcast; Pause detaches the source. Buffering and errors are distinct states. Media-session play/pause controls invoke the same player actions as the visible buttons.
 
@@ -44,4 +44,6 @@ References reviewed:
 - [WXPN program guide](https://xpn.org/program_guide/)
 - [WXPN playlist](https://xpn.org/wxpn-playlists/)
 
-Source is split between the app shell (`App.jsx`), content screens (`screens.jsx`), shared accessible controls (`ui.jsx`), and the existing player/storage modules. No UI library or new production dependency was added.
+Source is split between the app shell (`App.jsx`), content screens (`screens/`), reusable music rows and player (`components/`), data and appearance hooks (`hooks/`), shared accessible controls (`ui.jsx`), and the existing player/storage modules. No UI library or new production dependency was added.
+
+Appearance is saved as `xpn.appearance`. Device mode follows operating-system changes, and the theme is applied before React starts to avoid a flash on reload. Shared color tokens in `global.css` cover both palettes.
