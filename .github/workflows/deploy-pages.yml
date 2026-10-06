@@ -49,6 +49,10 @@ jobs:
           # The preview's address, for link previews when it is shared.
           VITE_SITE_URL: https://alex-colemankime.github.io/xpn-app-update/
 
+      # Every screen in light and dark, at …/xpn-app-update/screens/
+      - name: Add the screens page
+        run: cp -R design/screens dist/screens
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:

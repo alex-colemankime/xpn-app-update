@@ -31,6 +31,9 @@ const ICONS = {
     '<rect x="4" y="9" width="11" height="12" rx="2"/><path d="M13 3a7 7 0 0 1 7 7"/><path d="m17.5 9.5 2.5.5.5-2.5"/>',
   ),
   open: svg('<path d="M7 17 17 7M8 7h9v9"/>', 16),
+  grid: svg(
+    '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>',
+  ),
 };
 
 function readChoice() {
@@ -89,6 +92,9 @@ export function mountDevicePreview(root, { build = "" } = {}) {
           <button type="button" class="dp-tool dp-rotate" aria-pressed="false" aria-label="Landscape tablet">
             ${ICONS.rotate}<span>Rotate</span>
           </button>
+          <a class="dp-tool" href="${BASE}screens/" aria-label="All screens">
+            ${ICONS.grid}<span>All screens</span>
+          </a>
           <a class="dp-tool dp-open" target="_blank" rel="noopener">
             Full window ${ICONS.open}
           </a>

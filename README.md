@@ -21,7 +21,10 @@ npm run check      # lint, formatting, tests and a production build
 | `npm run check`       | Everything CI runs, in one go                           |
 | `npm run cap:sync`    | Build and copy into the native projects                 |
 
-CI runs `lint`, `format:check`, `test` and `build` on every push and pull request. Pushes to `main` also deploy the preview to GitHub Pages.
+CI runs `lint`, `format:check`, `test` and `build` on every push and pull request. Pushes to `main` also deploy the preview to GitHub Pages:
+
+- **Live preview:** https://alex-colemankime.github.io/xpn-app-update/ (on a computer, with Phone, Tablet and Laptop buttons)
+- **Every screen:** https://alex-colemankime.github.io/xpn-app-update/screens/ (light and dark, from `design/screens/`)
 
 ## Configuration
 

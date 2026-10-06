@@ -1,0 +1,870 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Every screen of the WXPN app, on phone, tablet and laptop, in light and dark."
+    />
+    <title>WXPN App Screens</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap"
+    />
+    <style>
+      /* Layout: a contact sheet of real app screens, laid out in the order a
+     listener moves through the app, framed in the app's own palette. */
+      :root {
+        --bg: #faf6ee;
+        --surface: #f3eee3;
+        --text: #211f1c;
+        --muted: #64605a;
+        --border: #d9d2c4;
+        --brand-w: #f2b28f;
+        --accent: #b83d1c;
+        --action: #ef7149;
+        --action-ink: #241710;
+        --bezel: #111213;
+        --shadow: 0 1px 2px rgb(20 20 18 / 0.06), 0 12px 32px rgb(20 20 18 / 0.1);
+        --font: "Figtree", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #161719;
+          --surface: #202123;
+          --text: #f3f1eb;
+          --muted: #aaa9a3;
+          --border: #383a3a;
+          --accent: #ff9875;
+          --brand-w: #8a5440;
+          --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 14px 36px rgb(0 0 0 / 0.45);
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #161719;
+        --surface: #202123;
+        --text: #f3f1eb;
+        --muted: #aaa9a3;
+        --border: #383a3a;
+        --accent: #ff9875;
+        --brand-w: #8a5440;
+        --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 14px 36px rgb(0 0 0 / 0.45);
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.55 var(--font);
+        -webkit-font-smoothing: antialiased;
+      }
+      .page {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding-inline: clamp(16px, 4vw, 40px);
+        padding-block: 28px 64px;
+      }
+
+      /* Masthead: the app's wordmark, then what this page is. */
+      .masthead {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px 40px;
+        padding-bottom: 28px;
+        border-bottom: 1px solid var(--border);
+      }
+      .wordmark {
+        font-size: clamp(44px, 7vw, 64px);
+        font-weight: 800;
+        letter-spacing: -0.085em;
+        line-height: 1;
+        margin: 0 0 18px;
+      }
+      .wordmark span {
+        color: var(--accent);
+      }
+      .lede {
+        margin: 0;
+        font-size: 16px;
+        color: var(--muted);
+      }
+      .lede a {
+        color: var(--accent);
+        font-weight: 600;
+        text-underline-offset: 3px;
+      }
+      .wordmark .w {
+        color: var(--brand-w);
+      }
+      h1 {
+        font-size: clamp(26px, 3.2vw, 36px);
+        font-weight: 650;
+        letter-spacing: -0.035em;
+        line-height: 1.15;
+        margin: 0 0 10px;
+        text-wrap: balance;
+      }
+
+      /* Theme switch for the screenshots, styled like the app's own tabs. */
+      .switch-group {
+        display: grid;
+        gap: 8px;
+      }
+      .switch-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .segmented {
+        display: inline-flex;
+        border-bottom: 1px solid var(--border);
+      }
+      .segmented button {
+        font: inherit;
+        font-size: 15px;
+        color: var(--muted);
+        background: none;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        min-height: 44px;
+        padding: 0 18px;
+        cursor: pointer;
+      }
+      .segmented button[aria-pressed="true"] {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+      .segmented button:focus-visible,
+      a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+
+      section {
+        padding-top: 44px;
+      }
+      section > h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+        margin: 0 0 24px;
+      }
+
+      .section-note {
+        font-size: 15px;
+        color: var(--muted);
+        max-width: 62ch;
+        margin: -12px 0 24px;
+        text-wrap: pretty;
+      }
+      /* Phones: equal columns so every frame and caption lines up. */
+      .phones {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        gap: 40px 28px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .shot {
+        display: grid;
+        gap: 14px;
+        align-content: start;
+        min-width: 0;
+      }
+      .device {
+        background: var(--bezel);
+        border: 1px solid var(--border);
+        border-radius: 34px;
+        padding: 7px;
+        box-shadow: var(--shadow);
+        max-width: 290px;
+        width: 100%;
+        justify-self: center;
+      }
+      .device img {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 390 / 844;
+        border-radius: 27px;
+        background: var(--surface);
+      }
+      .caption {
+        display: grid;
+        gap: 4px;
+      }
+      .caption h3 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0;
+      }
+      .caption p {
+        font-size: 14px;
+        color: var(--muted);
+        margin: 0;
+        text-wrap: pretty;
+      }
+      /* Tablet: one portrait in a bezel, one landscape, at the same height. */
+      .tablets {
+        display: grid;
+        gap: 40px 28px;
+        align-items: start;
+      }
+      @media (min-width: 760px) {
+        .tablets {
+          grid-template-columns: minmax(0, 1fr) minmax(0, 2.07fr);
+        }
+      }
+      .tablet {
+        margin: 0;
+        background: var(--bezel);
+        border: 1px solid var(--border);
+        border-radius: 26px;
+        padding: 10px;
+        box-shadow: var(--shadow);
+      }
+      .tablet img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 17px;
+        background: var(--surface);
+      }
+      .tablet.portrait img {
+        aspect-ratio: 820 / 1180;
+      }
+      .tablet.landscape img {
+        aspect-ratio: 1180 / 820;
+      }
+      .tablets .caption {
+        margin-top: 14px;
+      }
+
+      /* Laptop: the same screens in a browser window. */
+      .desks {
+        display: grid;
+        gap: 40px;
+        margin-top: 40px;
+      }
+      .window {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        background: var(--surface);
+      }
+      .window-bar {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        height: 34px;
+        padding: 0 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .window-bar i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--border);
+      }
+      .window-bar span {
+        margin-left: 12px;
+        font-size: 12px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .window img {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1440 / 900;
+      }
+
+      @media (max-width: 480px) {
+        .phones {
+          grid-template-columns: 1fr;
+        }
+        .device {
+          max-width: 300px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="masthead">
+        <div>
+          <p class="wordmark" aria-hidden="true"><b class="w">w</b>xpn<span>.</span></p>
+          <h1>WXPN app screens</h1>
+          <p class="lede">
+            Every screen in light and dark, with sample content.
+            <a href="../">Try the live preview</a>
+          </p>
+        </div>
+        <div class="switch-group">
+          <span class="switch-label" id="theme-label">Theme</span>
+          <div class="segmented" role="group" aria-labelledby="theme-label">
+            <button type="button" id="show-light" data-theme-choice="light" aria-pressed="true">
+              Light
+            </button>
+            <button type="button" id="show-dark" data-theme-choice="dark" aria-pressed="false">
+              Dark
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <section aria-labelledby="phone-heading">
+        <h2 id="phone-heading">Phone</h2>
+        <ul class="phones">
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-welcome"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Welcome, step 1: show cards to follow, with World Cafe and Funky Friday checked."
+              />
+            </div>
+            <div class="caption">
+              <h3>Welcome</h3>
+              <p>Follow a few shows on first launch.</p>
+            </div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-welcome2"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Welcome, step 2: a sample reminder for World Cafe and a Turn on reminders button."
+              />
+            </div>
+            <div class="caption">
+              <h3>Reminders</h3>
+              <p>Turn on reminders for the shows you followed.</p>
+            </div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-welcome3"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Welcome, step 3: Connect Spotify and Connect Apple Music buttons under a sample WXPN Favorites playlist."
+              />
+            </div>
+            <div class="caption">
+              <h3>Your music</h3>
+              <p>Connect Spotify or Apple Music so hearted songs build a playlist.</p>
+            </div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-listen"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Listen screen, ready to play: WXPN, XPN2 and Homegrown tabs, an On air band for World Cafe, album art, the song with heart and menu, and a Listen live button beside a cast button."
+              />
+            </div>
+            <div class="caption">
+              <h3>Listen</h3>
+              <p>Who’s on air, the song, and Listen live with cast beside it.</p>
+            </div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-live"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Listen during Free at Noon: one On air band names the session, Free at Noon: Wesley Stace, with a Watch button."
+              />
+            </div>
+            <div class="caption">
+              <h3>Free at Noon</h3>
+              <p>The week’s video joins the On air band, from xpn.org/livestream.</p>
+            </div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-songmenu"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Song menu headed by the song’s artwork, title and artist, with Connect Spotify, Connect Apple Music and Share song."
+              />
+            </div>
+            <div class="caption">
+              <h3>Song menu</h3>
+              <p>Connect a music service, or share.</p>
+            </div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-reminder"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="A notice reading World Cafe starts in 5 minutes, with the show’s artwork, the hosts, and Listen beneath."
+              />
+            </div>
+            <div class="caption"><h3>Show reminder</h3></div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-sleep"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Sleep timer: 15, 30 and 45 minutes and 1 hour as large keys, then End of World Cafe, stops at 4pm."
+              />
+            </div>
+            <div class="caption"><h3>Sleep timer</h3></div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-recent"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Recently played songs with times; saved songs have hearts in each album’s color on a pale wash of the same color."
+              />
+            </div>
+            <div class="caption">
+              <h3>Recently played</h3>
+              <p>Saved songs are washed in their heart’s color, here and in Favorites.</p>
+            </div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-shows"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Shows screen with show cards and a search field."
+              />
+            </div>
+            <div class="caption"><h3>Shows</h3></div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-schedule"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Monday’s schedule with World Cafe marked as on air."
+              />
+            </div>
+            <div class="caption"><h3>Schedule</h3></div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-sheet"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="World Cafe details: hosts, air times, Following, Listen now, and episodes with a heart each."
+              />
+            </div>
+            <div class="caption"><h3>Show details</h3></div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-favorites"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Saved songs, each row washed in its heart’s color, and a prompt to connect a music service."
+              />
+            </div>
+            <div class="caption"><h3>Favorites</h3></div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-drive"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="An orange-tinted member drive banner with a Donate button."
+              />
+            </div>
+            <div class="caption">
+              <h3>Member drive</h3>
+              <p>A station message across every screen.</p>
+            </div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-concerts"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Concerts with a search field, date chips with All dates chosen, Region and more, and a list of shows with Tickets links."
+              />
+            </div>
+            <div class="caption">
+              <h3>Concerts</h3>
+              <p>From xpn.org’s calendar.</p>
+            </div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-concert-calendar"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="A concert with Tickets and Add to calendar, and a menu offering Apple Calendar, Outlook or Google Calendar."
+              />
+            </div>
+            <div class="caption"><h3>Add to calendar</h3></div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-toast-concert"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="A notice reading Concert saved, with the date and artist, and Add to calendar beneath."
+              />
+            </div>
+            <div class="caption"><h3>Concert saved</h3></div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-fav-concerts"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Favorites, Concerts tab, with Add all 2 concerts to your calendar."
+              />
+            </div>
+            <div class="caption"><h3>Saved concerts</h3></div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-livebanner"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="A dark band with a red LIVE tag and a Watch button above Concerts."
+              />
+            </div>
+            <div class="caption"><h3>Live on every screen</h3></div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-settings"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Settings: the radio alarm at 7:00 AM with its clock face, weekdays lit in a row of day keys, and Wake up to and Snooze for keys."
+              />
+            </div>
+            <div class="caption"><h3>Settings</h3></div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-reminders"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Show reminders on, with Remind me keys: At the start, 5 min before (chosen) and 15 min before."
+              />
+            </div>
+            <div class="caption"><h3>Reminder settings</h3></div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-playlist"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Your playlist with Spotify and Apple Music rows to connect, then Listening and Appearance, each panel spaced evenly."
+              />
+            </div>
+            <div class="caption"><h3>Your playlist</h3></div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-alarm"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="The radio alarm ringing: a bell, 2:42pm on WXPN, Snooze 10 min in white on near-black, and Dismiss outlined."
+              />
+            </div>
+            <div class="caption"><h3>Alarm ringing</h3></div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="phone-loading"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Square placeholder rows while the playlist loads."
+              />
+            </div>
+            <div class="caption"><h3>Loading</h3></div>
+          </li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="lock-heading">
+        <h2 id="lock-heading">Lock screen</h2>
+        <p class="section-note">
+          The phone draws these itself, from what the app hands it: the song, artist and artwork
+          while the station plays, and the radio alarm as a notification. A live station has no
+          skip, so the system shows play and pause only.
+        </p>
+        <ul class="phones">
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="lock-ios-player"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="iPhone lock screen at 2:42 with the system player: First Day Of My Life by Bright Eyes, the album art, a pause button with skip buttons greyed out, and volume."
+              />
+            </div>
+            <div class="caption">
+              <h3>iPhone, playing</h3>
+              <p>Now Playing on the lock screen, with AirPlay.</p>
+            </div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="lock-ios-alarm"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="iPhone lock screen at 7:00 with a WXPN notification: Radio alarm. Good morning. Tap to wake up to WXPN."
+              />
+            </div>
+            <div class="caption">
+              <h3>iPhone, alarm</h3>
+              <p>Tapping it opens the app and starts the station.</p>
+            </div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="lock-android-player"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Android lock screen at 2:42 with the media card: the album art filling the card, First Day Of My Life by Bright Eyes, and an orange pause button."
+              />
+            </div>
+            <div class="caption">
+              <h3>Android, playing</h3>
+              <p>The media card takes the song’s artwork.</p>
+            </div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="lock-android-alarm"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Android lock screen at 7:00 with a WXPN notification: Radio alarm. Good morning. Tap to wake up to WXPN."
+              />
+            </div>
+            <div class="caption">
+              <h3>Android, alarm</h3>
+              <p>In the station’s orange, from the app’s notification icon.</p>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="desk-heading">
+        <h2 id="desk-heading">Tablet and laptop</h2>
+        <div class="tablets">
+          <figure class="tablet portrait">
+            <img
+              data-shot="tablet-listen"
+              width="820"
+              height="1180"
+              loading="lazy"
+              alt="Listen on a tablet held upright, ready to play. The player bar runs under the content: play, then the song and its heart, with volume and output at the far end."
+            />
+          </figure>
+          <figure class="tablet landscape">
+            <img
+              data-shot="tabletwide-concerts"
+              width="1180"
+              height="820"
+              loading="lazy"
+              alt="Concerts on a tablet held sideways."
+            />
+          </figure>
+        </div>
+        <div class="desks">
+          <figure class="window" style="margin: 0">
+            <div class="window-bar" aria-hidden="true">
+              <i></i><i></i><i></i><span>WXPN / Listen live</span>
+            </div>
+            <img
+              data-shot="desk-listen"
+              width="1440"
+              height="900"
+              alt="Listen on a laptop: the label with heart and menu on one line, the title on its own line below, Listen live, Recently played beside it, and the player bar lined up with the page."
+              loading="lazy"
+            />
+          </figure>
+          <figure class="window" style="margin: 0">
+            <div class="window-bar" aria-hidden="true">
+              <i></i><i></i><i></i><span>WXPN / Shows / World Cafe</span>
+            </div>
+            <img
+              data-shot="desk-sheet"
+              width="1440"
+              height="900"
+              alt="World Cafe details in a side sheet."
+              loading="lazy"
+            />
+          </figure>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      var SHOTS = {
+        "desk-listen-dark": "img/desk-listen-dark.webp",
+        "desk-listen-light": "img/desk-listen-light.webp",
+        "desk-sheet-dark": "img/desk-sheet-dark.webp",
+        "desk-sheet-light": "img/desk-sheet-light.webp",
+        "phone-alarm-dark": "img/phone-alarm-dark.webp",
+        "phone-alarm-light": "img/phone-alarm-light.webp",
+        "phone-concert-calendar-dark": "img/phone-concert-calendar-dark.webp",
+        "phone-concert-calendar-light": "img/phone-concert-calendar-light.webp",
+        "phone-concerts-dark": "img/phone-concerts-dark.webp",
+        "phone-concerts-light": "img/phone-concerts-light.webp",
+        "phone-drive-dark": "img/phone-drive-dark.webp",
+        "phone-drive-light": "img/phone-drive-light.webp",
+        "phone-fav-concerts-dark": "img/phone-fav-concerts-dark.webp",
+        "phone-fav-concerts-light": "img/phone-fav-concerts-light.webp",
+        "phone-favorites-dark": "img/phone-favorites-dark.webp",
+        "phone-favorites-light": "img/phone-favorites-light.webp",
+        "phone-listen-dark": "img/phone-listen-dark.webp",
+        "phone-listen-light": "img/phone-listen-light.webp",
+        "phone-live-dark": "img/phone-live-dark.webp",
+        "phone-live-light": "img/phone-live-light.webp",
+        "phone-livebanner-dark": "img/phone-livebanner-dark.webp",
+        "phone-livebanner-light": "img/phone-livebanner-light.webp",
+        "phone-loading-dark": "img/phone-loading-dark.webp",
+        "phone-loading-light": "img/phone-loading-light.webp",
+        "phone-playlist-dark": "img/phone-playlist-dark.webp",
+        "phone-playlist-light": "img/phone-playlist-light.webp",
+        "phone-recent-dark": "img/phone-recent-dark.webp",
+        "phone-recent-light": "img/phone-recent-light.webp",
+        "phone-reminder-dark": "img/phone-reminder-dark.webp",
+        "phone-reminder-light": "img/phone-reminder-light.webp",
+        "phone-reminders-dark": "img/phone-reminders-dark.webp",
+        "phone-reminders-light": "img/phone-reminders-light.webp",
+        "phone-schedule-dark": "img/phone-schedule-dark.webp",
+        "phone-schedule-light": "img/phone-schedule-light.webp",
+        "phone-settings-dark": "img/phone-settings-dark.webp",
+        "phone-settings-light": "img/phone-settings-light.webp",
+        "phone-sheet-dark": "img/phone-sheet-dark.webp",
+        "phone-sheet-light": "img/phone-sheet-light.webp",
+        "phone-shows-dark": "img/phone-shows-dark.webp",
+        "phone-shows-light": "img/phone-shows-light.webp",
+        "phone-sleep-dark": "img/phone-sleep-dark.webp",
+        "phone-sleep-light": "img/phone-sleep-light.webp",
+        "phone-songmenu-dark": "img/phone-songmenu-dark.webp",
+        "phone-songmenu-light": "img/phone-songmenu-light.webp",
+        "phone-toast-concert-dark": "img/phone-toast-concert-dark.webp",
+        "phone-toast-concert-light": "img/phone-toast-concert-light.webp",
+        "phone-welcome-dark": "img/phone-welcome-dark.webp",
+        "phone-welcome-light": "img/phone-welcome-light.webp",
+        "phone-welcome2-dark": "img/phone-welcome2-dark.webp",
+        "phone-welcome2-light": "img/phone-welcome2-light.webp",
+        "phone-welcome3-dark": "img/phone-welcome3-dark.webp",
+        "phone-welcome3-light": "img/phone-welcome3-light.webp",
+        "tablet-listen-dark": "img/tablet-listen-dark.webp",
+        "tablet-listen-light": "img/tablet-listen-light.webp",
+        "tabletwide-concerts-dark": "img/tabletwide-concerts-dark.webp",
+        "tabletwide-concerts-light": "img/tabletwide-concerts-light.webp",
+        "lock-ios-player-light": "img/lock-ios-player-light.webp",
+        "lock-ios-player-dark": "img/lock-ios-player-dark.webp",
+        "lock-ios-alarm-light": "img/lock-ios-alarm-light.webp",
+        "lock-ios-alarm-dark": "img/lock-ios-alarm-dark.webp",
+        "lock-android-player-light": "img/lock-android-player-light.webp",
+        "lock-android-player-dark": "img/lock-android-player-dark.webp",
+        "lock-android-alarm-light": "img/lock-android-alarm-light.webp",
+        "lock-android-alarm-dark": "img/lock-android-alarm-dark.webp",
+      };
+      (function () {
+        var buttons = document.querySelectorAll("[data-theme-choice]");
+        var images = document.querySelectorAll("img[data-shot]");
+        function show(theme) {
+          images.forEach(function (img) {
+            img.src = SHOTS[img.getAttribute("data-shot") + "-" + theme];
+          });
+          buttons.forEach(function (b) {
+            b.setAttribute("aria-pressed", String(b.getAttribute("data-theme-choice") === theme));
+          });
+        }
+        buttons.forEach(function (b) {
+          b.addEventListener("click", function () {
+            show(b.getAttribute("data-theme-choice"));
+          });
+        });
+        // Start in whichever theme the viewer is using.
+        var root = document.documentElement.getAttribute("data-theme");
+        var dark = root
+          ? root === "dark"
+          : window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches;
+        show(dark ? "dark" : "light");
+      })();
+    </script>
+  </body>
+</html>
