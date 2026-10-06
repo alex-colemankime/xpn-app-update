@@ -36,9 +36,19 @@ const mediaSession = new Proxy(
   },
 );
 
+// Which player has the lock screen and the player bar: the station ("live")
+// or an archive episode (episode-player.js). Whichever started last.
+const focusStore = createStore("live");
+export const subscribeFocus = focusStore.subscribe;
+export const getFocus = focusStore.getSnapshot;
+export const setAudioFocus = (source) => focusStore.set(source);
+// The lock-screen controls, shared with the episode player.
+export const mediaControls = mediaSession;
+
 const player = createPlayer({
   createAudio: () => (typeof Audio === "undefined" ? null : new Audio()),
   mediaSession,
+  isActive: () => focusStore.getSnapshot() === "live",
   streams: STREAMS,
   initialStreamId: "xpn",
   stationArtwork: [
@@ -103,7 +113,12 @@ if (typeof window !== "undefined") {
   window.addEventListener("online", () => player.resume());
 }
 
-export const playStream = player.play;
+// Playing the station takes the lock screen and the bar back from an episode
+// (which pauses itself; see episode-player.js).
+export function playStream() {
+  focusStore.set("live");
+  player.play();
+}
 export const pauseStream = player.pause;
 export const setMetadata = player.setMetadata;
 export const promptCast = player.promptCast;

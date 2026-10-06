@@ -11,12 +11,18 @@ import {
   untilLabel,
 } from "../catalog.js";
 import { DAYS, easternParts, clockLabel, deviceIsEastern } from "../time.js";
-import { songId } from "../favorites.js";
+import { songId, useFavoriteItems } from "../favorites.js";
 import { playStream, selectStream } from "../player.js";
 import { PROGRAM_GUIDE_URL } from "../links.js";
 import { SaveButton, ShowCard } from "../components/MusicRows.jsx";
 import { useNow } from "../hooks/useNow.js";
 import { enableReminders, useReminderSettings } from "../hooks/useShowReminders.js";
+import { ARCHIVE_ENABLED, SHOW_SAMPLES } from "../config.js";
+import { episodesOf, useArchive } from "../archive.js";
+import { ArchiveList, EpisodeDetail, EpisodeRow } from "../components/Archive.jsx";
+
+// All shows, the week's schedule, and (when there is one) the audio archive.
+const MODES = ["All shows", "Schedule", ...(ARCHIVE_ENABLED || SHOW_SAMPLES ? ["Archive"] : [])];
 
 const matchesQuery = (query) => {
   const q = query.trim().toLowerCase();
@@ -54,18 +60,25 @@ export function ShowsScreen({ onOpen }) {
         </div>
       </div>
       <div className="toolbar">
-        <Segmented
-          label="Browse shows"
-          value={mode}
-          onChange={setMode}
-          options={["All shows", "Schedule"]}
+        <Segmented label="Browse shows" value={mode} onChange={setMode} options={MODES} />
+        <SearchField
+          value={query}
+          onChange={setQuery}
+          placeholder={mode === "Archive" ? "Search episodes" : "Find a show or host"}
         />
-        <SearchField value={query} onChange={setQuery} placeholder="Find a show or host" />
       </div>
-      <p className="sr-only" role="status">
-        {mode === "All shows" ? shows.length : slots.length} matching shows
-      </p>
-      {mode === "All shows" ? (
+      {mode !== "Archive" && (
+        <p className="sr-only" role="status">
+          {mode === "All shows" ? shows.length : slots.length} matching shows
+        </p>
+      )}
+      {mode === "Archive" ? (
+        <ArchiveList
+          query={query}
+          onOpen={(episode) => onOpen(episode.show, episode.id)}
+          onClearQuery={() => setQuery("")}
+        />
+      ) : mode === "All shows" ? (
         shows.length ? (
           <div className="show-grid all-shows">
             {shows.map((show) => (
@@ -230,11 +243,24 @@ function Airing({ show }) {
 }
 
 export function ShowDetail({ show, episodeId, onOpenEpisode, onCloseEpisode, onClose, onListen }) {
-  const episodes = show.episodes || [];
+  // The show's archive episodes when it has a podcast feed (playable), else
+  // the preview's sample episodes. A saved episode can still be opened after
+  // it has left the feed.
+  const archive = useArchive();
+  const saved = useFavoriteItems("episodes");
+  const archived = episodesOf(archive, show.id);
+  const playable = archived.length > 0;
+  const episodes = playable ? archived : show.episodes || [];
   const onNow = onAirAt()?.show.id === show.id;
   const [offer, setOffer] = useState(false);
   const page = showUrl(show);
-  const episode = episodeId && episodes.find((ep) => episodeKey(show, ep) === episodeId);
+  const archivedEpisode =
+    episodeId &&
+    (archived.find((ep) => ep.id === episodeId) ||
+      saved.find((ep) => ep.id === episodeId && ep.audio));
+  const episode =
+    archivedEpisode ||
+    (episodeId && (show.episodes || []).find((ep) => episodeKey(show, ep) === episodeId));
   const stream = showStream(show);
   const listen = () => {
     selectStream(stream);
@@ -242,9 +268,11 @@ export function ShowDetail({ show, episodeId, onOpenEpisode, onCloseEpisode, onC
     onListen();
   };
   return (
-    <Modal title={episode ? episode.title : show.name} onClose={onClose}>
+    <Modal title={show.name} onClose={onClose}>
       <div className="detail-body">
-        {episode ? (
+        {archivedEpisode ? (
+          <EpisodeDetail show={show} episode={archivedEpisode} onBack={onCloseEpisode} />
+        ) : episode ? (
           <EpisodeView show={show} episode={episode} onBack={onCloseEpisode} />
         ) : (
           <>
@@ -290,31 +318,47 @@ export function ShowDetail({ show, episodeId, onOpenEpisode, onCloseEpisode, onC
                 </a>
               )}
             </div>
-            {episodes.length > 0 && (
+            {playable ? (
               <>
                 <div className="section-heading">
-                  <h3>Episodes</h3>
-                  <span className="sample-label">Sample episodes</span>
+                  <h3>Recent episodes</h3>
                 </div>
-                {episodes.map((ep) => (
-                  <div className="episode-row" key={ep.title}>
-                    <button
-                      className="episode-open"
-                      onClick={() => onOpenEpisode(episodeKey(show, ep))}
-                    >
-                      <Art src={ep.img || show.img} alt="" />
-                      <span>
-                        <strong>{ep.title}</strong>
-                        <small>
-                          {ep.date} · {ep.dur}
-                        </small>
-                      </span>
-                      <Icon name="chev" size={17} />
-                    </button>
-                    <SaveButton type="episodes" item={savedEpisode(show, ep)} name={ep.title} />
-                  </div>
+                {archived.slice(0, 8).map((ep) => (
+                  <EpisodeRow
+                    key={ep.id}
+                    episode={ep}
+                    showShow={false}
+                    onOpen={(e) => onOpenEpisode(e.id)}
+                  />
                 ))}
               </>
+            ) : (
+              episodes.length > 0 && (
+                <>
+                  <div className="section-heading">
+                    <h3>Episodes</h3>
+                    <span className="sample-label">Sample episodes</span>
+                  </div>
+                  {episodes.map((ep) => (
+                    <div className="episode-row" key={ep.title}>
+                      <button
+                        className="episode-open"
+                        onClick={() => onOpenEpisode(episodeKey(show, ep))}
+                      >
+                        <Art src={ep.img || show.img} alt="" />
+                        <span>
+                          <strong>{ep.title}</strong>
+                          <small>
+                            {ep.date} · {ep.dur}
+                          </small>
+                        </span>
+                        <Icon name="chev" size={17} />
+                      </button>
+                      <SaveButton type="episodes" item={savedEpisode(show, ep)} name={ep.title} />
+                    </div>
+                  ))}
+                </>
+              )
             )}
           </>
         )}

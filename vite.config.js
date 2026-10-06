@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import { defineConfig, loadEnv } from "vite";
+import { parseArchiveFeeds as archiveFeeds } from "./config.js";
 
 const { version } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 
@@ -15,7 +16,9 @@ function noSamples() {
     enforce: "pre",
     resolveId: (source) => (/(^|\/)samples\.js$/.test(source) ? id : null),
     load: (key) =>
-      key === id ? "export const SAMPLE_EPISODES = {}; export const SAMPLE_UPDATES = {};" : null,
+      key === id
+        ? "export const SAMPLE_EPISODES = {}; export const SAMPLE_UPDATES = {}; export const SAMPLE_ARCHIVE = [];"
+        : null,
   };
 }
 
@@ -81,6 +84,7 @@ function contentSecurityPolicy(env) {
           origin(env.VITE_XPN_CONCERTS_ENDPOINT),
           origin(env.VITE_XPN_LIVESTREAM_PAGE),
           origin(env.VITE_APPLE_MUSIC_TOKEN_URL),
+          ...archiveFeeds(env.VITE_XPN_ARCHIVE_FEEDS).map((f) => origin(f.url)),
         ];
         const policy = [
           "default-src 'self'",
@@ -88,7 +92,9 @@ function contentSecurityPolicy(env) {
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' https: data: blob:",
           "font-src 'self'",
-          "media-src 'self' https://wxpnhi.xpn.org https://wxpn.xpn.org blob:",
+          // Archive episodes play from wherever their podcast hosts them,
+          // often through a measurement redirect or two.
+          "media-src 'self' https: blob:",
           `connect-src ${[...new Set(connect.filter(Boolean))].join(" ")}`,
           // The design preview shows the app in a frame of its own.
           `frame-src ${env.VITE_DEVICE_PREVIEW === "true" ? "'self' " : ""}https://www.youtube-nocookie.com https://*.apple.com`,

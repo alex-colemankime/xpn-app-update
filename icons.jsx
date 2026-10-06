@@ -20,6 +20,45 @@ const ICONS = {
   arrowRight: [outline(1.7, rounded), <path d="M4 12h16M14 6l6 6-6 6" />],
   arrowUp: [outline(1.7, rounded), <path d="M6 18 18 6M6 6h12v12" />],
   back: [outline(2.5, roundCaps), <path d="M15 18l-6-6 6-6" />],
+  // Skip keys for archive episodes: a circling arrow with the seconds inside.
+  back15: [
+    outline(1.7, rounded),
+    <>
+      <path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3" />
+      <path d="M4.2 3.6v3.6h3.6" />
+      <text
+        x="12.4"
+        y="15.3"
+        fill="currentColor"
+        stroke="none"
+        fontSize="7.6"
+        fontWeight="700"
+        textAnchor="middle"
+        fontFamily="inherit"
+      >
+        15
+      </text>
+    </>,
+  ],
+  ahead30: [
+    outline(1.7, rounded),
+    <>
+      <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" />
+      <path d="M19.8 3.6v3.6h-3.6" />
+      <text
+        x="11.6"
+        y="15.3"
+        fill="currentColor"
+        stroke="none"
+        fontSize="7.6"
+        fontWeight="700"
+        textAnchor="middle"
+        fontFamily="inherit"
+      >
+        30
+      </text>
+    </>,
+  ],
   cast: [
     outline(1.8, roundCaps),
     <>

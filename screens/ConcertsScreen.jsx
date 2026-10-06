@@ -5,6 +5,7 @@ import { ConcertRow } from "../components/ConcertRow.jsx";
 import { easternToday } from "../concerts.js";
 import { shiftDate } from "../time.js";
 import { CALENDAR_URL } from "../links.js";
+import { NewsletterPrompt } from "../components/Newsletter.jsx";
 
 const PAGE = 40;
 
@@ -161,6 +162,7 @@ export function ConcertsScreen({ result }) {
             Show more concerts
           </button>
         )}
+        <NewsletterPrompt />
       </>
     );
   }

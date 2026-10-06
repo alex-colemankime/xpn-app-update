@@ -26,6 +26,9 @@ export function createPlayer({
   initialStreamId,
   stationArtwork = [],
   resolveUrl = (src) => src,
+  // False while something else (an archive episode) has the lock screen, so
+  // song changes on the station don't overwrite what is shown there.
+  isActive = () => true,
   retryDelays = RETRY_DELAYS_MS,
   stallTimeout = STALL_TIMEOUT_MS,
   setTimer = (fn, ms) => setTimeout(fn, ms),
@@ -120,6 +123,7 @@ export function createPlayer({
   }
 
   function updateMetadata() {
+    if (!isActive()) return;
     let artwork = stationArtwork;
     if (track?.img) {
       try {
@@ -180,19 +184,27 @@ export function createPlayer({
       if (wantPlaying) retry();
     });
 
-    // Lock screen, notification and headset buttons drive the same actions
-    // as the on-screen button.
+    bindControls();
+    updateMetadata();
+    return audio;
+  }
+
+  // Lock screen, notification and headset buttons drive the same actions as
+  // the on-screen button. Bound again on every play, since an archive episode
+  // binds its own (with seeking, which a live station has none of).
+  function bindControls() {
     mediaSession.setActionHandler({ action: "play" }, () => play());
     mediaSession.setActionHandler({ action: "pause" }, () => pause());
     mediaSession.setActionHandler({ action: "stop" }, () => pause());
-
-    updateMetadata();
-    return audio;
+    for (const action of ["seekto", "seekbackward", "seekforward"]) {
+      mediaSession.setActionHandler({ action }, null);
+    }
   }
 
   function play() {
     if (!audio) init(onPlaying, onStatus);
     if (!audio || !stream?.url) return;
+    bindControls();
     wantPlaying = true;
     attempt = 0;
     connect();

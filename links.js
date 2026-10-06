@@ -6,6 +6,11 @@ export const CALENDAR_URL = "https://xpn.org/concert-and-events/";
 export const LISTEN_URL = "https://xpn.org/listen/";
 export const PRIVACY_URL = "https://xpn.org/privacy-policy/";
 export const STATION_EMAIL = "wxpndesk@xpn.org";
+// The weekly e-news (top stories and music news, concert and event alerts,
+// special announcements): the station's short signup form, and the Top
+// Stories form that adds a free playlist.
+export const ENEWS_URL = "https://xpn.org/enews/";
+export const TOP_STORIES_URL = "https://xpn.org/signup-xpn-top-stories/";
 
 // Show pages that exist on xpn.org. Other shows have no page of their own.
 export const SHOW_PAGES = {

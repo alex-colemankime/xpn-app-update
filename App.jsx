@@ -31,6 +31,7 @@ import { useConcerts } from "./hooks/useConcerts.js";
 import { useRadioAlarm } from "./hooks/useRadioAlarm.js";
 import { useShowReminders } from "./hooks/useShowReminders.js";
 import { PlayerBar } from "./components/PlayerBar.jsx";
+import { useAudioFocus, useEpisodePlayer } from "./episode-player.js";
 import { Toast } from "./components/Toast.jsx";
 import { StationBanner } from "./components/StationUpdates.jsx";
 import { useStationUpdates } from "./hooks/useStationUpdates.js";
@@ -66,21 +67,26 @@ const useStreamId = () => useSyncExternalStore(subscribePlayer, () => getPlayerS
 // Keeps the lock screen, media notification and browser tab in step with the
 // song on air (or the station, when no song is current). Renders nothing.
 function NowPlayingSync({ playlist }) {
-  const { playing, station } = usePlayer();
+  const { playing: livePlaying, station } = usePlayer();
   const current = useLiveSong(playlist);
+  const focus = useAudioFocus();
+  const archive = useEpisodePlayer();
+  const episode = focus === "episode" && archive.status === "playing" ? archive.episode : null;
+  const playing = livePlaying || Boolean(episode);
   // While audio plays in the background, time keeps moving for the song info.
   useEffect(() => keepClockRunning(playing), [playing]);
   useEffect(() => {
     setMetadata(current);
   }, [current]);
   useEffect(() => {
-    document.title =
-      playing && current
+    document.title = episode
+      ? `${episode.title} — ${episode.showName}`
+      : playing && current
         ? `${current.title} · ${current.artist} — ${station.label}`
         : playing
           ? `${station.label} — Listening live`
           : "WXPN — Listen live";
-  }, [playing, current, station]);
+  }, [playing, current, station, episode]);
   return null;
 }
 
@@ -351,7 +357,11 @@ export default function App() {
         </div>
       </main>
       <NowPlayingSync playlist={playlist} />
-      <PlayerBar playlist={playlist} onOpen={() => route.navigate("listen")} />
+      <PlayerBar
+        playlist={playlist}
+        onOpen={() => route.navigate("listen")}
+        onOpenEpisode={(episode) => route.openShow(episode.show, episode.id)}
+      />
       <nav className="mobile-nav" aria-label="Mobile navigation">
         {NAV.map((n) => (
           <button key={n.id} className={isCurrent(n.id) ? "active" : ""} {...currentProps(n.id)}>

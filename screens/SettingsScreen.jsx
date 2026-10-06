@@ -13,6 +13,7 @@ import {
 } from "../hooks/useShowReminders.js";
 import { notificationsAreNative } from "../notifications.js";
 import { PlaylistSyncPanel } from "../components/PlaylistSync.jsx";
+import { NewsletterPanel } from "../components/Newsletter.jsx";
 import { CONCERTS_ENABLED } from "../config.js";
 import { CALENDAR_URL, DONATE_URL, PRIVACY_URL, STATION_EMAIL } from "../links.js";
 import { SHOWS } from "../catalog.js";
@@ -337,6 +338,7 @@ export function SettingsScreen({
               ]}
             />
           </section>
+          <NewsletterPanel />
           <section className="settings-panel">
             <h2>
               <Icon name="heart" />

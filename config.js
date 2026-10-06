@@ -43,3 +43,22 @@ export const LIVESTREAM_PAGE_URL =
 export const SPOTIFY_CLIENT_ID = import.meta.env?.VITE_SPOTIFY_CLIENT_ID || "";
 export const APPLE_MUSIC_TOKEN_URL = import.meta.env?.VITE_APPLE_MUSIC_TOKEN_URL || "";
 export const APPLE_MUSIC_DEVELOPER_TOKEN = import.meta.env?.VITE_APPLE_MUSIC_DEVELOPER_TOKEN || "";
+
+// The audio archive (archive.js): podcast feeds whose episodes listeners can
+// play on demand, as "show=feed URL" pairs separated by commas, where show
+// is a show id from shows.json. Default: World Cafe's NPR podcast. "off"
+// removes the Archive tab.
+export const DEFAULT_ARCHIVE_FEEDS = "worldcafe=https://feeds.npr.org/510008/podcast.xml";
+export function parseArchiveFeeds(setting) {
+  if (setting === "off") return [];
+  return String(setting || DEFAULT_ARCHIVE_FEEDS)
+    .split(",")
+    .map((pair) => pair.trim().split(/=(.+)/))
+    .filter(([show, url]) => /^[a-z0-9-]+$/.test(show || "") && /^https:\/\//.test(url || ""))
+    .map(([show, url]) => ({ show, url: url.trim() }));
+}
+export const ARCHIVE_FEEDS = parseArchiveFeeds(import.meta.env?.VITE_XPN_ARCHIVE_FEEDS);
+export const ARCHIVE_ENABLED = ARCHIVE_FEEDS.length > 0;
+// Where the World Cafe podcast lives, for when the archive can't load.
+export const ARCHIVE_HOME =
+  "https://www.npr.org/podcasts/510008/world-cafe-words-and-music-from-wxpn";

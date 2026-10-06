@@ -188,3 +188,114 @@ export const SAMPLE_UPDATES = {
     },
   ],
 };
+
+// The audio archive in preview builds, where a browser can't read NPR's feed:
+// recent episodes of the World Cafe podcast as published (October 2026), in
+// the shape archive.js reads. Their audio plays from NPR as it would in the
+// app.
+export const SAMPLE_ARCHIVE = [
+  {
+    id: "worldcafe-33b3a938",
+    show: "worldcafe",
+    title: "John R. Miller takes to the road on 'The Great Unknowing'",
+    date: "2026-10-06T15:09:06.000Z",
+    duration: 2247,
+    audio:
+      "https://prfx.byspotify.com/e/play.podtrac.com/npr-510008/npr.simplecastaudio.com/9f9bf25c-f85f-4dec-838d-d1b64ccf57ac/episodes/33b3a938-4607-4f51-a542-addfc3d3634b/audio/256/default.mp3?awCollectionId=9f9bf25c-f85f-4dec-838d-d1b64ccf57ac&awEpisodeId=33b3a938-4607-4f51-a542-addfc3d3634b&feed=THKu2Bbc&t=podcast&e=nx-s1-5991685&p=510008&d=2247&size=71935042",
+    image:
+      "https://npr.brightspotcdn.com/dims3/default/strip/false/crop/3500x3500+0+0/resize/600/quality/80/format/jpg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2F8e%2Fe8%2F5697cc434db3923c66a2a55b84d1%2Fe0ea4e30-166c-4a20-949b-2706d64b82f9.jpg",
+    summary:
+      "Miller's new album is a sort of travelogue inspired by his years as a traveling musician, but it's also an exploration of quieter moments.",
+  },
+  {
+    id: "worldcafe-f1058ff2",
+    show: "worldcafe",
+    title: "Before the Breakthrough: Los Lobos",
+    date: "2026-10-02T16:00:00.000Z",
+    duration: 684,
+    audio:
+      "https://prfx.byspotify.com/e/play.podtrac.com/npr-510008/npr.simplecastaudio.com/9f9bf25c-f85f-4dec-838d-d1b64ccf57ac/episodes/f1058ff2-209b-4255-93aa-9d2d479c49a6/audio/256/default.mp3?awCollectionId=9f9bf25c-f85f-4dec-838d-d1b64ccf57ac&awEpisodeId=f1058ff2-209b-4255-93aa-9d2d479c49a6&feed=THKu2Bbc&t=podcast&e=nx-s1-5986310&p=510008&d=684&size=21901984",
+    image:
+      "https://npr.brightspotcdn.com/dims3/default/strip/false/crop/3500x3500+0+0/resize/600/quality/80/format/jpg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2F8b%2F65%2F5b546e414de0af70751e7d190da4%2F2bcac54d-70e6-4419-8915-1961d39efb7e.jpg",
+    summary:
+      'For Hispanic Heritage Month, World Cafe is diving into the East Los Angeles band\'s career and music before "La Bamba" changed everything.',
+  },
+  {
+    id: "worldcafe-020f64cc",
+    show: "worldcafe",
+    title: "'You gotta make it wiggly': How The Wiggles set the standard for kid's entertainment",
+    date: "2026-10-02T12:00:00.000Z",
+    duration: 2332,
+    audio:
+      "https://prfx.byspotify.com/e/play.podtrac.com/npr-510008/npr.simplecastaudio.com/9f9bf25c-f85f-4dec-838d-d1b64ccf57ac/episodes/020f64cc-862e-41cb-9191-388a273708cd/audio/256/default.mp3?awCollectionId=9f9bf25c-f85f-4dec-838d-d1b64ccf57ac&awEpisodeId=020f64cc-862e-41cb-9191-388a273708cd&feed=THKu2Bbc&t=podcast&e=nx-s1-5986284&p=510008&d=2332&size=74650941",
+    image:
+      "https://npr.brightspotcdn.com/dims3/default/strip/false/crop/3500x3500+0+0/resize/600/quality/80/format/jpg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2Fc7%2Ffa%2F96f2ffc549ecb8f369e699d545be%2F1d561220-73c4-457c-ae28-2a24e5f110da.jpg",
+    summary:
+      "Plus, the Australian children's music group perform a cover of Olivia Dean's megahit, \"Man I Need.\"",
+  },
+  {
+    id: "worldcafe-404ad107",
+    show: "worldcafe",
+    title: "For Michaela Anne, the 'humdrum is holy'",
+    date: "2026-10-01T12:00:00.000Z",
+    duration: 1818,
+    audio:
+      "https://prfx.byspotify.com/e/play.podtrac.com/npr-510008/npr.simplecastaudio.com/9f9bf25c-f85f-4dec-838d-d1b64ccf57ac/episodes/404ad107-e446-4990-8fd7-5902803f60f6/audio/256/default.mp3?awCollectionId=9f9bf25c-f85f-4dec-838d-d1b64ccf57ac&awEpisodeId=404ad107-e446-4990-8fd7-5902803f60f6&feed=THKu2Bbc&t=podcast&e=nx-s1-5985020&p=510008&d=1818&size=58194217",
+    image:
+      "https://npr.brightspotcdn.com/dims3/default/strip/false/crop/3500x3500+0+0/resize/600/quality/80/format/jpg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2Fed%2Fa5%2F1955e3724627922c9ee1993a666d%2F6592327f-27b0-4eb4-8177-c383e94c589b.jpg",
+    summary:
+      'The singer-songwriter found her way out of a two-year songwriting drought after finding inspiration in the "absolute magic" of everyday life.',
+  },
+  {
+    id: "worldcafe-310b70e5",
+    show: "worldcafe",
+    title: "Tune in to a mini-concert with Friko",
+    date: "2026-09-30T12:00:00.000Z",
+    duration: 1087,
+    audio:
+      "https://prfx.byspotify.com/e/play.podtrac.com/npr-510008/npr.simplecastaudio.com/9f9bf25c-f85f-4dec-838d-d1b64ccf57ac/episodes/310b70e5-7f46-4315-8281-f235a645b79a/audio/256/default.mp3?awCollectionId=9f9bf25c-f85f-4dec-838d-d1b64ccf57ac&awEpisodeId=310b70e5-7f46-4315-8281-f235a645b79a&feed=THKu2Bbc&t=podcast&e=nx-s1-5985015&p=510008&d=1087&size=34799368",
+    image:
+      "https://npr.brightspotcdn.com/dims3/default/strip/false/crop/3500x3500+0+0/resize/600/quality/80/format/jpg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2F8b%2Fca%2Fe6f5127b458cbce049841642710c%2Ff8218d31-6aa9-4000-99b9-2ef767e8710c.jpg",
+    summary:
+      "The Chicago band performs music from their sophomore album, Something Worth Waiting For.",
+  },
+  {
+    id: "worldcafe-2ea8e4a2",
+    show: "worldcafe",
+    title: "Swamp Dogg contemplates the afterlife",
+    date: "2026-09-28T12:00:00.000Z",
+    duration: 1421,
+    audio:
+      "https://prfx.byspotify.com/e/play.podtrac.com/npr-510008/npr.simplecastaudio.com/9f9bf25c-f85f-4dec-838d-d1b64ccf57ac/episodes/2ea8e4a2-eb97-4517-9eee-0f102ee087a6/audio/256/default.mp3?awCollectionId=9f9bf25c-f85f-4dec-838d-d1b64ccf57ac&awEpisodeId=2ea8e4a2-eb97-4517-9eee-0f102ee087a6&feed=THKu2Bbc&t=podcast&e=nx-s1-5979055&p=510008&d=1421&size=45503303",
+    image:
+      "https://npr.brightspotcdn.com/dims3/default/strip/false/crop/3500x3500+0+0/resize/600/quality/80/format/jpg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2F18%2F85%2F44ebcab940dda80253acb504c9bd%2Fef810a10-14b5-4b6a-8108-0bc82a5c7114.jpg",
+    summary:
+      "The 84-year-old musician and producer has built a cult following for his weird, satirical, hilarious musical personality.",
+  },
+  {
+    id: "worldcafe-1545de2c",
+    show: "worldcafe",
+    title: "Before the Breakthrough: Daddy Yankee",
+    date: "2026-09-25T16:00:00.000Z",
+    duration: 676,
+    audio:
+      "https://prfx.byspotify.com/e/play.podtrac.com/npr-510008/npr.simplecastaudio.com/9f9bf25c-f85f-4dec-838d-d1b64ccf57ac/episodes/1545de2c-f5e0-4d2e-b25d-cbfc068ad8cb/audio/256/default.mp3?awCollectionId=9f9bf25c-f85f-4dec-838d-d1b64ccf57ac&awEpisodeId=1545de2c-f5e0-4d2e-b25d-cbfc068ad8cb&feed=THKu2Bbc&t=podcast&e=nx-s1-5979056&p=510008&d=676&size=21644522",
+    image:
+      "https://npr.brightspotcdn.com/dims3/default/strip/false/crop/3500x3500+0+0/resize/600/quality/80/format/jpg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2F38%2Fe3%2F60a2fe3b4c1f901de8a71533ed1c%2F90a7f67b-14d1-4830-9134-9f42300c6fc4.jpg",
+    summary:
+      'The Puerto Rican star\'s 2004 single, "Gasolina," helped launch reggaeton into the stratosphere.',
+  },
+  {
+    id: "worldcafe-0e3d22f0",
+    show: "worldcafe",
+    title: "Bedouine builds a home for herself on 'Neon Summer Skin'",
+    date: "2026-09-24T12:00:00.000Z",
+    duration: 1388,
+    audio:
+      "https://prfx.byspotify.com/e/play.podtrac.com/npr-510008/npr.simplecastaudio.com/9f9bf25c-f85f-4dec-838d-d1b64ccf57ac/episodes/0e3d22f0-ad66-4fdb-b60f-6bccb3347b58/audio/256/default.mp3?awCollectionId=9f9bf25c-f85f-4dec-838d-d1b64ccf57ac&awEpisodeId=0e3d22f0-ad66-4fdb-b60f-6bccb3347b58&feed=THKu2Bbc&t=podcast&e=nx-s1-5976844&p=510008&d=1388&size=44445866",
+    image:
+      "https://npr.brightspotcdn.com/dims3/default/strip/false/crop/3500x3500+0+0/resize/600/quality/80/format/jpg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2Fd5%2Fe1%2Fb33436b148f6a0817c2428246bd9%2F3706b59e-c641-406f-8e44-c955ab72646a.jpg",
+    summary:
+      'After a trip to her childhood home in Saudi Arabia, the Syrian American musician was left contemplating what it means to "be home."',
+  },
+];
