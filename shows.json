@@ -80,7 +80,7 @@
     "page": "https://xpn.org/program/world-cafe/",
     "tint": {
       "light": "#dd494c",
-      "dark": "#dd494c"
+      "dark": "#e05a5d"
     }
   },
   "afternoons": {
@@ -135,7 +135,7 @@
     "page": "https://xpn.org/program/funky-friday/",
     "tint": {
       "light": "#8475cb",
-      "dark": "#8475cb"
+      "dark": "#8b7cce"
     }
   },
   "freeatnoon": {
@@ -194,7 +194,7 @@
     "page": "https://xpn.org/program/wxpn-overnights/",
     "tint": {
       "light": "#6f2caa",
-      "dark": "#934dd1"
+      "dark": "#a76dd9"
     }
   },
   "firstcup": {
@@ -264,7 +264,7 @@
     "page": "https://xpn.org/program/wxpn-local/",
     "tint": {
       "light": "#3e5420",
-      "dark": "#59792e"
+      "dark": "#698f36"
     }
   },
   "indie": {
@@ -317,7 +317,7 @@
     "page": "https://xpn.org/program/wxpn-evenings/",
     "tint": {
       "light": "#6f2baa",
-      "dark": "#9853d3"
+      "dark": "#a76bd9"
     }
   },
   "culturecypher": {
@@ -373,7 +373,7 @@
     "page": "https://xpn.org/program/sleepy-hollow/",
     "tint": {
       "light": "#638329",
-      "dark": "#638329"
+      "dark": "#6f932e"
     }
   },
   "postsleepy": {
@@ -394,7 +394,7 @@
     "page": "https://xpn.org/program/the-post-sleepy-hollow-experience/",
     "tint": {
       "light": "#7130ab",
-      "dark": "#9553cf"
+      "dark": "#a46bd6"
     }
   },
   "saturdaymix": {
@@ -415,7 +415,7 @@
     "page": "https://xpn.org/program/saturday-afternoon-mix/",
     "tint": {
       "light": "#a959d6",
-      "dark": "#a959d6"
+      "dark": "#b169da"
     }
   },
   "benvaughn": {
@@ -474,7 +474,7 @@
     "page": "https://xpn.org/program/american-routes/",
     "tint": {
       "light": "#585dc0",
-      "dark": "#666bc5"
+      "dark": "#7c80cd"
     }
   },
   "starsend": {
@@ -575,7 +575,7 @@
     "page": "https://xpn.org/program/mountain-stage/",
     "tint": {
       "light": "#c15ba5",
-      "dark": "#c15ba5"
+      "dark": "#c462a9"
     }
   },
   "folkshow": {
@@ -596,7 +596,7 @@
     "page": "https://xpn.org/program/the-folk-show/",
     "tint": {
       "light": "#6f452a",
-      "dark": "#a3663e"
+      "dark": "#b97447"
     }
   },
   "cafeconversations": {
@@ -617,7 +617,7 @@
     "page": "https://xpn.org/program/conversations-from-the-world-cafe/",
     "tint": {
       "light": "#de4b4e",
-      "dark": "#de4b4e"
+      "dark": "#e05456"
     }
   },
   "amazoncountry": {
@@ -679,7 +679,7 @@
     "page": "https://xpn.org/program/echoes/",
     "tint": {
       "light": "#0c1079",
-      "dark": "#595fee"
+      "dark": "#757af1"
     }
   },
   "jamnation": {

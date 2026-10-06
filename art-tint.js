@@ -5,10 +5,12 @@
 
 import { useEffect, useState } from "react";
 
-// Backgrounds a heart can sit on, per theme: page, surface, alternate row.
+// Backgrounds a heart can sit on, per theme (global.css): page, surface,
+// alternate row, the player bar, and a saved row's pale wash of the heart's
+// own color (close to the page, so the page stands in for it).
 const GROUNDS = {
-  light: ["#faf6ee", "#f3eee3", "#efe9dd"],
-  dark: ["#161719", "#202123", "#202223"],
+  light: ["#faf8f3", "#f2efe7", "#eeeae1", "#fffdf8"],
+  dark: ["#202224", "#292c2f", "#2b2e30", "#32363a"],
 };
 const MIN_CONTRAST = 3.2;
 
@@ -59,10 +61,18 @@ function toRgb([h, s, l]) {
 
 // The artwork's prominent vivid color from RGBA pixels (a small downscale is
 // plenty), or null when it has none. Pixels are grouped by hue, weighted by
-// how vivid they are; the winning group's average is the color.
+// how vivid they are. A color in real artwork spreads across neighboring
+// hues (a lawn is yellow-green to green), so each hue is scored together
+// with its two neighbors, and the winning group's average is the color.
+// It counts when it carries enough vivid weight, or covers enough of the
+// artwork even if muted (a dusky blue sky); a few vivid pixels in grey art
+// are neither.
+const BINS = 24;
+const MIN_WEIGHT = 0.04;
+const MIN_SHARE = 0.08;
 export function pickTint(pixels) {
-  const BINS = 24;
   const weight = new Float64Array(BINS);
+  const count = new Float64Array(BINS);
   const sums = Array.from({ length: BINS }, () => [0, 0, 0]);
   let counted = 0;
   for (let i = 0; i + 3 < pixels.length; i += 4) {
@@ -74,15 +84,19 @@ export function pickTint(pixels) {
     const w = s * (1 - Math.abs(l - 0.5) * 1.4);
     const bin = Math.floor(h * BINS) % BINS;
     weight[bin] += w;
+    count[bin]++;
     sums[bin][0] += rgb[0] * w;
     sums[bin][1] += rgb[1] * w;
     sums[bin][2] += rgb[2] * w;
   }
+  if (!counted) return null;
+  const near = (b) => [(b + BINS - 1) % BINS, b, (b + 1) % BINS];
+  const total = (list, b) => near(b).reduce((sum, n) => sum + list[n], 0);
   let best = 0;
-  for (let b = 1; b < BINS; b++) if (weight[b] > weight[best]) best = b;
-  // A few vivid pixels in a grey image are not its color.
-  if (!counted || weight[best] < counted * 0.04) return null;
-  return sums[best].map((v) => v / weight[best]);
+  for (let b = 1; b < BINS; b++) if (total(weight, b) > total(weight, best)) best = b;
+  const w = total(weight, best);
+  if (!w || (w < counted * MIN_WEIGHT && total(count, best) < counted * MIN_SHARE)) return null;
+  return [0, 1, 2].map((k) => near(best).reduce((sum, n) => sum + sums[n][k], 0) / w);
 }
 
 // The color for each theme: lightness moved toward contrast, hue kept, and
