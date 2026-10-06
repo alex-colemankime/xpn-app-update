@@ -22,7 +22,7 @@ import { Capacitor } from "@capacitor/core";
 import { useLiveSong, useNowPlaying } from "./nowplaying.js";
 import { SHOWS } from "./catalog.js";
 import { useFavoriteItems } from "./favorites.js";
-import { Icon, Wordmark } from "./ui.jsx";
+import { Icon, Wordmark, heightVar } from "./ui.jsx";
 import { usePlayer } from "./hooks/usePlayer.js";
 import { keepClockRunning } from "./hooks/useNow.js";
 import { parseRoute, useRoute } from "./hooks/useRoute.js";
@@ -57,6 +57,7 @@ const NAV = [
 ];
 const TITLES = { ...Object.fromEntries(NAV.map((n) => [n.id, n.label])), settings: "Settings" };
 const ONBOARDED_KEY = "xpn.onboarded";
+const trackAlarmHeight = heightVar("--alarm-h");
 
 // Only the station choice, so the app shell does not re-render on every
 // change between connecting, playing and paused.
@@ -228,10 +229,6 @@ export default function App() {
         <button className="brand" onClick={() => route.navigate("listen")}>
           <span className="sr-only">WXPN home</span>
           <Wordmark dot />
-          <small>
-            <span>88.5 FM</span>
-            <span>Philadelphia</span>
-          </small>
         </button>
         <nav aria-label="Main navigation">
           {NAV.map((n) => (
@@ -293,7 +290,7 @@ export default function App() {
           </div>
         </header>
         {alarm.ringing && (
-          <div className="alarm-banner" role="alert">
+          <div className="alarm-banner" role="alert" ref={trackAlarmHeight}>
             <span className="alarm-banner-title">
               <span className="alarm-bell" aria-hidden="true">
                 <Icon name="bell" size={20} />

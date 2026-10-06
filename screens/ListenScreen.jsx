@@ -274,10 +274,15 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
           </span>
           <div className="now-info" key={`info-${songKey}`}>
             <h2>{current?.title || station.label}</h2>
-            <p className="now-artist">{current?.artist || station.tagline}</p>
-            {current?.album &&
-              current.album !== current.artist &&
-              current.album !== current.title && <p className="now-album">{current.album}</p>}
+            {/* Artist, then the album after it on the same line, quieter. */}
+            <p className="now-artist">
+              <span>{current?.artist || station.tagline}</span>
+              {current?.album &&
+                current.album !== current.artist &&
+                current.album !== current.title && (
+                  <span className="now-album"> · {current.album}</span>
+                )}
+            </p>
           </div>
           {current && (
             <div className="now-song-actions">

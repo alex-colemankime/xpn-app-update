@@ -127,12 +127,7 @@ export function Welcome({ onDone }) {
   };
 
   return (
-    <Modal
-      title="Welcome to WXPN"
-      eyebrow="88.5 FM · PHILADELPHIA"
-      onClose={onDone}
-      className="welcome-dialog"
-    >
+    <Modal title="Welcome to WXPN" onClose={onDone} className="welcome-dialog">
       <div className="detail-body welcome">
         {stepName === "follow" ? (
           <>

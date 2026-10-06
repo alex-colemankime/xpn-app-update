@@ -1,10 +1,11 @@
-import { Art, Icon } from "../ui.jsx";
+import { Art, Icon, heightVar } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { STATION_ART } from "../assets.js";
 import { localClock } from "../time.js";
 import { dismissUpdate } from "../hooks/useStationUpdates.js";
 
 const liveArt = (live) => live.image || SHOWS[live.show]?.img || STATION_ART;
+const trackHeight = heightVar("--banner-h");
 const liveWhen = (live) =>
   live.state === "live" ? "Live now" : `Today at ${localClock(live.starts)}`;
 
@@ -19,6 +20,7 @@ export function StationBanner({ banner, live, liveDismissed, onWatch, onListenSc
   return (
     <div
       className="station-banner"
+      ref={trackHeight}
       data-kind={showLive ? "live" : "banner"}
       role="region"
       aria-label="From WXPN"

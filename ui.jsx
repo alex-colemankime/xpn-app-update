@@ -14,6 +14,21 @@ export function focusFirstItem(e) {
   }
 }
 
+// A ref that keeps a CSS variable on the page set to the element's height
+// while it is shown (a banner), so layouts below can make room for it.
+export const heightVar = (name) => (el) => {
+  if (!el) return;
+  const root = document.documentElement;
+  const set = () => root.style.setProperty(name, `${el.offsetHeight}px`);
+  set();
+  const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(set);
+  observer?.observe(el);
+  return () => {
+    observer?.disconnect();
+    root.style.removeProperty(name);
+  };
+};
+
 // "World Cafe", "World Cafe and Funky Friday", "World Cafe, Funky Friday and 2 more".
 export const nameList = (names) =>
   names.length <= 2
