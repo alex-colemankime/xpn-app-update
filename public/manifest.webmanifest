@@ -1,0 +1,37 @@
+{
+  "id": "./",
+  "lang": "en-US",
+  "name": "WXPN — Listen live",
+  "short_name": "WXPN",
+  "description": "Listen to WXPN 88.5 FM, XPN2 and Kids Corner. Discover shows, save songs, and find live music.",
+  "start_url": "./#/listen",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#faf8f3",
+  "theme_color": "#faf8f3",
+  "categories": [
+    "music",
+    "entertainment"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

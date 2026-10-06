@@ -1,48 +1,87 @@
 import { useState } from "react";
 import { Icon, Art, Segmented, Empty, SearchField, shareText } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
-import { useFavorites } from "../favorites.js";
-import { useSavedConcerts } from "../concerts.js";
-import { TrackRow, ShowCard } from "../components/MusicRows.jsx";
-import { ConcertRow } from "./ConcertsScreen.jsx";
+import { useFavoriteItems } from "../favorites.js";
+import { easternToday } from "../concerts.js";
+import { CONCERTS_ENABLED, SHOW_SAMPLES } from "../config.js";
+import { showToast } from "../toast.js";
+import { TrackRow, ShowCard, SaveButton } from "../components/MusicRows.jsx";
+import { ConcertRow } from "../components/ConcertRow.jsx";
+import { PlaylistSyncPrompt } from "../components/PlaylistSync.jsx";
+import { calendarIsNative, downloadIcs } from "../calendar.js";
 
-export function LibraryScreen({ onOpen, onEpisode, onNavigate, concerts, onMessage }) {
+// Empty-state copy and the screen each category's call to action opens.
+const EMPTY = {
+  songs: {
+    icon: "music",
+    action: "Find a song",
+    target: "listen",
+    text: "Hear something you love? Tap the heart beside a song to keep it here.",
+  },
+  shows: {
+    icon: "headphones",
+    action: "Explore shows",
+    target: "shows",
+    text: "Follow your favorite voices and keep their schedules close.",
+  },
+  episodes: {
+    icon: "headphones",
+    action: "Explore shows",
+    target: "shows",
+    text: "Save an episode from a show’s archive to find it here.",
+  },
+  concerts: {
+    icon: "navConcerts",
+    action: "Explore concerts",
+    target: "concerts",
+    text: "Save a concert and make a night of it.",
+  },
+};
+
+const searchText = (item) =>
+  `${item.title || ""} ${item.artist || ""} ${item.name || ""} ${item.showName || ""}`.toLowerCase();
+
+export function LibraryScreen({ onOpenShow, onNavigate }) {
   const [type, setType] = useState("songs");
   const [query, setQuery] = useState("");
-  const songs = useFavorites("songs");
-  const shows = useFavorites("shows");
-  const episodes = useFavorites("episodes");
-  const [savedConcerts, toggleConcert] = useSavedConcerts();
-  const concertItems = concerts.concerts.filter((c) => savedConcerts.has(c.id));
+  const songs = useFavoriteItems("songs");
+  const shows = useFavoriteItems("shows");
+  const episodes = useFavoriteItems("episodes");
+  const concertsSaved = useFavoriteItems("concerts");
+  const today = easternToday();
+
+  // Sample episodes cannot be reached in production, so neither can saves of them.
   const items = {
-    songs: songs.items,
-    shows: shows.items,
-    episodes: episodes.items,
-    concerts: concertItems,
+    songs,
+    shows,
+    ...(SHOW_SAMPLES ? { episodes } : {}),
+    // Saved with their details, so they show even while the feed is down;
+    // past dates drop off.
+    ...(CONCERTS_ENABLED ? { concerts: concertsSaved.filter((c) => c.date >= today) } : {}),
   };
-  const filtered = items[type].filter((item) =>
-    `${item.title || ""} ${item.artist || ""} ${item.name || ""} ${item.showName || ""}`
-      .toLowerCase()
-      .includes(query.toLowerCase()),
-  );
+  const category = items[type] ? type : "songs";
+  const q = query.trim().toLowerCase();
+  const filtered = items[category].filter((item) => !q || searchText(item).includes(q));
+  const empty = EMPTY[category];
+  // Until something is saved, the counts and search have nothing to work on.
+  const anything = Object.values(items).some((list) => list.length);
+
+  const shareSongs = async () =>
+    showToast(
+      await shareText(
+        "My WXPN discoveries",
+        songs.map((t) => `${t.title} — ${t.artist}`).join("\n"),
+      ),
+    );
+
   return (
     <>
       <div className="page-heading">
         <div>
           <h1>Favorites</h1>
         </div>
-        {songs.items.length > 0 && (
-          <button
-            className="secondary-button"
-            onClick={async () =>
-              onMessage(
-                await shareText(
-                  "My WXPN discoveries",
-                  songs.items.map((t) => `${t.title} — ${t.artist}`).join("\n"),
-                ),
-              )
-            }
-          >
+        {category === "songs" && songs.length > 0 && (
+          <button className="text-button" onClick={shareSongs}>
             <Icon name="shareAlt" size={18} />
             Share songs
           </button>
@@ -50,114 +89,76 @@ export function LibraryScreen({ onOpen, onEpisode, onNavigate, concerts, onMessa
       </div>
       <div className="toolbar">
         <Segmented
-          label="Library category"
-          value={type}
-          onChange={setType}
+          label="Favorites category"
+          value={category}
+          onChange={(next) => {
+            setType(next);
+            setQuery("");
+          }}
           options={Object.keys(items).map((key) => ({
             value: key,
-            label: `${key[0].toUpperCase() + key.slice(1)} ${items[key].length}`,
+            label: key[0].toUpperCase() + key.slice(1),
+            count: items[key].length || undefined,
           }))}
         />
-        <SearchField value={query} onChange={setQuery} placeholder="Search your library" />
+        {anything && (
+          <SearchField value={query} onChange={setQuery} placeholder="Search your favorites" />
+        )}
       </div>
-      <p className="data-note">Saved on this device.</p>
-      {filtered.length ? (
-        type === "songs" ? (
-          filtered.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)
-        ) : type === "shows" ? (
-          <div className="show-grid all-shows">
-            {filtered.map((s) => (
-              <div className="saved-show" key={s.id}>
-                <ShowCard show={SHOWS[s.id] || s} onOpen={onOpen} />
-                <button
-                  className="icon-button saved"
-                  aria-label={`Unfollow ${s.name}`}
-                  onClick={() => shows.toggle(s)}
-                >
-                  <Icon name="heartF" />
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : type === "concerts" ? (
-          filtered.map((c, index) => (
-            <ConcertRow
-              key={c.id}
-              concert={c}
-            index={index}
-              sample={concerts.source === "sample"}
-              saved
-              onToggle={() => toggleConcert(c.id)}
-            />
-          ))
-        ) : (
-          filtered.map((ep) => (
-            <div className="episode-row" key={ep.id}>
-              <button
-                className="episode-open"
-                onClick={() =>
-                  onEpisode(
-                    SHOWS[ep.showId] || {
-                      id: ep.showId,
-                      name: ep.showName,
-                      img: ep.img,
-                      host: ep.host,
-                      episodes: [],
-                    },
-                    ep,
-                  )
-                }
-              >
-                <Art src={ep.img} />
-                <span>
-                  <strong>{ep.title}</strong>
-                  <small>
-                    {ep.showName} · {ep.date}
-                  </small>
-                </span>
-                <Icon name="chev" size={18} />
-              </button>
-              <button
-                className="icon-button saved"
-                aria-label={`Remove ${ep.title}`}
-                onClick={() => episodes.toggle(ep)}
-              >
-                <Icon name="heartF" />
-              </button>
-            </div>
-          ))
-        )
+      <p className="sr-only" role="status">
+        {filtered.length} saved {category}
+        {q ? " match your search" : ""}
+      </p>
+      {category === "songs" && songs.length > 0 ? (
+        <PlaylistSyncPrompt onSetUp={() => onNavigate("settings")} />
+      ) : category === "concerts" && items.concerts?.length > 1 && !calendarIsNative() ? (
+        <button className="playlist-prompt" onClick={() => downloadIcs(items.concerts)}>
+          <Icon name="calendarAdd" size={18} />
+          <span>Add all {items.concerts.length} concerts to your calendar</span>
+          <Icon name="chev" size={16} />
+        </button>
       ) : (
+        anything && <p className="data-note">Saved on this device.</p>
+      )}
+      {!filtered.length ? (
         <Empty
-          icon={type === "concerts" ? "navConcerts" : type === "songs" ? "music" : "headphones"}
-          title={query ? "No matching discoveries" : `No saved ${type} yet.`}
-          action={
-            query
-              ? "Clear search"
-              : type === "songs"
-                ? "Find a song"
-                : type === "concerts"
-                  ? "Explore concerts"
-                  : "Explore shows"
-          }
-          onAction={() =>
-            query
-              ? setQuery("")
-              : onNavigate(type === "songs" ? "listen" : type === "concerts" ? "concerts" : "shows")
-          }
+          icon={empty.icon}
+          title={q ? "No matching favorites" : `No saved ${category} yet`}
+          action={q ? "Clear search" : empty.action}
+          onAction={() => (q ? setQuery("") : onNavigate(empty.target))}
         >
-          {query
-            ? "Try a different name."
-            : type === "songs"
-              ? "Hear something you love? Tap the heart beside a song to keep it here."
-              : type === "shows"
-                ? "Follow your favorite voices and keep their schedules close."
-                : type === "episodes"
-                  ? "Save an episode from a show’s archive to find it here."
-                  : "Save a concert and make a night of it."}
+          {q ? "Try a different name." : empty.text}
         </Empty>
+      ) : category === "songs" ? (
+        filtered.map((t) => <TrackRow key={t.id} track={t} />)
+      ) : category === "shows" ? (
+        <div className="show-grid all-shows">
+          {filtered.map((s) => (
+            <div className="saved-show" key={s.id}>
+              <ShowCard show={SHOWS[s.id] || s} onOpen={onOpenShow} />
+              <SaveButton type="shows" item={s} name={s.name} />
+            </div>
+          ))}
+        </div>
+      ) : category === "concerts" ? (
+        filtered.map((c) => <ConcertRow key={c.id} concert={c} />)
+      ) : (
+        filtered.map((ep) => (
+          <div className="episode-row" key={ep.id}>
+            <button className="episode-open" onClick={() => onOpenShow(ep.showId, ep.id)}>
+              <Art src={ep.img} alt="" />
+              <span>
+                <strong>{ep.title}</strong>
+                <small>
+                  {ep.showName} · {ep.date}
+                </small>
+              </span>
+              <Icon name="chev" size={18} />
+            </button>
+            <SaveButton type="episodes" item={ep} name={ep.title} />
+          </div>
+        ))
       )}
     </>
   );
 }
-

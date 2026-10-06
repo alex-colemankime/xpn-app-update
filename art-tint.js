@@ -1,0 +1,149 @@
+// A saved heart takes its color from the item's artwork: the artwork's most
+// prominent vivid color, adjusted per theme so the heart keeps at least 3:1
+// contrast with the screen behind it (WCAG 1.4.11). Artwork with no vivid
+// color (black and white photos, grey logos) keeps the app's accent.
+
+import { useEffect, useState } from "react";
+
+// Backgrounds a heart can sit on, per theme: page, surface, alternate row.
+const GROUNDS = {
+  light: ["#faf6ee", "#f3eee3", "#efe9dd"],
+  dark: ["#161719", "#202123", "#202223"],
+};
+const MIN_CONTRAST = 3.2;
+
+const hex = (rgb) => `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
+const parseHex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+
+function luminance([r, g, b]) {
+  const lin = (v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+export function contrast(a, b) {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+function toHsl([r, g, b]) {
+  const [R, G, B] = [r / 255, g / 255, b / 255];
+  const max = Math.max(R, G, B);
+  const min = Math.min(R, G, B);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  const h =
+    max === R
+      ? ((G - B) / d + (G < B ? 6 : 0)) / 6
+      : max === G
+        ? ((B - R) / d + 2) / 6
+        : ((R - G) / d + 4) / 6;
+  return [h, s, l];
+}
+function toRgb([h, s, l]) {
+  if (s === 0) return [l * 255, l * 255, l * 255];
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const f = (t) => {
+    const u = t < 0 ? t + 1 : t > 1 ? t - 1 : t;
+    if (u < 1 / 6) return p + (q - p) * 6 * u;
+    if (u < 1 / 2) return q;
+    if (u < 2 / 3) return p + (q - p) * (2 / 3 - u) * 6;
+    return p;
+  };
+  return [f(h + 1 / 3) * 255, f(h) * 255, f(h - 1 / 3) * 255];
+}
+
+// The artwork's prominent vivid color from RGBA pixels (a small downscale is
+// plenty), or null when it has none. Pixels are grouped by hue, weighted by
+// how vivid they are; the winning group's average is the color.
+export function pickTint(pixels) {
+  const BINS = 24;
+  const weight = new Float64Array(BINS);
+  const sums = Array.from({ length: BINS }, () => [0, 0, 0]);
+  let counted = 0;
+  for (let i = 0; i + 3 < pixels.length; i += 4) {
+    if (pixels[i + 3] < 128) continue;
+    const rgb = [pixels[i], pixels[i + 1], pixels[i + 2]];
+    const [h, s, l] = toHsl(rgb);
+    counted++;
+    if (s < 0.18 || l < 0.12 || l > 0.92) continue;
+    const w = s * (1 - Math.abs(l - 0.5) * 1.4);
+    const bin = Math.floor(h * BINS) % BINS;
+    weight[bin] += w;
+    sums[bin][0] += rgb[0] * w;
+    sums[bin][1] += rgb[1] * w;
+    sums[bin][2] += rgb[2] * w;
+  }
+  let best = 0;
+  for (let b = 1; b < BINS; b++) if (weight[b] > weight[best]) best = b;
+  // A few vivid pixels in a grey image are not its color.
+  if (!counted || weight[best] < counted * 0.04) return null;
+  return sums[best].map((v) => v / weight[best]);
+}
+
+// The color for each theme: lightness moved toward contrast, hue kept, and
+// saturation kept lively so the heart still reads as a color.
+export function themeTints(rgb) {
+  if (!rgb) return null;
+  const [h, s0, l0] = toHsl(rgb);
+  const s = Math.max(s0, 0.45);
+  const fit = (grounds, step) => {
+    let l = l0;
+    for (let i = 0; i < 60; i++) {
+      const c = toRgb([h, s, l]);
+      if (grounds.every((g) => contrast(c, parseHex(g)) >= MIN_CONTRAST)) return hex(c);
+      l = Math.min(1, Math.max(0, l + step));
+    }
+    return null;
+  };
+  const light = fit(GROUNDS.light, -0.02);
+  const dark = fit(GROUNDS.dark, 0.02);
+  return light && dark ? { light, dark } : null;
+}
+
+// Tints by artwork URL, shared by every heart showing the same art.
+const cache = new Map();
+function sample(url) {
+  if (cache.has(url)) return cache.get(url);
+  const result = new Promise((resolve) => {
+    if (typeof Image === "undefined" || typeof document === "undefined") return resolve(null);
+    const img = new Image();
+    img.crossOrigin = "anonymous"; // only artwork served with CORS can be read
+    img.decoding = "async";
+    img.onload = () => {
+      try {
+        const size = 24;
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = size;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0, size, size);
+        resolve(themeTints(pickTint(ctx.getImageData(0, 0, size, size).data)));
+      } catch {
+        resolve(null); // artwork without CORS: keep the accent
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+  cache.set(url, result);
+  return result;
+}
+
+// { light, dark } for an artwork URL, or a precomputed tint ({ light, dark }
+// from the show data); null until known, or when the art gives no color.
+export function useArtTint(url, preset = null) {
+  const [found, setFound] = useState({ url: null, tint: null });
+  useEffect(() => {
+    if (preset || !url) return;
+    let live = true;
+    sample(url).then((tint) => live && setFound({ url, tint }));
+    return () => {
+      live = false;
+    };
+  }, [url, preset]);
+  return preset || (found.url === url ? found.tint : null);
+}

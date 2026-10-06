@@ -1,19 +1,33 @@
 import { useEffect, useState } from "react";
-import { easternParts } from "./catalog.js";
+import { getPlayerSnapshot } from "./player.js";
+import { useNow } from "./hooks/useNow.js";
+import { decodeFeedText } from "./feed-text.js";
+import {
+  clockLabel,
+  easternParts,
+  easternToEpoch,
+  localClock,
+  reportedMinutes,
+  shiftDate,
+} from "./time.js";
+
+// Each station's day playlist (one file per Eastern date, with times) and
+// its now-playing file (the song on air, with its length), the same sources
+// xpn.org's own player reads.
 const ENDPOINTS = {
-  xpn: "https://origin.xpn.org/utils/playlist/json/",
-  xpn2: "https://origin.xpn.org/xpn2/json/",
+  xpn: {
+    day: "https://origin.xpn.org/utils/playlist/json/",
+    now: "https://origin.xpn.org/utils/nowplaying/json/xpnNowPlaying.json",
+  },
+  xpn2: {
+    day: "https://origin.xpn.org/xpn2/json/",
+    now: "https://origin.xpn.org/xpn2/json/nowplaying/xpn2NowPlaying.json",
+  },
 };
 // The station publishes one file per Eastern calendar day. Just after
 // midnight ET that file is nearly empty, so the previous day is merged in
 // until the new day has built up its own history.
 const EARLY_HOUR = 5;
-export function previousDate(date) {
-  const stamp = new Date(`${date}T12:00:00Z`);
-  if (Number.isNaN(stamp.valueOf())) return date;
-  stamp.setUTCDate(stamp.getUTCDate() - 1);
-  return stamp.toISOString().slice(0, 10);
-}
 const reportedKey = (track) => `${track.date} ${track.time} ${track.title} ${track.artist}`;
 export function mergeTracks(lists) {
   const seen = new Set();
@@ -27,6 +41,74 @@ export function mergeTracks(lists) {
     })
     .sort((a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`));
 }
+// A song reported longer ago than this is no longer presented as playing,
+// unless the station says how long it runs: then until it should have ended,
+// plus a little slack (so a 20-minute jam stays "now playing" to the end).
+const FRESH_MINUTES = 15;
+const SLACK_MINUTES = 3;
+
+// Minutes since a song was reported, compared in absolute minutes so a song
+// reported at 23:58 is 3 minutes old at 00:01. Null when unknown.
+function reportAge(track, now) {
+  const { date, time } = easternParts(now);
+  const age = reportedMinutes(date, time) - reportedMinutes(track.date, track.time);
+  return Number.isFinite(age) && age >= 0 ? age : null;
+}
+
+// Is the reported song plausibly still on air?
+export function isFresh(track, now = new Date()) {
+  if (!track) return false;
+  const age = reportAge(track, now);
+  const window = Math.max(FRESH_MINUTES, (track.minutes || 0) + SLACK_MINUTES);
+  return age !== null && age < window;
+}
+
+// "04:22" -> 5 (whole minutes, rounded up). Null when missing or odd.
+export function durationMinutes(text) {
+  const m = /^(?:(\d+):)?(\d{1,3}):(\d{2})$/.exec(String(text || "").trim());
+  if (!m) return null;
+  const total = Number(m[1] || 0) * 60 + Number(m[2]) + Number(m[3]) / 60;
+  return total > 0 && total < 24 * 60 ? Math.ceil(total) : null;
+}
+
+const sameSong = (a, b) =>
+  a.artist.trim().toLowerCase() === decodeFeedText(b.artist).trim().toLowerCase() &&
+  a.title.trim().toLowerCase() === decodeFeedText(b.song).trim().toLowerCase();
+
+// Adds what the now-playing file knows to the latest playlist entry when they
+// are the same song: its length, and its artwork if the playlist has none yet.
+export function withNowPlaying(tracks, nowFile) {
+  const now = Array.isArray(nowFile) ? nowFile[0] : null;
+  const latest = tracks[0];
+  if (!now || !latest || !sameSong(latest, now)) return tracks;
+  const minutes = durationMinutes(now.duration);
+  const img = latest.img || (/^https:\/\//.test(now.image || "") ? now.image : "");
+  return [{ ...latest, ...(minutes ? { minutes } : {}), img }, ...tracks.slice(1)];
+}
+
+// When a song played, in the listener's time: "2:32pm".
+export function playedAt(track, timeZone) {
+  const at = track?.date && track?.time ? easternToEpoch(track.date, track.time) : null;
+  return at === null ? (track?.time ? clockLabel(track.time) : "") : localClock(at, timeZone);
+}
+
+// "Played just now", "Played 3 min ago" for the last hour, then the time.
+export function playedLabel(track, now = new Date(), timeZone) {
+  if (!track?.time) return "";
+  const age = reportAge(track, now);
+  if (age !== null && age < 60) return age < 1 ? "Played just now" : `Played ${age} min ago`;
+  return `Played at ${playedAt(track, timeZone)}`;
+}
+
+// The song on air now, or null once the latest report has gone stale (the
+// feed has paused overnight, or failed and kept its last list). Stale songs
+// stay in Recently played but are never shown as current.
+export function useLiveSong(playlist) {
+  const now = useNow();
+  const latest = playlist.tracks[0];
+  return latest && isFresh(latest, new Date(now)) ? latest : null;
+}
+
 export function normalizePlaylist(data) {
   if (!Array.isArray(data)) return [];
   return data
@@ -39,30 +121,54 @@ export function normalizePlaylist(data) {
         t.song.trim(),
     )
     .map((t) => ({
-      title: t.song,
-      artist: t.artist,
-      album: t.album || "",
+      title: decodeFeedText(t.song).trim(),
+      artist: decodeFeedText(t.artist).trim(),
+      album: decodeFeedText(t.album).trim(),
       img: /^https?:\/\//.test(t.image || "") ? t.image : "",
       time: String(t.timeslice || "").slice(11, 16),
       date: String(t.timeslice || "").slice(0, 10),
     }))
     .sort((a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`));
 }
+const LOADING = { tracks: [], status: "loading" };
+const UNAVAILABLE = { tracks: [], status: "unavailable" };
+const trackKey = (t) => `${reportedKey(t)} ${t.minutes || ""} ${t.img}`;
+const sameTracks = (a, b) =>
+  a.length === b.length && a.every((track, i) => trackKey(track) === trackKey(b[i]));
+
+// The playlist for one station, polled every 30 seconds while the app is
+// visible. Results are kept per station, so switching back to a station
+// shows its list at once while it refreshes.
 export function useNowPlaying(streamId) {
-  const [result, setResult] = useState({ streamId, tracks: [], status: "loading" });
+  const [byStream, setByStream] = useState({});
   useEffect(() => {
-    let active = true;
-    let controller;
     const endpoint = ENDPOINTS[streamId];
-    setResult({ streamId, tracks: [], status: endpoint ? "loading" : "unavailable" });
     if (!endpoint) return;
+    const loadNow = (signal) =>
+      fetch(endpoint.now, { signal, cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+    let active = true;
+    // The last now-playing file that loaded, so one failed fetch does not
+    // drop the current song's length (it only applies to the same song).
+    let lastNow = null;
+    let controller;
+    const store = (next) =>
+      setByStream((prev) => {
+        const old = prev[streamId];
+        // An unchanged poll keeps the old object, so nothing re-renders.
+        if (old && old.status === next.status && sameTracks(old.tracks, next.tracks)) return prev;
+        return { ...prev, [streamId]: next };
+      });
     async function loadDay(date, signal) {
-      const response = await fetch(`${endpoint}${date}.json`, { signal, cache: "no-store" });
+      const response = await fetch(`${endpoint.day}${date}.json`, { signal, cache: "no-store" });
       if (!response.ok) throw Error("Playlist unavailable");
       return normalizePlaylist(await response.json());
     }
     async function update() {
-      if (document.visibilityState === "hidden") return;
+      // While hidden, keep polling only if audio is playing: the lock screen
+      // and media notification still show the song.
+      if (document.visibilityState === "hidden" && !getPlayerSnapshot().playing) return;
       controller?.abort();
       controller = new AbortController();
       const { signal } = controller;
@@ -76,23 +182,25 @@ export function useNowPlaying(streamId) {
       try {
         const now = easternParts();
         const days = [now.date];
-        if (Number(now.time.slice(0, 2)) < EARLY_HOUR) days.push(previousDate(now.date));
-        const lists = await Promise.all(
-          days.map((date, index) =>
+        if (Number(now.time.slice(0, 2)) < EARLY_HOUR) days.push(shiftDate(now.date, -1));
+        const [nowFile, ...lists] = await Promise.all([
+          loadNow(signal), // optional: only adds the song's length
+          ...days.map((date, index) =>
             // Only today's file is required; yesterday's is a courtesy.
             index === 0 ? loadDay(date, signal) : loadDay(date, signal).catch(() => []),
           ),
-        );
-        const tracks = mergeTracks(lists).slice(0, 80);
-        if (active) setResult({ streamId, tracks, status: tracks.length ? "ready" : "empty" });
+        ]);
+        if (nowFile) lastNow = nowFile;
+        const tracks = withNowPlaying(mergeTracks(lists).slice(0, 80), nowFile || lastNow);
+        if (active) store({ tracks, status: tracks.length ? "ready" : "empty" });
       } catch (error) {
         // A superseded or unmounted request is not a station failure.
         if (error?.name === "AbortError" && !timedOut) return;
+        // Keep the last good list on screen; the status line explains.
         if (active)
-          setResult((prev) => ({
-            streamId,
-            tracks: prev.streamId === streamId ? prev.tracks : [],
-            status: "unavailable",
+          setByStream((prev) => ({
+            ...prev,
+            [streamId]: { tracks: prev[streamId]?.tracks || [], status: "unavailable" },
           }));
       } finally {
         clearTimeout(timeout);
@@ -110,5 +218,6 @@ export function useNowPlaying(streamId) {
       window.removeEventListener("wxpn:refresh-playlist", update);
     };
   }, [streamId]);
-  return result.streamId === streamId ? result : { streamId, tracks: [], status: "loading" };
+  if (!ENDPOINTS[streamId]) return UNAVAILABLE; // Homegrown has no song feed
+  return byStream[streamId] || LOADING;
 }

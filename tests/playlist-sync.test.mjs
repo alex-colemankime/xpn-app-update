@@ -1,0 +1,289 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+
+// A minimal localStorage, so the stores behave as in the app.
+const memory = new Map([["xpn.playlistSync", JSON.stringify({ service: "spotify" })]]);
+globalThis.window = {
+  localStorage: {
+    getItem: (k) => (memory.has(k) ? memory.get(k) : null),
+    setItem: (k, v) => memory.set(k, String(v)),
+    removeItem: (k) => memory.delete(k),
+  },
+  addEventListener() {},
+};
+
+const { songId, toggleFavorite, getSavedSongs } = await import("../favorites.js");
+const { syncPlan, syncNow, usePlaylistSync } = await import("../playlist-sync.js");
+const { SERVICES, plainTitle, leadArtist } = await import("../music-services.js");
+void usePlaylistSync;
+
+test("station titles and artists are simplified for the second search", () => {
+  assert.equal(plainTitle("Rein Me In (ft. Olivia Dean)"), "Rein Me In");
+  assert.equal(plainTitle("Heroes - 2017 Remaster"), "Heroes");
+  assert.equal(plainTitle("Lost Boys (Live at the Fillmore)"), "Lost Boys");
+  assert.equal(plainTitle("Good Times // End Times"), "Good Times // End Times");
+  assert.equal(leadArtist("Prince & The Revolution"), "Prince");
+  assert.equal(leadArtist("Kyle Dixon, Michael Stein"), "Kyle Dixon");
+  assert.equal(leadArtist("Bright Eyes"), "Bright Eyes");
+});
+
+test("a run adds new saves, removes unsaved songs, and skips known misses", () => {
+  const saved = [
+    { title: "Lost Boys", artist: "Phoebe Bridgers" },
+    { title: "First Day of My Life", artist: "Bright Eyes" },
+    { title: "Obscure B-side", artist: "Nobody" },
+  ];
+  const state = {
+    matched: {
+      [songId(saved[1])]: "uri:bright",
+      [songId({ title: "Old", artist: "Gone" })]: "uri:old",
+    },
+    missing: [songId(saved[2]), songId({ title: "Also gone", artist: "X" })],
+  };
+  const plan = syncPlan(saved, state, true);
+  assert.deepEqual(
+    plan.toFind.map((s) => s.title),
+    ["Lost Boys"],
+  );
+  assert.deepEqual(plan.toRemove, [songId({ title: "Old", artist: "Gone" })]);
+  assert.deepEqual(plan.missing, [songId(saved[2])], "misses are forgotten once unsaved");
+  assert.deepEqual(syncPlan(saved, state, false).toRemove, [], "Apple Music cannot remove");
+});
+
+test("syncing keeps the playlist in step with saves, against a fake service", async () => {
+  const calls = [];
+  const fake = {
+    available: () => true,
+    ensurePlaylist: async (s) =>
+      s.playlistId ? s : { playlistId: "pl1", playlistUrl: "https://open.spotify.test/pl1" },
+    find: async (song) => (song.title === "Missing" ? null : `uri:${song.title}`),
+    add: async (id, refs) => calls.push(["add", id, refs]),
+    remove: async (id, refs) => calls.push(["remove", id, refs]),
+  };
+  Object.assign(SERVICES.spotify, fake);
+
+  toggleFavorite("songs", { title: "Lost Boys", artist: "Phoebe Bridgers" });
+  toggleFavorite("songs", { title: "Missing", artist: "Nobody" });
+  await syncNow();
+  assert.deepEqual(calls.at(-1), ["add", "pl1", ["uri:Lost Boys"]]);
+  let state = JSON.parse(memory.get("xpn.playlistSync"));
+  assert.equal(state.missing.length, 1);
+  assert.equal(state.status, "idle");
+
+  await syncNow();
+  assert.equal(calls.length, 1, "nothing new, nothing sent");
+
+  toggleFavorite("songs", { title: "Lost Boys", artist: "Phoebe Bridgers" });
+  await syncNow();
+  assert.deepEqual(calls.at(-1), ["remove", "pl1", ["uri:Lost Boys"]]);
+  state = JSON.parse(memory.get("xpn.playlistSync"));
+  assert.deepEqual(state.matched, {});
+});
+
+// A fake service whose calls are recorded, and which can be told to fail or
+// to wait.
+function fakeService(overrides = {}) {
+  const calls = [];
+  return {
+    calls,
+    available: () => true,
+    ensurePlaylist: async (s) => (s.playlistId ? s : { playlistId: "pl-new", playlistUrl: "" }),
+    find: async (song) => `uri:${song.title}`,
+    add: async (id, refs) => calls.push(["add", id, refs]),
+    remove: async (id, refs) => calls.push(["remove", id, refs]),
+    ...overrides,
+  };
+}
+const clearSongs = () => getSavedSongs().forEach((s) => toggleFavorite("songs", s));
+const syncState = () => JSON.parse(memory.get("xpn.playlistSync"));
+
+test("a failed removal never makes the next run add the same songs again", async () => {
+  clearSongs();
+  await syncNow();
+  let failRemove = true;
+  const svc = fakeService({
+    remove: async (id, refs) => {
+      svc.calls.push(["remove", id, refs]);
+      if (failRemove) throw new Error("network");
+    },
+  });
+  Object.assign(SERVICES.spotify, svc);
+  toggleFavorite("songs", { title: "Keep", artist: "A" });
+  toggleFavorite("songs", { title: "Drop", artist: "B" });
+  await syncNow();
+  toggleFavorite("songs", { title: "Drop", artist: "B" });
+  toggleFavorite("songs", { title: "New", artist: "C" });
+  await syncNow(); // adds New, then the removal of Drop fails
+  failRemove = false;
+  await syncNow();
+  const adds = svc.calls.filter((c) => c[0] === "add").flatMap((c) => c[2]);
+  assert.equal(adds.filter((r) => r === "uri:New").length, 1, "New added once");
+  assert.ok(!syncState().matched[songId({ title: "Drop", artist: "B" })], "Drop removed on retry");
+  assert.equal(syncState().status, "idle");
+});
+
+test("where songs can't be removed, saving one again doesn't add a second copy", async () => {
+  clearSongs();
+  const svc = fakeService({ remove: null });
+  Object.assign(SERVICES.spotify, svc);
+  await syncNow();
+  const song = { title: "Twice", artist: "Apple" };
+  toggleFavorite("songs", song);
+  await syncNow();
+  toggleFavorite("songs", song); // unsave: stays in the playlist
+  await syncNow();
+  toggleFavorite("songs", song); // save again
+  await syncNow();
+  const adds = svc.calls.filter((c) => c[0] === "add").flatMap((c) => c[2]);
+  assert.deepEqual(
+    adds.filter((r) => r === "uri:Twice"),
+    ["uri:Twice"],
+  );
+});
+
+test("reconnecting the same service keeps its playlist; a run from an old connection writes nothing", async () => {
+  clearSongs();
+  const { connect, disconnect } = await import("../playlist-sync.js");
+  await syncNow();
+  const before = syncState();
+  assert.ok(before.playlistId, "has a playlist");
+  Object.assign(SERVICES.spotify, { connect: async () => "redirect" });
+  await connect("spotify");
+  assert.equal(syncState().playlistId, before.playlistId, "same playlist after reconnect");
+  assert.deepEqual(syncState().matched, before.matched);
+
+  // A slow add from the old connection resolves after the listener switched.
+  let release;
+  Object.assign(SERVICES.spotify, fakeService({ add: () => new Promise((r) => (release = r)) }));
+  toggleFavorite("songs", { title: "Slow", artist: "S" });
+  const pending = syncNow();
+  await new Promise((r) => setTimeout(r, 0));
+  disconnect();
+  release();
+  await pending;
+  assert.deepEqual(syncState().matched, {}, "the old run's result never lands");
+  assert.equal(syncState().service, null);
+});
+
+test("while a run is under way its status reads syncing", async () => {
+  let release;
+  Object.assign(
+    SERVICES.spotify,
+    fakeService({ ensurePlaylist: (s) => new Promise((r) => (release = () => r(s))) }),
+  );
+  const { connect } = await import("../playlist-sync.js");
+  Object.assign(SERVICES.spotify, { connect: async () => "redirect" });
+  await connect("spotify");
+  const pending = syncNow();
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(syncState().status, "syncing", "Settings can say “Adding your songs…”");
+  release();
+  await pending;
+  assert.equal(syncState().status, "idle");
+});
+
+test("signing in again mid-sync keeps the run's work: no song added twice", async () => {
+  clearSongs();
+  const { connect } = await import("../playlist-sync.js");
+  Object.assign(SERVICES.spotify, fakeService(), { connect: async () => "redirect" });
+  await connect("spotify");
+  await syncNow();
+  let release;
+  const svc = fakeService({
+    add: (id, refs) => {
+      svc.calls.push(["add", id, refs]);
+      return new Promise((r) => (release = r));
+    },
+    connect: async () => "redirect",
+  });
+  Object.assign(SERVICES.spotify, svc);
+  toggleFavorite("songs", { title: "Mid", artist: "M" });
+  const pending = syncNow();
+  await new Promise((r) => setTimeout(r, 0));
+  await connect("spotify"); // reconnect while the add is in flight
+  release();
+  await pending;
+  await syncNow();
+  const adds = svc.calls.filter((c) => c[0] === "add").flatMap((c) => c[2]);
+  assert.deepEqual(adds, ["uri:Mid"], "added once");
+  assert.equal(syncState().status, "idle");
+});
+
+test("a failed switch to another service goes back to the old one, not stuck syncing", async () => {
+  const { connect } = await import("../playlist-sync.js");
+  Object.assign(SERVICES.spotify, fakeService(), { connect: async () => "redirect" });
+  await connect("spotify");
+  await syncNow();
+  const before = syncState();
+  const apple = SERVICES.apple;
+  const saved = { available: apple.available, connect: apple.connect };
+  Object.assign(apple, {
+    available: () => true,
+    connect: async () => {
+      throw new Error("cancelled");
+    },
+  });
+  await connect("apple");
+  Object.assign(apple, saved);
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(syncState().service, "spotify");
+  assert.equal(syncState().playlistId, before.playlistId);
+  assert.notEqual(syncState().status, "syncing");
+});
+
+test("title variants share one remote track until the last favorite is removed", async () => {
+  const { connect, disconnect } = await import("../playlist-sync.js");
+  disconnect();
+  clearSongs();
+  const remote = [];
+  Object.assign(
+    SERVICES.spotify,
+    fakeService({
+      connect: async () => "redirect",
+      find: async () => "uri:shared-track",
+      add: async (_, refs) => remote.push(...refs),
+      remove: async (_, refs) => {
+        for (const ref of refs) {
+          const index = remote.indexOf(ref);
+          if (index >= 0) remote.splice(index, 1);
+        }
+      },
+    }),
+  );
+  await connect("spotify");
+  const original = { artist: "Artist", title: "Song" };
+  const variant = { artist: "Artist", title: "Song (Radio Edit)" };
+  toggleFavorite("songs", original);
+  toggleFavorite("songs", variant);
+  await syncNow();
+  assert.deepEqual(remote, ["uri:shared-track"], "one catalog entry for both favorites");
+  toggleFavorite("songs", original);
+  await syncNow();
+  assert.deepEqual(remote, ["uri:shared-track"], "the remaining favorite still owns this entry");
+  toggleFavorite("songs", variant);
+  await syncNow();
+  assert.deepEqual(remote, [], "only removed once no favorite references it");
+});
+
+test("more than 60 saved songs keep newest-first order across sync batches", async (t) => {
+  const { connect, disconnect } = await import("../playlist-sync.js");
+  disconnect();
+  clearSongs();
+  const remote = [];
+  Object.assign(
+    SERVICES.spotify,
+    fakeService({
+      connect: async () => "redirect",
+      prepends: true,
+      add: async (_, refs) => remote.unshift(...refs),
+    }),
+  );
+  await connect("spotify");
+  let savedAt = 1000;
+  t.mock.method(Date, "now", () => savedAt++);
+  for (let i = 1; i <= 65; i++) toggleFavorite("songs", { artist: "Artist", title: `Track ${i}` });
+  const expected = getSavedSongs().map((song) => `uri:${song.title}`);
+  await syncNow();
+  await syncNow();
+  assert.deepEqual(remote, expected);
+});

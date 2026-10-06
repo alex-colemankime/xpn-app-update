@@ -1,4 +1,5 @@
 import { Component } from "react";
+import { LISTEN_URL } from "./links.js";
 
 // A render error anywhere in the tree would otherwise leave a listener with a
 // blank page. The stream itself is a plain <audio> element outside React, so
@@ -27,7 +28,7 @@ export class ErrorBoundary extends Component {
           <button className="primary-button" onClick={() => window.location.reload()}>
             Reload the app
           </button>
-          <a className="text-button" href="https://xpn.org/listen/" target="_blank" rel="noreferrer">
+          <a className="text-button" href={LISTEN_URL} target="_blank" rel="noreferrer">
             Listen on xpn.org
           </a>
         </div>

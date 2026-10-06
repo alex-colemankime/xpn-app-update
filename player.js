@@ -1,216 +1,183 @@
-// player.js — real audio for the WXPN app.
+// Wires the playback core to the real <audio> element and to lock-screen
+// controls via @capgo/capacitor-media-session, which gives one code path:
+//   - iOS (Capacitor): lock screen / Control Center controls and metadata
+//   - Android (Capacitor): media notification plus a foreground service, so
+//     Android does not kill audio when the app is backgrounded
+//   - Web/PWA: a thin wrapper over the standard Media Session API
 //
-// One shared <audio> element does the actual playback on every platform
-// (plain HTTPS MP3/AAC from StreamGuys — no HLS library needed).
-//
-// Media session handling goes through @capgo/capacitor-media-session,
-// which gives one code path everywhere:
-//   - iOS (Capacitor): lock screen / control center controls + metadata
-//   - Android (Capacitor): media notification with controls, PLUS a
-//     foreground service so Android doesn't kill audio when the app
-//     is backgrounded — this is the part a bare WebView can't do
-//   - Web/PWA: thin wrapper over the standard Media Session API
-//
-// iOS background audio additionally needs two native-side settings,
-// already applied in the ios/ project (see README):
+// Background audio on iOS additionally needs two native settings once the
+// ios/ project is generated (see README, "Native apps"):
 //   1. UIBackgroundModes: audio in Info.plist
 //   2. AVAudioSession category .playback in AppDelegate
 
-import { MediaSession as MS } from "@capgo/capacitor-media-session";
+import { MediaSession as NativeMediaSession } from "@capgo/capacitor-media-session";
+import { publicAsset } from "./assets.js";
+import { createPlayer, fadeLevel } from "./player-core.js";
+import { createLocalStore, createStore } from "./storage.js";
+import { STREAMS } from "./streams.js";
+import { tap } from "./haptics.js";
 
-const noop = () => {};
-const publicAsset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
-
-// A media-controls failure should degrade silently (no lock screen
-// metadata), never crash audio or the app.
-const MediaSession = new Proxy(
+// A media-controls failure should degrade silently (no lock-screen metadata),
+// never break audio or the app.
+const mediaSession = new Proxy(
   {},
   {
     get:
       (_, method) =>
       (...args) => {
         try {
-          const r = MS[method]?.(...args);
-          if (r?.catch) r.catch(() => {});
-          return r;
+          const result = NativeMediaSession[method]?.(...args);
+          result?.catch?.(() => {});
+          return result;
         } catch {
-          /* unsupported platform — ignore */
+          /* unsupported platform */
         }
       },
   },
 );
 
-export const STREAMS = {
-  xpn: {
-    id: "xpn",
-    label: "WXPN",
-    short: "WXPN",
-    tagline: "88.5 FM · Public Radio",
-    // Verified 2026-06-15. This no-preroll mount is suitable for app playback.
-    url: "https://wxpnhi.xpn.org/xpnhi-nopreroll",
-  },
-  xpn2: {
-    id: "xpn2",
-    label: "XPN2",
-    short: "XPN2",
-    tagline: "XPoNential Radio",
-    // Verified 2026-06-15 via StreamGuys response headers.
-    url: "https://wxpnhi.xpn.org/xpn2mp3hi",
-  },
-  kids: {
-    id: "kids",
-    label: "Kids Corner",
-    short: "Kids Corner",
-    tagline: "Family music, all day",
-    // Verified 2026-06-15 from kidscorner.org playlist 6107.
-    url: "https://wxpnhi.xpn.org/kidscornermp3hi",
-  },
-};
+const player = createPlayer({
+  createAudio: () => (typeof Audio === "undefined" ? null : new Audio()),
+  mediaSession,
+  streams: STREAMS,
+  initialStreamId: "xpn",
+  stationArtwork: [
+    { src: publicAsset("icons/icon-192.png"), sizes: "192x192", type: "image/png" },
+    { src: publicAsset("icons/icon-512.png"), sizes: "512x512", type: "image/png" },
+  ],
+  resolveUrl: (src) => new URL(src, window.location.href).href,
+});
 
-const ARTWORK = [
-  { src: publicAsset("icons/icon-192.png"), sizes: "192x192", type: "image/png" },
-  { src: publicAsset("icons/icon-512.png"), sizes: "512x512", type: "image/png" },
-];
+// React reads playback state through useSyncExternalStore (hooks/usePlayer.js),
+// so the player stays the single source of truth instead of being mirrored
+// into component state.
+const playerStore = createStore({
+  status: "paused",
+  playing: false,
+  streamId: "xpn",
+  castAvailable: false,
+});
+const update = (patch) => playerStore.set((current) => ({ ...current, ...patch }));
+export const subscribePlayer = playerStore.subscribe;
+export const getPlayerSnapshot = playerStore.getSnapshot;
 
-let audio = null;
-let currentStream = STREAMS.xpn;
-let onPlayingChange = noop;
-let onStatusChange = noop;
-let playRequest = 0;
-let currentTrack = null;
+// Volume is remembered across launches under the original key.
+const volumeStore = createLocalStore("xpn.volume", 70, (value) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.min(100, Math.max(0, Math.round(n))) : 70;
+});
+export const subscribeVolume = volumeStore.subscribe;
+export const getVolume = volumeStore.getSnapshot;
 
-const setPlayingState = (playing) => {
-  onPlayingChange(Boolean(playing));
-  MediaSession.setPlaybackState({ playbackState: playing ? "playing" : "paused" });
-};
+// The alarm plays at its own volume without touching the listener's saved
+// one, which comes back as soon as playback stops.
+let temporaryVolume = false;
 
-export function initPlayer(setPlaying = noop, setStatus = noop) {
-  onPlayingChange = setPlaying;
-  onStatusChange = setStatus;
-  if (audio) return audio;
-  if (typeof Audio === "undefined") return null;
-
-  audio = new Audio();
-  audio.preload = "none"; // don't buffer a live stream until play is tapped
-
-  // Keep React state honest if playback is interrupted (network drop,
-  // a phone call, another app taking the audio session, etc.)
-  audio.addEventListener("pause", () => {
-    setPlayingState(false);
-  });
-  audio.addEventListener("playing", () => {
-    setPlayingState(true);
-    onStatusChange("playing");
-  });
-  audio.addEventListener("waiting", () => onStatusChange("loading"));
-  // A live stream that errors or runs dry should flip the UI back to
-  // paused — otherwise the app shows "playing" over dead air. (Ignore
-  // the error fired by intentional source detach in pauseStream.)
-  audio.addEventListener("error", () => {
-    if (audio.getAttribute("src")) {
-      setPlayingState(false);
-      onStatusChange("error");
-    }
-  });
-  audio.addEventListener("ended", () => {
-    setPlayingState(false);
-    onStatusChange("paused");
-  });
-
-  // Lock screen / notification / headset buttons drive the same state
-  // as the on-screen play button.
-  MediaSession.setActionHandler({ action: "play" }, () => playStream());
-  MediaSession.setActionHandler({ action: "pause" }, () => pauseStream());
-  MediaSession.setActionHandler({ action: "stop" }, () => pauseStream());
-
-  setMetadata();
-  return audio;
+export function setVolume(percent) {
+  temporaryVolume = false;
+  volumeStore.set(percent);
+  player.setVolume(volumeStore.getSnapshot());
 }
 
-export function playStream() {
-  if (!audio) initPlayer();
-  if (!audio || !currentStream.url) {
-    setPlayingState(false);
-    return;
-  }
-  // For a live stream, re-attach the source on every play so listeners
-  // rejoin "now" instead of resuming a stale buffer.
-  const request = ++playRequest;
-  onStatusChange("loading");
-  audio.src = currentStream.url;
-  audio.play().catch(() => {
-    if (request !== playRequest) return;
-    setPlayingState(false);
-    onStatusChange("error");
-  });
-  setMetadata(currentTrack);
+export function setTemporaryVolume(percent) {
+  temporaryVolume = true;
+  player.setVolume(percent);
+}
+const AUDIBLE = ["loading", "reconnecting", "playing"];
+
+if (typeof window !== "undefined") {
+  // No network is used until play: the element is created with preload=none.
+  player.init(
+    (playing) => update({ playing }),
+    (status) => {
+      update({ status });
+      if (temporaryVolume && !AUDIBLE.includes(status)) {
+        temporaryVolume = false;
+        player.setVolume(volumeStore.getSnapshot());
+      }
+    },
+  );
+  player.setVolume(volumeStore.getSnapshot());
+  update({ castAvailable: player.canCast() });
+  // Coming back online skips the rest of a reconnect backoff.
+  window.addEventListener("online", () => player.resume());
 }
 
-export function pauseStream() {
-  ++playRequest;
-  if (!audio) return;
-  audio.pause();
-  // Detach the source so the stream stops buffering in the background
-  // (saves listener data on mobile).
-  audio.removeAttribute("src");
-  audio.load();
-  setPlayingState(false);
-  onStatusChange("paused");
-}
+export const playStream = player.play;
+export const pauseStream = player.pause;
+export const setMetadata = player.setMetadata;
+export const promptCast = player.promptCast;
 
-export function setStream(id) {
-  const next = STREAMS[id];
-  if (!next || !next.url) return false;
-  if (next.id === currentStream.id) return true;
-  const wasPlaying = audio && !audio.paused;
-  currentStream = next;
-  currentTrack = null;
-  if (wasPlaying) playStream();
-  else {
-    setMetadata();
-    onStatusChange("paused");
-  }
+export function selectStream(id) {
+  if (id !== getPlayerSnapshot().streamId) tap();
+  if (!player.setStream(id)) return false;
+  update({ streamId: id });
   return true;
 }
 
-export function getCurrentStream() {
-  return currentStream;
-}
+// Is the listener waiting on audio (connecting, buffering or retrying)?
+export const isConnecting = (status) => status === "loading" || status === "reconnecting";
 
-export function setPlayerVolume(percent) {
-  if (!audio) initPlayer();
-  if (!audio) return;
-  const value = Number(percent);
-  audio.volume = Math.min(1, Math.max(0, Number.isFinite(value) ? value / 100 : 0.7));
-}
-
-// Hook point for live "now playing" data. Poll the playlist feed and
-// call this with {title, artist, album} — the lock screen and the
-// Android notification will show the current song.
-export function setMetadata(track) {
-  currentTrack = track || null;
-  let artwork = ARTWORK;
-  if (track?.img && typeof window !== "undefined") {
-    try {
-      artwork = [{ src: new URL(track.img, window.location.href).href }];
-    } catch {
-      /* Use station art if the track art is invalid. */
-    }
+export function togglePlayback() {
+  tap("medium");
+  const { playing, status } = getPlayerSnapshot();
+  if (playing || isConnecting(status)) {
+    pauseStream();
+    return;
   }
-  MediaSession.setMetadata({
-    title: track?.title || currentStream.label,
-    artist: track?.artist || currentStream.tagline,
-    album: track?.album || "",
-    artwork,
-  });
+  playStream();
+  // Pressing play is a good moment to refresh the song info.
+  window.dispatchEvent(new Event("wxpn:refresh-playlist"));
 }
 
-export function canCast() {
-  return Boolean(audio?.remote?.prompt || audio?.webkitShowPlaybackTargetPicker);
+// Sleep timer. Playback fades out over the last 20 seconds and then pauses;
+// the saved volume comes back on its own once playback stops (see
+// setTemporaryVolume). Stopping playback any other way cancels the timer.
+const sleepStore = createStore(null); // when playback will stop (epoch ms)
+let sleepTick = null;
+let sleepFading = false;
+export const subscribeSleep = sleepStore.subscribe;
+export const getSleepEndsAt = sleepStore.getSnapshot;
+
+export function cancelSleepTimer() {
+  if (sleepStore.getSnapshot() === null) return;
+  clearInterval(sleepTick);
+  sleepTick = null;
+  // Cancelled mid-fade: back to the listener's volume. Harmless when paused,
+  // and needed if the stream is reconnecting (it would resume faded).
+  if (sleepFading) setVolume(volumeStore.getSnapshot());
+  sleepFading = false;
+  sleepStore.set(null);
 }
 
-export async function promptCast() {
-  if (audio?.remote?.prompt) return audio.remote.prompt();
-  if (audio?.webkitShowPlaybackTargetPicker) return audio.webkitShowPlaybackTargetPicker();
-  throw new Error("Audio output selection is not available in this browser.");
+// Stop playback at a moment (epoch ms), such as the end of the current show.
+// Replacing a timer that is already fading brings the volume back first.
+export function sleepUntil(endsAt) {
+  clearInterval(sleepTick);
+  if (sleepFading) setVolume(volumeStore.getSnapshot());
+  sleepFading = false;
+  sleepStore.set(endsAt);
+  sleepTick = setInterval(() => {
+    const remaining = endsAt - Date.now();
+    if (remaining <= 0) {
+      pauseStream(); // pause first, so restoring the volume is silent
+      cancelSleepTimer();
+      return;
+    }
+    const level = fadeLevel(remaining);
+    if (level < 1) {
+      sleepFading = true;
+      setTemporaryVolume(Math.round(volumeStore.getSnapshot() * level));
+    }
+  }, 1000);
 }
+
+export const startSleepTimer = (minutes) => sleepUntil(Date.now() + minutes * 60000);
+
+// A timer only makes sense while there is audio to stop.
+subscribePlayer(() => {
+  const { status } = getPlayerSnapshot();
+  if (getSleepEndsAt() !== null && ["paused", "error", "blocked"].includes(status)) {
+    cancelSleepTimer();
+  }
+});

@@ -1,0 +1,15 @@
+{
+  "appId": "org.xpn.wxpn",
+  "appName": "WXPN",
+  "webDir": "dist",
+  "backgroundColor": "#faf6ee",
+  "ios": {
+    "contentInset": "never"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_wxpn",
+      "iconColor": "#EF7149"
+    }
+  }
+}

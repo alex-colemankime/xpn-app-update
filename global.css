@@ -1,31 +1,52 @@
+/* Safe areas: Capacitor 8 sets --safe-area-inset-* on Android, where apps
+   now draw edge to edge (required from Android 15/16) and the web view's own
+   env() values can be 0; iOS and browsers fall back to env(). */
+
 /* Shared semantic colors keep every screen and native control theme-aware. */
-:root, :root[data-theme="light"] {
+:root,
+:root[data-theme="light"] {
   color-scheme: light;
-  --bg: #faf9f6;
-  --surface: #f1f0eb;
-  --text: #20211f;
-  --muted: #62635e;
-  --border: #d5d5ce;
+  --bg: #faf8f3;
+  --surface: #f2efe7;
+  --text: #211f1c;
+  --muted: #64605a;
+  --border: #ded9cf;
+  --control-border: #8e897f;
   --accent: #b83d1c;
   --action: #ef7149;
   --action-ink: #241710;
-  --row-alt: #eeede7;
+  --row-alt: #eeeae1;
+  /* A control raised above its track (the chosen station). */
+  --raised: #fffdf8;
+  /* Notices: the page's colors turned around. */
+  --inverse-bg: #2a2724;
+  --inverse-text: #f6f2ea;
+  --inverse-accent: #ff9875;
+  /* The lighter "w" in the wordmark. */
+  --brand-w: #f2b28f;
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #161719;
-  --surface: #202123;
-  --text: #f3f1eb;
-  --muted: #aaa9a3;
-  --border: #383a3a;
+  --bg: #202224;
+  --surface: #292c2f;
+  --text: #eeede8;
+  --muted: #b6b7b3;
+  --border: #44484a;
+  --control-border: #797b7c;
   --accent: #ff9875;
   --action: #ef7149;
   --action-ink: #241710;
-  --row-alt: #202223;
+  --row-alt: #2b2e30;
+  --raised: #32363a;
+  --inverse-bg: #f3f1eb;
+  --inverse-text: #211f1c;
+  --inverse-accent: #b83d1c;
+  --brand-w: #bf917c;
 }
 
 :root {
   font-family:
+    "Figtree Variable",
     "Figtree",
     -apple-system,
     BlinkMacSystemFont,
@@ -33,14 +54,34 @@
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
-  color-scheme: light;
+  /* Layout: the desktop player bar, and on phones the tab bar and the mini
+     player that sits on it. */
+  --player-h: 5.75rem;
+  --tabbar-h: 4.1875rem;
+  --mini-h: 4.75rem;
+  --page-gutter: clamp(28px, 3.5vw, 56px);
+  /* Stacking, lowest to highest. */
+  --z-sidebar: 20;
+  --z-banner: 25;
+  --z-bars: 30;
+  --z-toast: 90;
+  --z-skip: 100;
 }
 * {
   box-sizing: border-box;
 }
+html {
+  /* No layout jump when a screen gains or loses a scrollbar. */
+  scrollbar-gutter: stable;
+  scroll-padding-block: 24px
+    calc(var(--player-h) + 24px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+  /* Stop iOS enlarging text on rotation. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 body {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   -webkit-font-smoothing: antialiased;
 }
 button,
@@ -54,6 +95,8 @@ button {
   background: none;
   border: 0;
   padding: 0;
+  -webkit-user-select: none;
+  user-select: none;
 }
 button,
 a {
@@ -61,9 +104,12 @@ a {
   transition:
     background 0.18s,
     color 0.18s,
-    border-color 0.18s;
+    border-color 0.18s,
+    opacity 0.18s,
+    transform 0.12s;
   touch-action: manipulation;
 }
+/* A long press on a control should not start a text selection. */
 button:disabled {
   cursor: default;
   opacity: 0.6;
@@ -72,7 +118,12 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--border);
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+summary:focus-visible,
+[tabindex="0"]:focus-visible {
+  outline: 2px solid var(--accent);
   outline-offset: 4px;
 }
 a {
@@ -89,6 +140,14 @@ h3,
 p {
   margin-top: 0;
 }
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
 .icon {
   display: inline-flex;
   flex-shrink: 0;
@@ -99,7 +158,7 @@ p {
   position: fixed;
   left: 15px;
   top: -100px;
-  z-index: 100;
+  z-index: var(--z-skip);
   background: var(--action);
   color: var(--action-ink);
   padding: 15px;
@@ -110,42 +169,52 @@ p {
 }
 .app-sidebar {
   position: fixed;
-  z-index: 20;
-  inset: 0 auto 92px 0;
-  width: 224px;
+  z-index: var(--z-sidebar);
+  inset: 0 auto calc(var(--player-h) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))) 0;
+  width: 232px;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--border);
-  padding: 36px 20px 24px;
-  background: var(--surface);
+  padding: calc(36px + var(--safe-area-inset-top, env(safe-area-inset-top))) 20px 24px
+    max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+  background: var(--bg);
   overflow-y: auto;
 }
 .brand {
   color: var(--text);
   display: flex;
   flex-direction: column;
-  margin: 0 12px 52px;
+  margin: 0 12px 56px;
   text-align: left;
 }
 .brand > span {
-  font-size: 53px;
+  font-size: 3.3125rem;
   font-weight: 800;
   letter-spacing: -0.085em;
   line-height: 1;
 }
-.brand-dot,
-.mobile-brand > span {
+.wordmark-w {
+  color: var(--brand-w);
+}
+.wordmark-dot {
   color: var(--accent);
 }
+/* On the station's orange tiles the light "w" is a paler tint of the tile. */
+.station-art .wordmark-w {
+  color: #fcd9c6;
+}
 .brand small {
-  font-size: 10px;
+  display: grid;
+  gap: 3px;
+  text-transform: uppercase;
+  font-size: 0.875rem;
   letter-spacing: 0.15em;
   margin-top: 12px;
   font-weight: 600;
   color: var(--muted);
 }
 .eyebrow {
-  font-size: 12px;
+  font-size: 0.875rem;
   letter-spacing: 0.14em;
   font-weight: 700;
   color: var(--muted);
@@ -154,22 +223,20 @@ p {
   display: flex;
   align-items: center;
   width: 100%;
-  height: 49px;
+  min-height: 49px;
+  padding-block: 10px;
   padding: 0 14px;
-  font-size: 15px;
+  font-size: 0.9375rem;
   gap: 13px;
-  border-radius: 0;
-  margin-bottom: 5px;
+  border-radius: 10px;
+  margin-bottom: 6px;
   font-weight: 500;
   color: var(--muted);
 }
-.nav-button:hover {
-  background: var(--surface);
-  color: var(--text);
-}
 .nav-button.active {
-  background: transparent;
-  color: var(--accent);
+  background: var(--row-alt);
+  color: var(--text);
+  font-weight: 650;
 }
 .nav-button i {
   width: 5px;
@@ -186,113 +253,69 @@ p {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 14px;
-  padding: 7px 2px;
+  font-size: 0.875rem;
+  min-height: 44px;
+  padding: 7px 14px;
   color: var(--muted);
 }
+.settings-button[aria-current="page"] {
+  color: var(--accent);
+  font-weight: 600;
+}
 .main-shell {
-  margin-left: 224px;
+  margin-left: 232px;
   min-width: 0;
-  padding-bottom: 122px;
+  padding-bottom: calc(
+    var(--player-h) + 30px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
+  );
   outline: none;
 }
 .topbar {
-  height: 76px;
-  border-bottom: 1px solid var(--border);
+  display: none;
+}
+.topbar-actions {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0 42px;
-  font-size: 13px;
+  gap: 12px;
+  margin-left: auto;
+}
+.topbar-support {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 4px;
   color: var(--muted);
-}
-.topbar-location b {
-  color: var(--text);
+  font-size: 0.875rem;
   font-weight: 500;
-  margin-left: 7px;
+  text-underline-offset: 4px;
 }
-.topbar > a {
-  display: flex;
-  gap: 10px;
-  align-items: center;
+.topbar-support:hover {
+  color: var(--text);
+  text-decoration: underline;
 }
 .mobile-brand,
 .mobile-settings {
   display: none !important;
 }
 .page-content {
-  max-width: 1530px;
-  padding: 35px 42px 30px;
+  max-width: 1376px;
+  padding: 36px var(--page-gutter) 40px;
   margin: auto;
 }
 .page-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 27px;
+  gap: 20px;
+  margin-bottom: 24px;
 }
+
 h1 {
   font-weight: 650;
-  font-size: clamp(30px, 3.3vw, 49px);
+  font-size: clamp(1.875rem, 3.3vw, 3.0625rem);
   letter-spacing: -0.045em;
   line-height: 1.2;
   margin: 8px 0 0;
-}
-.station-switcher {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 25px;
-}
-.station {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 13px 17px;
-  border-radius: 0;
-  border: 0;
-  color: var(--text);
-  font-size: 14px;
-  border-bottom: 2px solid transparent;
-  min-height: 44px;
-}
-.station > span:not(.icon) {
-  font-size: 12px;
-  color: var(--muted);
-}
-.station strong {
-  font-weight: 600;
-}
-.station.selected {
-  background: transparent;
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.station.selected > span:not(.icon) {
-  color: var(--accent);
-}
-.station i {
-  height: 5px;
-  width: 5px;
-  border-radius: 50%;
-  background: var(--action);
-  margin-left: 6px;
-}
-.live-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--accent);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  font-weight: 700;
-}
-.live-label i,
-.player-live i {
-  width: 6px;
-  height: 6px;
-  background: currentColor;
-  display: inline-block;
-  border-radius: 100%;
 }
 .primary-button {
   display: inline-flex;
@@ -301,14 +324,12 @@ h1 {
   gap: 10px;
   background: var(--action);
   color: var(--action-ink);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
+  min-height: 48px;
   padding: 13px 22px;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
-  border-radius: 7px;
-}
-.primary-button:hover {
-  background: var(--action);
+  border-radius: 12px;
 }
 .section-heading {
   display: flex;
@@ -319,24 +340,22 @@ h1 {
 .section-heading h2 {
   margin: 0;
   font-weight: 600;
-  font-size: 22px;
+  font-size: 1.375rem;
   letter-spacing: -0.025em;
 }
 .subtle {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.875rem;
 }
 .text-button {
   display: inline-flex;
   align-items: center;
   gap: 11px;
-  font-size: 13px;
+  min-height: 44px;
+  font-size: 0.9375rem;
   color: var(--muted);
-  padding: 8px 0;
+  padding: 0;
   font-weight: 500;
-}
-.text-button:hover {
-  color: var(--accent);
 }
 .show-grid {
   display: grid;
@@ -352,7 +371,7 @@ h1 {
   aspect-ratio: 1.5;
   overflow: hidden;
   position: relative;
-  border-radius: 2px;
+  border-radius: 6px;
   background: var(--surface);
 }
 .show-cover img {
@@ -361,28 +380,14 @@ h1 {
   object-fit: cover;
   transition: transform 0.25s;
 }
-.show-card:hover .show-cover img {
-  transform: scale(1.04);
-}
-.round-arrow {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  height: 33px;
-  width: 33px;
-  display: none;
-  place-items: center;
-  border: 1px solid var(--border);
-  background: #15151590;
-  border-radius: 50%;
-}
-.show-card h3 {
-  font-size: 16px;
+.show-card h2 {
+  font-size: 1rem;
   font-weight: 550;
   margin: 13px 0 4px;
 }
 .show-card p {
-  font-size: 13px;
+  overflow-wrap: anywhere;
+  font-size: 0.875rem;
   color: var(--muted);
   margin: 0;
 }
@@ -393,31 +398,50 @@ h1 {
   padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
-.track-number {
-  color: var(--muted);
-  font-size: 13px;
-  width: 18px;
-}
 .track-row > img {
   width: 46px;
   height: 46px;
   object-fit: cover;
   border-radius: 4px;
 }
-.track-row > span:not(.track-number) {
+.track-row > span {
   flex: 1;
   min-width: 0;
 }
 .track-row strong {
-  display: block;
-  font-size: 14px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: 1rem;
   font-weight: 550;
+  overflow-wrap: anywhere;
 }
 .track-row small {
   display: block;
   color: var(--muted);
   margin-top: 5px;
-  font-size: 13px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.track-row .track-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  white-space: normal;
+}
+.track-meta > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.track-meta .track-time {
+  font-size: 0.875rem;
 }
 .icon-button {
   width: 44px;
@@ -429,26 +453,35 @@ h1 {
   border-radius: 50%;
   color: var(--muted);
 }
-.icon-button:hover {
-  background: var(--row-alt);
-  color: var(--accent);
-}
 .saved {
   color: var(--accent);
 }
+/* A saved heart in its artwork's color (art-tint.js picks one per theme). */
+.saved[data-tinted] svg {
+  color: var(--tint-light);
+}
+:root[data-theme="dark"] .saved[data-tinted] svg {
+  color: var(--tint-dark);
+}
+@media (forced-colors: active) {
+  .saved[data-tinted] svg {
+    color: inherit;
+  }
+}
 .player-bar {
   position: fixed;
-  z-index: 30;
+  z-index: var(--z-bars);
   bottom: 0;
   left: 0;
   right: 0;
-  height: 92px;
+  height: calc(var(--player-h) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  padding: 0 34px;
-  background: var(--bg);
-  backdrop-filter: blur(15px);
+  padding: 0 max(34px, var(--safe-area-inset-right, env(safe-area-inset-right)))
+    var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
+    max(34px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+  background: var(--raised);
   border-top: 1px solid var(--border);
 }
 .player-track {
@@ -467,18 +500,18 @@ h1 {
   display: grid;
   place-items: center;
   color: var(--action-ink);
-  font-size: 23px;
+  font-size: 1.4375rem;
   letter-spacing: -0.09em;
   font-weight: 800;
 }
 .player-track strong {
   display: block;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 .player-track small {
   display: block;
-  font-size: 12px;
+  font-size: 0.875rem;
   color: var(--muted);
   margin-top: 5px;
 }
@@ -489,36 +522,39 @@ h1 {
   gap: 16px;
 }
 .player-play {
+  position: relative;
   height: 56px;
   width: 56px;
   flex-shrink: 0;
-  border-radius: 50%;
+  /* A rounded square, in the family of the other buttons. */
+  border-radius: 16px;
   display: grid;
   place-items: center;
   background: var(--action);
   color: var(--action-ink);
 }
-.player-play:hover {
-  background: var(--accent);
-}
 .player-live {
   display: flex;
   align-items: center;
+  min-width: 76px;
   gap: 7px;
-  font-size: 10px;
+  font-size: 0.875rem;
   letter-spacing: 0.1em;
   color: var(--text);
 }
 .player-live i {
-  color: var(--accent);
+  display: inline-block;
   width: 5px;
   height: 5px;
+  border-radius: 50%;
+  color: var(--accent);
+  background: currentColor;
 }
 .player-utilities {
   display: flex;
   justify-content: end;
   align-items: center;
-  gap: 14px;
+  gap: 9px;
   color: var(--muted);
 }
 .player-utilities input {
@@ -534,10 +570,7 @@ h1 {
     padding: 28px;
   }
   .topbar {
-    padding: 0 28px;
-  }
-  .station > span:not(.icon) {
-    display: none;
+    padding: var(--safe-area-inset-top, env(safe-area-inset-top)) 28px 0;
   }
   .show-grid {
     gap: 15px;
@@ -552,64 +585,53 @@ h1 {
   }
   .main-shell {
     margin: 0;
-    padding-bottom: calc(160px + env(safe-area-inset-bottom));
+    padding-bottom: calc(
+      var(--tabbar-h) + var(--mini-h) + 23px +
+        var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
+    );
   }
   .topbar {
-    height: 67px;
-    padding: 0 21px;
-  }
-  .topbar-location {
-    display: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    min-height: calc(64px + var(--safe-area-inset-top, env(safe-area-inset-top)));
+    height: auto;
+    padding: calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top)))
+      max(21px, var(--safe-area-inset-right, env(safe-area-inset-right))) 8px
+      max(21px, var(--safe-area-inset-left, env(safe-area-inset-left)));
   }
   .mobile-brand {
     display: block !important;
-    font-size: 36px;
+    font-size: clamp(28px, 9vw, 36px);
     letter-spacing: -0.08em;
     font-weight: 800;
   }
   .mobile-settings {
     display: inline-flex !important;
   }
-  .topbar > a {
-    display: none;
+  .topbar-actions .mobile-settings {
+    width: 44px;
+    height: 44px;
+  }
+  .topbar-actions .mobile-settings[aria-current="page"] {
+    background: var(--surface);
+    color: var(--accent);
   }
   .page-content {
-    padding: 23px 20px;
+    padding: 23px max(20px, var(--safe-area-inset-right, env(safe-area-inset-right))) 23px
+      max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
   }
   .page-heading {
     margin-bottom: 24px;
   }
-  .page-heading .eyebrow {
-    font-size: 10px;
-  }
   h1 {
-    font-size: 31px;
+    font-size: 1.9375rem;
     margin-top: 7px;
-  }
-  .station-switcher {
-    gap: 7px;
-    margin-bottom: 20px;
-  }
-  .station {
-    padding: 12px 13px;
-    gap: 7px;
-    flex: 1;
-    justify-content: center;
-    font-size: 12px;
-    white-space: nowrap;
-  }
-  .station svg {
-    width: 16px;
-  }
-  .station i {
-    display: none;
-  }
-  .live-label {
-    font-size: 10px;
   }
   .primary-button {
     padding: 12px 16px;
-    font-size: 14px;
+    font-size: 0.875rem;
     gap: 7px;
   }
   .show-grid {
@@ -620,22 +642,24 @@ h1 {
     aspect-ratio: 1.35;
   }
   .section-heading h2 {
-    font-size: 21px;
+    font-size: 1.3125rem;
   }
   .section-heading > .text-button {
-    font-size: 12px;
+    font-size: 0.875rem;
     white-space: nowrap;
   }
-  .show-card h3 {
-    font-size: 15px;
+  .show-card h2 {
+    font-size: 1rem;
   }
   .show-card p {
-    font-size: 12px;
+    overflow-wrap: anywhere;
+    font-size: 0.875rem;
   }
   .player-bar {
-    bottom: calc(67px + env(safe-area-inset-bottom));
-    height: 70px;
-    padding: 0 18px;
+    bottom: calc(var(--tabbar-h) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+    height: var(--mini-h);
+    padding: 0 max(18px, var(--safe-area-inset-right, env(safe-area-inset-right))) 0
+      max(18px, var(--safe-area-inset-left, env(safe-area-inset-left)));
     grid-template-columns: minmax(0, 1fr) auto;
   }
   .player-track {
@@ -644,13 +668,13 @@ h1 {
   .station-mark {
     width: 40px;
     height: 40px;
-    font-size: 20px;
+    font-size: 1.25rem;
   }
   .player-track strong {
-    font-size: 13px;
+    font-size: 0.875rem;
   }
   .player-track small {
-    font-size: 11px;
+    font-size: 0.875rem;
   }
   .player-center {
     gap: 0;
@@ -662,41 +686,36 @@ h1 {
   .player-play {
     height: 48px;
     width: 48px;
+    border-radius: 14px;
     background: var(--action);
     color: var(--action-ink);
   }
   .mobile-nav {
     position: fixed;
-    z-index: 30;
+    z-index: var(--z-bars);
     bottom: 0;
     left: 0;
     right: 0;
     display: flex;
-    padding: 0 10px env(safe-area-inset-bottom);
-    background: var(--surface);
+    padding: 0 10px var(--safe-area-inset-bottom, env(safe-area-inset-bottom));
+    background: var(--bg);
     border-top: 1px solid var(--border);
   }
   .mobile-nav button {
     display: flex;
+    min-width: 0;
+    overflow-wrap: anywhere;
     flex: 1;
-    height: 67px;
+    height: var(--tabbar-h);
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 6px;
     color: var(--muted);
-    font-size: 11px;
+    font-size: 0.875rem;
   }
   .mobile-nav button.active {
     color: var(--accent);
-  }
-}
-@media (max-width: 370px) {
-  .page-content {
-    padding: 20px 14px;
-  }
-  .station {
-    padding: 11px 8px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -727,52 +746,75 @@ h1 {
   gap: 15px;
   padding: 20px 2px 0;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
+/* The heading and the station tabs share one rule, so the stations read as
+   part of the header rather than floating above the stage. */
 .listen-heading {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   gap: 24px;
   margin-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+}
+.listen-heading h1 {
+  padding-bottom: 12px;
+}
+.station-switcher.segmented {
+  border-bottom: 0;
+  gap: 6px;
+}
+.station-switcher.segmented button {
+  min-height: 48px;
+  padding: 0 14px;
+  white-space: nowrap;
+  margin-bottom: -1px;
+  font-size: 1rem;
+  font-weight: 600;
 }
 .listen-heading h1,
 .page-heading h1 {
-  font-size: 32px;
+  font-size: clamp(2rem, 2.5vw, 2.25rem);
   margin: 0;
-  letter-spacing: -0.035em;
-}
-.listen-heading .station-switcher {
-  margin: 0;
-  gap: 6px;
-}
-.listen-heading .station {
-  padding: 12px 15px;
+  letter-spacing: -0.045em;
 }
 .live-workspace {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
-  gap: 36px;
+  grid-template-columns: minmax(300px, 0.95fr) minmax(320px, 1.05fr);
+  gap: clamp(32px, 4vw, 64px);
   align-items: start;
 }
 .now-card {
-  padding: 0 24px;
-  border: 0;
-  background: transparent;
-  border-radius: 0;
+  min-width: 0;
+  /* One column width for the band, the artwork, the song and Listen live,
+     also bounded by the window's height so Listen live stays above the
+     player bar on a laptop screen. */
+  --stage: min(400px, 100%, max(240px, calc(100svh - 590px)));
+}
+.live-lists {
+  min-width: 0;
 }
 
+/* The stage: artwork, the song, and the station's main action, in one
+   column the width of the artwork, so every edge lines up. */
+.now-stage {
+  width: var(--stage);
+  margin: 0 auto;
+}
 .now-art {
-  width: min(310px, 100%);
-  margin: 0 auto 26px;
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  margin: 0 0 22px;
   aspect-ratio: 1;
 }
 .now-art > img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  box-shadow: none;
-  border-radius: 0;
+  border-radius: 10px;
+  box-shadow: 0 16px 36px -22px rgb(0 0 0 / 0.45);
 }
 .station-art {
   background: var(--action);
@@ -782,76 +824,105 @@ h1 {
   justify-content: center;
   align-items: center;
   color: var(--action-ink);
-  border-radius: 4px;
+  border-radius: 10px;
   padding: 20px;
+  box-shadow: none;
 }
 .station-art strong {
-  font-size: clamp(32px, 5vw, 64px);
+  font-size: clamp(2rem, 5vw, 4rem);
   font-weight: 800;
   letter-spacing: -0.08em;
 }
-.station-art span {
-  font-size: 14px;
-  margin-top: 8px;
-  text-align: center;
+.now-meta {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
 }
 .now-info {
-  text-align: center;
+  flex: 1;
+  min-width: 0;
 }
 .now-info .eyebrow {
-  font-size: 11px;
+  font-size: 0.875rem;
   color: var(--muted);
 }
 .now-info h2 {
-  font-size: clamp(26px, 2.5vw, 36px);
-  font-weight: 600;
-  line-height: 1.14;
-  letter-spacing: -0.025em;
-  margin: 10px 0 8px;
+  font-size: clamp(1.5rem, 1.9vw, 1.75rem);
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 8px 0 4px;
   overflow-wrap: anywhere;
 }
 .now-artist {
-  font-size: 19px;
-  margin: 0 0 6px;
+  font-size: 1.125rem;
+  margin: 0 0 2px;
   color: var(--text);
 }
 .now-album {
-  font-size: 14px;
+  font-size: 0.875rem;
   margin: 0;
   color: var(--muted);
 }
+/* Heart and menu beside the title, as in a music app's player. */
+.now-song-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 2px;
+  margin: 24px -10px 0 0;
+}
 .now-controls {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 23px;
-  margin: 26px 0 16px;
+  align-items: stretch;
+  gap: 12px;
+  margin: 22px 0 6px;
 }
-.now-controls .primary-button {
-  min-width: 145px;
+/* The station's main action, labeled: "Listen live" / "Pause". */
+.now-controls .hero-play {
+  flex: 1;
+  min-height: 56px;
+  padding: 0 24px;
+  border-radius: 16px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.005em;
 }
-.control-space {
-  width: 44px;
+.hero-play[data-busy] {
+  animation: busy-pulse 0.9s ease-in-out infinite alternate;
+}
+/* Cast / AirPlay, one tap from the main action, as on a station's own app. */
+.hero-cast {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  min-height: 56px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  color: var(--text);
+  transition: background-color 0.15s;
+}
+.hero-cast:hover {
+  background: var(--row-alt);
 }
 .now-status {
-  font-size: 12px;
+  font-size: 0.875rem;
   color: var(--muted);
-  text-align: center;
-  min-height: 34px;
+  min-height: 20px;
   line-height: 1.5;
 }
 .now-footer {
-  margin-top: 10px;
+  margin-top: 8px;
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
   min-height: 51px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.875rem;
 }
 .now-footer .text-button {
-  font-size: 12px;
+  font-size: 0.875rem;
 }
 .recent-panel > .section-heading,
 .saved-preview > .section-heading {
@@ -859,7 +930,7 @@ h1 {
   margin-bottom: 10px;
 }
 .live-lists .section-heading h2 {
-  font-size: 21px;
+  font-size: 1.3125rem;
 }
 .live-lists .track-row {
   padding: 12px 0;
@@ -870,14 +941,15 @@ h1 {
   height: 46px;
 }
 .track-time {
-  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
   color: var(--muted);
   white-space: nowrap;
 }
 .track-row > .icon-button {
-  width: 40px;
+  width: 44px;
 }
-.playlist-expand {
+.playlist-more {
   margin-top: 10px;
 }
 .saved-preview {
@@ -886,7 +958,7 @@ h1 {
   padding-top: 20px;
 }
 .saved-empty {
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.6;
   color: var(--muted);
   margin: 3px 0;
@@ -899,7 +971,7 @@ h1 {
   border-radius: 8px;
 }
 .playlist-empty p {
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.6;
   margin: 14px 0 3px;
 }
@@ -919,12 +991,6 @@ h1 {
   white-space: nowrap;
   overflow: hidden;
 }
-.player-live {
-  min-width: 76px;
-}
-.player-utilities {
-  gap: 9px;
-}
 .toolbar {
   display: flex;
   align-items: center;
@@ -934,6 +1000,7 @@ h1 {
 }
 .segmented {
   display: inline-flex;
+  flex-wrap: wrap;
   padding: 0;
   border: 0;
   background: transparent;
@@ -942,25 +1009,74 @@ h1 {
   border-bottom: 1px solid var(--border);
 }
 .segmented button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
   min-height: 44px;
   border-radius: 0;
   padding: 0 17px;
-  font-size: 14px;
+  font-size: 1rem;
   color: var(--muted);
   border-bottom: 2px solid transparent;
+  font-weight: 600;
+}
+.tab-count {
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
 }
 .segmented button.active {
   color: var(--accent);
   background: transparent;
   border-color: var(--accent);
 }
+/* A setting picked from a few options (the station, the color theme): a
+   contained control, with the choice raised on its track. */
+.segmented-pill {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--row-alt);
+}
+.segmented-pill button {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 9px;
+  color: var(--muted);
+  font-weight: 600;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  transition:
+    background-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
+}
+.segmented-pill button:hover {
+  color: var(--text);
+}
+.segmented-pill button.active {
+  /* The pick reads at a glance in both themes: the same inverted fill as an
+     active filter chip, not a shade one step off the track. */
+  background: var(--text);
+  color: var(--bg);
+  border: 0;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+}
 .search-field {
   display: flex;
   min-height: 44px;
   align-items: center;
   gap: 11px;
-  border: 1px solid var(--border);
-  border-radius: 7px;
+  border: 1px solid var(--control-border);
+  border-radius: 12px;
+  background: var(--surface);
+  min-width: 0;
   padding: 0 14px;
   color: var(--muted);
 }
@@ -972,11 +1088,21 @@ h1 {
   color: var(--text);
   outline: none;
   padding: 10px 0;
-  font-size: 14px;
+  font-size: 1rem;
 }
 .search-field:focus-within {
-  outline: 2px solid var(--border);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+.search-field input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+.search-clear {
+  margin-right: -10px;
+}
+.search-field input::placeholder {
+  color: var(--muted);
+  opacity: 1;
 }
 .all-shows {
   row-gap: 30px;
@@ -986,19 +1112,20 @@ h1 {
 }
 .day-picker {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 4px 0 22px;
 }
 .day-picker button {
-  flex: 1;
+  min-height: 44px;
+  flex: 1 0 2.2em;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  min-height: 43px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 .day-picker button.active {
   background: var(--action);
@@ -1024,14 +1151,15 @@ h1 {
   padding: 20px 0;
 }
 .schedule-row > time {
+  font-variant-numeric: tabular-nums;
   width: 64px;
   flex-shrink: 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .schedule-row time small {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.875rem;
   margin-top: 6px;
 }
 .schedule-row > img {
@@ -1046,30 +1174,33 @@ h1 {
 }
 .schedule-info > strong {
   display: block;
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 550;
 }
 .schedule-info > span {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--muted);
   display: block;
   margin-top: 5px;
 }
 .schedule-info p {
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.5;
   color: var(--muted);
   margin: 10px 0 0;
   max-width: 600px;
 }
 .data-note {
-  font-size: 13px;
+  font-size: 0.875rem;
   color: var(--muted);
   line-height: 1.65;
   margin: 18px 0;
 }
+/* Links inside running text are underlined, not marked by color alone. */
 .data-note a {
   color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .empty-state {
   padding: 70px 25px;
@@ -1082,15 +1213,15 @@ h1 {
 .empty-state > .icon {
   color: var(--accent);
 }
-.empty-state h3 {
-  font-size: 23px;
+.empty-state h2 {
+  font-size: 1.4375rem;
   font-weight: 550;
   letter-spacing: -0.02em;
   margin: 22px 0 12px;
 }
 .empty-state p {
   color: var(--muted);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.65;
   max-width: 410px;
   margin: 0 auto 25px;
@@ -1100,15 +1231,12 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: 9px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  border: 1px solid var(--control-border);
+  border-radius: 10px;
   padding: 12px 16px;
   min-height: 44px;
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: 500;
-}
-.secondary-button:hover {
-  background: var(--surface);
 }
 .saved-show {
   position: relative;
@@ -1122,6 +1250,7 @@ h1 {
   width: 100%;
 }
 .saved-show .show-card p {
+  overflow-wrap: anywhere;
   padding-right: 36px;
 }
 .detail-dialog {
@@ -1138,27 +1267,51 @@ h1 {
   background: var(--surface);
   color: var(--text);
   overflow-y: auto;
+  /* Scrolling to the end of the sheet must not scroll the page behind it. */
+  overscroll-behavior: contain;
+  /* Slides in from the edge it is attached to; @starting-style gives the
+     first frame. Browsers without it simply show the sheet. */
+  transition:
+    translate 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.2s ease-out;
+}
+@starting-style {
+  .detail-dialog[open] {
+    translate: 48px 0;
+    opacity: 0;
+  }
 }
 .detail-dialog::backdrop {
   background: #0009;
   backdrop-filter: blur(3px);
+  transition: opacity 0.25s ease-out;
+}
+@starting-style {
+  .detail-dialog[open]::backdrop {
+    opacity: 0;
+  }
 }
 .dialog-header {
+  /* Close stays in reach however far down the sheet the listener scrolls. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
   display: flex;
   justify-content: space-between;
   gap: 20px;
-  padding: 26px 28px 24px;
+  padding: calc(26px + var(--safe-area-inset-top, env(safe-area-inset-top))) 28px 24px;
   border-bottom: 1px solid var(--border);
 }
 .dialog-header h2 {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.2;
   margin: 10px 0 0;
 }
 .dialog-header .eyebrow {
-  font-size: 11px;
+  font-size: 0.875rem;
 }
 .detail-body {
   padding: 28px;
@@ -1176,19 +1329,19 @@ h1 {
 }
 .show-detail-hero h3 {
   font-weight: 550;
-  font-size: 20px;
+  font-size: 1.25rem;
   margin: 9px 0;
 }
 .show-detail-hero p {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 .show-detail-hero .eyebrow {
-  font-size: 10px;
+  font-size: 0.875rem;
 }
 .show-description {
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.75;
   color: var(--muted);
   margin: 25px 0;
@@ -1201,13 +1354,13 @@ h1 {
   flex-wrap: wrap;
 }
 .detail-body .section-heading > h3 {
-  font-size: 20px;
+  font-size: 1.25rem;
   margin: 0;
   font-weight: 550;
 }
 .sample-label {
   display: inline-block;
-  font-size: 11px;
+  font-size: 0.875rem;
   color: var(--muted);
   background: var(--surface);
   padding: 5px 8px;
@@ -1239,13 +1392,13 @@ h1 {
   min-width: 0;
 }
 .episode-open strong {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 550;
   display: block;
   line-height: 1.4;
 }
 .episode-open small {
-  font-size: 13px;
+  font-size: 0.875rem;
   color: var(--muted);
   display: block;
   margin-top: 5px;
@@ -1261,7 +1414,7 @@ h1 {
   margin-bottom: 24px;
 }
 .episode-title {
-  font-size: 28px;
+  font-size: 1.75rem;
   font-weight: 600;
   margin: 10px 0;
 }
@@ -1270,141 +1423,214 @@ h1 {
   align-items: flex-start;
   gap: 15px;
   margin-top: 27px;
-  padding: 20px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  border-left: 2px solid var(--accent);
+  padding: 18px 20px;
+  border-radius: 12px;
+  background: var(--row-alt);
 }
 .info-note p {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.6;
   margin: 8px 0;
 }
-.preview-notice {
+.playlist-more {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
   align-items: center;
-  gap: 13px;
-  padding: 12px 16px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  margin-bottom: 24px;
-  border-left: 2px solid var(--accent);
+  gap: 8px 16px;
 }
-.preview-notice p {
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--muted);
-  margin: 0;
-}
-.preview-notice a {
-  text-decoration: underline;
-}
+/* Concert filters: search, then rows of chips (When, Region, Show only). */
 .concert-filters {
-  display: flex;
+  display: grid;
   gap: 12px;
+  margin-bottom: 8px;
 }
-.concert-filters .search-field {
-  flex: 1;
+.concert-refine {
+  border-bottom: 1px solid var(--border);
 }
-select {
-  min-height: 44px;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 14px;
-  padding: 8px 28px 8px 13px;
-  max-width: 100%;
-}
-.filter-checks {
+.concert-refine summary {
   display: flex;
-  gap: 24px;
   align-items: center;
-  margin: 22px 0;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
-.filter-checks label {
+.concert-refine summary::-webkit-details-marker {
+  display: none;
+}
+.concert-refine[open] summary > .icon {
+  rotate: 180deg;
+}
+.filter-count {
+  margin-left: 12px;
+  color: var(--accent);
+  font-size: 0.875rem;
+}
+.filter-options {
+  display: grid;
+  gap: 20px;
+  padding: 8px 0 24px;
+}
+.filter-label {
+  margin: 0 0 10px;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.chips {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  color: var(--muted);
 }
-.filter-checks input {
-  width: 17px;
-  height: 17px;
-  accent-color: var(--action);
+/* Between groups of chips in one row. */
+.chips-divider {
+  width: 1px;
+  height: 22px;
+  margin: 0 4px;
+  background: var(--border);
+  flex-shrink: 0;
 }
-.filter-checks > span {
-  margin-left: auto;
-  font-size: 13px;
-  color: var(--muted);
+.chip {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--control-border);
+  border-radius: 999px;
+  font-size: 1rem;
+  color: var(--text);
+  white-space: nowrap;
 }
-.concert-row {
+.chip[aria-pressed="true"] {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
+}
+@media (hover: hover) {
+  .chip:hover {
+    border-color: var(--text);
+  }
+}
+.concert-count {
   display: flex;
-  gap: 24px;
   align-items: center;
-  padding: 22px 16px;
+  gap: 14px;
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.concert-count .text-button {
+  min-height: 44px;
+  color: var(--accent);
+}
+.show-more {
+  display: flex;
+  margin: 24px auto 0;
+}
+.concert-partial {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 8px 0;
+}
+/* Rows of long lists skip layout and paint while off screen. */
+.concert-row,
+.schedule-row,
+.track-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 72px;
+}
+
+/* A concert: the date, then who and where, with Tickets and (once saved)
+   Add to calendar as quiet text actions under it; the heart at the end. */
+.concert-row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  column-gap: 20px;
+  align-items: start;
+  padding: 16px 0;
   border-bottom: 1px solid var(--border);
 }
 .concert-date {
-  width: 61px;
-  padding: 9px 8px;
+  font-variant-numeric: tabular-nums;
   text-align: center;
-  flex-shrink: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  border-right: 1px solid var(--border);
+  padding-top: 2px;
 }
 .concert-date > span {
-  font-size: 11px;
+  font-size: 0.875rem;
   display: block;
   text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--muted);
 }
 .concert-date strong {
-  font-size: 28px;
+  font-size: 1.625rem;
   display: block;
   font-weight: 600;
-  margin: 2px 0;
+  line-height: 1.15;
 }
 .concert-date small {
-  font-size: 11px;
+  font-size: 0.875rem;
   color: var(--muted);
 }
-.concert-info {
-  flex: 1;
+.concert-body {
   min-width: 0;
 }
-.concert-info h3 {
-  font-size: 21px;
-  font-weight: 550;
-  margin: 6px 0;
-  letter-spacing: -0.02em;
+.concert-info {
+  display: block;
 }
-.concert-info p {
-  font-size: 15px;
-  color: var(--muted);
-  margin: 0 0 6px;
-}
-.concert-info small {
-  font-size: 12px;
-  color: var(--muted);
-}
-.welcomes {
+.concert-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
   color: var(--accent);
-  font-size: 10px;
+  font-size: 0.875rem;
   font-weight: 650;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.concert-info h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 2px 0;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+}
+.concert-meta {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--muted);
+  margin: 0;
+}
+.concert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 18px;
+  margin-top: 2px;
+}
+.concert-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.concert-row > .icon-button {
+  margin-top: -6px;
 }
 .loading-state {
   padding: 45px 20px;
   text-align: center;
 }
 .settings-grid {
+  max-width: 1040px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 28px;
@@ -1414,14 +1640,14 @@ select {
   background: transparent;
   border-radius: 0;
   padding: 24px 0;
-  margin-bottom: 25px;
+  margin-bottom: 0;
   border-top: 1px solid var(--border);
 }
 .settings-panel h2 {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 21px;
+  font-size: 1.3125rem;
   font-weight: 550;
   letter-spacing: -0.02em;
   margin: 0 0 8px;
@@ -1435,9 +1661,62 @@ select {
   margin: 30px 0 20px;
 }
 .alarm-time .eyebrow {
-  font-size: 10px;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+}
+.alarm-time-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+/* The system's own picker icon gives way to a clock set to the alarm. */
+.alarm-time input::-webkit-calendar-picker-indicator {
+  display: none;
+}
+.clock-button {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-top: 7px;
+  border-radius: 50%;
+  color: var(--text);
+}
+.clock-face {
+  width: 44px;
+  height: 44px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+}
+.clock-face > circle:first-child {
+  stroke-width: 2.4;
+}
+.clock-tick {
+  stroke-width: 1.6;
+  opacity: 0.5;
+}
+.clock-hour,
+.clock-minute {
+  transform-origin: 20px 20px;
+  transition: rotate 0.4s ease;
+}
+.clock-hour {
+  stroke-width: 3;
+}
+.clock-minute {
+  stroke-width: 2.2;
+  stroke: var(--accent);
+}
+.clock-pin {
+  fill: currentColor;
+  stroke: none;
 }
 .alarm-time input {
+  flex: 1;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
   font-family: inherit;
   display: block;
   width: 100%;
@@ -1445,25 +1724,81 @@ select {
   color: var(--text);
   border: 0;
   margin-top: 7px;
-  font-size: 44px;
+  font-size: 2.75rem;
   letter-spacing: -0.035em;
 }
 .repeat-days {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin: 18px 0 28px;
 }
 .repeat-days button {
-  flex: 1;
-  font-size: 12px;
+  flex: 1 0 2.2em;
+  min-height: 44px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  min-height: 40px;
+  border-radius: 8px;
 }
+/* Chosen days are filled, so they read at a glance and not by color alone. */
 .repeat-days button.active {
+  color: var(--action-ink);
+  background: var(--action);
+  border-color: var(--action);
+}
+/* A setting with a few choices: name above, choices in one row below. */
+.setting-choice {
+  display: grid;
+  gap: 10px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.setting-choice-label {
+  font-size: 0.9375rem;
+}
+.setting-choice .segmented-pill {
+  display: grid;
+  width: 100%;
+  max-width: 440px;
+}
+.setting-choice .segmented-pill button {
+  min-height: 44px;
+  padding: 0 8px;
+  font-size: 1rem;
+}
+.segmented-pill button:disabled {
+  opacity: 0.45;
+}
+.service-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+.service-row {
+  min-height: 56px;
+  text-align: left;
+}
+.service-list li:last-child .service-row {
+  border-bottom: 0;
+}
+.service-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.service-connect {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--accent);
-  background: var(--surface);
-  border-color: var(--accent);
+  font-weight: 600;
+}
+.service-row:hover .service-connect {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .setting-row {
   min-height: 65px;
@@ -1472,12 +1807,13 @@ select {
   justify-content: space-between;
   gap: 16px;
   border-bottom: 1px solid var(--border);
-  font-size: 15px;
+  font-size: 0.9375rem;
   padding: 10px 0;
 }
 .setting-row > span > small {
+  font-variant-numeric: tabular-nums;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.875rem;
   display: block;
   margin-top: 4px;
 }
@@ -1493,12 +1829,19 @@ select {
   width: 100%;
 }
 .switch {
+  position: relative;
   width: 45px;
   height: 27px;
   padding: 3px;
   border-radius: 20px;
   background: var(--muted);
   flex-shrink: 0;
+}
+/* A larger invisible hit area than the drawn switch. */
+.switch::after {
+  content: "";
+  position: absolute;
+  inset: -9px -4px;
 }
 .switch > span {
   display: block;
@@ -1509,42 +1852,129 @@ select {
   transition: transform 0.15s;
 }
 .switch.checked {
-  background: var(--action);
+  background: var(--accent);
 }
 .switch.checked > span {
   transform: translateX(18px);
   background: var(--bg);
 }
+/* The wake-up alarm: the one moment the app must be impossible to miss. */
 .alarm-banner {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-banner);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 15px;
-  background: var(--text);
-  padding: 15px 30px;
+  gap: 10px 12px;
+  background: var(--action);
+  color: var(--action-ink);
+  padding: 12px max(24px, var(--safe-area-inset-right, env(safe-area-inset-right))) 12px
+    max(24px, var(--safe-area-inset-left, env(safe-area-inset-left)));
 }
 .alarm-banner > span {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  min-width: 10ch;
 }
 .alarm-banner button {
-  font-size: 14px;
-  padding: 6px;
-  text-decoration: underline;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1.5px solid currentColor;
+  font-size: 0.875rem;
+  font-weight: 650;
 }
+.alarm-banner button.alarm-snooze {
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--action-ink);
+}
+@media (max-width: 767px) {
+  /* Label on its own line, then two equal thumb-sized actions. */
+  .alarm-banner > span {
+    flex-basis: 100%;
+  }
+  .alarm-banner button {
+    flex: 1;
+  }
+}
+/* Notices rise from the bottom as a dark (in dark mode, light) bar, so they
+   stand apart from the page: optional artwork or icon, a title and a line,
+   one text action, and a close button when there is an action. */
 .toast {
   position: fixed;
-  z-index: 100;
-  bottom: 115px;
+  z-index: var(--z-toast);
+  bottom: calc(var(--player-h) + 16px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
   left: 50%;
   transform: translateX(-50%);
-  padding: 14px 20px;
-  max-width: calc(100% - 40px);
-  width: max-content;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  font-size: 14px;
-  box-shadow: 0 8px 30px #0008;
+  width: min(440px, calc(100% - 32px));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 6px 10px 16px;
+  min-height: 52px;
+  border-radius: 14px;
+  color: var(--inverse-text);
+  background: var(--inverse-bg);
+  box-shadow:
+    0 2px 6px rgb(0 0 0 / 0.12),
+    0 12px 32px rgb(0 0 0 / 0.22);
+  font-size: 0.875rem;
+  line-height: 1.35;
+  /* Rises into place. */
+  transition:
+    opacity 0.2s ease-out,
+    translate 0.2s ease-out;
+}
+.toast:not(.has-action) {
+  padding-right: 16px;
+}
+.toast-media {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-left: -6px;
+}
+.toast-icon {
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--inverse-text) 14%, transparent);
+}
+.toast-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+.toast-text strong {
+  font-weight: 650;
+}
+.toast-text strong + span {
+  font-size: 0.875rem;
+  opacity: 0.75;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.toast-action {
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: var(--inverse-accent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.toast-close {
+  width: 40px;
+  height: 40px;
+  color: inherit;
+  opacity: 0.7;
 }
 @media (max-width: 1200px) {
   .live-workspace {
@@ -1552,10 +1982,7 @@ select {
     grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
   }
   .now-card {
-    padding: 20px 22px 0;
-  }
-  .now-art {
-    width: min(240px, 100%);
+    --stage: min(340px, 100%, max(240px, calc(100svh - 590px)));
   }
   .listen-heading {
     flex-wrap: wrap;
@@ -1591,103 +2018,97 @@ select {
     margin-left: 7px;
   }
   .brand small {
-    font-size: 9px;
+    font-size: 0.875rem;
+    letter-spacing: 0.1em;
   }
   .live-workspace {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .now-card {
-    max-width: 570px;
-  }
-  .now-art {
-    width: 260px;
+    --stage: min(380px, 100%, max(240px, calc(100svh - 590px)));
   }
   .all-shows {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 @media (max-width: 767px) {
+  /* On phones the station tabs hang from the app header: same rule, full
+     width, left aligned. */
   .listen-heading {
-    margin: 0 0 20px;
     display: block;
+    margin: -23px calc(-1 * max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)))) 18px;
+    padding: 0 max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
   }
+  .main-shell[data-screen="listen"] .topbar {
+    border-bottom-color: transparent;
+  }
+  /* Hidden visually on phones, where the tab bar names the screen, but kept
+     for screen readers so the page still has a heading. */
   .listen-heading h1 {
-    display: none;
-  }
-  .listen-heading .station-switcher {
-    margin: 0;
-  }
-  .listen-heading .station {
-    min-height: 42px;
-    padding: 10px;
-    font-size: 14px;
-  }
-  .listen-heading .station > span {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
   }
   .live-workspace {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 27px;
   }
-  .now-card {
-    padding: 18px 22px 0;
+  .station-switcher.segmented {
+    gap: 2px;
+  }
+  .station-switcher.segmented button:first-child {
+    padding-left: 0;
   }
 
-
+  /* Sized so the band, the artwork, the song and Listen live all fit
+     above the tab bar on a typical phone. */
+  .now-card {
+    --stage: min(100%, max(260px, 38svh));
+  }
   .now-art {
-    width: min(225px, 70vw);
-    margin: 22px auto 21px;
+    margin-bottom: 18px;
   }
   .now-info h2 {
-    font-size: 28px;
+    font-size: 1.5rem;
   }
-  .now-info .eyebrow {
-    font-size: 11px;
-  }
-  .now-artist {
-    font-size: 18px;
-  }
-  .now-album {
-    font-size: 14px;
+  .now-song-actions {
+    margin-top: 20px;
   }
   .now-controls {
-    margin: 22px 0 13px;
-    gap: 23px;
-  }
-  .now-controls .primary-button {
-    min-width: 152px;
-    min-height: 46px;
-    font-size: 16px;
+    margin: 18px 0 4px;
   }
   .now-status {
-    font-size: 12px;
-    min-height: 30px;
+    font-size: 0.875rem;
+    min-height: 20px;
   }
   .now-footer {
     margin-top: 4px;
     min-height: 48px;
   }
   .now-footer .text-button {
-    font-size: 12px;
+    font-size: 0.875rem;
   }
   .recent-panel > .section-heading {
     margin-bottom: 6px;
   }
   .live-lists .section-heading h2 {
-    font-size: 22px;
+    font-size: 1.375rem;
   }
   .live-lists .track-row {
     padding: 13px 0;
-    gap: 12px;
+    gap: 8px;
   }
   .track-time {
-    font-size: 11px;
+    font-size: 0.875rem;
   }
   .live-lists .track-row strong {
-    font-size: 15px;
+    font-size: 1rem;
   }
   .track-row .icon-button {
-    width: 36px;
+    width: 44px;
   }
   .saved-preview {
     margin-top: 24px;
@@ -1702,7 +2123,7 @@ select {
     margin-bottom: 24px;
   }
   .page-heading h1 {
-    font-size: 29px;
+    font-size: 1.8125rem;
   }
   .toolbar {
     margin: 20px 0;
@@ -1714,15 +2135,30 @@ select {
   }
   .segmented button {
     flex: 1;
-    font-size: 13px;
+    font-size: 1rem;
     padding: 0 9px;
+    font-weight: 600;
+  }
+  .tab-count {
+    font-size: 0.875rem;
+  }
+  .toolbar .segmented {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .toolbar .segmented button {
+    flex: 1 0 auto;
+    white-space: nowrap;
+    gap: 5px;
+    padding: 10px 6px;
+    font-weight: 600;
   }
   .day-picker {
     gap: 5px;
   }
   .day-picker button {
-    min-height: 41px;
-    font-size: 12px;
+    min-height: 44px;
+    font-size: 0.875rem;
   }
   .schedule-row {
     gap: 12px;
@@ -1730,17 +2166,17 @@ select {
   }
   .schedule-row > time {
     width: 51px;
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .schedule-row > img {
     width: 47px;
     height: 47px;
   }
   .schedule-info > strong {
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
   .schedule-info > span {
-    font-size: 13px;
+    font-size: 0.875rem;
   }
   .schedule-info p {
     display: none;
@@ -1748,63 +2184,54 @@ select {
   .all-shows {
     row-gap: 24px;
   }
+  .show-card h2 {
+    overflow-wrap: anywhere;
+  }
   .all-shows .show-cover {
     aspect-ratio: 1;
   }
   .concert-row {
-    gap: 14px;
-    padding: 21px 12px;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    column-gap: 14px;
+    padding: 14px 0;
   }
-  .concert-info h3 {
-    font-size: 18px;
+  .concert-date strong {
+    font-size: 1.4375rem;
   }
-  .concert-info p {
-    font-size: 14px;
-    line-height: 1.5;
+  .concert-info h2 {
+    font-size: 1.0625rem;
   }
-  .concert-info p span {
-    display: block;
+  /* Chip rows scroll sideways on a phone rather than wrapping into a wall. */
+  .chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 calc(-1 * max(20px, var(--safe-area-inset-left, env(safe-area-inset-left))));
+    padding: 0 max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+    scrollbar-width: none;
+    /* Chips fade at the screen's edge, so the row reads as one to swipe. */
+    mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
   }
-  .concert-info small {
-    font-size: 12px;
+  .chips::-webkit-scrollbar {
+    display: none;
   }
-  .filter-checks {
-    gap: 13px;
+  .filter-options .chips {
     flex-wrap: wrap;
-  }
-  .filter-checks label {
-    font-size: 13px;
-  }
-  .filter-checks > span {
-    width: 100%;
+    overflow: visible;
     margin: 0;
-  }
-  .concert-filters > label:not(.search-field) {
-    flex: 1;
-    min-width: 0;
-  }
-  .concert-filters select {
-    width: 100%;
-    font-size: 13px;
-  }
-  .ticket-link {
-    font-size: 12px;
-    padding: 8px;
+    padding: 0;
+    mask-image: none;
   }
   .settings-panel {
     padding: 22px 0;
   }
   .settings-panel h2 {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
   .settings-grid {
     display: block;
   }
   .setting-row {
-    font-size: 14px;
-  }
-  .setting-row select {
-    max-width: 170px;
+    font-size: 0.875rem;
   }
   .setting-row input[type="range"] {
     width: 115px;
@@ -1813,16 +2240,29 @@ select {
     gap: 4px;
   }
   .repeat-days button {
-    font-size: 11px;
+    font-size: 0.875rem;
   }
+  /* On phones the sheet rises from the bottom, sized to its content. */
   .detail-dialog {
+    inset: auto 0 0 0;
     width: 100%;
+    height: auto;
+    max-height: calc(100dvh - 40px - var(--safe-area-inset-top, env(safe-area-inset-top)));
+    border-left: 0;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -12px 40px #0006;
+  }
+  @starting-style {
+    .detail-dialog[open] {
+      translate: 0 64px;
+      opacity: 0;
+    }
   }
   .dialog-header {
-    padding: 22px;
+    padding: 22px 22px 18px;
   }
   .detail-body {
-    padding: 22px;
+    padding: 22px 22px calc(28px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
   }
   .show-detail-hero {
     gap: 18px;
@@ -1832,29 +2272,29 @@ select {
     height: 125px;
   }
   .show-detail-hero h3 {
-    font-size: 18px;
+    font-size: 1.125rem;
   }
   .show-detail-hero p {
-    font-size: 13px;
+    font-size: 0.875rem;
   }
   .show-detail-hero .secondary-button {
     padding: 10px 13px;
-    font-size: 13px;
+    font-size: 1rem;
   }
   .detail-actions .primary-button {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .detail-body .section-heading > h3 {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
   .episode-row .icon-button {
-    width: 36px;
+    width: 44px;
   }
   .episode-open {
     gap: 11px;
   }
   .episode-open strong {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .episode-open > img {
     width: 48px;
@@ -1863,14 +2303,53 @@ select {
   .empty-state {
     padding: 48px 18px;
   }
-  .empty-state h3 {
-    font-size: 22px;
+  .empty-state h2 {
+    font-size: 1.375rem;
   }
   .empty-state p {
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
   .toast {
-    bottom: calc(158px + env(safe-area-inset-bottom));
+    bottom: calc(
+      var(--tabbar-h) + var(--mini-h) + 10px +
+        var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
+    );
+  }
+  :root[data-hero-visible] .toast {
+    bottom: calc(
+      var(--tabbar-h) + 10px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
+    );
+  }
+  /* On Listen, the big controls are the player; the mini player steps aside
+     until they scroll out of view. */
+  .player-bar {
+    transition:
+      translate 0.25s ease-out,
+      opacity 0.2s ease-out,
+      visibility 0.25s;
+  }
+  :root[data-hero-visible] .player-bar {
+    translate: 0 30%;
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* Keep focused controls above the fixed transport, including at large zoom. */
+@media (max-width: 767px) {
+  html {
+    scroll-padding-bottom: calc(
+      var(--tabbar-h) + var(--mini-h) + 24px +
+        var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
+    );
+  }
+  .player-bar {
+    border-radius: 0;
+    background: var(--surface);
+  }
+  .now-footer {
+    flex-wrap: wrap;
+    gap: 4px 12px;
   }
 }
 
@@ -1881,7 +2360,7 @@ select {
   text-align: center;
 }
 .app-error h1 {
-  font-size: 22px;
+  font-size: 1.375rem;
   margin: 0 0 12px;
 }
 .app-error p {
@@ -1896,12 +2375,1014 @@ select {
   gap: 14px;
 }
 
-.concert-row.alternating { background: var(--row-alt); }
-.appearance-settings { margin: 0 0 40px; }
-.appearance-settings h2 { font-size: 21px; font-weight: 550; }
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
-  outline-color: var(--accent);
+/* ---------------------------------------------------------------------------
+   Interaction states
+   ------------------------------------------------------------------------ */
+
+/* Hover only where a pointer can hover: on touch screens a tapped control
+   would otherwise stay "hovered" until the next tap elsewhere. */
+@media (hover: hover) {
+  .nav-button:hover {
+    background: var(--surface);
+    color: var(--text);
+  }
+  .text-button:hover {
+    color: var(--accent);
+  }
+  .show-card:hover .show-cover img {
+    transform: scale(1.04);
+  }
+  .icon-button:hover {
+    background: var(--row-alt);
+    color: var(--accent);
+  }
+  .player-play:hover {
+    background: color-mix(in srgb, var(--action) 88%, var(--text));
+  }
+  .secondary-button:hover {
+    background: var(--surface);
+  }
+}
+
+/* Pressed feedback, since the platform tap highlight is switched off. */
+:is(
+  .primary-button,
+  .secondary-button,
+  .player-play,
+  .icon-button,
+  .segmented-pill button,
+  .day-picker button,
+  .repeat-days button,
+  .show-card,
+  .mobile-nav button,
+  .alarm-banner button
+):active {
+  transform: scale(0.96);
+}
+:is(.schedule-row, .episode-open, .player-track, .nav-button):active {
+  opacity: 0.65;
+}
+
+/* Tab bar: the active tab gets a pill behind its icon as well as color, so
+   the current screen is never signalled by color alone (WCAG 1.4.1). */
+@media (max-width: 767px) {
+  .mobile-nav .icon {
+    width: 56px;
+    height: 30px;
+    border-radius: 15px;
+    transition: background 0.2s;
+  }
+  .mobile-nav button.active .icon {
+    background: var(--row-alt);
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+  }
+  .mobile-nav button.active span {
+    font-weight: 650;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Live and loading feedback
+   ------------------------------------------------------------------------ */
+
+/* The LIVE dot breathes while audio is actually flowing. */
+.player-live[data-live] i {
+  animation: live-pulse 2s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  50% {
+    opacity: 0.35;
+    scale: 0.7;
+  }
+}
+
+/* An outline pulses around the play button while connecting or reconnecting. */
+.player-play[data-busy]::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 20px;
+  border: 2px solid var(--action);
+  animation: busy-pulse 0.9s ease-in-out infinite alternate;
+}
+@keyframes busy-pulse {
+  from {
+    opacity: 0.2;
+  }
+}
+
+/* Placeholder rows while the playlist loads: the layout appears at once and
+   the songs fill in, instead of a line of text swapping for a list. */
+.skeleton-row {
+  pointer-events: none;
+}
+.skeleton-block {
+  display: block;
+  border-radius: 4px;
+  background: var(--row-alt);
+  background:
+    linear-gradient(
+        90deg,
+        transparent 20%,
+        color-mix(in srgb, var(--bg) 60%, transparent) 50%,
+        transparent 80%
+      )
+      0 0 / 200% 100% no-repeat,
+    color-mix(in srgb, var(--border) 55%, transparent);
+  animation: shimmer 1.4s linear infinite;
+}
+.skeleton-row .skeleton-art {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+}
+.skeleton-row .skeleton-lines {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+}
+.skeleton-row .skeleton-line {
+  height: 12px;
+  width: 62%;
+}
+.skeleton-row .skeleton-line + .skeleton-line {
+  width: 38%;
+}
+@keyframes shimmer {
+  from {
+    background-position:
+      150% 0,
+      0 0;
+  }
+  to {
+    background-position:
+      -50% 0,
+      0 0;
+  }
+}
+
+@starting-style {
+  .toast {
+    opacity: 0;
+    translate: 0 10px;
+  }
+}
+
+/* Screen changes cross-fade (see hooks/useRoute.js). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.16s;
+}
+
+/* ---------------------------------------------------------------------------
+   Accessibility preferences
+   ------------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  :is(button, a):active {
+    transform: none;
+  }
+}
+
+/* Stronger secondary text and dividers when the system asks for contrast. */
+@media (prefers-contrast: more) {
+  :root,
+  :root[data-theme="light"] {
+    --muted: #45463f;
+    --border: #8a8b83;
+  }
+  :root[data-theme="dark"] {
+    --muted: #d2d1cb;
+    --border: #7a7c7c;
+  }
+}
+
+/* Windows High Contrast and other forced-color modes replace backgrounds,
+   which would erase the switch and every selected state. */
+@media (forced-colors: active) {
+  .switch {
+    border: 1px solid ButtonText;
+  }
+  .switch > span {
+    background: ButtonText;
+  }
+  .switch.checked > span {
+    background: Highlight;
+  }
+  :is(
+    .nav-button.active,
+    .segmented button.active,
+    .day-picker button.active,
+    .repeat-days button.active,
+    .mobile-nav button.active
+  ) {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+  .player-play,
+  .primary-button,
+  .alarm-banner button {
+    border: 1px solid ButtonText;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Now playing: the stage
+   ------------------------------------------------------------------------ */
+
+/* Who is on the air, above the song: set like the "Now playing" label
+   below the art, so the stage reads top to bottom with no boxes. */
+/* On air: a band washed in the show's color, with its artwork. */
+.on-air {
+  --band: var(--tint-light, var(--accent));
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: var(--stage, 100%);
+  margin: 0 auto 24px;
+  padding: 12px 14px 12px 12px;
+  border-radius: 12px;
+  text-align: left;
+  color: var(--text);
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--band) 24%, var(--bg)) 0%,
+    color-mix(in srgb, var(--band) 8%, var(--bg)) 70%,
+    var(--bg) 100%
+  );
+  transition: filter 0.15s;
+}
+:root[data-theme="dark"] .on-air {
+  --band: var(--tint-dark, var(--accent));
+}
+.on-air:hover {
+  filter: brightness(1.04);
+}
+.on-air > .icon {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+.on-air-art {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.on-air-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.on-air-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.on-air-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--action);
+}
+.on-air-dot[data-live] {
+  animation: live-pulse 2s ease-in-out infinite;
+}
+.on-air-show {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.on-air-host {
+  font-size: 0.875rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 767px) {
+  /* Edge to edge on phones, like the station tabs above it. */
+  .on-air {
+    width: auto;
+    margin: -18px calc(-1 * max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)))) 20px;
+    padding: 12px max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+    border-radius: 0;
+  }
+  .on-air-art {
+    width: 48px;
+    height: 48px;
+  }
+}
+@media (forced-colors: active) {
+  .on-air {
+    border: 1px solid CanvasText;
+  }
+}
+
+/* The artwork, blurred and enlarged behind itself: each song tints the
+   stage in its own colors. A plain CSS filter on an image, so it renders
+   everywhere (unlike backdrop blur). */
+.now-art > img.now-art-glow {
+  position: absolute;
+  /* Spreads sideways into the margins, but stays inside the art's height
+     so the band above and the song text below stay clear. */
+  inset: 14% -10% 6%;
+  width: 120%;
+  height: 80%;
+  z-index: -1;
+  border-radius: 24px;
+  box-shadow: none;
+  filter: blur(26px) saturate(1.4);
+  opacity: 0.18;
+  pointer-events: none;
+}
+:root[data-theme="dark"] .now-art > img.now-art-glow {
+  opacity: 0.25;
+}
+
+/* A new song fades in rather than snapping into place. */
+.now-art,
+.now-info {
+  animation: song-in 0.45s ease-out both;
+}
+@keyframes song-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+/* Dancing bars beside NOW PLAYING while audio plays. */
+.eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 10px;
+  margin-right: 8px;
+  vertical-align: -1px;
+}
+.eq i {
+  width: 3px;
+  height: 100%;
+  border-radius: 1px;
+  background: var(--accent);
+  transform-origin: bottom;
+  animation: eq 0.9s ease-in-out infinite alternate;
+}
+.eq i:nth-child(2) {
+  animation-duration: 0.7s;
+  animation-delay: -0.3s;
+}
+.eq i:nth-child(3) {
+  animation-duration: 1.1s;
+  animation-delay: -0.6s;
+}
+@keyframes eq {
+  from {
+    scale: 1 0.3;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+
+/* The heart pops on the tap that saves. */
+[data-pop] .icon {
+  animation: heart-pop 0.4s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes heart-pop {
+  40% {
+    scale: 1.35;
+  }
+}
+
+.sleep-button {
+  anchor-name: --sleep;
+}
+.sleep-button.active {
+  color: var(--accent);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The sleep timer's menu anchors to its button; each song menu sets its own
+   anchor inline (components/MusicRows.jsx). */
+.sleep-menu {
+  position-anchor: --sleep;
+}
+
+/* Popover menus (sleep timer, song actions): anchored under their button where CSS anchor
+   positioning exists, a bottom sheet on phones, and a floating panel above
+   the player elsewhere. The platform supplies Escape and tap-outside. */
+.popover-menu {
+  margin: 0;
+  inset: auto;
+  min-width: 240px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 16px 44px rgb(0 0 0 / 0.35);
+  top: anchor(bottom);
+  right: anchor(right);
+  margin-top: 8px;
+  position-try-fallbacks: flip-block;
+  transition:
+    opacity 0.18s ease-out,
+    translate 0.18s ease-out;
+}
+@starting-style {
+  .popover-menu:popover-open {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+@supports not (anchor-name: --a) {
+  .popover-menu {
+    right: 24px;
+    bottom: calc(110px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+  }
+}
+.popover-menu-title {
+  margin: 0;
+  padding: 8px 12px 6px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.popover-menu-title.song-title {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.popover-menu :is(button, a) {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  text-align: left;
+}
+.popover-menu :is(button, a) small {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.popover-menu-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 4px 12px 8px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.popover-menu .sleep-off {
+  color: var(--accent);
+  font-weight: 600;
+}
+@media (hover: hover) {
+  .popover-menu :is(button, a):hover {
+    background: var(--row-alt);
+  }
+}
+@media (max-width: 767px) {
+  .popover-menu {
+    position-anchor: none;
+    inset: auto 0 0 0;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 18px 18px 0 0;
+    padding: 22px 12px calc(16px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+  }
+  /* The grabber that says "this is a sheet". */
+  .popover-menu::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 36px;
+    height: 4px;
+    margin-left: -18px;
+    border-radius: 2px;
+    background: var(--border);
+  }
+  @starting-style {
+    .popover-menu:popover-open {
+      translate: 0 40px;
+    }
+  }
+  .popover-menu::backdrop {
+    background: #0008;
+  }
+}
+
+/* Schedule: the slot on the air now. Marked in type, not with a box: the
+   time turns accent and a small label sits over the show name. */
+.schedule-row.on-air-row time {
+  color: var(--accent);
+  font-weight: 700;
+}
+.on-air-chip {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* Show sheet: on now, or next on. */
+.show-detail-hero p.airing {
+  margin: -6px 0 14px;
+  font-size: 0.875rem;
+}
+.show-detail-hero p.airing.on {
+  color: var(--accent);
+  font-weight: 650;
+}
+
+/* Glow and fades step aside when the system asks for plainer visuals. */
+@media (prefers-contrast: more), (forced-colors: active), (prefers-reduced-transparency: reduce) {
+  .now-art > img.now-art-glow {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   First-run welcome
+   ------------------------------------------------------------------------ */
+
+/* A centered card on larger screens; on phones it is the same bottom sheet as
+   the show details. */
+@media (min-width: 768px) {
+  .detail-dialog.welcome-dialog {
+    inset: 0;
+    margin: auto;
+    width: min(600px, 100% - 48px);
+    height: auto;
+    max-height: min(780px, 100dvh - 48px);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: 0 30px 80px rgb(0 0 0 / 0.35);
+  }
+  @starting-style {
+    .detail-dialog.welcome-dialog[open] {
+      translate: 0 16px;
+      opacity: 0;
+    }
+  }
+  .welcome-dialog .dialog-header {
+    padding-top: 26px;
+  }
+}
+.welcome h3 {
+  margin: 0 0 6px;
+  font-size: 1.375rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  outline: none;
+}
+.welcome-lede {
+  margin: 0 0 20px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.welcome-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 520px) {
+  .welcome-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.welcome-show {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 8px 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  text-align: left;
+}
+.welcome-show > img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 7px;
+}
+.welcome-show-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.welcome-show-text strong {
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+.welcome-show-text small {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.welcome-check {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
+}
+.welcome-show.followed {
+  border-color: var(--accent);
+}
+.welcome-show.followed .welcome-check {
+  background: var(--action);
+  color: var(--action-ink);
+}
+/* Welcome step 2: a preview of the reminder itself, styled like a phone
+   notification. */
+.reminder-preview {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin: 4px 0 8px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--row-alt);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.06),
+    0 8px 24px rgb(0 0 0 / 0.08);
+}
+.reminder-preview img {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  flex-shrink: 0;
+}
+.reminder-preview figcaption {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+.reminder-preview figcaption > span:last-child {
+  color: var(--muted);
+}
+.reminder-preview-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.reminder-preview-top strong {
+  font-weight: 600;
+}
+.connect-buttons {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+/* Two equal choices: the same size and lettering, only the fill differs. */
+.connect-buttons > button {
+  min-height: 52px;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 650;
+}
+.playlist-preview-art {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: var(--action);
+  color: var(--action-ink);
+}
+/* The actions stay pinned to the bottom of the sheet while the show grid
+   scrolls under them, so Next is always in reach on a phone. */
+.detail-body.welcome {
+  --welcome-pad: 28px;
+  padding-bottom: 0;
+}
+.welcome-actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+  margin: 24px calc(-1 * var(--welcome-pad)) 0;
+  padding: 14px var(--welcome-pad)
+    calc(18px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+@media (max-width: 767px) {
+  .detail-body.welcome {
+    --welcome-pad: 22px;
+  }
+}
+.welcome-step {
+  margin-right: auto;
+  font-size: 0.875rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------------
+   Small pieces
+   ------------------------------------------------------------------------ */
+
+/* A sheet's title takes focus when it opens (for screen readers) but is not
+   a control, so it shows no ring. */
+.dialog-title:focus {
+  outline: none;
+}
+.show-times {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.expand-chevron {
+  display: inline-flex;
+  transition: rotate 0.2s ease-out;
+}
+.expand-chevron.up {
+  rotate: 180deg;
+}
+.appearance-settings .segmented {
+  display: flex;
+  max-width: 480px;
+  margin-top: 16px;
+}
+.appearance-settings .segmented button {
+  flex: 1;
+  font-weight: 600;
+}
+/* The status line keeps its height, so messages come and go without the
+   page jumping. */
+.now-status:empty::before {
+  content: "\00a0";
+}
+
+.reminder-offer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--row-alt);
+  font-size: 0.875rem;
+}
+.reminder-offer > span:not(.icon) {
+  flex: 1;
+  min-width: 12em;
+}
+.reminder-offer .icon {
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------------------
+   Station updates: the banner across every screen, the live card on Listen
+   and the video sheet.
+   ------------------------------------------------------------------------ */
+
+.station-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px var(--page-gutter);
+  background: var(--surface);
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.station-banner[data-kind="live"] {
+  background: var(--text);
+  color: var(--bg);
+}
+.station-banner p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 550;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.station-banner-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.875rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.station-banner[data-kind="live"] .station-banner-action {
+  background: var(--action);
+  color: var(--action-ink);
+}
+.station-banner-close {
+  width: 44px;
+  height: 44px;
+  margin-right: -8px;
+  color: inherit;
+  opacity: 0.75;
+}
+.station-banner-live,
+.live-card .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.station-banner-live i,
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff5a36;
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+
+.live-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 0 0 28px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--surface);
+}
+.live-card > img {
+  width: 76px;
+  height: 76px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 10px;
+}
+.live-card > div {
+  flex: 1;
+  min-width: 0;
+}
+.live-card .eyebrow {
+  color: var(--accent);
+}
+.live-card h2 {
+  margin: 4px 0 2px;
+  font-size: 1.125rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.live-card p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.live-card > button {
+  flex-shrink: 0;
+}
+
+.video-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  margin: 0 0 18px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+.video-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+@media (min-width: 768px) {
+  .detail-dialog.video-dialog {
+    width: min(880px, 100%);
+  }
+}
+
+@media (max-width: 767px) {
+  .station-banner {
+    padding: 8px max(20px, var(--safe-area-inset-right, env(safe-area-inset-right))) 8px
+      max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+    gap: 10px;
+  }
+  .station-banner p {
+    font-size: 0.875rem;
+  }
+  .live-card {
+    flex-wrap: wrap;
+    gap: 12px 14px;
+    margin-bottom: 20px;
+  }
+  .live-card > img {
+    width: 56px;
+    height: 56px;
+  }
+  .live-card > button {
+    width: 100%;
+    justify-content: center;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
+  .station-banner-live i,
+  .live-dot {
+    animation: none;
+  }
+}
+
+/* Playlist sync */
+.setting-status {
+  display: grid;
+  gap: 4px;
+  margin: 4px 0 14px;
+  font-size: 0.875rem;
+}
+.setting-status span {
+  color: var(--muted);
+  line-height: 1.5;
+}
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+}
+.playlist-prompt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  margin: 4px 0 8px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 0.875rem;
+  text-align: left;
+}
+.playlist-prompt > span:not(.icon) {
+  flex: 1;
+}
+.playlist-prompt .icon:first-child {
+  color: var(--accent);
+}
+.playlist-prompt.connected {
+  min-height: 0;
+  padding: 0;
+  background: none;
+  font-size: 0.875rem;
+  color: var(--muted);
 }

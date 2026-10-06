@@ -1,99 +1,78 @@
 import { useEffect, useId, useRef } from "react";
-import { publicAsset } from "./data.js";
-import { ic } from "./icons.jsx";
-const paths = {
-  arrowRight: (
-    <>
-      <path d="M4 12h16M14 6l6 6-6 6" />
-    </>
-  ),
-  arrowUp: (
-    <>
-      <path d="M6 18 18 6M6 6h12v12" />
-    </>
-  ),
-  headphones: (
-    <>
-      <path d="M3 14v-3a9 9 0 0 1 18 0v3" />
-      <rect x="3" y="12" width="4" height="8" rx="2" />
-      <rect x="17" y="12" width="4" height="8" rx="2" />
-    </>
-  ),
-  settings: (
-    <>
-      <path d="M4 7h6m4 0h6M4 17h10m4 0h2" />
-      <circle cx="12" cy="7" r="2" />
-      <circle cx="16" cy="17" r="2" />
-    </>
-  ),
-  music: (
-    <>
-      <path d="M9 18V5l12-2v13M9 8l12-2" />
-      <ellipse cx="6" cy="18" rx="3" ry="3" />
-      <ellipse cx="18" cy="16" rx="3" ry="3" />
-    </>
-  ),
-  volume: (
-    <>
-      <path d="m11 5-6 4H2v6h3l6 4zM15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14" />
-    </>
-  ),
-  clock: (
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 2" />
-    </>
-  ),
-  check: <path d="m5 12 4 4L19 6" />,
-};
-export function Icon({ name, size = 20 }) {
+import { STATION_ART } from "./assets.js";
+import { Icon } from "./icons.jsx";
+import { Toast, modalClosed, modalOpened } from "./components/Toast.jsx";
+
+export { Icon };
+
+// For a popover menu's onToggle: move focus to its first item when it opens,
+// so keyboard and screen-reader users land inside it (the platform returns
+// focus to the button when it closes).
+export function focusFirstItem(e) {
+  if ((e.nativeEvent?.newState ?? e.newState) === "open") {
+    e.currentTarget.querySelector("button, a")?.focus({ preventScroll: true });
+  }
+}
+
+// "World Cafe", "World Cafe and Funky Friday", "World Cafe, Funky Friday and 2 more".
+export const nameList = (names) =>
+  names.length <= 2
+    ? names.join(" and ")
+    : `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`;
+
+// The station's lettering. As in WXPN's own logo, the "w" is set lighter so
+// "xpn" carries the name. Other text is shown as is.
+export function Wordmark({ text = "wxpn", dot = false }) {
+  const split = /^w(?=xpn)/i.test(text);
   return (
-    <span className="icon" aria-hidden="true">
-      {ic[name] ? (
-        ic[name](size, "currentColor")
+    <span className="wordmark" aria-hidden="true">
+      {split ? (
+        <>
+          <span className="wordmark-w">{text[0]}</span>
+          {text.slice(1)}
+        </>
       ) : (
-        <svg
-          width={size}
-          height={size}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          {paths[name] || paths.music}
-        </svg>
+        text
       )}
+      {dot && <span className="wordmark-dot">.</span>}
     </span>
   );
 }
 
-// Native dialog provides focus containment, Escape dismissal, and a modal backdrop.
+// Artwork that falls back to the station mark when a feed image is missing
+// or fails to load, so a row never shows a broken-image icon.
 export function Art({ src, alt = "", className = "", ...props }) {
   return (
     <img
-      src={src || publicAsset("icons/icon-512.png")}
+      src={src || STATION_ART}
       alt={alt}
       className={className}
+      decoding="async"
       onError={(e) => {
         e.currentTarget.onerror = null;
-        e.currentTarget.src = publicAsset("icons/icon-512.png");
+        e.currentTarget.src = STATION_ART;
       }}
       {...props}
     />
   );
 }
-export function Modal({ title, description, children, onClose }) {
+
+// Native dialog provides focus containment, Escape dismissal, and a modal backdrop.
+export function Modal({ title, description, children, onClose, eyebrow = null, className = "" }) {
   const ref = useRef(null);
   const id = useId();
   useEffect(() => {
     const el = ref.current;
     const previous = document.activeElement;
     el.showModal();
+    modalOpened();
+    // Start at the title, so a screen reader reads the sheet from the top
+    // and no button opens already outlined.
+    el.querySelector(".dialog-title")?.focus();
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
+      modalClosed();
       el.close();
       document.body.style.overflow = overflow;
       previous?.focus?.();
@@ -102,7 +81,7 @@ export function Modal({ title, description, children, onClose }) {
   return (
     <dialog
       ref={ref}
-      className="detail-dialog"
+      className={`detail-dialog ${className}`}
       aria-labelledby={id}
       aria-describedby={description ? `${id}-description` : undefined}
       onCancel={(e) => {
@@ -118,21 +97,38 @@ export function Modal({ title, description, children, onClose }) {
     >
       <div className="dialog-header">
         <div>
-          <span className="eyebrow">WXPN / DISCOVER</span>
-          <h2 id={id}>{title}</h2>
+          {eyebrow && <span className="eyebrow">{eyebrow}</span>}
+          <h2 id={id} className="dialog-title" tabIndex={-1}>
+            {title}
+          </h2>
           {description && <p id={`${id}-description`}>{description}</p>}
         </div>
-        <button className="icon-button" onClick={onClose} aria-label="Close details">
+        <button className="icon-button" onClick={onClose} aria-label="Close">
           <Icon name="close" />
         </button>
       </div>
       {children}
+      <Toast inModal />
     </dialog>
   );
 }
-export function Segmented({ value, onChange, options, label }) {
+// One choice among a few. "tabs" (underlined) switches between views of a
+// screen; "pill" (a contained control) picks a setting, such as the station.
+export function Segmented({
+  value,
+  onChange,
+  options,
+  label,
+  variant = "tabs",
+  className = "",
+  disabled = false,
+}) {
   return (
-    <div className="segmented" role="group" aria-label={label}>
+    <div
+      className={`segmented ${variant === "pill" ? "segmented-pill" : ""} ${className}`}
+      role="group"
+      aria-label={label}
+    >
       {options.map((option) => {
         const o = typeof option === "string" ? { value: option, label: option } : option;
         return (
@@ -140,9 +136,11 @@ export function Segmented({ value, onChange, options, label }) {
             key={o.value}
             aria-pressed={value === o.value}
             className={value === o.value ? "active" : ""}
+            disabled={disabled}
             onClick={() => onChange(o.value)}
           >
             {o.label}
+            {o.count !== undefined && <span className="tab-count">{o.count}</span>}
           </button>
         );
       })}
@@ -153,7 +151,7 @@ export function Empty({ icon = "heart", title, children, action, onAction }) {
   return (
     <div className="empty-state">
       <Icon name={icon} size={32} />
-      <h3>{title}</h3>
+      <h2>{title}</h2>
       <p>{children}</p>
       {action && (
         <button className="secondary-button" onClick={onAction}>
@@ -165,29 +163,73 @@ export function Empty({ icon = "heart", title, children, action, onAction }) {
   );
 }
 export function SearchField({ value, onChange, placeholder, label }) {
+  const input = useRef(null);
+  const id = useId();
   return (
-    <label className="search-field">
-      <span className="sr-only">{label || placeholder}</span>
+    <div className="search-field">
+      <label className="sr-only" htmlFor={id}>
+        {label || placeholder}
+      </label>
       <Icon name="search" size={18} />
       <input
+        id={id}
+        ref={input}
         type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        enterKeyHint="search"
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
       />
-    </label>
+      {value && (
+        <button
+          className="icon-button search-clear"
+          aria-label={`Clear ${label || placeholder}`}
+          onClick={() => {
+            onChange("");
+            input.current?.focus();
+          }}
+        >
+          <Icon name="close" size={16} />
+        </button>
+      )}
+    </div>
   );
 }
-export async function shareText(title, text) {
+// Native share sheet where there is one, the clipboard otherwise.
+export async function shareText(title, text, url) {
   try {
     if (navigator.share) {
-      await navigator.share({ title, text });
+      await navigator.share(url ? { title, text, url } : { title, text });
       return "Shared.";
     }
     if (!navigator.clipboard) return "Sharing is not available in this browser.";
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(url ? `${text}\n${url}` : text);
     return "Copied to clipboard.";
   } catch (error) {
     return error.name === "AbortError" ? "" : "Sharing is unavailable. Please try again.";
   }
+}
+
+// A setting with a few choices: its name, then the choices side by side, so
+// every option is visible and one tap away (no dropdown to open).
+export function ChoiceSetting({ label, value, onChange, options, disabled = false }) {
+  return (
+    <div className="setting-choice">
+      <span className="setting-choice-label" aria-hidden="true">
+        {label}
+      </span>
+      <Segmented
+        label={label}
+        variant="pill"
+        value={value}
+        onChange={onChange}
+        options={options}
+        disabled={disabled}
+      />
+    </div>
+  );
 }

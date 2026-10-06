@@ -1,0 +1,14 @@
+// Every xpn.org address the app links to, in one place.
+export const DONATE_URL = "https://xpn.org/donate/";
+export const PLAYLIST_URL = "https://xpn.org/wxpn-playlists/";
+export const PROGRAM_GUIDE_URL = "https://xpn.org/program_guide/";
+export const CALENDAR_URL = "https://xpn.org/concert-and-events/";
+export const LISTEN_URL = "https://xpn.org/listen/";
+export const PRIVACY_URL = "https://xpn.org/privacy-policy/";
+export const STATION_EMAIL = "wxpndesk@xpn.org";
+
+// Show pages that exist on xpn.org. Other shows have no page of their own.
+export const SHOW_PAGES = {
+  freeatnoon: "https://xpn.org/free-at-noon/",
+  worldcafe: "https://xpn.org/program/world-cafe/",
+};

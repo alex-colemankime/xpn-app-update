@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WXPN App Updates</title>
+    <style>
+      :root {
+        --bg: #faf6ee;
+        --surface: #f3eee3;
+        --text: #211f1c;
+        --muted: #64605a;
+        --border: #d9d2c4;
+        --accent: #b83d1c;
+        --action: #ef7149;
+        --ink: #241710;
+        color-scheme: light;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #161719;
+          --surface: #202123;
+          --text: #f3f1eb;
+          --muted: #aaa9a3;
+          --border: #383a3a;
+          --accent: #ff9875;
+          color-scheme: dark;
+        }
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 15px;
+        line-height: 1.45;
+      }
+      main {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        letter-spacing: -0.02em;
+      }
+      .lede {
+        margin: 0 0 24px;
+        color: var(--muted);
+      }
+      .card {
+        margin: 0 0 16px;
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface);
+      }
+      .card header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .card h2 {
+        margin: 0;
+        font-size: 16px;
+      }
+      .state {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .state.on {
+        color: var(--accent);
+      }
+      label {
+        display: grid;
+        gap: 4px;
+        margin: 0 0 12px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      label small {
+        font-weight: 400;
+        color: var(--muted);
+      }
+      input,
+      textarea,
+      select {
+        font: inherit;
+        font-weight: 400;
+        padding: 9px 11px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--text);
+      }
+      textarea {
+        min-height: 60px;
+        resize: vertical;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      button {
+        font: inherit;
+        min-height: 40px;
+        padding: 0 16px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--bg);
+        color: var(--text);
+        cursor: pointer;
+      }
+      button.primary {
+        border-color: var(--action);
+        background: var(--action);
+        color: var(--ink);
+        font-weight: 650;
+      }
+      button.link {
+        border: 0;
+        padding: 0;
+        min-height: 0;
+        background: none;
+        color: var(--accent);
+      }
+      .bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 8px 0 24px;
+      }
+      .preview {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 4px 0 12px;
+        padding: 10px 16px;
+        border-radius: 10px;
+        background: var(--action);
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 550;
+      }
+      .preview.live {
+        background: var(--text);
+        color: var(--bg);
+      }
+      .preview p {
+        flex: 1;
+        margin: 0;
+      }
+      .preview span {
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: var(--ink);
+        color: var(--action);
+        font-weight: 650;
+        white-space: nowrap;
+      }
+      .preview.live span {
+        background: var(--action);
+        color: var(--ink);
+      }
+      pre {
+        overflow: auto;
+        max-height: 360px;
+        padding: 14px;
+        border-radius: 10px;
+        background: var(--surface);
+        font-size: 13px;
+      }
+      .note {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .error {
+        color: var(--accent);
+        font-size: 13px;
+      }
+      @media (max-width: 560px) {
+        .row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>WXPN app updates</h1>
+      <p class="lede">
+        Write the banner and live-video messages the app shows, then publish the file below to the
+        address the app reads (<code>VITE_XPN_UPDATES_URL</code>). The app checks it every few
+        minutes, so changes appear without an app update.
+      </p>
+      <div class="bar">
+        <button class="primary" data-add="banner">Add a banner</button>
+        <button data-add="live">Add a live video</button>
+        <button id="load">Load an existing file…</button>
+      </div>
+      <div id="items"></div>
+      <h2>The file</h2>
+      <div class="bar">
+        <button class="primary" id="copy">Copy</button>
+        <button id="download">Download updates.json</button>
+      </div>
+      <pre id="json"></pre>
+      <p class="note">
+        Times are entered in Eastern time. Only the first banner that is running shows, and the
+        first live video; a live video takes over the banner while it is on.
+      </p>
+    </main>
+    <script>
+      const items = [];
+      const $ = (s, el = document) => el.querySelector(s);
+      const esc = (s) =>
+        String(s ?? "").replace(
+          /[&<>"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+        );
+
+      // Eastern wall clock <-> ISO with the right offset (EDT or EST).
+      function easternIso(local) {
+        if (!local) return "";
+        for (const offset of ["-04:00", "-05:00"]) {
+          const t = new Date(`${local}:00${offset}`);
+          const back = new Intl.DateTimeFormat("sv-SE", {
+            timeZone: "America/New_York",
+            dateStyle: "short",
+            timeStyle: "short",
+          })
+            .format(t)
+            .replace(" ", "T");
+          if (back === local) return `${local}:00${offset}`;
+        }
+        return `${local}:00-05:00`;
+      }
+      const easternLocal = (iso) =>
+        iso
+          ? new Intl.DateTimeFormat("sv-SE", {
+              timeZone: "America/New_York",
+              dateStyle: "short",
+              timeStyle: "short",
+            })
+              .format(new Date(iso))
+              .replace(" ", "T")
+          : "";
+
+      const slug = (s) =>
+        String(s)
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "")
+          .slice(0, 64);
+
+      function add(kind, values = {}) {
+        items.push({
+          kind,
+          id: values.id || "",
+          text: values.text || "",
+          title: values.title || "",
+          watch: values.watch || "",
+          image: values.image || "",
+          show: values.show || "",
+          label: values.action?.label || (kind === "banner" ? "" : ""),
+          url: values.action?.url || "",
+          starts: easternLocal(values.starts),
+          ends: easternLocal(values.ends),
+        });
+        render();
+      }
+
+      function state(item) {
+        const now = Date.now();
+        const s = item.starts ? Date.parse(easternIso(item.starts)) : -Infinity;
+        const e = item.ends ? Date.parse(easternIso(item.ends)) : Infinity;
+        if (now < s) return ["Scheduled", false];
+        if (now >= e) return ["Ended", false];
+        return ["Showing now", true];
+      }
+
+      function render() {
+        $("#items").innerHTML = items
+          .map((it, i) => {
+            const [label, on] = state(it);
+            const banner = it.kind === "banner";
+            return `<section class="card" data-i="${i}">
+              <header><h2>${banner ? "Banner" : "Live video"}</h2><span class="state ${on ? "on" : ""}">${label}</span></header>
+              <div class="preview ${banner ? "" : "live"}"><p>${esc(banner ? it.text || "Your message" : it.title || "Video title")}</p><span>${esc(banner ? it.label || "Button" : "Watch")}</span></div>
+              ${
+                banner
+                  ? `<label>Message <small>One or two short sentences.</small><textarea data-f="text" maxlength="280">${esc(it.text)}</textarea></label>
+                     <div class="row"><label>Button text <small>Optional, e.g. Donate</small><input data-f="label" maxlength="24" value="${esc(it.label)}"></label>
+                     <label>Button link <small>https:// only</small><input data-f="url" value="${esc(it.url)}" placeholder="https://xpn.org/donate/"></label></div>`
+                  : `<label>Title<input data-f="title" maxlength="120" value="${esc(it.title)}" placeholder="Free at Noon: Artist"></label>
+                     <label>Line under the title <small>Optional</small><input data-f="text" maxlength="160" value="${esc(it.text)}" placeholder="Live from The Music Hall at World Stage"></label>
+                     <label>Video link <small>A YouTube video or live link plays in the app; anything else opens in the browser.</small><input data-f="watch" value="${esc(it.watch)}" placeholder="https://www.youtube.com/watch?v=…"></label>
+                     <div class="row"><label>Image <small>Optional https:// link</small><input data-f="image" value="${esc(it.image)}"></label>
+                     <label>Or a show's artwork <small>Show id, e.g. freeatnoon</small><input data-f="show" value="${esc(it.show)}"></label></div>`
+              }
+              <div class="row"><label>Starts (Eastern)${banner ? " <small>Optional</small>" : ""}<input type="datetime-local" data-f="starts" value="${esc(it.starts)}"></label>
+              <label>Ends (Eastern)<input type="datetime-local" data-f="ends" value="${esc(it.ends)}"></label></div>
+              ${problems(it)
+                .map((p) => `<p class="error">${esc(p)}</p>`)
+                .join("")}
+              <button class="link" data-remove>Remove</button>
+            </section>`;
+          })
+          .join("");
+        $("#json").textContent = JSON.stringify(file(), null, 2);
+      }
+
+      function problems(it) {
+        const out = [];
+        if (it.kind === "banner" && !it.text.trim()) out.push("A banner needs a message.");
+        if (it.url && !/^https:\/\//.test(it.url)) out.push("Links must start with https://");
+        if (it.kind === "live" && !it.title.trim()) out.push("A live video needs a title.");
+        if (it.kind === "live" && !/^https:\/\//.test(it.watch)) out.push("Add the video link.");
+        if (it.kind === "live" && !it.starts) out.push("A live video needs a start time.");
+        if (it.starts && it.ends && it.ends <= it.starts) out.push("It ends before it starts.");
+        return out;
+      }
+
+      function file() {
+        return {
+          updates: items.map((it) => {
+            const id =
+              it.id || slug(`${it.kind}-${it.title || it.text}-${(it.starts || "").slice(0, 10)}`);
+            const base = { id, kind: it.kind };
+            if (it.starts) base.starts = easternIso(it.starts);
+            if (it.ends) base.ends = easternIso(it.ends);
+            if (it.kind === "banner") {
+              base.text = it.text.trim();
+              if (it.label && it.url) base.action = { label: it.label.trim(), url: it.url.trim() };
+            } else {
+              base.title = it.title.trim();
+              if (it.text) base.text = it.text.trim();
+              base.watch = it.watch.trim();
+              if (it.image) base.image = it.image.trim();
+              if (it.show) base.show = it.show.trim();
+            }
+            return base;
+          }),
+        };
+      }
+
+      // Typing updates the item, its preview, status and problems, and the file,
+      // without rebuilding the form (which would lose the caret and the next field).
+      function refresh(card) {
+        const it = items[card.dataset.i];
+        $(".preview p", card).textContent =
+          it.kind === "banner" ? it.text || "Your message" : it.title || "Video title";
+        $(".preview span", card).textContent =
+          it.kind === "banner" ? it.label || "Button" : "Watch";
+        const [label, on] = state(it);
+        const badge = $(".state", card);
+        badge.textContent = label;
+        badge.classList.toggle("on", on);
+        card.querySelectorAll(".error").forEach((el) => el.remove());
+        const remove = $("[data-remove]", card);
+        problems(it).forEach((text) => {
+          const p = document.createElement("p");
+          p.className = "error";
+          p.textContent = text;
+          remove.before(p);
+        });
+        $("#json").textContent = JSON.stringify(file(), null, 2);
+      }
+      const onEdit = (e) => {
+        const card = e.target.closest("[data-i]");
+        if (!card || !e.target.dataset.f) return;
+        items[card.dataset.i][e.target.dataset.f] = e.target.value;
+        refresh(card);
+      };
+      document.addEventListener("input", onEdit);
+      document.addEventListener("change", onEdit);
+      document.addEventListener("click", async (e) => {
+        if (e.target.dataset.add) add(e.target.dataset.add);
+        if (e.target.matches("[data-remove]")) {
+          items.splice(e.target.closest("[data-i]").dataset.i, 1);
+          render();
+        }
+        if (e.target.id === "copy") {
+          await navigator.clipboard.writeText($("#json").textContent);
+          e.target.textContent = "Copied";
+          setTimeout(() => (e.target.textContent = "Copy"), 1500);
+        }
+        if (e.target.id === "download") {
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(
+            new Blob([$("#json").textContent], { type: "application/json" }),
+          );
+          a.download = "updates.json";
+          a.click();
+        }
+        if (e.target.id === "load") {
+          const text = prompt("Paste the current updates.json:");
+          if (!text) return;
+          try {
+            items.length = 0;
+            (JSON.parse(text).updates || []).forEach((u) =>
+              add(u.kind === "live" ? "live" : "banner", u),
+            );
+          } catch {
+            alert("That isn’t a valid updates file.");
+          }
+        }
+      });
+      render();
+    </script>
+  </body>
+</html>

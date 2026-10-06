@@ -3,7 +3,6 @@
     "id": "middays",
     "name": "WXPN Middays",
     "host": "Mike Vasilikos",
-    "time": "Weekdays - 10a-2p",
     "img": "shows/middays.jpg",
     "desc": "Whether at work or at play, this special blend of established and emerging artists offers the perfect soundtrack for your day.",
     "schedule": [
@@ -12,40 +11,36 @@
           "Monday",
           "Tuesday",
           "Wednesday",
-          "Thursday",
-          "Friday"
+          "Thursday"
         ],
         "start": "10:00",
         "end": "14:00"
+      },
+      {
+        "days": [
+          "Friday"
+        ],
+        "start": "10:00",
+        "end": "12:00"
+      },
+      {
+        "days": [
+          "Friday"
+        ],
+        "start": "13:00",
+        "end": "14:00"
       }
     ],
-    "color": "#65a6b5",
-    "episodes": [
-      {
-        "title": "New Music Tuesday",
-        "date": "Feb 11",
-        "dur": "4 hr",
-        "img": "https://backend.xpn.org/app/uploads/2022/03/Middays-350x350.jpg"
-      },
-      {
-        "title": "Midday Mix",
-        "date": "Feb 10",
-        "dur": "4 hr",
-        "img": "https://backend.xpn.org/app/uploads/2022/03/Middays-350x350.jpg"
-      },
-      {
-        "title": "Listener Request Hour",
-        "date": "Feb 7",
-        "dur": "4 hr",
-        "img": "https://backend.xpn.org/app/uploads/2022/03/Middays-350x350.jpg"
-      }
-    ]
+    "page": "https://xpn.org/program/wxpn-middays/",
+    "tint": {
+      "light": "#398897",
+      "dark": "#58afc0"
+    }
   },
   "morning": {
     "id": "morning",
     "name": "WXPN Morning Show",
     "host": "Kristen Kurtis & Bob Bumbera",
-    "time": "Weekdays - 6-10a",
     "img": "shows/morning.jpg",
     "desc": "Wake up, tune in, and greet the weekday with a handcrafted mix of music, headline news, and special musical features!",
     "schedule": [
@@ -61,33 +56,12 @@
         "end": "10:00"
       }
     ],
-    "color": "#6ea8c9",
-    "episodes": [
-      {
-        "title": "Tuesday Morning",
-        "date": "Feb 11",
-        "dur": "4 hr",
-        "img": "https://backend.xpn.org/app/uploads/2021/11/morning_show_sq-350x350.jpg"
-      },
-      {
-        "title": "Monday Morning",
-        "date": "Feb 10",
-        "dur": "4 hr",
-        "img": "https://backend.xpn.org/app/uploads/2021/11/morning_show_sq-350x350.jpg"
-      },
-      {
-        "title": "Friday Morning",
-        "date": "Feb 7",
-        "dur": "4 hr",
-        "img": "https://backend.xpn.org/app/uploads/2021/11/morning_show_sq-350x350.jpg"
-      }
-    ]
+    "page": "https://xpn.org/program/xpn-morning-show/"
   },
   "worldcafe": {
     "id": "worldcafe",
     "name": "World Cafe",
     "host": "Raina Douris & Stephen Kallao",
-    "time": "Weekdays - 2-4p",
     "img": "shows/worldcafe.jpg",
     "desc": "Get a \"before they were famous\" look at emerging musicians and connect with legendary performers through intimate interviews, exclusive live performances, and a curated music mix.",
     "schedule": [
@@ -103,45 +77,16 @@
         "end": "16:00"
       }
     ],
-    "color": "#c42d2d",
-    "episodes": [
-      {
-        "title": "Guerilla Toss Session",
-        "date": "Feb 9",
-        "dur": "52 min",
-        "img": "https://npr.brightspotcdn.com/dims3/default/strip/false/crop/960x540+0+0/resize/800/quality/85/format/jpeg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2Ffb%2F91%2F54f754ff4d53aebbc8b3d060b500%2Fguerillatoss-2025-promo-01-ebruyildiz-2500x1667-300.jpg"
-      },
-      {
-        "title": "This Is Lorelei on Holo Boy",
-        "date": "Feb 5",
-        "dur": "48 min",
-        "img": "https://npr.brightspotcdn.com/dims3/default/strip/false/crop/3600x2025+0+0/resize/800/quality/85/format/jpeg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2Fa1%2F38%2Fb27fa7f24f8e995f5eb0485d6888%2F709a40e4-6607-4373-9f1b-671bc6ea6465.jpg"
-      },
-      {
-        "title": "Call and Response in Black Music",
-        "date": "Feb 4",
-        "dur": "55 min",
-        "img": "https://npr.brightspotcdn.com/dims3/default/strip/false/crop/3600x2025+0+0/resize/800/quality/85/format/jpeg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2F24%2F8c%2F3ee43b634fdaabb9fb97ddd25c60%2F5baafa8f-8a56-4f54-8927-87e6bc91a3ff.jpg"
-      },
-      {
-        "title": "The Rise of Baltimore Club Music",
-        "date": "Feb 3",
-        "dur": "44 min",
-        "img": "https://npr.brightspotcdn.com/dims3/default/strip/false/crop/3360x1890+0+0/resize/800/quality/85/format/jpeg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2Fc6%2Fa8%2F4fa8473742b4aad18fcee0600c4c%2F2c3db3ea-2201-4b87-be2d-bd12dafc75e3.jpg"
-      },
-      {
-        "title": "Dan Deacon on Baltimore",
-        "date": "Jan 30",
-        "dur": "50 min",
-        "img": "https://npr.brightspotcdn.com/dims3/default/strip/false/crop/3360x1890+0+0/resize/800/quality/85/format/jpeg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2F75%2Fbe%2Fdd77c6d344b2bd1cf6df899b677e%2Fd90ed12a-7d4f-4fca-916f-1ee4fe4878d4.jpg"
-      }
-    ]
+    "page": "https://xpn.org/program/world-cafe/",
+    "tint": {
+      "light": "#dd494c",
+      "dark": "#dd494c"
+    }
   },
   "afternoons": {
     "id": "afternoons",
     "name": "WXPN Afternoons",
     "host": "Dan Reed",
-    "time": "Weekdays - 4-7p",
     "img": "shows/afternoons.jpg",
     "desc": "An awesome blend of music served with a side of fun for your afternoon drive.",
     "schedule": [
@@ -149,47 +94,33 @@
         "days": [
           "Monday",
           "Tuesday",
-          "Friday"
-        ],
-        "start": "16:00",
-        "end": "19:00"
-      },
-      {
-        "days": [
           "Wednesday",
           "Thursday"
         ],
         "start": "16:00",
+        "end": "18:00"
+      },
+      {
+        "days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday"
+        ],
+        "start": "19:00",
         "end": "20:00"
       }
     ],
-    "color": "#71a6ba",
-    "episodes": [
-      {
-        "title": "Tuesday Drive",
-        "date": "Feb 11",
-        "dur": "3 hr",
-        "img": "https://backend.xpn.org/app/uploads/2022/03/Afternoons-350x350.jpg"
-      },
-      {
-        "title": "Monday Drive",
-        "date": "Feb 10",
-        "dur": "3 hr",
-        "img": "https://backend.xpn.org/app/uploads/2022/03/Afternoons-350x350.jpg"
-      },
-      {
-        "title": "Friday Drive",
-        "date": "Feb 7",
-        "dur": "3 hr",
-        "img": "https://backend.xpn.org/app/uploads/2022/03/Afternoons-350x350.jpg"
-      }
-    ]
+    "page": "https://xpn.org/program/wxpn-afternoons/",
+    "tint": {
+      "light": "#3a8a99",
+      "dark": "#5ab0c0"
+    }
   },
   "funky": {
     "id": "funky",
     "name": "Funky Friday",
     "host": "Dan Reed",
-    "time": "Fridays - 4-7p",
     "img": "shows/funky.jpg",
     "desc": "Welcome the weekend with the ultimate dance party mix of booty-shaking tunes.",
     "schedule": [
@@ -201,34 +132,17 @@
         "end": "19:00"
       }
     ],
-    "color": "#b485e2",
-    "episodes": [
-      {
-        "title": "Funk & Soul Classics",
-        "date": "Feb 7",
-        "dur": "3 hr",
-        "img": "https://backend.xpn.org/app/uploads/2022/01/funky_friday_logo_screen-350x350.jpg"
-      },
-      {
-        "title": "Disco Revival Night",
-        "date": "Jan 31",
-        "dur": "3 hr",
-        "img": "https://backend.xpn.org/app/uploads/2022/01/funky_friday_logo_screen-350x350.jpg"
-      },
-      {
-        "title": "New Funk Friday",
-        "date": "Jan 24",
-        "dur": "3 hr",
-        "img": "https://backend.xpn.org/app/uploads/2022/01/funky_friday_logo_screen-350x350.jpg"
-      }
-    ]
+    "page": "https://xpn.org/program/funky-friday/",
+    "tint": {
+      "light": "#8475cb",
+      "dark": "#8475cb"
+    }
   },
   "freeatnoon": {
     "id": "freeatnoon",
-    "name": "Free At Noon",
-    "host": "WXPN Live",
-    "time": "Fridays - Noon",
-    "img": "shows/freeatnoon.png",
+    "name": "Free at Noon",
+    "host": "",
+    "img": "shows/freeatnoon.jpg",
     "desc": "Weekly lunchtime broadcast of a free, live concert performance.",
     "schedule": [
       {
@@ -239,33 +153,17 @@
         "end": "13:00"
       }
     ],
-    "episodes": [
-      {
-        "title": "Iron & Wine",
-        "date": "Feb 7",
-        "dur": "45 min",
-        "img": "https://backend.xpn.org/app/uploads/2025/01/FAN_logo-green_sans-XPN-1-e1737491524361.png"
-      },
-      {
-        "title": "Kashus Culpepper",
-        "date": "Jan 31",
-        "dur": "40 min",
-        "img": "https://backend.xpn.org/app/uploads/2025/01/FAN_logo-green_sans-XPN-1-e1737491524361.png"
-      },
-      {
-        "title": "Gigi Perez",
-        "date": "Jan 24",
-        "dur": "42 min",
-        "img": "https://backend.xpn.org/app/uploads/2025/01/FAN_logo-green_sans-XPN-1-e1737491524361.png"
-      }
-    ]
+    "page": "https://xpn.org/program/free-at-noon/",
+    "tint": {
+      "light": "#74812b",
+      "dark": "#96a738"
+    }
   },
   "overnight": {
     "id": "overnight",
     "name": "WXPN Overnight",
-    "host": "WXPN",
-    "time": "Weekdays - late night",
-    "img": "https://backend.xpn.org/app/uploads/2022/03/Overnight-350x350.jpg",
+    "host": "",
+    "img": "https://xpn.org/wp-content/uploads/2022/03/Overnight.jpg",
     "desc": "A handcrafted and curated music mix from the WXPN music library.",
     "schedule": [
       {
@@ -282,19 +180,28 @@
           "Thursday",
           "Friday"
         ],
-        "start": "03:00",
+        "start": "02:00",
         "end": "05:00"
+      },
+      {
+        "days": [
+          "Saturday"
+        ],
+        "start": "02:00",
+        "end": "06:00"
       }
     ],
-    "color": "#0a0101",
-    "episodes": []
+    "page": "https://xpn.org/program/wxpn-overnights/",
+    "tint": {
+      "light": "#6f2caa",
+      "dark": "#934dd1"
+    }
   },
   "firstcup": {
     "id": "firstcup",
     "name": "Your First Cup",
     "host": "Robert Drake",
-    "time": "Weekdays - 5-6a",
-    "img": "https://backend.xpn.org/app/uploads/2022/03/FirstCup-350x350.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/03/FirstCup.jpg",
     "desc": "As welcoming as an early morning mug of coffee, this is the perfect musical brew to get you ready to face the day.",
     "schedule": [
       {
@@ -309,15 +216,17 @@
         "end": "06:00"
       }
     ],
-    "color": "#dd9933",
-    "episodes": []
+    "page": "https://xpn.org/program/your-first-cup/",
+    "tint": {
+      "light": "#b46b12",
+      "dark": "#e99125"
+    }
   },
   "highs70s": {
     "id": "highs70s",
     "name": "Highs in the 70s",
     "host": "Dan Reed",
-    "time": "Mon-Thu - 6-7p",
-    "img": "https://backend.xpn.org/app/uploads/2025/05/Highs-in-the-70s-Design-1900x1900-1-350x350.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2025/05/Highs-in-the-70s-Design-1900x1900-1.jpg",
     "desc": "\"Highs in the 70s\" takes listeners on a groovy journey through the golden era of music: the 1970s.",
     "schedule": [
       {
@@ -331,71 +240,17 @@
         "end": "19:00"
       }
     ],
-    "episodes": []
-  },
-  "kidscorner": {
-    "id": "kidscorner",
-    "name": "Kids Corner",
-    "host": "Kathy O'Connell & Robert Drake",
-    "time": "Mon-Tue - 7-8p",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-1166892023-150x150.jpg",
-    "desc": "A stimulating, fun, and interactive show created for children ages 5-13 that delights young and old alike.",
-    "schedule": [
-      {
-        "days": [
-          "Monday",
-          "Tuesday"
-        ],
-        "start": "19:00",
-        "end": "20:00"
-      }
-    ],
-    "color": "#361599",
-    "episodes": []
-  },
-  "mondaynews": {
-    "id": "mondaynews",
-    "name": "The Monday Night 8 O'Clock News",
-    "host": "Mike Vasilikos",
-    "time": "Mondays - 8-10p",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-1208312246-150x150.jpg",
-    "desc": "Stay on top of the newest new music. It's all new releases, all the time.",
-    "schedule": [
-      {
-        "days": [
-          "Monday"
-        ],
-        "start": "20:00",
-        "end": "22:00"
-      }
-    ],
-    "color": "#5a8693",
-    "episodes": []
-  },
-  "rhythmlab": {
-    "id": "rhythmlab",
-    "name": "Rhythm Lab Radio",
-    "host": "WXPN",
-    "time": "Mondays - 10p-midnight",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-723525113-150x150.jpg",
-    "desc": "Redefining the urban sound with a mix of jazz, electronic, hip-hop, and soul music.",
-    "schedule": [
-      {
-        "days": [
-          "Monday"
-        ],
-        "start": "22:00",
-        "end": "00:00"
-      }
-    ],
-    "episodes": []
+    "page": "https://xpn.org/program/highs-in-the-70s/",
+    "tint": {
+      "light": "#6f76c8",
+      "dark": "#9499d6"
+    }
   },
   "wxpnlocal": {
     "id": "wxpnlocal",
-    "name": "WXPN Local",
+    "name": "Homegrown – The XPN Local Show",
     "host": "Mike Vasilikos",
-    "time": "Tuesdays - 8-10p",
-    "img": "https://backend.xpn.org/app/uploads/2020/02/20200210_FawziyyaHeart_KSS12.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/01/homegrown-local-show-_FINAL_square.jpg",
     "desc": "A weekly spotlight on up-and-coming bands from the tri-state area featuring new releases and exclusive live performances.",
     "schedule": [
       {
@@ -406,14 +261,17 @@
         "end": "22:00"
       }
     ],
-    "episodes": []
+    "page": "https://xpn.org/program/wxpn-local/",
+    "tint": {
+      "light": "#3e5420",
+      "dark": "#59792e"
+    }
   },
   "indie": {
     "id": "indie",
     "name": "Indie Rock Hit Parade",
     "host": "Eric Schuman",
-    "time": "Tuesdays - 10p-midnight",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-489002359-150x150.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/01/IRHP-2022.jpg",
     "desc": "The latest indie-rock releases, the occasional classic, and special in-studio performances from new bands.",
     "schedule": [
       {
@@ -424,65 +282,66 @@
         "end": "00:00"
       }
     ],
-    "color": "#020202",
-    "episodes": []
+    "page": "https://xpn.org/program/indie-rock-hit-parade/"
   },
   "evenings": {
     "id": "evenings",
     "name": "WXPN Evenings",
     "host": "Abdur Rahman & Jim McGuinn",
-    "time": "Wed-Thu evenings",
-    "img": "https://backend.xpn.org/app/uploads/2022/03/Evenings-350x350.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/03/Evenings.jpg",
     "desc": "This handcrafted, diverse mix of music from emerging and established artists creates the perfect vibe for your evening listening.",
     "schedule": [
       {
         "days": [
-          "Wednesday"
+          "Wednesday",
+          "Thursday"
         ],
         "start": "20:00",
-        "end": "22:00"
+        "end": "00:00"
       },
       {
         "days": [
-          "Wednesday"
+          "Friday"
         ],
         "start": "23:00",
         "end": "00:00"
       },
       {
         "days": [
-          "Thursday"
+          "Saturday"
         ],
-        "start": "20:00",
-        "end": "00:00"
+        "start": "00:00",
+        "end": "02:00"
       }
     ],
-    "episodes": []
+    "page": "https://xpn.org/program/wxpn-evenings/",
+    "tint": {
+      "light": "#6f2baa",
+      "dark": "#9853d3"
+    }
   },
   "culturecypher": {
     "id": "culturecypher",
     "name": "Culture Cypher Radio",
     "host": "John Morrison",
-    "time": "Wednesdays - 10-11p",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-157425110-150x150.jpg",
-    "desc": "An expansive selection of new and classic hip-hop music alongside the related worlds of jazz, soul, and experimental sounds each Wednesday.",
+    "img": "https://xpn.org/wp-content/uploads/2022/01/culture_cypher_logo_slide.jpg",
+    "desc": "An expansive selection of new and classic hip-hop music alongside the related worlds of jazz, soul, and experimental sounds.",
     "schedule": [
       {
         "days": [
-          "Wednesday"
+          "Friday"
         ],
         "start": "22:00",
         "end": "23:00"
       }
     ],
-    "episodes": []
+    "page": "https://xpn.org/program/culture-cypher-radio/"
   },
   "landlost": {
     "id": "landlost",
-    "name": "Land Of The Lost",
+    "name": "Land of the Lost",
     "host": "Robert Drake",
-    "time": "Fridays - 7-9p",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-116068118-150x150.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/01/lotl_logo_shirt.jpg",
     "desc": "Rediscover the 1980s' diverse musical landscape with cult classics, punk, and new wave anthems.",
     "schedule": [
       {
@@ -490,37 +349,16 @@
           "Friday"
         ],
         "start": "19:00",
-        "end": "21:00"
+        "end": "22:00"
       }
     ],
-    "color": "#c92a7f",
-    "episodes": []
-  },
-  "frequency": {
-    "id": "frequency",
-    "name": "What's The Frequency?",
-    "host": "Amber Miller",
-    "time": "Fridays - 9-11p",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/IMG_2671-1-150x150.jpg",
-    "desc": "A weekly musical excursion through all musical genres of the 90s that's equal parts curated and interactive.",
-    "schedule": [
-      {
-        "days": [
-          "Friday"
-        ],
-        "start": "21:00",
-        "end": "23:00"
-      }
-    ],
-    "color": "#2138d1",
-    "episodes": []
+    "page": "https://xpn.org/program/land-of-the-lost/"
   },
   "sleepyhollow": {
     "id": "sleepyhollow",
     "name": "Sleepy Hollow",
     "host": "Keith Kelleher & Joey Sweeney",
-    "time": "Weekends - 6-10a",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-1185599258-150x150.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/01/the-Quiet-Sounds-for-WEekend-Mornings.png",
     "desc": "A mix of jazz, folk, instrumental, contemporary acoustic, and indie music perfectly blended for a distinct quiet sound.",
     "schedule": [
       {
@@ -532,15 +370,17 @@
         "end": "10:00"
       }
     ],
-    "color": "#4e8e2c",
-    "episodes": []
+    "page": "https://xpn.org/program/sleepy-hollow/",
+    "tint": {
+      "light": "#638329",
+      "dark": "#638329"
+    }
   },
   "postsleepy": {
     "id": "postsleepy",
     "name": "The Post Sleepy Hollow Experience",
     "host": "Bruce Warren",
-    "time": "Saturdays - 10a-2p",
-    "img": "https://backend.xpn.org/app/uploads/2022/03/Overnight-350x350.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/03/SleepyHollow.jpg",
     "desc": "The perfect Saturday segue from the quiet sounds to WXPN's signature music mix.",
     "schedule": [
       {
@@ -551,14 +391,17 @@
         "end": "14:00"
       }
     ],
-    "episodes": []
+    "page": "https://xpn.org/program/the-post-sleepy-hollow-experience/",
+    "tint": {
+      "light": "#7130ab",
+      "dark": "#9553cf"
+    }
   },
   "saturdaymix": {
     "id": "saturdaymix",
     "name": "Saturday Afternoon Mix",
     "host": "Wendy Rollins",
-    "time": "Saturdays - 2-6p",
-    "img": "https://backend.xpn.org/app/uploads/2022/03/Afternoons-350x350.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/03/SAturay-afternoon-mix.png",
     "desc": "Signature mix of music featuring new and legendary indie, classic and alternative rock, vintage R&B, soul, blues, and more.",
     "schedule": [
       {
@@ -569,14 +412,17 @@
         "end": "18:00"
       }
     ],
-    "episodes": []
+    "page": "https://xpn.org/program/saturday-afternoon-mix/",
+    "tint": {
+      "light": "#a959d6",
+      "dark": "#a959d6"
+    }
   },
   "benvaughn": {
     "id": "benvaughn",
     "name": "The Many Moods of Ben Vaughn",
     "host": "Ben Vaughn",
-    "time": "Saturdays - 6-7p",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-1091573962-150x150.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/01/256138338_10160416659803646_2761755819641589633_n.jpg",
     "desc": "An eclectic mix of rock, blues, jazz, folk, soul, R&B, country, bossa nova, soundtracks, easy listening, and more.",
     "schedule": [
       {
@@ -587,15 +433,13 @@
         "end": "19:00"
       }
     ],
-    "color": "#7f4902",
-    "episodes": []
+    "page": "https://xpn.org/program/the-many-moods-of-ben-vaughn/"
   },
   "bluesshow": {
     "id": "bluesshow",
     "name": "The Blues Show",
     "host": "Jonny Meister",
-    "time": "Saturdays - 7-11p",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-103922652-150x150.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/01/blues_show_logo.jpg",
     "desc": "A mix of Blues music from the 1920s to the present, ranging from the best-known to the most obscure.",
     "schedule": [
       {
@@ -606,15 +450,17 @@
         "end": "23:00"
       }
     ],
-    "color": "#012787",
-    "episodes": []
+    "page": "https://xpn.org/program/the-blues-show/",
+    "tint": {
+      "light": "#e64606",
+      "dark": "#f84d08"
+    }
   },
   "americanroutes": {
     "id": "americanroutes",
     "name": "American Routes",
     "host": "Nick Spitzer",
-    "time": "Saturdays - 11p-1a",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-578294498-150x150.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/01/american_routes_logo.png",
     "desc": "Songs and stories from blues and jazz, gospel and soul, rockabilly and country, Cajun, swamp pop, Tejano, Latin, and beyond.",
     "schedule": [
       {
@@ -625,15 +471,17 @@
         "end": "01:00"
       }
     ],
-    "color": "#c68269",
-    "episodes": []
+    "page": "https://xpn.org/program/american-routes/",
+    "tint": {
+      "light": "#585dc0",
+      "dark": "#666bc5"
+    }
   },
   "starsend": {
     "id": "starsend",
     "name": "Star's End",
     "host": "Chuck van Zyl",
-    "time": "Sundays - 1-6a",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-659629338-150x150.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/01/StarsEndDrafts_V1_Page_1.jpg",
     "desc": "A gentle aural soundscape of ambient music to accompany your sleep and dreams.",
     "schedule": [
       {
@@ -644,15 +492,13 @@
         "end": "06:00"
       }
     ],
-    "color": "#020202",
-    "episodes": []
+    "page": "https://xpn.org/program/stars-end/"
   },
   "davesworld": {
     "id": "davesworld",
     "name": "Dave's World",
     "host": "David Dye",
-    "time": "Sundays - 10a-noon",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/17795826_1852528218353374_9189750100218384128_n-150x150.png",
+    "img": "https://xpn.org/wp-content/uploads/2022/01/17493018_1852528051686724_1285190363288290186_o.jpg",
     "desc": "David Dye's eclectic musical tastes and far-reaching knowledge of music come together for a unique listening experience.",
     "schedule": [
       {
@@ -663,15 +509,17 @@
         "end": "12:00"
       }
     ],
-    "color": "#721313",
-    "episodes": []
+    "page": "https://xpn.org/program/daves-world/",
+    "tint": {
+      "light": "#9e793c",
+      "dark": "#d9c19a"
+    }
   },
   "sundaymix": {
     "id": "sundaymix",
     "name": "Sunday Afternoon Mix",
     "host": "Abdur Rahman & Wendy Rollins",
-    "time": "Sundays - noon-5p",
-    "img": "https://backend.xpn.org/app/uploads/2022/03/Afternoons-350x350.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/03/SunAfternoon.jpg",
     "desc": "This handcrafted, diverse mix of music from emerging and established artists creates the perfect vibe for your Sunday afternoon listening.",
     "schedule": [
       {
@@ -682,14 +530,17 @@
         "end": "17:00"
       }
     ],
-    "episodes": []
+    "page": "https://xpn.org/program/sunday-afternoon-mix/",
+    "tint": {
+      "light": "#9e7a01",
+      "dark": "#fec506"
+    }
   },
   "americana": {
     "id": "americana",
     "name": "Americana Music Hour",
     "host": "Dan Reed",
-    "time": "Sundays - 5-6p",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-117146905-150x150.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/03/Americana.jpg",
     "desc": "Celebrating country, roots-rock, folk, bluegrass, R&B, blues, and other American roots music styles.",
     "schedule": [
       {
@@ -700,14 +551,17 @@
         "end": "18:00"
       }
     ],
-    "episodes": []
+    "page": "https://xpn.org/program/americana-music-hour/",
+    "tint": {
+      "light": "#398897",
+      "dark": "#58afc0"
+    }
   },
   "mountainstage": {
     "id": "mountainstage",
     "name": "Mountain Stage",
-    "host": "WXPN",
-    "time": "Sundays - 6-8p",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-117146905-150x150.jpg",
+    "host": "",
+    "img": "https://xpn.org/wp-content/uploads/2022/01/mountain_stage.jpg",
     "desc": "Recorded live performances from musical legends and emerging stars in folk, blues, country, indie rock, synth-pop, world music, and beyond.",
     "schedule": [
       {
@@ -718,14 +572,17 @@
         "end": "20:00"
       }
     ],
-    "episodes": []
+    "page": "https://xpn.org/program/mountain-stage/",
+    "tint": {
+      "light": "#c15ba5",
+      "dark": "#c15ba5"
+    }
   },
   "folkshow": {
     "id": "folkshow",
     "name": "The Folk Show",
-    "host": "Ian Zolitor",
-    "time": "Sundays - 8-10p",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-1278377665-150x150.jpg",
+    "host": "Bruce Warren, Jim McGuinn & David Dye",
+    "img": "https://xpn.org/wp-content/uploads/2022/01/folk_show.jpg",
     "desc": "A music mix spanning the last century of folk artists and recordings along with in-studio interviews and performances.",
     "schedule": [
       {
@@ -736,15 +593,17 @@
         "end": "22:00"
       }
     ],
-    "color": "#895700",
-    "episodes": []
+    "page": "https://xpn.org/program/the-folk-show/",
+    "tint": {
+      "light": "#6f452a",
+      "dark": "#a3663e"
+    }
   },
   "cafeconversations": {
     "id": "cafeconversations",
-    "name": "Conversations From The World Cafe",
+    "name": "Conversations from the World Cafe",
     "host": "Raina Douris & Stephen Kallao",
-    "time": "Sundays - 10-11p",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/WC-studio-150x150.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/04/wc_conversations.jpg",
     "desc": "A weekly best-of collection of recent World Cafe interviews and performances.",
     "schedule": [
       {
@@ -755,15 +614,17 @@
         "end": "23:00"
       }
     ],
-    "color": "#4c4c4c",
-    "episodes": []
+    "page": "https://xpn.org/program/conversations-from-the-world-cafe/",
+    "tint": {
+      "light": "#de4b4e",
+      "dark": "#de4b4e"
+    }
   },
   "amazoncountry": {
     "id": "amazoncountry",
     "name": "Amazon Country",
     "host": "Debra D'Alessandro",
-    "time": "Sundays - 11-11:30p",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-1175616122-150x150.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/01/AmazonCountry_flag.jpg",
     "desc": "A showcase of lesbian and feminist musicians celebrating the diversity of the Women's Music movement.",
     "schedule": [
       {
@@ -774,15 +635,17 @@
         "end": "23:30"
       }
     ],
-    "color": "#549db7",
-    "episodes": []
+    "page": "https://xpn.org/program/amazon-country/",
+    "tint": {
+      "light": "#398897",
+      "dark": "#58b0c0"
+    }
   },
   "outsounds": {
     "id": "outsounds",
     "name": "OUTsounds",
     "host": "Robert Drake",
-    "time": "Sundays - 11:30p-midnight",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-1129765002-150x150.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/01/OutSounds.png",
     "desc": "OUTsounds celebrates out musicians worldwide.",
     "schedule": [
       {
@@ -790,31 +653,75 @@
           "Sunday"
         ],
         "start": "23:30",
-        "end": "23:59"
+        "end": "00:00"
       }
     ],
-    "color": "#025a7a",
-    "episodes": []
+    "page": "https://xpn.org/program/outsounds/"
   },
   "echoes": {
     "id": "echoes",
     "name": "Echoes",
     "host": "John Diliberto",
-    "time": "Mon-Thu - midnight-2a",
-    "img": "https://backend.xpn.org/app/uploads/2022/01/GettyImages-649063649-150x150.jpg",
+    "img": "https://xpn.org/wp-content/uploads/2022/01/echoes_logo_slide.jpg",
     "desc": "A cross-cultural and trans-millennial sound, merging cultures and forms, technology and tradition.",
     "schedule": [
       {
         "days": [
-          "Monday",
           "Tuesday",
           "Wednesday",
-          "Thursday"
+          "Thursday",
+          "Friday"
         ],
         "start": "00:00",
         "end": "02:00"
       }
     ],
-    "episodes": []
+    "page": "https://xpn.org/program/echoes/",
+    "tint": {
+      "light": "#0c1079",
+      "dark": "#595fee"
+    }
+  },
+  "jamnation": {
+    "id": "jamnation",
+    "name": "JamNation",
+    "host": "Bruce Warren",
+    "img": "https://xpn.org/wp-content/uploads/2026/07/jamnation.jpg",
+    "desc": "Every Monday night, JamNation explores the artists who thrive on improvisation, exploration, and the magic of live performance, from the Allman Brothers Band, the Grateful Dead and Phish to Goose, Billy Strings and King Gizzard & the Lizard Wizard.",
+    "schedule": [
+      {
+        "days": [
+          "Monday"
+        ],
+        "start": "20:00",
+        "end": "22:00"
+      }
+    ],
+    "page": "https://xpn.org/program/jamnation/",
+    "tint": {
+      "light": "#0d8e8a",
+      "dark": "#0e9893"
+    }
+  },
+  "newmusic": {
+    "id": "newmusic",
+    "name": "The New Music Show on XPN",
+    "host": "Amber Miller",
+    "img": "https://xpn.org/wp-content/uploads/2026/07/new-music-show.png",
+    "desc": "Two hours of the newest music on XPN, every Monday night with Amber Miller.",
+    "schedule": [
+      {
+        "days": [
+          "Monday"
+        ],
+        "start": "22:00",
+        "end": "00:00"
+      }
+    ],
+    "page": "https://xpn.org/program/the-new-music-show-on-xpn/",
+    "tint": {
+      "light": "#3a8a99",
+      "dark": "#5ab0c0"
+    }
   }
 }
