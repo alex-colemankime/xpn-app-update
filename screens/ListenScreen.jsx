@@ -24,33 +24,51 @@ const STATION_OPTIONS = Object.values(STREAMS).map((s) => ({ value: s.id, label:
 const RECENT_PREVIEW = 6;
 const RECENT_MAX = 50;
 
+// The live video, when it belongs to the show on the air now (Free at Noon
+// during Free at Noon): then the on-air band carries it, rather than a second
+// card saying the same thing.
+const videoOfShow = (live, onAirNow) =>
+  live?.state === "live" && onAirNow && live.show === onAirNow.show.id ? live : null;
+
 // Who is on the air right now, from the FM schedule. Radio is its hosts, so
 // this leads the screen: a band in the show's own color, like a station's
-// studio sign. Tapping opens the show.
-function OnAir({ onAirNow, playing, onOpenShow }) {
+// studio sign. Tapping opens the show; during the show's live video, the band
+// names the session and offers Watch.
+function OnAir({ onAirNow, playing, onOpenShow, live, onWatch }) {
   if (!onAirNow) return null;
   const { show } = onAirNow;
   const until = untilLabel(onAirNow);
+  const video = videoOfShow(live, onAirNow);
+  const line = video ? video.text : show.host;
   return (
-    <button
+    <div
       className="on-air"
-      onClick={() => onOpenShow(show.id)}
+      data-video={video ? "" : undefined}
       style={
         show.tint ? { "--tint-light": show.tint.light, "--tint-dark": show.tint.dark } : undefined
       }
     >
-      <Art className="on-air-art" src={show.img} alt="" />
-      <span className="on-air-text">
-        <span className="on-air-label">
-          <i className="on-air-dot" data-live={playing || undefined} />
-          On air{until ? ` · ${until}` : ""}
+      <button className="on-air-open" onClick={() => onOpenShow(show.id)}>
+        <Art className="on-air-art" src={show.img} alt="" />
+        <span className="on-air-text">
+          <span className="on-air-label">
+            <i className="on-air-dot" data-live={playing || video ? "" : undefined} />
+            On air{until ? ` · ${until}` : ""}
+          </span>
+          <span className="on-air-show">{video ? video.title : show.name}</span>
+          {line && <span className="on-air-host">{line}</span>}
         </span>
-        <span className="on-air-show">{show.name}</span>
-        {show.host && <span className="on-air-host">{show.host}</span>}
-      </span>
-      <Icon name="chev" size={18} />
-      <span className="sr-only">Show details</span>
-    </button>
+        {!video && <Icon name="chev" size={18} />}
+        <span className="sr-only">Show details</span>
+      </button>
+      {video && (
+        <button className="on-air-watch" onClick={() => onWatch(video)}>
+          <Icon name="play" size={14} />
+          Watch
+          <span className="sr-only"> the live video</span>
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -63,7 +81,14 @@ const EqBars = () => (
   </span>
 );
 
-const SLEEP_MINUTES = [15, 30, 45, 60];
+// Each choice as the menu shows it (a large number over its unit) and as it
+// is said aloud and in the confirmation.
+const SLEEP_CHOICES = [
+  { minutes: 15, number: "15", unit: "min", said: "15 minutes" },
+  { minutes: 30, number: "30", unit: "min", said: "30 minutes" },
+  { minutes: 45, number: "45", unit: "min", said: "45 minutes" },
+  { minutes: 60, number: "1", unit: "hour", said: "an hour" },
+];
 
 // Stop playback after a while, fading out; lives in a popover so it needs no
 // screen of its own. Only offered while there is audio to stop.
@@ -106,18 +131,34 @@ function SleepTimer({ onAirNow }) {
         role="dialog"
         aria-labelledby="sleep-title"
       >
-        <p id="sleep-title" className="popover-menu-title">
-          Stop playing after
-        </p>
-        {SLEEP_MINUTES.map((m) => (
-          <button key={m} onClick={() => choose(m, `in ${m === 60 ? "an hour" : `${m} minutes`}`)}>
-            {m === 60 ? "1 hour" : `${m} minutes`}
-          </button>
-        ))}
+        <div className="sleep-head">
+          <p id="sleep-title" className="sleep-title">
+            <Icon name="moon" size={18} />
+            Sleep timer
+          </p>
+          <p className="sleep-sub">
+            {endsAt ? `The radio stops in ${left} min.` : "The radio fades out, then stops after…"}
+          </p>
+        </div>
+        <div className="sleep-grid">
+          {SLEEP_CHOICES.map((c) => (
+            <button
+              key={c.minutes}
+              aria-label={c.said === "an hour" ? "1 hour" : c.said}
+              onClick={() => choose(c.minutes, `in ${c.said}`)}
+            >
+              <strong>{c.number}</strong>
+              <small>{c.unit}</small>
+            </button>
+          ))}
+        </div>
         {onAirNow && (
-          <button onClick={untilShowEnds}>
-            End of {onAirNow.show.name}
-            <small>at {localClock(onAirNow.endsAt)}</small>
+          <button className="sleep-show" onClick={untilShowEnds}>
+            <Art src={onAirNow.show.img} alt="" />
+            <span>
+              <strong>End of {onAirNow.show.name}</strong>
+              <small>Stops at {localClock(onAirNow.endsAt)}</small>
+            </span>
           </button>
         )}
         {endsAt && (
@@ -173,7 +214,7 @@ function useHeroVisibility(ref) {
   }, [ref]);
 }
 
-function NowPlaying({ playlist, onOpenShow }) {
+function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
   const player = usePlayer();
   const { station, streamId, playing, connecting, castAvailable } = player;
   const now = useNow();
@@ -195,7 +236,13 @@ function NowPlaying({ playlist, onOpenShow }) {
 
   return (
     <section className="now-card" aria-label="Current song">
-      <OnAir onAirNow={onAirNow} playing={playing} onOpenShow={onOpenShow} />
+      <OnAir
+        onAirNow={onAirNow}
+        playing={playing}
+        onOpenShow={onOpenShow}
+        live={live}
+        onWatch={onWatch}
+      />
       <div className="now-stage">
         <div className="now-art" key={`art-${songKey}`}>
           {current?.img ? (
@@ -217,19 +264,21 @@ function NowPlaying({ playlist, onOpenShow }) {
             </div>
           )}
         </div>
+        {/* The label and the song's own actions (heart, menu) share the top
+            line, so the title below has the full width of the stage and
+            never wraps around them. */}
         <div className="now-meta">
+          <span className="eyebrow now-eyebrow">
+            {playing && current && <EqBars />}
+            {eyebrow}
+          </span>
           <div className="now-info" key={`info-${songKey}`}>
-            <span className="eyebrow">
-              {playing && current && <EqBars />}
-              {eyebrow}
-            </span>
             <h2>{current?.title || station.label}</h2>
             <p className="now-artist">{current?.artist || station.tagline}</p>
             {current?.album &&
               current.album !== current.artist &&
               current.album !== current.title && <p className="now-album">{current.album}</p>}
           </div>
-          {/* The song's own actions sit with the song. */}
           {current && (
             <div className="now-song-actions">
               <SaveSong track={current} />
@@ -375,6 +424,9 @@ function SavedPreview({ onNavigate }) {
 
 export function ListenScreen({ playlist, live, onWatch, onNavigate, onOpenShow }) {
   const { streamId, station } = usePlayer();
+  const now = useNow();
+  // During the show's own live video the on-air band carries it instead.
+  const merged = streamId === "xpn" && videoOfShow(live, onAirAt(new Date(now)));
   return (
     <>
       <div className="listen-heading">
@@ -387,9 +439,9 @@ export function ListenScreen({ playlist, live, onWatch, onNavigate, onOpenShow }
           options={STATION_OPTIONS}
         />
       </div>
-      <LiveCard live={live} onWatch={onWatch} />
+      {!merged && <LiveCard live={live} onWatch={onWatch} />}
       <div className="live-workspace">
-        <NowPlaying playlist={playlist} onOpenShow={onOpenShow} />
+        <NowPlaying playlist={playlist} onOpenShow={onOpenShow} live={live} onWatch={onWatch} />
         <div className="live-lists">
           {/* Homegrown publishes no playlist, so it has no list to show. */}
           {station.songFeed && (

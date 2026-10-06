@@ -19,7 +19,9 @@ export function Toast({ inModal = false }) {
     <div className="toast-region" role="status" aria-live="polite">
       {shown && (
         <div
-          className={`toast ${message.action ? "has-action" : ""}`}
+          className={`toast ${message.action ? "has-action" : ""} ${
+            message.action && message.title && message.text ? "stacked" : ""
+          }`}
           onPointerEnter={() => holdToast(true)}
           onPointerLeave={() => holdToast(false)}
           onFocus={() => holdToast(true)}

@@ -40,6 +40,8 @@ import { showToast } from "./toast.js";
 import { readJson, writeJson } from "./storage.js";
 import { DONATE_URL } from "./links.js";
 import { CONCERTS_ENABLED } from "./config.js";
+import { STREAMS } from "./streams.js";
+import { clockLabel } from "./time.js";
 import { ListenScreen } from "./screens/ListenScreen.jsx";
 import { ShowsScreen, ShowDetail } from "./screens/ShowsScreen.jsx";
 import { LibraryScreen } from "./screens/LibraryScreen.jsx";
@@ -292,14 +294,25 @@ export default function App() {
         </header>
         {alarm.ringing && (
           <div className="alarm-banner" role="alert">
-            <span>
-              <Icon name="clock" />
-              Radio alarm
+            <span className="alarm-banner-title">
+              <span className="alarm-bell" aria-hidden="true">
+                <Icon name="bell" size={20} />
+              </span>
+              <span>
+                <strong>Radio alarm</strong>
+                <small>
+                  {clockLabel(alarm.alarm.time)} · {STREAMS[alarm.alarm.streamId]?.label}
+                </small>
+              </span>
             </span>
-            <button className="alarm-snooze" onClick={alarm.snooze}>
-              Snooze {alarm.alarm.snoozeMinutes} min
-            </button>
-            <button onClick={alarm.dismiss}>Dismiss</button>
+            <span className="alarm-banner-actions">
+              <button className="alarm-snooze" onClick={alarm.snooze}>
+                Snooze {alarm.alarm.snoozeMinutes} min
+              </button>
+              <button className="alarm-dismiss" onClick={alarm.dismiss}>
+                Dismiss
+              </button>
+            </span>
           </div>
         )}
         <StationBanner {...updates} onWatch={watch} onListenScreen={route.screen === "listen"} />

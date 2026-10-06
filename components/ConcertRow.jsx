@@ -62,7 +62,12 @@ function AddToCalendar({ concert }) {
         aria-label={label}
         style={{ positionAnchor: `--${menuId}` }}
       >
-        <p className="popover-menu-title">Add to calendar</p>
+        <div className="popover-menu-head">
+          <span>
+            <strong>Add to calendar</strong>
+            <small>{concert.artist}</small>
+          </span>
+        </div>
         <button
           onClick={() => {
             close();

@@ -160,9 +160,13 @@ export function SongMenu({ track, stationLabel = "WXPN" }) {
       >
         {open && (
           <>
-            <p className="popover-menu-title song-title">
-              {track.title} · {track.artist}
-            </p>
+            <div className="popover-menu-head">
+              <Art src={track.img} alt="" />
+              <span>
+                <strong>{track.title}</strong>
+                <small>{track.artist}</small>
+              </span>
+            </div>
             <PlaylistMenuItems track={track} close={close} />
             <button onClick={share}>
               Share song
@@ -192,10 +196,17 @@ export function ShowCard({ show, onOpen }) {
 }
 
 // A song in a list. `showTime` adds when it played, for the station's
-// playlist; saved songs leave it out.
+// playlist; saved songs leave it out. A saved song's row is washed in a pale
+// version of its heart's color.
 export function TrackRow({ track, showTime = false }) {
+  const saved = useIsFavorite("songs", { ...track, id: songId(track) });
+  const tint = useArtTint(saved ? track.img : null);
   return (
-    <div className="track-row">
+    <div
+      className="track-row"
+      data-saved={saved ? "" : undefined}
+      style={tint ? { "--tint-light": tint.light, "--tint-dark": tint.dark } : undefined}
+    >
       <Art src={track.img} loading="lazy" />
       <span>
         <strong>{track.title}</strong>

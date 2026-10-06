@@ -89,7 +89,17 @@ export function Welcome({ onDone }) {
   const [stepName, setStepName] = useState("follow");
   const step = Math.max(0, steps.indexOf(stepName));
   const next = () => (step + 1 < steps.length ? setStepName(steps[step + 1]) : onDone());
-  const counter = <span className="welcome-step">{`${step + 1} of ${steps.length}`}</span>;
+  // Progress as a row of short bars, one per step, filled up to this one.
+  const counter = (
+    <span className="welcome-step">
+      <span className="welcome-bars" aria-hidden="true">
+        {steps.map((name, i) => (
+          <i key={name} data-on={i <= step || undefined} />
+        ))}
+      </span>
+      <span className="sr-only">{`Step ${step + 1} of ${steps.length}`}</span>
+    </span>
+  );
   const heading = useRef(null);
 
   // Each step replaces the button that was just pressed, so move focus to

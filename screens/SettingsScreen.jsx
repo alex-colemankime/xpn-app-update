@@ -129,10 +129,29 @@ function ClockFace({ time }) {
   );
 }
 
+// "07:00" as the listener's clock writes it: ["7:00", "AM"] (or ["07:00", ""]
+// where clocks run to 24 hours).
+const TIME_FORMAT = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+function clockParts(time) {
+  const [h, m] = String(time || "0:0")
+    .split(":")
+    .map(Number);
+  const parts = TIME_FORMAT.formatToParts(new Date(2000, 0, 1, h || 0, m || 0));
+  const period = parts.find((p) => p.type === "dayPeriod")?.value || "";
+  const clock = parts
+    .filter((p) => p.type !== "dayPeriod")
+    .map((p) => p.value)
+    .join("")
+    .trim();
+  return [clock, period];
+}
+
 // The alarm time, large, with a clock face set to it; tapping the face opens
-// the system time picker.
+// the system time picker. The time is shown as the clock writes it ("7:00",
+// with a smaller "AM"); the native field takes over while it is being edited.
 function AlarmTime({ time, onChange }) {
   const input = useRef(null);
+  const [clock, period] = clockParts(time);
   const openPicker = () => {
     try {
       input.current.showPicker();
@@ -146,14 +165,20 @@ function AlarmTime({ time, onChange }) {
         Alarm time · your local time
       </label>
       <div className="alarm-time-row">
-        <input
-          id="alarm-time"
-          ref={input}
-          type="time"
-          value={time}
-          onChange={(e) => e.target.value && onChange(e.target.value)}
-          required
-        />
+        <span className="alarm-time-field">
+          <input
+            id="alarm-time"
+            ref={input}
+            type="time"
+            value={time}
+            onChange={(e) => e.target.value && onChange(e.target.value)}
+            required
+          />
+          <span className="alarm-time-display" aria-hidden="true">
+            {clock}
+            {period && <small>{period}</small>}
+          </span>
+        </span>
         <button
           type="button"
           className="clock-button"

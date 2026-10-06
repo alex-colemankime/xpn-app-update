@@ -68,7 +68,7 @@ export function LiveCard({ live, onWatch }) {
       <div>
         <span className="eyebrow">
           {live.state === "live" && <i className="live-dot" aria-hidden="true" />}
-          {liveWhen(live)} · Video
+          {liveWhen(live)}
         </span>
         <h2>{live.title}</h2>
         {live.text && <p>{live.text}</p>}

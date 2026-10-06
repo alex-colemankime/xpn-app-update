@@ -13,6 +13,9 @@
   --border: #ded9cf;
   --control-border: #8e897f;
   --accent: #b83d1c;
+  /* The accent as text on an accent-tinted fill (a chosen key, the LIVE
+     tag), a step darker so it keeps 4.5:1 there. */
+  --accent-strong: #983012;
   --action: #ef7149;
   --action-ink: #241710;
   --row-alt: #eeeae1;
@@ -34,6 +37,7 @@
   --border: #44484a;
   --control-border: #797b7c;
   --accent: #ff9875;
+  --accent-strong: #ffa585;
   --action: #ef7149;
   --action-ink: #241710;
   --row-alt: #2b2e30;
@@ -56,7 +60,8 @@
   font-synthesis: none;
   /* Layout: the desktop player bar, and on phones the tab bar and the mini
      player that sits on it. */
-  --player-h: 5.75rem;
+  --player-h: 4.75rem;
+  --sidebar-w: 232px;
   --tabbar-h: 4.1875rem;
   --mini-h: 4.75rem;
   --page-gutter: clamp(28px, 3.5vw, 56px);
@@ -170,8 +175,9 @@ p {
 .app-sidebar {
   position: fixed;
   z-index: var(--z-sidebar);
-  inset: 0 auto calc(var(--player-h) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))) 0;
-  width: 232px;
+  /* Full height: the player bar sits beside it, under the content. */
+  inset: 0 auto 0 0;
+  width: var(--sidebar-w);
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--border);
@@ -263,7 +269,7 @@ p {
   font-weight: 600;
 }
 .main-shell {
-  margin-left: 232px;
+  margin-left: var(--sidebar-w);
   min-width: 0;
   padding-bottom: calc(
     var(--player-h) + 30px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
@@ -391,12 +397,21 @@ h1 {
   color: var(--muted);
   margin: 0;
 }
+/* A song in a list. Any row can carry a soft highlight (a saved song, in
+   its heart's color), so the row reaches a little past the column and its
+   divider is drawn inset, lined up with the column. */
 .track-row {
   display: flex;
   gap: 17px;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
+  margin-inline: -10px;
+  padding: 12px 10px;
+  border-radius: 10px;
+  background-image: linear-gradient(var(--border), var(--border));
+  background-size: calc(100% - 20px) 1px;
+  background-position: 50% 100%;
+  background-repeat: no-repeat;
+  transition: background-color 0.35s ease-out;
 }
 .track-row > img {
   width: 46px;
@@ -468,21 +483,38 @@ h1 {
     color: inherit;
   }
 }
+/* The player on tablets and laptops: a bar under the content (the sidebar
+   runs the full height beside it), its edges lined up with the page's.
+   Play leads the song it plays, the heart follows the song, and volume and
+   output sit at the far edge. */
 .player-bar {
   position: fixed;
   z-index: var(--z-bars);
   bottom: 0;
-  left: 0;
+  left: var(--sidebar-w);
   right: 0;
   height: calc(var(--player-h) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  display: flex;
   align-items: center;
-  padding: 0 max(34px, var(--safe-area-inset-right, env(safe-area-inset-right)))
-    var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
-    max(34px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+  gap: 16px;
+  /* The page's own gutter, and on a very wide window the same centering as
+     the page, so the bar's ends sit under the content's ends. */
+  --bar-inset: max(
+    var(--page-gutter),
+    calc((100% - var(--sidebar-w) - 1376px) / 2 + var(--page-gutter))
+  );
+  padding: 0 max(var(--bar-inset), var(--safe-area-inset-right, env(safe-area-inset-right)))
+    var(--safe-area-inset-bottom, env(safe-area-inset-bottom)) var(--bar-inset);
   background: var(--raised);
   border-top: 1px solid var(--border);
+}
+/* The song, and its heart right beside it. */
+.player-now {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 .player-track {
   display: flex;
@@ -492,80 +524,150 @@ h1 {
   text-align: left;
 }
 .station-mark {
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
   background: var(--action);
-  border-radius: 4px;
+  border-radius: 6px;
   display: grid;
   place-items: center;
   color: var(--action-ink);
-  font-size: 1.4375rem;
+  font-size: 1.375rem;
   letter-spacing: -0.09em;
   font-weight: 800;
 }
 .player-track strong {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.9375rem;
+  font-weight: 650;
 }
 .player-track small {
   display: block;
   font-size: 0.875rem;
   color: var(--muted);
-  margin-top: 5px;
+  margin-top: 3px;
 }
-.player-center {
-  display: flex;
-  justify-content: center;
+/* What the stream is doing, as a small tag before the artist: a pulsing
+   dot and "live", "connecting" or "offline". */
+.live-badge {
+  display: inline-flex;
   align-items: center;
-  gap: 16px;
+  gap: 5px;
+  margin-right: 8px;
+  padding: 1px 7px 1px 6px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  color: var(--accent-strong);
+  font-size: 0.8125rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: 1px;
 }
+.live-badge i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.live-badge[data-state="live"] i {
+  animation: live-pulse 2s ease-in-out infinite;
+}
+.live-badge[data-state="error"] {
+  background: color-mix(in srgb, var(--muted) 16%, transparent);
+  color: var(--muted);
+}
+/* Play: the same orange key as Listen live, sized to the artwork beside it. */
 .player-play {
   position: relative;
-  height: 56px;
-  width: 56px;
   flex-shrink: 0;
-  /* A rounded square, in the family of the other buttons. */
-  border-radius: 16px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
   background: var(--action);
   color: var(--action-ink);
 }
-.player-live {
-  display: flex;
-  align-items: center;
-  min-width: 76px;
-  gap: 7px;
-  font-size: 0.875rem;
-  letter-spacing: 0.1em;
-  color: var(--text);
-}
-.player-live i {
-  display: inline-block;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  color: var(--accent);
-  background: currentColor;
-}
 .player-utilities {
   display: flex;
-  justify-content: end;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
+  margin-left: auto;
+  padding-left: 16px;
   color: var(--muted);
 }
-.player-utilities input {
-  width: 90px;
-  height: 28px;
-  accent-color: var(--text);
+.player-volume {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+/* A slim slider: the level filled in the text color on a hairline track. */
+.player-volume input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 104px;
+  height: 20px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.player-volume input::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    var(--text) var(--fill, 70%),
+    var(--border) var(--fill, 70%)
+  );
+}
+.player-volume input::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+.player-volume input::-moz-range-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--text);
+}
+.player-volume input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 2px solid var(--raised);
+  box-shadow: 0 0 0 1px var(--border);
+}
+.player-volume input::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 2px solid var(--raised);
+}
+@media (max-width: 1000px) {
+  .player-volume input {
+    width: 84px;
+  }
+}
+/* Lists read as a column, not a full-width table: on a wide window the
+   heart and actions stay near the names they belong to. */
+@media (min-width: 768px) {
+  .main-shell:is([data-screen="concerts"], [data-screen="favorites"]) .page-content > section {
+    max-width: 900px;
+  }
 }
 .mobile-nav {
   display: none;
 }
 @media (max-width: 1200px) {
+  :root {
+    --page-gutter: 28px;
+  }
   .page-content {
     padding: 28px;
   }
@@ -580,6 +682,9 @@ h1 {
   }
 }
 @media (max-width: 767px) {
+  :root {
+    --sidebar-w: 0px;
+  }
   .app-sidebar {
     display: none;
   }
@@ -655,12 +760,18 @@ h1 {
     overflow-wrap: anywhere;
     font-size: 0.875rem;
   }
+  /* The mini player: full width above the tab bar, the song first and
+     play at its end, under the thumb. */
   .player-bar {
+    left: 0;
     bottom: calc(var(--tabbar-h) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
     height: var(--mini-h);
     padding: 0 max(18px, var(--safe-area-inset-right, env(safe-area-inset-right))) 0
       max(18px, var(--safe-area-inset-left, env(safe-area-inset-left)));
-    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+  .player-now {
+    flex: 1;
   }
   .player-track {
     gap: 11px;
@@ -676,19 +787,16 @@ h1 {
   .player-track small {
     font-size: 0.875rem;
   }
-  .player-center {
-    gap: 0;
-  }
-  .player-live,
+  .player-now > .icon-button,
   .player-utilities {
     display: none;
   }
+  .live-badge {
+    margin-right: 6px;
+  }
   .player-play {
-    height: 48px;
-    width: 48px;
+    order: 1;
     border-radius: 14px;
-    background: var(--action);
-    color: var(--action-ink);
   }
   .mobile-nav {
     position: fixed;
@@ -779,10 +887,13 @@ h1 {
   margin: 0;
   letter-spacing: -0.045em;
 }
+/* Two columns on a wide screen: the stage, as wide as its artwork and set
+   against the left edge under the heading, then the playlist taking the
+   rest, so nothing floats in the middle of an empty column. */
 .live-workspace {
   display: grid;
-  grid-template-columns: minmax(300px, 0.95fr) minmax(320px, 1.05fr);
-  gap: clamp(32px, 4vw, 64px);
+  grid-template-columns: auto minmax(320px, 1fr);
+  gap: clamp(40px, 5vw, 72px);
   align-items: start;
 }
 .now-card {
@@ -790,7 +901,19 @@ h1 {
   /* One column width for the band, the artwork, the song and Listen live,
      also bounded by the window's height so Listen live stays above the
      player bar on a laptop screen. */
-  --stage: min(400px, 100%, max(240px, calc(100svh - 590px)));
+  --stage: min(400px, 100%, max(260px, calc(100svh - 590px)));
+}
+@media (min-width: 1001px) {
+  /* Sized by the window, not the column, since the column takes its width
+     from the card. */
+  .now-card {
+    --stage: min(400px, max(260px, calc(100svh - 590px)));
+    width: var(--stage);
+  }
+  .now-stage,
+  .on-air {
+    margin-left: 0;
+  }
 }
 .live-lists {
   min-width: 0;
@@ -834,25 +957,30 @@ h1 {
   letter-spacing: -0.08em;
 }
 .now-meta {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label actions"
+    "info info";
+  align-items: center;
 }
-.now-info {
-  flex: 1;
-  min-width: 0;
-}
-.now-info .eyebrow {
+.now-eyebrow {
+  grid-area: label;
   font-size: 0.875rem;
   color: var(--muted);
+}
+.now-info {
+  grid-area: info;
+  min-width: 0;
 }
 .now-info h2 {
   font-size: clamp(1.5rem, 1.9vw, 1.75rem);
   font-weight: 650;
   line-height: 1.15;
   letter-spacing: -0.02em;
-  margin: 8px 0 4px;
-  overflow-wrap: anywhere;
+  margin: 2px 0 4px;
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 .now-artist {
   font-size: 1.125rem;
@@ -864,12 +992,13 @@ h1 {
   margin: 0;
   color: var(--muted);
 }
-/* Heart and menu beside the title, as in a music app's player. */
+/* Heart and menu on the label's line, their glyphs lined up with the
+   artwork's right edge. */
 .now-song-actions {
+  grid-area: actions;
   display: flex;
-  flex-shrink: 0;
-  gap: 2px;
-  margin: 24px -10px 0 0;
+  gap: 0;
+  margin: -6px -12px -6px 0;
 }
 .now-controls {
   display: flex;
@@ -933,12 +1062,34 @@ h1 {
   font-size: 1.3125rem;
 }
 .live-lists .track-row {
-  padding: 12px 0;
+  padding-block: 12px;
   gap: 13px;
 }
 .live-lists .track-row > img {
   width: 46px;
   height: 46px;
+}
+/* A saved song's row, washed very lightly in its heart's color. */
+.track-row[data-saved] {
+  --row-tint: var(--tint-light, var(--accent));
+  background-color: color-mix(in srgb, var(--row-tint) 7%, var(--bg));
+  background-image: none;
+}
+:root[data-theme="dark"] .track-row[data-saved] {
+  --row-tint: var(--tint-dark, var(--accent));
+  background-color: color-mix(in srgb, var(--row-tint) 9%, var(--bg));
+}
+.track-row[data-saved] + .track-row[data-saved] {
+  margin-top: 2px;
+}
+/* The divider above a highlighted row steps aside too. */
+.track-row:has(+ .track-row[data-saved]) {
+  background-image: none;
+}
+@media (forced-colors: active) {
+  .track-row[data-saved] {
+    border: 1px solid CanvasText;
+  }
 }
 .track-time {
   font-variant-numeric: tabular-nums;
@@ -1031,42 +1182,67 @@ h1 {
   background: transparent;
   border-color: var(--accent);
 }
-/* A setting picked from a few options (the station, the color theme): a
-   contained control, with the choice raised on its track. */
-.segmented-pill {
+/* A setting picked from a few options (the station, the snooze, the color
+   theme), and the days of the week: one outlined control divided into keys,
+   like a row of buttons on a console. The chosen key lights up in the
+   accent, filled edge to edge; nothing floats on a track inside it. */
+.segmented-pill,
+.repeat-days,
+.day-picker {
+  --key-lit: color-mix(in srgb, var(--accent) 14%, var(--bg));
   display: inline-grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
-  gap: 2px;
-  padding: 3px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--row-alt);
+  gap: 0;
+  padding: 0;
+  border: 1px solid var(--control-border);
+  border-radius: 10px;
+  background: var(--bg);
+  overflow: hidden;
+}
+:root[data-theme="dark"] :is(.segmented-pill, .repeat-days, .day-picker) {
+  --key-lit: color-mix(in srgb, var(--accent) 20%, var(--bg));
+}
+/* Settings keys share the row by their wording, and wrap only when the
+   screen is too narrow for it; the days split it evenly. */
+.segmented-pill {
+  grid-auto-columns: auto;
 }
 .segmented-pill button {
-  min-height: 40px;
-  padding: 0 18px;
-  border: 0;
-  border-radius: 9px;
-  color: var(--muted);
-  font-weight: 600;
   white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  line-height: 1.2;
+}
+.segmented-pill button,
+.repeat-days button,
+.day-picker button {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 550;
+  white-space: nowrap;
   transition:
     background-color 0.15s,
-    color 0.15s,
-    box-shadow 0.15s;
+    color 0.15s;
 }
-.segmented-pill button:hover {
-  color: var(--text);
+/* Hairlines between the keys. */
+:is(.segmented-pill, .repeat-days, .day-picker) button + button {
+  box-shadow: inset 1px 0 var(--border);
 }
-.segmented-pill button.active {
-  /* The pick reads at a glance in both themes: the same inverted fill as an
-     active filter chip, not a shade one step off the track. */
-  background: var(--text);
-  color: var(--bg);
-  border: 0;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+@media (hover: hover) {
+  :is(.segmented-pill, .repeat-days, .day-picker) button:not(.active):hover {
+    color: var(--text);
+    background: var(--surface);
+  }
+}
+/* Chosen: lit in the accent, and bolder, so it reads without color too. */
+:is(.segmented-pill, .repeat-days, .day-picker) button.active {
+  background: var(--key-lit);
+  color: var(--accent-strong);
+  font-weight: 750;
 }
 .search-field {
   display: flex;
@@ -1111,27 +1287,19 @@ h1 {
   aspect-ratio: 1.25;
 }
 .day-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 4px 0 22px;
+  display: grid;
+  width: 100%;
+  max-width: 560px;
+  margin: 4px 0 22px;
 }
 .day-picker button {
-  min-height: 44px;
-  flex: 1 0 2.2em;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.875rem;
+  padding: 0 4px;
 }
-.day-picker button.active {
-  background: var(--action);
-  color: var(--action-ink);
-  border-color: var(--accent);
-}
+/* Today, marked with a dot. */
 .day-picker i {
   width: 4px;
   height: 4px;
@@ -1391,6 +1559,11 @@ h1 {
   flex: 1;
   min-width: 0;
 }
+/* The row itself opens the episode; a chevron before the heart only
+   reads as a stray mark. */
+.episode-open > .icon {
+  display: none;
+}
 .episode-open strong {
   font-size: 0.9375rem;
   font-weight: 550;
@@ -1495,22 +1668,36 @@ h1 {
   background: var(--border);
   flex-shrink: 0;
 }
+/* Filter chips: compact keys in the same family as the settings controls
+   (the chosen one lit in the accent), with a full-size touch target. */
 .chip {
-  min-height: 44px;
-  padding: 0 16px;
+  position: relative;
+  min-height: 38px;
+  margin-block: 3px;
+  padding: 0 14px;
   border: 1px solid var(--control-border);
-  border-radius: 999px;
-  font-size: 1rem;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 550;
   color: var(--text);
   white-space: nowrap;
 }
+.chip::after {
+  content: "";
+  position: absolute;
+  inset: -4px 0;
+}
 .chip[aria-pressed="true"] {
-  border-color: var(--text);
-  background: var(--text);
-  color: var(--bg);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg));
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+:root[data-theme="dark"] .chip[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 20%, var(--bg));
 }
 @media (hover: hover) {
-  .chip:hover {
+  .chip:not([aria-pressed="true"]):hover {
     border-color: var(--text);
   }
 }
@@ -1635,11 +1822,15 @@ h1 {
   grid-template-columns: 1fr 1fr;
   gap: 28px;
 }
+/* Every panel has the same anatomy: a title line (with a switch, when the
+   panel has one), a line saying what it does, rows divided by hairlines,
+   and an optional note at the end. Panels are separated by one rule and an
+   even gap, so no panel ends in a stray divider. */
 .settings-panel {
   border: 0;
   background: transparent;
   border-radius: 0;
-  padding: 24px 0;
+  padding: 24px 0 32px;
   margin-bottom: 0;
   border-top: 1px solid var(--border);
 }
@@ -1647,10 +1838,24 @@ h1 {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-height: 44px;
   font-size: 1.3125rem;
-  font-weight: 550;
+  font-weight: 600;
   letter-spacing: -0.02em;
-  margin: 0 0 8px;
+  margin: 0;
+}
+.settings-panel > .data-note {
+  margin: 16px 0 0;
+}
+/* The line under the title. */
+.settings-panel > :is(h2, .section-heading) + .data-note {
+  margin: 2px 0 14px;
+}
+.settings-panel > :is(h2, .section-heading) + :is(.setting-row, .setting-choice) {
+  margin-top: 10px;
+}
+.settings-panel {
+  padding-bottom: 28px;
 }
 .settings-panel h2 .icon {
   color: var(--accent);
@@ -1658,7 +1863,7 @@ h1 {
 .alarm-time {
   display: flex;
   flex-direction: column;
-  margin: 30px 0 20px;
+  margin: 18px 0 0;
 }
 .alarm-time .eyebrow {
   font-size: 0.875rem;
@@ -1668,6 +1873,8 @@ h1 {
   display: flex;
   align-items: center;
   gap: 12px;
+  /* The clock face lines up with the end of the days below. */
+  max-width: 440px;
 }
 /* The system's own picker icon gives way to a clock set to the alarm. */
 .alarm-time input::-webkit-calendar-picker-indicator {
@@ -1713,47 +1920,68 @@ h1 {
   fill: currentColor;
   stroke: none;
 }
-.alarm-time input {
+.alarm-time-field {
+  position: relative;
   flex: 1;
   min-width: 0;
+  margin-top: 7px;
+}
+.alarm-time input {
   font-variant-numeric: tabular-nums;
   font-family: inherit;
   display: block;
   width: 100%;
+  padding: 0;
   background: transparent;
   color: var(--text);
   border: 0;
-  margin-top: 7px;
   font-size: 2.75rem;
+  font-weight: 500;
   letter-spacing: -0.035em;
 }
-.repeat-days {
+/* The time as the clock writes it ("7:00 AM", no leading zero), drawn over
+   the field; the native field shows through only while being edited. */
+.alarm-time-display {
+  position: absolute;
+  inset: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 18px 0 28px;
+  align-items: baseline;
+  gap: 8px;
+  pointer-events: none;
+  font-size: 2.75rem;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+.alarm-time-display small {
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+.alarm-time-field:not(:focus-within) input,
+.alarm-time-field:not(:focus-within) input::-webkit-datetime-edit {
+  color: transparent;
+}
+.alarm-time-field:focus-within .alarm-time-display {
+  visibility: hidden;
+}
+.repeat-days {
+  display: grid;
+  width: 100%;
+  max-width: 440px;
+  margin: 18px 0 22px;
 }
 .repeat-days button {
-  flex: 1 0 2.2em;
-  min-height: 44px;
+  padding: 0 2px;
   font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--muted);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-/* Chosen days are filled, so they read at a glance and not by color alone. */
-.repeat-days button.active {
-  color: var(--action-ink);
-  background: var(--action);
-  border-color: var(--action);
 }
 /* A setting with a few choices: name above, choices in one row below. */
 .setting-choice {
   display: grid;
   gap: 10px;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 16px 0 18px;
+  border-top: 1px solid var(--border);
 }
 .setting-choice-label {
   font-size: 0.9375rem;
@@ -1763,11 +1991,6 @@ h1 {
   width: 100%;
   max-width: 440px;
 }
-.setting-choice .segmented-pill button {
-  min-height: 44px;
-  padding: 0 8px;
-  font-size: 1rem;
-}
 .segmented-pill button:disabled {
   opacity: 0.45;
 }
@@ -1775,14 +1998,10 @@ h1 {
   list-style: none;
   margin: 14px 0 0;
   padding: 0;
-  border-top: 1px solid var(--border);
 }
 .service-row {
   min-height: 56px;
   text-align: left;
-}
-.service-list li:last-child .service-row {
-  border-bottom: 0;
 }
 .service-name {
   font-size: 1rem;
@@ -1801,12 +2020,12 @@ h1 {
   text-underline-offset: 3px;
 }
 .setting-row {
-  min-height: 65px;
+  min-height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border-bottom: 1px solid var(--border);
+  border-top: 1px solid var(--border);
   font-size: 0.9375rem;
   padding: 10px 0;
 }
@@ -1823,7 +2042,7 @@ h1 {
   min-height: 36px;
 }
 .settings-panel .secondary-button {
-  margin-top: 23px;
+  margin-top: 18px;
 }
 .full-width {
   width: 100%;
@@ -1866,40 +2085,105 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 12px;
+  gap: 14px 24px;
+  /* The station's orange in both themes, with near-black lettering: every
+     word on it is dark, so nothing on the band is orange-on-orange. */
   background: var(--action);
   color: var(--action-ink);
-  padding: 12px max(24px, var(--safe-area-inset-right, env(safe-area-inset-right))) 12px
-    max(24px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+  padding: 16px max(var(--page-gutter), var(--safe-area-inset-right, env(safe-area-inset-right)))
+    16px max(var(--page-gutter), var(--safe-area-inset-left, env(safe-area-inset-left)));
 }
-.alarm-banner > span {
+.alarm-banner-title {
   flex: 1;
   display: flex;
   align-items: center;
+  gap: 12px;
+  min-width: 12ch;
+}
+.alarm-banner-title strong {
+  display: block;
+  font-size: 1.0625rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+.alarm-banner-title small {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
+}
+/* The bell sits in a dark disc and rings. */
+.alarm-bell {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--action-ink);
+  color: #fff;
+}
+.alarm-bell .icon {
+  transform-origin: 50% 15%;
+  animation: alarm-ring 1.2s ease-in-out infinite;
+}
+@keyframes alarm-ring {
+  0%,
+  50%,
+  100% {
+    rotate: 0deg;
+  }
+  10%,
+  30% {
+    rotate: 14deg;
+  }
+  20%,
+  40% {
+    rotate: -14deg;
+  }
+}
+.alarm-banner-actions {
+  display: flex;
   gap: 10px;
-  font-weight: 700;
-  min-width: 10ch;
 }
 .alarm-banner button {
-  min-height: 44px;
-  padding: 0 18px;
-  border-radius: 999px;
-  border: 1.5px solid currentColor;
-  font-size: 0.875rem;
-  font-weight: 650;
+  min-height: 46px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
-.alarm-banner button.alarm-snooze {
-  background: transparent;
-  color: var(--accent);
-  border-color: var(--action-ink);
+/* Snooze is the big, easy target: white on near-black. */
+.alarm-banner .alarm-snooze {
+  background: var(--action-ink);
+  color: #fff;
+}
+.alarm-banner .alarm-dismiss {
+  border: 1.5px solid var(--action-ink);
+  color: var(--action-ink);
+}
+@media (hover: hover) {
+  .alarm-banner .alarm-snooze:hover {
+    background: #000;
+  }
+  .alarm-banner .alarm-dismiss:hover {
+    background: rgb(36 23 16 / 0.1);
+  }
 }
 @media (max-width: 767px) {
   /* Label on its own line, then two equal thumb-sized actions. */
-  .alarm-banner > span {
+  .alarm-banner {
+    padding-block: 14px 16px;
+    padding-inline: max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+  }
+  .alarm-banner-title,
+  .alarm-banner-actions {
     flex-basis: 100%;
   }
-  .alarm-banner button {
+  .alarm-banner-actions > button {
     flex: 1;
+    min-height: 50px;
   }
 }
 /* Notices rise from the bottom as a dark (in dark mode, light) bar, so they
@@ -1909,7 +2193,8 @@ h1 {
   position: fixed;
   z-index: var(--z-toast);
   bottom: calc(var(--player-h) + 16px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
-  left: 50%;
+  /* Centered over the content, not the whole window. */
+  left: calc(50% + var(--sidebar-w) / 2);
   transform: translateX(-50%);
   width: min(440px, calc(100% - 32px));
   display: flex;
@@ -1955,14 +2240,20 @@ h1 {
 .toast-text strong {
   font-weight: 650;
 }
+.toast-text strong,
+.toast-text strong + span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
 .toast-text strong + span {
   font-size: 0.875rem;
-  opacity: 0.75;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  opacity: 0.78;
 }
 .toast-action {
+  flex-shrink: 0;
   min-height: 40px;
   padding: 0 10px;
   border-radius: 8px;
@@ -1976,13 +2267,44 @@ h1 {
   color: inherit;
   opacity: 0.7;
 }
+/* A notice with a title, a line and an action (a show reminder, a saved
+   concert, Undo) sets the action under the words, so neither is cut short:
+   like a phone's own notification. */
+.toast.stacked {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "media text close"
+    "media action close";
+  align-items: start;
+  gap: 0;
+  padding: 12px 6px 6px 16px;
+}
+.toast.stacked .toast-media {
+  grid-area: media;
+  margin-right: 12px;
+}
+.toast.stacked .toast-text {
+  grid-area: text;
+  padding-top: 1px;
+}
+.toast.stacked .toast-action {
+  grid-area: action;
+  justify-self: start;
+  min-height: 36px;
+  margin: 2px 0 0 -8px;
+  padding: 0 8px;
+}
+.toast.stacked .toast-close {
+  grid-area: close;
+  margin-top: -6px;
+}
 @media (max-width: 1200px) {
   .live-workspace {
-    gap: 24px;
-    grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
+    gap: 36px;
   }
   .now-card {
-    --stage: min(340px, 100%, max(240px, calc(100svh - 590px)));
+    --stage: min(340px, max(260px, calc(100svh - 590px)));
   }
   .listen-heading {
     flex-wrap: wrap;
@@ -2006,13 +2328,12 @@ h1 {
   }
 }
 @media (max-width: 1000px) and (min-width: 768px) {
+  :root {
+    --sidebar-w: 190px;
+  }
   .app-sidebar {
-    width: 190px;
     padding-left: 15px;
     padding-right: 15px;
-  }
-  .main-shell {
-    margin-left: 190px;
   }
   .brand {
     margin-left: 7px;
@@ -2025,7 +2346,7 @@ h1 {
     grid-template-columns: minmax(0, 1fr);
   }
   .now-card {
-    --stage: min(380px, 100%, max(240px, calc(100svh - 590px)));
+    --stage: min(380px, 100%, max(260px, calc(100svh - 590px)));
   }
   .all-shows {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2074,9 +2395,7 @@ h1 {
   .now-info h2 {
     font-size: 1.5rem;
   }
-  .now-song-actions {
-    margin-top: 20px;
-  }
+
   .now-controls {
     margin: 18px 0 4px;
   }
@@ -2098,7 +2417,7 @@ h1 {
     font-size: 1.375rem;
   }
   .live-lists .track-row {
-    padding: 13px 0;
+    padding-block: 13px;
     gap: 8px;
   }
   .track-time {
@@ -2133,7 +2452,7 @@ h1 {
     max-width: 100%;
     width: 100%;
   }
-  .segmented button {
+  .segmented:not(.segmented-pill) button {
     flex: 1;
     font-size: 1rem;
     padding: 0 9px;
@@ -2153,13 +2472,7 @@ h1 {
     padding: 10px 6px;
     font-weight: 600;
   }
-  .day-picker {
-    gap: 5px;
-  }
-  .day-picker button {
-    min-height: 44px;
-    font-size: 0.875rem;
-  }
+
   .schedule-row {
     gap: 12px;
     padding: 17px 0;
@@ -2236,12 +2549,7 @@ h1 {
   .setting-row input[type="range"] {
     width: 115px;
   }
-  .repeat-days {
-    gap: 4px;
-  }
-  .repeat-days button {
-    font-size: 0.875rem;
-  }
+
   /* On phones the sheet rises from the bottom, sized to its content. */
   .detail-dialog {
     inset: auto 0 0 0;
@@ -2404,15 +2712,16 @@ h1 {
   }
 }
 
-/* Pressed feedback, since the platform tap highlight is switched off. */
+/* Pressed feedback, since the platform tap highlight is switched off. Keys
+   in a joined control darken rather than shrink out of line. */
+:is(.segmented-pill, .repeat-days, .day-picker) button:active {
+  background: color-mix(in srgb, var(--accent) 22%, var(--bg));
+}
 :is(
   .primary-button,
   .secondary-button,
   .player-play,
   .icon-button,
-  .segmented-pill button,
-  .day-picker button,
-  .repeat-days button,
   .show-card,
   .mobile-nav button,
   .alarm-banner button
@@ -2445,10 +2754,6 @@ h1 {
    Live and loading feedback
    ------------------------------------------------------------------------ */
 
-/* The LIVE dot breathes while audio is actually flowing. */
-.player-live[data-live] i {
-  animation: live-pulse 2s ease-in-out infinite;
-}
 @keyframes live-pulse {
   50% {
     opacity: 0.35;
@@ -2461,7 +2766,7 @@ h1 {
   content: "";
   position: absolute;
   inset: -5px;
-  border-radius: 20px;
+  border-radius: 17px;
   border: 2px solid var(--action);
   animation: busy-pulse 0.9s ease-in-out infinite alternate;
 }
@@ -2491,10 +2796,12 @@ h1 {
     color-mix(in srgb, var(--border) 55%, transparent);
   animation: shimmer 1.4s linear infinite;
 }
+/* Square, like the artwork it stands in for (a row's spans otherwise
+   stretch to fill it). */
 .skeleton-row .skeleton-art {
+  flex: none;
   width: 46px;
   height: 46px;
-  flex-shrink: 0;
 }
 .skeleton-row .skeleton-lines {
   flex: 1;
@@ -2602,30 +2909,64 @@ h1 {
   --band: var(--tint-light, var(--accent));
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   width: var(--stage, 100%);
   margin: 0 auto 24px;
   padding: 12px 14px 12px 12px;
   border-radius: 12px;
-  text-align: left;
   color: var(--text);
-  background: linear-gradient(
-    100deg,
-    color-mix(in srgb, var(--band) 24%, var(--bg)) 0%,
-    color-mix(in srgb, var(--band) 8%, var(--bg)) 70%,
-    var(--bg) 100%
-  );
-  transition: filter 0.15s;
+  /* One even wash of the show's color, edge to edge: no fade that reads as
+     the band being cut off. */
+  background: color-mix(in srgb, var(--band) 13%, var(--bg));
+  transition: background-color 0.15s;
 }
 :root[data-theme="dark"] .on-air {
   --band: var(--tint-dark, var(--accent));
+  background: color-mix(in srgb, var(--band) 17%, var(--bg));
 }
-.on-air:hover {
-  filter: brightness(1.04);
+.on-air-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
 }
-.on-air > .icon {
+@media (hover: hover) {
+  .on-air:has(.on-air-open:hover) {
+    background: color-mix(in srgb, var(--band) 19%, var(--bg));
+  }
+  :root[data-theme="dark"] .on-air:has(.on-air-open:hover) {
+    background: color-mix(in srgb, var(--band) 24%, var(--bg));
+  }
+}
+.on-air-open > .icon {
   flex-shrink: 0;
+  margin-left: auto;
   color: var(--muted);
+}
+/* Watch, during the show's live video: a compact version of the main
+   button, so the band stays one line of type with one action. */
+.on-air-watch {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: var(--action);
+  color: var(--action-ink);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+@media (hover: hover) {
+  .on-air-watch:hover {
+    background: color-mix(in srgb, var(--action) 88%, var(--text));
+  }
+}
+.on-air[data-video] .on-air-host {
+  white-space: normal;
 }
 .on-air-art {
   width: 56px;
@@ -2816,32 +3157,56 @@ h1 {
     bottom: calc(110px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
   }
 }
-.popover-menu-title {
-  margin: 0;
-  padding: 8px 12px 6px;
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
+/* What the menu is about: the song (with its artwork) or the concert, set
+   as a title and a muted line, ruled off from the choices. */
+.popover-menu-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 6px;
+  padding: 4px 12px 12px;
+  border-bottom: 1px solid var(--border);
 }
-.popover-menu-title.song-title {
-  text-transform: none;
-  letter-spacing: 0;
+.popover-menu-head img {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  object-fit: cover;
+}
+.popover-menu-head > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.popover-menu-head strong {
+  font-size: 1rem;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.popover-menu-head small {
   font-size: 0.875rem;
-  font-weight: 600;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .popover-menu :is(button, a) {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   width: 100%;
-  min-height: 44px;
+  min-height: 48px;
   padding: 0 12px;
   border-radius: 8px;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   text-align: left;
+}
+.popover-menu :is(button, a) > .icon {
+  color: var(--muted);
 }
 .popover-menu :is(button, a) small {
   color: var(--muted);
@@ -2852,14 +3217,111 @@ h1 {
   align-items: center;
   gap: 8px;
   margin: 0;
-  padding: 4px 12px 8px;
+  padding: 6px 12px 8px;
   font-size: 0.875rem;
   line-height: 1.45;
   color: var(--muted);
 }
 .popover-menu .sleep-off {
+  justify-content: center;
+  margin-top: 6px;
   color: var(--accent);
+  font-weight: 650;
+}
+
+/* Sleep timer: the durations as large numbers on four keys, then the end of
+   the show on the air, so each choice reads at a glance. */
+.popover-menu.sleep-menu {
+  width: 340px;
+  padding: 16px;
+}
+.sleep-head {
+  margin: 0 2px 14px;
+}
+.sleep-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.sleep-title .icon {
+  color: var(--accent);
+}
+.sleep-sub {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.sleep-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.popover-menu .sleep-grid button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 78px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  text-align: center;
+}
+.sleep-grid strong {
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.popover-menu .sleep-grid small {
+  font-size: 0.8125rem;
   font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.popover-menu .sleep-show {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  margin-top: 8px;
+  padding: 10px 12px 10px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+}
+.sleep-show img {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.sleep-show span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.sleep-show strong {
+  font-size: 1rem;
+  font-weight: 650;
+}
+@media (hover: hover) {
+  .popover-menu :is(.sleep-grid button, .sleep-show):hover {
+    border-color: var(--accent);
+    background: var(--bg);
+  }
+}
+.popover-menu :is(.sleep-grid button, .sleep-show):active {
+  transform: scale(0.97);
 }
 @media (hover: hover) {
   .popover-menu :is(button, a):hover {
@@ -2895,6 +3357,10 @@ h1 {
   }
   .popover-menu::backdrop {
     background: #0008;
+  }
+  .popover-menu.sleep-menu {
+    width: 100%;
+    padding: 28px 20px calc(20px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
   }
 }
 
@@ -3098,6 +3564,9 @@ h1 {
   --welcome-pad: 28px;
   padding-bottom: 0;
 }
+.welcome-actions > button {
+  white-space: nowrap;
+}
 .welcome-actions {
   position: sticky;
   bottom: 0;
@@ -3117,10 +3586,26 @@ h1 {
   }
 }
 .welcome-step {
+  display: inline-flex;
+  align-items: center;
   margin-right: auto;
   font-size: 0.875rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+}
+.welcome-bars {
+  display: inline-flex;
+  gap: 5px;
+}
+.welcome-bars i {
+  width: 20px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  transition: background-color 0.25s;
+}
+.welcome-bars i[data-on] {
+  background: var(--accent);
 }
 
 /* ---------------------------------------------------------------------------
@@ -3147,13 +3632,10 @@ h1 {
   rotate: 180deg;
 }
 .appearance-settings .segmented {
-  display: flex;
-  max-width: 480px;
-  margin-top: 16px;
-}
-.appearance-settings .segmented button {
-  flex: 1;
-  font-weight: 600;
+  display: grid;
+  width: 100%;
+  max-width: 440px;
+  margin-top: 12px;
 }
 /* The status line keeps its height, so messages come and go without the
    page jumping. */
@@ -3186,18 +3668,22 @@ h1 {
    and the video sheet.
    ------------------------------------------------------------------------ */
 
+/* A station message: a band washed in the station's orange, its action a
+   compact filled button. A live video turns the band dark, like a studio's
+   ON AIR light against the wall. */
 .station-banner {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 10px var(--page-gutter);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--action) 15%, var(--bg));
   color: var(--text);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid color-mix(in srgb, var(--action) 32%, var(--bg));
 }
 .station-banner[data-kind="live"] {
   background: var(--text);
   color: var(--bg);
+  border-bottom-color: var(--text);
 }
 .station-banner p {
   flex: 1;
@@ -3213,20 +3699,29 @@ h1 {
   overflow: hidden;
 }
 .station-banner-action {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
-  padding: 0 16px;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--accent);
-  font-size: 0.875rem;
-  font-weight: 650;
-  white-space: nowrap;
-}
-.station-banner[data-kind="live"] .station-banner-action {
+  flex-shrink: 0;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
   background: var(--action);
   color: var(--action-ink);
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+/* A full-size touch target around the compact button. */
+.station-banner-action::after {
+  content: "";
+  position: absolute;
+  inset: -3px 0;
+}
+@media (hover: hover) {
+  .station-banner-action:hover {
+    background: color-mix(in srgb, var(--action) 88%, var(--text));
+  }
 }
 .station-banner-close {
   width: 44px;
@@ -3245,6 +3740,17 @@ h1 {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+/* LIVE as a small red tag on the dark band. */
+.station-banner-live {
+  flex-shrink: 0;
+  padding: 2px 8px 2px 7px;
+  border-radius: 5px;
+  background: #d93d1e;
+  color: #fff;
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+}
+
 .station-banner-live i,
 .live-dot {
   width: 7px;
@@ -3253,22 +3759,27 @@ h1 {
   background: #ff5a36;
   animation: live-pulse 1.6s ease-in-out infinite;
 }
+.station-banner-live i {
+  width: 6px;
+  height: 6px;
+  background: #fff;
+}
 
 .live-card {
   display: flex;
   align-items: center;
-  gap: 18px;
-  margin: 0 0 28px;
-  padding: 14px;
-  border-radius: 16px;
+  gap: 14px;
+  margin: 0 0 24px;
+  padding: 12px 14px 12px 12px;
+  border-radius: 12px;
   background: var(--surface);
 }
 .live-card > img {
-  width: 76px;
-  height: 76px;
+  width: 56px;
+  height: 56px;
   flex-shrink: 0;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 .live-card > div {
   flex: 1;
@@ -3278,9 +3789,10 @@ h1 {
   color: var(--accent);
 }
 .live-card h2 {
-  margin: 4px 0 2px;
-  font-size: 1.125rem;
-  font-weight: 650;
+  margin: 2px 0 1px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.3;
   letter-spacing: -0.01em;
 }
 .live-card p {
@@ -3288,8 +3800,15 @@ h1 {
   font-size: 0.875rem;
   color: var(--muted);
 }
+/* The same compact button as Watch in the on-air band. */
 .live-card > button {
   flex-shrink: 0;
+  min-height: 40px;
+  padding: 0 14px;
+  gap: 7px;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 700;
 }
 
 .video-frame {
@@ -3322,18 +3841,17 @@ h1 {
   .station-banner p {
     font-size: 0.875rem;
   }
+  /* A band of its own under the station tabs, edge to edge like the
+     on-air band that follows it. */
   .live-card {
-    flex-wrap: wrap;
-    gap: 12px 14px;
-    margin-bottom: 20px;
+    margin: -18px calc(-1 * max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)))) 18px;
+    padding: 12px max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+    border-radius: 0;
+    border-bottom: 1px solid var(--border);
   }
   .live-card > img {
-    width: 56px;
-    height: 56px;
-  }
-  .live-card > button {
-    width: 100%;
-    justify-content: center;
+    width: 48px;
+    height: 48px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
