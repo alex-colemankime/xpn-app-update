@@ -12,6 +12,7 @@ import {
   useReminderSettings,
 } from "../hooks/useShowReminders.js";
 import { notificationsAreNative } from "../notifications.js";
+import { setAlert, useAlertSettings } from "../hooks/useStationAlerts.js";
 import { PlaylistSyncPanel } from "../components/PlaylistSync.jsx";
 import { NewsletterPanel } from "../components/Newsletter.jsx";
 import { CONCERTS_ENABLED } from "../config.js";
@@ -71,12 +72,61 @@ function ShowReminders({ onNavigate }) {
   );
 }
 
+// One kind of notification from the station, with what it is and when it
+// comes beside its switch: the consent the App Store asks for (4.5.4).
+function AlertSwitch({ topic, on, title, children }) {
+  const id = `alert-${topic}`;
+  return (
+    <div className="alert-row">
+      <span>
+        <strong id={`${id}-label`}>{title}</strong>
+        <small id={`${id}-note`}>{children}</small>
+      </span>
+      <button
+        className={`switch ${on ? "checked" : ""}`}
+        role="switch"
+        aria-checked={on}
+        aria-labelledby={`${id}-label`}
+        aria-describedby={`${id}-note`}
+        onClick={() => setAlert(topic, !on)}
+      >
+        <span />
+      </button>
+    </div>
+  );
+}
+
+// Live video and member drive notifications: off until turned on here.
+function StationAlerts() {
+  const alerts = useAlertSettings();
+  return (
+    <section className="settings-panel">
+      <h2>
+        <Icon name="navLive" />
+        From WXPN
+      </h2>
+      <p className="data-note">
+        Notifications only if you turn them on. Turn them off here any time.
+      </p>
+      <AlertSwitch topic="live" on={alerts.live} title="Live video">
+        Free at Noon and other live sessions, 10 minutes before they start.
+      </AlertSwitch>
+      <AlertSwitch topic="drives" on={alerts.drives} title="Member drives">
+        A few times a year, while a member drive is on.
+      </AlertSwitch>
+      {!notificationsAreNative() && (
+        <p className="data-note">The iPhone and Android apps send these as notifications.</p>
+      )}
+    </section>
+  );
+}
+
 // The app's version, from package.json (see vite.config.js).
 const VERSION = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "";
 const PLATFORM = Capacitor.getPlatform(); // "ios", "android" or "web"
 
 const LINKS = [
-  { label: "Support WXPN", url: DONATE_URL },
+  { label: "Donate to WXPN", url: DONATE_URL },
   ...(CONCERTS_ENABLED ? [] : [{ label: "Concert calendar", url: CALENDAR_URL }]),
   { label: "Contact the station", url: `mailto:${STATION_EMAIL}` },
   {
@@ -290,6 +340,7 @@ export function SettingsScreen({
         </section>
         <div>
           <ShowReminders onNavigate={onNavigate} />
+          <StationAlerts />
           <PlaylistSyncPanel />
           <section className="settings-panel">
             <h2>

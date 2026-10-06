@@ -1,26 +1,29 @@
-// The audio archive: past episodes listeners can play on demand, read from
-// the shows' podcast feeds (standard RSS with audio enclosures), so the
-// station publishes nothing new for it. World Cafe's NPR podcast is the
-// default feed; VITE_XPN_ARCHIVE_FEEDS lists others (see config.js).
+// The audio archive: past broadcasts listeners can play on demand. xpn.org
+// already lists each archived show's recent broadcasts on its show page (from
+// StreamGuys), so the app reads them from there and the station publishes
+// nothing new; a podcast feed (standard RSS with audio enclosures) works as a
+// source too. The sources are in config.js (VITE_XPN_ARCHIVE_FEEDS).
 //
-//   - In the phone apps the feeds are read with native networking, which no
-//     browser cross-origin rule applies to.
-//   - In a browser a feed can only be read if its server allows it (CORS).
-//     NPR's does not, so preview builds fall back to a snapshot of recent
-//     episodes (samples.js); a production web build needs the feed served
-//     with CORS or through a proxy on xpn.org.
+//   - xpn.org's pages allow cross-origin reads, so the browser preview loads
+//     the real archive; the phone apps read with native networking anyway.
+//   - The audio links on xpn.org are signed, so they are always taken fresh
+//     from the page, never stored in the app.
 // Audio plays in an <audio> element, which needs no CORS at all.
 //
-// An episode: { id, show, title, date, duration, audio, image, summary, page }
-// where `show` is a show id from the catalog, `date` an ISO date, and
-// `duration` seconds (or null).
+// An episode: { id, show, title, date, duration, audio, image, summary, page,
+// aired, feature } where `show` is a show id from the catalog, `date` an ISO
+// time (when it aired, as near as is known), `duration` seconds (or null
+// until the file reports it), `aired` the slot it filled ("6am–10am") and
+// `feature` who it was about, when the archive names someone.
 
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
 import { useEffect, useSyncExternalStore } from "react";
-import { ARCHIVE_FEEDS, SHOW_SAMPLES } from "./config.js";
+import { ARCHIVE_FEEDS } from "./config.js";
+import { SHOWS } from "./catalog.js";
 import { decodeFeedText } from "./feed-text.js";
 import { withTimeout } from "./net.js";
 import { createStore, readJson, writeJson } from "./storage.js";
+import { clockLabel, easternParts, easternToEpoch } from "./time.js";
 
 const PER_FEED = 40;
 
@@ -135,6 +138,82 @@ export function parsePodcastFeed(xml, show) {
     .slice(0, PER_FEED);
 }
 
+// A show page's archive on xpn.org: one element per broadcast, carrying
+//   data-track-url    the audio (signed)
+//   data-track-title  "Sleepy Hollow - 10.04.2026", "… - 08.28.26 (Tim Curry)"
+//                     or a feature's title, "Friko on World Cafe"
+//   data-track-guid   a stable id
+// A dated title becomes the day it aired ("Sunday, October 4"), placed in the
+// show's slot that day; a feature keeps its name, dated by the file's upload
+// stamp (20261002065218_…). The same broadcast listed twice appears once.
+const LONG_DAY = new Intl.DateTimeFormat("en-US", {
+  timeZone: "UTC",
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+});
+const pad2 = (n) => String(n).padStart(2, "0");
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const pageAttr = (tag, name) =>
+  decodeFeedText(new RegExp(`\\s${name}\\s*=\\s*"([^"]*)"`, "i").exec(tag)?.[1] ?? "");
+
+function validDay(y, m, d) {
+  const t = new Date(Date.UTC(y, m - 1, d, 12));
+  return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
+}
+
+export function parseArchivePage(html, { show, name = "", schedule = [], page = "" }) {
+  const tags =
+    String(html ?? "").match(/<[a-z]+\b[^>]*\sdata-track-url\s*=\s*"[^"]*"[^>]*>/gi) || [];
+  const seen = new Set();
+  const episodes = [];
+  for (const tag of tags) {
+    const audio = safeHttps(pageAttr(tag, "data-track-url"));
+    const raw = plain(pageAttr(tag, "data-track-title"));
+    if (!audio || !raw) continue;
+    const dated = /^(.*?)\s*[-–—]\s*(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})\s*(?:\((.+)\))?\s*$/.exec(
+      raw,
+    );
+    const stamp = /\/(\d{4})(\d{2})(\d{2})\d{6}_[^/]*$/.exec(new URL(audio).pathname);
+    const [y, m, d] = dated
+      ? [
+          Number(dated[4].length === 2 ? `20${dated[4]}` : dated[4]),
+          Number(dated[2]),
+          Number(dated[3]),
+        ]
+      : stamp
+        ? [Number(stamp[1]), Number(stamp[2]), Number(stamp[3])]
+        : [];
+    if (!y || !validDay(y, m, d)) continue;
+    const day = `${y}-${pad2(m)}-${pad2(d)}`;
+    const weekday = easternParts(new Date(`${day}T16:00:00Z`)).day;
+    const slot = schedule.find((s) => s.days?.includes(weekday));
+    const at = (slot && easternToEpoch(day, slot.start)) ?? Date.parse(`${day}T16:00:00Z`);
+    const title = dated
+      ? LONG_DAY.format(new Date(`${day}T12:00:00Z`))
+      : raw.replace(new RegExp(`\\s*on\\s*${escapeRegExp(name)}\\s*$`, "i"), "").trim() || raw;
+    const feature = dated ? plain(dated[5] || "") : "";
+    const key = `${title}|${feature}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const guid = pageAttr(tag, "data-track-guid") || audio.split("?")[0];
+    episodes.push({
+      id: `${show}-${shortHash(guid)}`,
+      show,
+      title,
+      feature,
+      date: new Date(at).toISOString(),
+      duration: null,
+      audio,
+      image: "",
+      summary: "",
+      page,
+      aired: dated && slot ? `${clockLabel(slot.start)}–${clockLabel(slot.end)}` : "",
+    });
+  }
+  return episodes.sort((a, b) => b.date.localeCompare(a.date)).slice(0, PER_FEED);
+}
+
 // Episodes from the cache or a snapshot, checked the same way as a feed's.
 export function normalizeEpisodes(list) {
   if (!Array.isArray(list)) return [];
@@ -155,11 +234,13 @@ export function normalizeEpisodes(list) {
       page: safeHttps(e.page),
       duration: Number.isFinite(e.duration) ? e.duration : null,
       summary: typeof e.summary === "string" ? e.summary : "",
+      aired: typeof e.aired === "string" ? e.aired : "",
+      feature: typeof e.feature === "string" ? e.feature : "",
     }))
     .sort((a, b) => b.date.localeCompare(a.date));
 }
 
-async function readFeed(url, signal) {
+async function readSource(url, signal) {
   if (Capacitor.isNativePlatform()) {
     const response = await CapacitorHttp.get({
       url,
@@ -168,38 +249,42 @@ async function readFeed(url, signal) {
       readTimeout: 15000,
     });
     if (response.status < 200 || response.status >= 300) {
-      throw new Error(`Archive feed: HTTP ${response.status}`);
+      throw new Error(`Archive: HTTP ${response.status}`);
     }
     return String(response.data ?? "");
   }
   const response = await fetch(url, { signal: withTimeout(signal, 12000) });
-  if (!response.ok) throw new Error(`Archive feed: HTTP ${response.status}`);
+  if (!response.ok) throw new Error(`Archive: HTTP ${response.status}`);
   return response.text();
 }
 
-// Resolves to { episodes, source } where source is "live" (from the feeds),
-// "sample" (the preview's snapshot) or "error".
+// One source's episodes: a podcast feed, or an xpn.org show page. The show's
+// own artwork stands for each episode (the archive's is a generic image).
+export function parseSource(text, show) {
+  const info = SHOWS[show] || {};
+  const episodes = /<rss[\s>]/i.test(text)
+    ? parsePodcastFeed(text, show)
+    : parseArchivePage(text, { show, name: info.name, schedule: info.schedule, page: "" });
+  return episodes.map((e) => ({ ...e, image: e.image || info.img || "" }));
+}
+
+// Resolves to { episodes, source } where source is "live" or "error" (when
+// no source could be read at all).
 export async function fetchArchive(signal, feeds = ARCHIVE_FEEDS) {
   const results = await Promise.all(
     feeds.map((feed) =>
-      readFeed(feed.url, signal).then(
-        (xml) => parsePodcastFeed(xml, feed.show),
+      readSource(feed.url, signal).then(
+        (text) => parseSource(text, feed.show),
         () => null,
       ),
     ),
   );
   const loaded = results.filter(Boolean);
-  if (loaded.length) {
-    return {
-      episodes: loaded.flat().sort((a, b) => b.date.localeCompare(a.date)),
-      source: "live",
-    };
-  }
-  if (SHOW_SAMPLES) {
-    const { SAMPLE_ARCHIVE } = await import("./samples.js");
-    return { episodes: normalizeEpisodes(SAMPLE_ARCHIVE), source: "sample" };
-  }
-  return { episodes: [], source: "error" };
+  if (!loaded.length) return { episodes: [], source: "error" };
+  return {
+    episodes: loaded.flat().sort((a, b) => b.date.localeCompare(a.date)),
+    source: "live",
+  };
 }
 
 // Shared by every screen that shows episodes: loaded once when first needed,

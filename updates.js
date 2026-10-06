@@ -9,7 +9,14 @@
 //         "text": "The Fall Member Drive is on. Keep WXPN independent.",
 //         "action": { "label": "Donate", "url": "https://xpn.org/donate/" },
 //         "starts": "2026-10-05T06:00:00-04:00",
-//         "ends": "2026-10-17T00:00:00-04:00"
+//         "ends": "2026-10-17T00:00:00-04:00",
+//         "notify": [                       optional: member drive notifications,
+//           {                               for listeners who turned them on
+//             "at": "2026-10-16T08:00:00-04:00",
+//             "title": "Last day of the Fall Member Drive",
+//             "text": "There’s still time to give. Tap to donate."
+//           }
+//         ]
 //       },
 //       {
 //         "id": "fan-2026-10-09",
@@ -20,7 +27,8 @@
 //         "image": "https://xpn.org/…/slide.jpg",   optional; or
 //         "show": "freeatnoon",                     a show id, for its artwork
 //         "starts": "2026-10-09T12:00:00-04:00",
-//         "ends": "2026-10-09T13:00:00-04:00"
+//         "ends": "2026-10-09T13:00:00-04:00",
+//         "notify": false                   optional: no "starting soon" notification
 //       }
 //     ]
 //   }
@@ -29,6 +37,8 @@
 // than shown half-broken. Everything here is pure, so it can be tested.
 
 export const LIVE_ANNOUNCE_MINUTES = 120; // a live video is announced this long before it starts
+export const LIVE_ALERT_MINUTES = 10; // and notified this long before, to those who asked
+const MAX_NOTICES = 6; // per banner
 
 const text = (value, max = 280) =>
   typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, max) : "";
@@ -69,6 +79,10 @@ export function normalizeUpdate(raw) {
       starts,
       ends,
       dismissible: raw.dismissible !== false,
+      notify: (Array.isArray(raw.notify) ? raw.notify : [])
+        .map((n) => ({ at: time(n?.at), title: text(n?.title, 80), text: text(n?.text, 160) }))
+        .filter((n) => Number.isFinite(n.at) && n.title)
+        .slice(0, MAX_NOTICES),
     };
   }
   const title = text(raw.title, 120);
@@ -85,6 +99,7 @@ export function normalizeUpdate(raw) {
     starts,
     ends: ends ?? starts + 60 * 60000,
     dismissible: raw.dismissible !== false,
+    notify: raw.notify !== false,
   };
 }
 
@@ -111,6 +126,52 @@ export function activeUpdates(updates, now = Date.now()) {
   );
   const live = video ? { ...video, state: now >= video.starts ? "live" : "soon" } : null;
   return { banner, live };
+}
+
+// Notifications a listener has asked for in Settings ({ live, drives }),
+// planned from the updates file and scheduled on the phone, so they arrive
+// with the app closed and need no push service:
+//   - a live video, LIVE_ALERT_MINUTES before it starts, unless the file
+//     says "notify": false or the show is one the listener already gets a
+//     reminder for (`remindedShows`);
+//   - a member drive banner, at each time in its "notify" list.
+// Only what is still ahead and within `days`, soonest first. A phone learns
+// of a new notice when the app next opens, so the station posts them ahead.
+export const MAX_ALERTS = 12;
+export function alertPlan(
+  updates,
+  { live = false, drives = false } = {},
+  { now = Date.now(), days = 14, remindedShows = [] } = {},
+) {
+  const horizon = now + days * 86400000;
+  const ahead = (at) => at > now && at <= horizon;
+  const plan = [];
+  for (const u of updates) {
+    if (u.kind === "live" && live && u.notify && !remindedShows.includes(u.show)) {
+      const at = u.starts - LIVE_ALERT_MINUTES * 60000;
+      if (ahead(at))
+        plan.push({
+          key: `live:${u.id}`,
+          at,
+          title: u.title,
+          body: `The live video starts in ${LIVE_ALERT_MINUTES} minutes. Tap to watch.`,
+          extra: { action: "watch", live: u },
+        });
+    }
+    if (u.kind === "banner" && drives) {
+      for (const n of u.notify || []) {
+        if (!ahead(n.at) || (u.ends != null && n.at >= u.ends)) continue;
+        plan.push({
+          key: `drive:${u.id}@${n.at}`,
+          at: n.at,
+          title: n.title,
+          body: n.text || (u.action ? `Tap to ${u.action.label.toLowerCase()}.` : ""),
+          extra: { action: "open", url: u.action?.url || "" },
+        });
+      }
+    }
+  }
+  return plan.sort((a, b) => a.at - b.at).slice(0, MAX_ALERTS);
 }
 
 // YouTube links play inside the app; other links open in the browser.

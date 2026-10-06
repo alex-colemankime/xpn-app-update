@@ -44,11 +44,17 @@ export const SPOTIFY_CLIENT_ID = import.meta.env?.VITE_SPOTIFY_CLIENT_ID || "";
 export const APPLE_MUSIC_TOKEN_URL = import.meta.env?.VITE_APPLE_MUSIC_TOKEN_URL || "";
 export const APPLE_MUSIC_DEVELOPER_TOKEN = import.meta.env?.VITE_APPLE_MUSIC_DEVELOPER_TOKEN || "";
 
-// The audio archive (archive.js): podcast feeds whose episodes listeners can
-// play on demand, as "show=feed URL" pairs separated by commas, where show
-// is a show id from shows.json. Default: World Cafe's NPR podcast. "off"
-// removes the Archive tab.
-export const DEFAULT_ARCHIVE_FEEDS = "worldcafe=https://feeds.npr.org/510008/podcast.xml";
+// The audio archive (archive.js): where listeners' on-demand episodes come
+// from, as "show=URL" pairs separated by commas, where show is a show id from
+// shows.json and the URL is the show's page on xpn.org (its archive list) or
+// a podcast feed. Default: every show xpn.org archives. "off" removes the
+// Archive tab.
+export const DEFAULT_ARCHIVE_FEEDS = [
+  "sleepyhollow=https://xpn.org/program/sleepy-hollow/",
+  "funky=https://xpn.org/program/funky-friday/",
+  "landlost=https://xpn.org/program/land-of-the-lost/",
+  "worldcafe=https://xpn.org/program/world-cafe/",
+].join(",");
 export function parseArchiveFeeds(setting) {
   if (setting === "off") return [];
   return String(setting || DEFAULT_ARCHIVE_FEEDS)
@@ -59,6 +65,3 @@ export function parseArchiveFeeds(setting) {
 }
 export const ARCHIVE_FEEDS = parseArchiveFeeds(import.meta.env?.VITE_XPN_ARCHIVE_FEEDS);
 export const ARCHIVE_ENABLED = ARCHIVE_FEEDS.length > 0;
-// Where the World Cafe podcast lives, for when the archive can't load.
-export const ARCHIVE_HOME =
-  "https://www.npr.org/podcasts/510008/world-cafe-words-and-music-from-wxpn";

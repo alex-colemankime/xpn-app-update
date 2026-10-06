@@ -165,8 +165,8 @@
         white-space: nowrap;
       }
       .preview.live span {
-        background: var(--action);
-        color: var(--ink);
+        background: var(--bg);
+        color: var(--text);
       }
       pre {
         overflow: auto;
@@ -183,6 +183,28 @@
       .error {
         color: var(--accent);
         font-size: 13px;
+      }
+      .card h3 {
+        margin: 18px 0 4px;
+        font-size: 15px;
+      }
+      .card h3 small {
+        display: block;
+        margin-top: 2px;
+        font-weight: 400;
+        color: var(--muted);
+      }
+      .notice {
+        margin-top: 10px;
+      }
+      .check {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 12px;
+      }
+      .check input {
+        width: auto;
       }
       @media (max-width: 560px) {
         .row {
@@ -213,7 +235,8 @@
       <pre id="json"></pre>
       <p class="note">
         Times are entered in Eastern time. Only the first banner that is running shows, and the
-        first live video; a live video takes over the banner while it is on.
+        first live video; a live video takes over the banner while it is on. Notifications go only
+        to listeners who turned them on in the app (Settings › From WXPN).
       </p>
     </main>
     <script>
@@ -272,9 +295,20 @@
           url: values.action?.url || "",
           starts: easternLocal(values.starts),
           ends: easternLocal(values.ends),
+          // A banner's notifications (up to three), for listeners who turned
+          // on member drive notifications; a live video's "notify" switch.
+          ...Object.fromEntries(
+            [0, 1, 2].flatMap((n) => [
+              [`n${n}at`, easternLocal(values.notify?.[n]?.at)],
+              [`n${n}title`, values.notify?.[n]?.title || ""],
+              [`n${n}text`, values.notify?.[n]?.text || ""],
+            ]),
+          ),
+          notifyLive: values.notify !== false,
         });
         render();
       }
+      const NOTICES = [0, 1, 2];
 
       function state(item) {
         const now = Date.now();
@@ -297,12 +331,21 @@
                 banner
                   ? `<label>Message <small>One or two short sentences.</small><textarea data-f="text" maxlength="280">${esc(it.text)}</textarea></label>
                      <div class="row"><label>Button text <small>Optional, e.g. Donate</small><input data-f="label" maxlength="24" value="${esc(it.label)}"></label>
-                     <label>Button link <small>https:// only</small><input data-f="url" value="${esc(it.url)}" placeholder="https://xpn.org/donate/"></label></div>`
+                     <label>Button link <small>https:// only</small><input data-f="url" value="${esc(it.url)}" placeholder="https://xpn.org/donate/"></label></div>
+                     <h3>Notifications <small>Optional. Sent to listeners who turned on member drive notifications in the app. A phone learns of them when the app opens, so add them before the drive starts.</small></h3>
+                     ${NOTICES.map(
+                       (
+                         n,
+                       ) => `<div class="row notice"><label>Send at (Eastern)<input type="datetime-local" data-f="n${n}at" value="${esc(it[`n${n}at`])}"></label>
+                       <label>Title <small>Who or what, in a few words</small><input data-f="n${n}title" maxlength="80" value="${esc(it[`n${n}title`])}" placeholder="Last day of the Fall Member Drive"></label></div>
+                       <label>Text <small>Optional; the button’s action is used if empty</small><input data-f="n${n}text" maxlength="160" value="${esc(it[`n${n}text`])}" placeholder="There’s still time to give. Tap to donate."></label>`,
+                     ).join("")}`
                   : `<label>Title<input data-f="title" maxlength="120" value="${esc(it.title)}" placeholder="Free at Noon: Artist"></label>
                      <label>Line under the title <small>Optional</small><input data-f="text" maxlength="160" value="${esc(it.text)}" placeholder="Live from The Music Hall at World Stage"></label>
                      <label>Video link <small>A YouTube video or live link plays in the app; anything else opens in the browser.</small><input data-f="watch" value="${esc(it.watch)}" placeholder="https://www.youtube.com/watch?v=…"></label>
                      <div class="row"><label>Image <small>Optional https:// link</small><input data-f="image" value="${esc(it.image)}"></label>
-                     <label>Or a show's artwork <small>Show id, e.g. freeatnoon</small><input data-f="show" value="${esc(it.show)}"></label></div>`
+                     <label>Or a show's artwork <small>Show id, e.g. freeatnoon</small><input data-f="show" value="${esc(it.show)}"></label></div>
+                     <label class="check"><input type="checkbox" data-f="notifyLive" ${it.notifyLive ? "checked" : ""}> Notify listeners who turned on live video notifications, 10 minutes before it starts</label>`
               }
               <div class="row"><label>Starts (Eastern)${banner ? " <small>Optional</small>" : ""}<input type="datetime-local" data-f="starts" value="${esc(it.starts)}"></label>
               <label>Ends (Eastern)<input type="datetime-local" data-f="ends" value="${esc(it.ends)}"></label></div>
@@ -324,6 +367,15 @@
         if (it.kind === "live" && !/^https:\/\//.test(it.watch)) out.push("Add the video link.");
         if (it.kind === "live" && !it.starts) out.push("A live video needs a start time.");
         if (it.starts && it.ends && it.ends <= it.starts) out.push("It ends before it starts.");
+        if (it.kind === "banner")
+          for (const n of NOTICES) {
+            const at = it[`n${n}at`];
+            const title = it[`n${n}title`].trim();
+            if (!at && !title && !it[`n${n}text`].trim()) continue;
+            if (!at || !title) out.push(`Notification ${n + 1} needs a time and a title.`);
+            else if ((it.starts && at < it.starts) || (it.ends && at >= it.ends))
+              out.push(`Notification ${n + 1} is outside the banner’s dates, so it won’t be sent.`);
+          }
         return out;
       }
 
@@ -338,12 +390,21 @@
             if (it.kind === "banner") {
               base.text = it.text.trim();
               if (it.label && it.url) base.action = { label: it.label.trim(), url: it.url.trim() };
+              const notify = NOTICES.filter((n) => it[`n${n}at`] && it[`n${n}title`].trim()).map(
+                (n) => ({
+                  at: easternIso(it[`n${n}at`]),
+                  title: it[`n${n}title`].trim(),
+                  ...(it[`n${n}text`].trim() ? { text: it[`n${n}text`].trim() } : {}),
+                }),
+              );
+              if (notify.length) base.notify = notify;
             } else {
               base.title = it.title.trim();
               if (it.text) base.text = it.text.trim();
               base.watch = it.watch.trim();
               if (it.image) base.image = it.image.trim();
               if (it.show) base.show = it.show.trim();
+              if (!it.notifyLive) base.notify = false;
             }
             return base;
           }),
@@ -375,7 +436,8 @@
       const onEdit = (e) => {
         const card = e.target.closest("[data-i]");
         if (!card || !e.target.dataset.f) return;
-        items[card.dataset.i][e.target.dataset.f] = e.target.value;
+        items[card.dataset.i][e.target.dataset.f] =
+          e.target.type === "checkbox" ? e.target.checked : e.target.value;
         refresh(card);
       };
       document.addEventListener("input", onEdit);

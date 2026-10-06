@@ -16,9 +16,7 @@ function noSamples() {
     enforce: "pre",
     resolveId: (source) => (/(^|\/)samples\.js$/.test(source) ? id : null),
     load: (key) =>
-      key === id
-        ? "export const SAMPLE_EPISODES = {}; export const SAMPLE_UPDATES = {}; export const SAMPLE_ARCHIVE = [];"
-        : null,
+      key === id ? "export const SAMPLE_EPISODES = {}; export const SAMPLE_UPDATES = {};" : null,
   };
 }
 

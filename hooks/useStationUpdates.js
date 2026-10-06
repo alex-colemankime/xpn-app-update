@@ -89,13 +89,19 @@ export function useStationUpdates() {
   // text or link) replaces the old one without a restart.
   const bannerKey = banner && !dismissed.includes(banner.id) ? JSON.stringify(banner) : "";
   const liveKey = live ? JSON.stringify(live) : "";
+  // Every update, for the notifications planned ahead (useStationAlerts);
+  // the same array while the file's content is unchanged.
+  const allKey = JSON.stringify(updates);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const all = useMemo(() => updates, [allKey]);
   return useMemo(
     () => ({
       banner: bannerKey ? banner : null,
       live: liveKey ? live : null,
       liveDismissed: Boolean(live && dismissed.includes(live.id)),
+      all,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [bannerKey, liveKey, dismissed],
+    [bannerKey, liveKey, dismissed, all],
   );
 }

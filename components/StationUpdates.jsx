@@ -2,10 +2,21 @@ import { Art, Icon, heightVar } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { STATION_ART } from "../assets.js";
 import { localClock } from "../time.js";
+import { DONATE_URL } from "../links.js";
 import { dismissUpdate } from "../hooks/useStationUpdates.js";
 
 const liveArt = (live) => live.image || SHOWS[live.show]?.img || STATION_ART;
 const trackHeight = heightVar("--banner-h");
+// The same page as the header's Donate button, give or take a trailing slash.
+const page = (url) => {
+  try {
+    const u = new URL(url);
+    return `${u.origin}${u.pathname.replace(/\/$/, "")}`;
+  } catch {
+    return url;
+  }
+};
+const isDonate = (url) => page(url) === page(DONATE_URL);
 const liveWhen = (live) =>
   live.state === "live" ? "Live now" : `Today at ${localClock(live.starts)}`;
 
@@ -33,7 +44,8 @@ export function StationBanner({ banner, live, liveDismissed, onWatch, onListenSc
       )}
       <p>{showLive ? live.title : banner.text}</p>
       {showLive ? (
-        <button className="station-banner-action" onClick={() => onWatch(live)}>
+        <button className="station-banner-action watch-button" onClick={() => onWatch(live)}>
+          <Icon name="play" size={13} />
           Watch
         </button>
       ) : (
@@ -43,6 +55,8 @@ export function StationBanner({ banner, live, liveDismissed, onWatch, onListenSc
             href={banner.action.url}
             target="_blank"
             rel="noreferrer"
+            // On phones the header's Donate sits just above; one is enough.
+            data-donate={isDonate(banner.action.url) || undefined}
           >
             {banner.action.label}
           </a>
@@ -76,7 +90,7 @@ export function LiveCard({ live, onWatch }) {
         {live.text && <p>{live.text}</p>}
       </div>
       <button
-        className={live.state === "live" ? "primary-button" : "secondary-button"}
+        className={live.state === "live" ? "watch-button" : "secondary-button"}
         onClick={() => onWatch(live)}
       >
         <Icon name="play" size={17} />

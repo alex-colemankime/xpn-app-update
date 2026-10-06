@@ -76,6 +76,7 @@ export function ShowsScreen({ onOpen }) {
         <ArchiveList
           query={query}
           onOpen={(episode) => onOpen(episode.show, episode.id)}
+          onOpenShow={(id) => onOpen(id)}
           onClearQuery={() => setQuery("")}
         />
       ) : mode === "All shows" ? (
@@ -230,16 +231,42 @@ function ReminderOffer({ show, onDone }) {
   );
 }
 
-// "On air now, until 4pm" or "Next on air: Tomorrow at 2pm", in the
-// listener's own time.
+// "Next on air: Tomorrow at 2pm", in the listener's own time. While the show
+// is on, the band below says so instead.
 function Airing({ show }) {
   const now = new Date(useNow());
-  const onAirNow = onAirAt(now);
-  if (onAirNow?.show.id === show.id) {
-    return <p className="airing on">On air now, {untilLabel(onAirNow)}</p>;
-  }
+  if (onAirAt(now)?.show.id === show.id) return null;
   const next = nextAiringOf(show, now);
   return next ? <p className="airing">Next on air: {next.label}</p> : null;
+}
+
+// While the show is on the air: a band like the one on Listen, saying so,
+// that plays the station live. It never looks like an episode's Play, since
+// it isn't one.
+function OnAirBand({ show, onListen }) {
+  const now = new Date(useNow());
+  const onAirNow = onAirAt(now);
+  if (onAirNow?.show.id !== show.id) return null;
+  return (
+    <button
+      className="show-on-air"
+      onClick={onListen}
+      style={
+        show.tint ? { "--tint-light": show.tint.light, "--tint-dark": show.tint.dark } : undefined
+      }
+    >
+      <span className="show-on-air-text">
+        <span className="on-air-label">
+          <i className="on-air-dot" data-live="" />
+          On air now · {untilLabel(onAirNow)}
+        </span>
+        <strong>Listen live on WXPN</strong>
+      </span>
+      <span className="show-on-air-key" aria-hidden="true">
+        <Icon name="navLive" size={20} />
+      </span>
+    </button>
+  );
 }
 
 export function ShowDetail({ show, episodeId, onOpenEpisode, onCloseEpisode, onClose, onListen }) {
@@ -251,9 +278,7 @@ export function ShowDetail({ show, episodeId, onOpenEpisode, onCloseEpisode, onC
   const archived = episodesOf(archive, show.id);
   const playable = archived.length > 0;
   const episodes = playable ? archived : show.episodes || [];
-  const onNow = onAirAt()?.show.id === show.id;
   const [offer, setOffer] = useState(false);
-  const page = showUrl(show);
   const archivedEpisode =
     episodeId &&
     (archived.find((ep) => ep.id === episodeId) ||
@@ -305,25 +330,15 @@ export function ShowDetail({ show, episodeId, onOpenEpisode, onCloseEpisode, onC
               </div>
             </div>
             {offer && <ReminderOffer show={show} onDone={() => setOffer(false)} />}
+            <OnAirBand show={show} onListen={listen} />
             <p className="show-description">{show.desc}</p>
-            <div className="detail-actions">
-              <button className="primary-button" onClick={listen}>
-                <Icon name="play" size={17} />
-                {onNow ? "Listen now" : "Listen to WXPN live"}
-              </button>
-              {page && (
-                <a href={page} className="text-button" target="_blank" rel="noreferrer">
-                  Show page on xpn.org
-                  <Icon name="arrowUp" size={16} />
-                </a>
-              )}
-            </div>
             {playable ? (
               <>
                 <div className="section-heading">
-                  <h3>Recent episodes</h3>
+                  <h3>Episodes</h3>
+                  <span className="subtle">{archived.length} recent broadcasts</span>
                 </div>
-                {archived.slice(0, 8).map((ep) => (
+                {archived.map((ep) => (
                   <EpisodeRow
                     key={ep.id}
                     episode={ep}

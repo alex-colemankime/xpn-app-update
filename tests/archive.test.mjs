@@ -4,8 +4,10 @@ import {
   clockTime,
   lengthLabel,
   normalizeEpisodes,
+  parseArchivePage,
   parseDuration,
   parsePodcastFeed,
+  parseSource,
 } from "../archive.js";
 import { parseArchiveFeeds } from "../config.js";
 
@@ -117,10 +119,82 @@ test("lengths and positions read naturally", () => {
   assert.equal(clockTime(3723), "1:02:03");
 });
 
-test("archive feeds: World Cafe by default, a list, or off", () => {
-  assert.deepEqual(parseArchiveFeeds(undefined), [
-    { show: "worldcafe", url: "https://feeds.npr.org/510008/podcast.xml" },
-  ]);
+// The archive list on an xpn.org show page, as the site renders it.
+const item = (title, file, guid) =>
+  `<button type="button" class="wxpn-program-detail__archive-item" data-track-guid="${guid}" ` +
+  `data-track-url="https://dylan.streamguys1.com/${file}?key=abc&amp;ttl=1800" ` +
+  `data-track-title="${title}" data-track-image="https://xpn-rss.streamguys1.com/xpn/player.jpg">` +
+  `<span class="wxpn-program-detail__archive-caret">▶</span>` +
+  `<span class="wxpn-program-detail__archive-title">${title}</span></button>`;
+const PAGE = `<section class="wxpn-program-detail__archive-list">
+  ${item("Sleepy Hollow - 10.04.2026", "20261006140615_843187-SleepyHolow-10.04.2026.mp3", "9f6e24a0")}
+  ${item("Sleepy Hollow - 10.03.2026", "20261006135818_409025-SleepyHollow-10.03.2026.mp3", "82db8e00")}
+  ${item("Sleepy Hollow - 10.03.2026", "20261006135900_409026-SleepyHollow-10.03.2026.mp3", "82db8e01")}
+  ${item("Sleepy Hollow - 08.29.26 (Joni Mitchell)", "20260830101500_1-SH.mp3", "aa")}
+  ${item("Sleepy Hollow - 02.30.26", "20260302101500_2-SH.mp3", "bb")}
+  ${item("", "20260301101500_3-SH.mp3", "cc")}
+</section>`;
+const SLEEPY = {
+  show: "sleepyhollow",
+  name: "Sleepy Hollow",
+  schedule: [{ days: ["Saturday", "Sunday"], start: "06:00", end: "10:00" }],
+};
+
+test("an xpn.org show page's archive becomes broadcasts, by the day they aired", () => {
+  const episodes = parseArchivePage(PAGE, SLEEPY);
+  assert.deepEqual(
+    episodes.map((e) => [e.title, e.feature, e.aired]),
+    [
+      ["Sunday, October 4", "", "6am–10am"],
+      ["Saturday, October 3", "", "6am–10am"],
+      ["Saturday, August 29", "Joni Mitchell", "6am–10am"],
+    ],
+    "the repeat, the impossible date and the untitled item are dropped",
+  );
+  const [sunday] = episodes;
+  assert.equal(sunday.date, "2026-10-04T10:00:00.000Z", "6am Eastern, in its slot");
+  assert.equal(
+    sunday.audio,
+    "https://dylan.streamguys1.com/20261006140615_843187-SleepyHolow-10.04.2026.mp3?key=abc&ttl=1800",
+    "the signed link, as given",
+  );
+  assert.equal(sunday.duration, null);
+  assert.equal(parseArchivePage(PAGE, SLEEPY)[0].id, sunday.id, "ids are stable");
+  assert.match(sunday.id, /^sleepyhollow-/);
+});
+
+test("a feature on a show page keeps its name, dated by its upload", () => {
+  const page =
+    item("John R. Milleron World Cafe", "20261002065218_069616-JOHNR.mp3", "g1") +
+    item("Friko  on World Cafe", "20260930070000_1-FRIKO.mp3", "g2");
+  const episodes = parseArchivePage(page, {
+    show: "worldcafe",
+    name: "World Cafe",
+    schedule: [{ days: ["Friday", "Wednesday"], start: "14:00", end: "16:00" }],
+  });
+  assert.deepEqual(
+    episodes.map((e) => [e.title, e.date, e.aired]),
+    [
+      ["John R. Miller", "2026-10-02T18:00:00.000Z", ""],
+      ["Friko", "2026-09-30T18:00:00.000Z", ""],
+    ],
+  );
+});
+
+test("a source is read as a feed or a show page, with the show's own art", () => {
+  const fromPage = parseSource(PAGE, "sleepyhollow");
+  assert.equal(fromPage[0].title, "Sunday, October 4");
+  assert.ok(fromPage[0].image, "the catalog's art for the show");
+  const fromFeed = parseSource(FEED, "worldcafe");
+  assert.equal(fromFeed[0].title, "John R. Miller takes to the road");
+});
+
+test("archive sources: xpn.org's archived shows by default, a list, or off", () => {
+  assert.deepEqual(
+    parseArchiveFeeds(undefined).map((f) => f.show),
+    ["sleepyhollow", "funky", "landlost", "worldcafe"],
+  );
+  assert.ok(parseArchiveFeeds(undefined).every((f) => f.url.startsWith("https://xpn.org/")));
   assert.deepEqual(parseArchiveFeeds("off"), []);
   assert.deepEqual(
     parseArchiveFeeds("worldcafe=https://a.example/feed.xml?x=1, folkshow=https://b.example/rss"),

@@ -62,7 +62,7 @@ function OnAir({ onAirNow, playing, onOpenShow, live, onWatch }) {
         <span className="sr-only">Show details</span>
       </button>
       {video && (
-        <button className="on-air-watch" onClick={() => onWatch(video)}>
+        <button className="on-air-watch watch-button" onClick={() => onWatch(video)}>
           <Icon name="play" size={14} />
           Watch
           <span className="sr-only"> the live video</span>
@@ -102,7 +102,7 @@ function SleepTimer({ onAirNow }) {
   const choose = (minutes, label) => {
     startSleepTimer(minutes);
     close();
-    showToast(`Playback will stop ${label}.`);
+    showToast(`The radio will turn off ${label}.`);
   };
   // Worked out at the tap, from the clock and the show's real end time, so
   // a menu opened a moment ago can't stop a minute into the next show.
@@ -111,17 +111,19 @@ function SleepTimer({ onAirNow }) {
     close();
     if (!live) return;
     sleepUntil(live.endsAt);
-    showToast(`Playback will stop when ${live.show.name} ends.`);
+    showToast(`The radio will turn off when ${live.show.name} ends.`);
   };
   return (
     <>
       <button
         className={`text-button sleep-button ${endsAt ? "active" : ""}`}
         popoverTarget="sleep-menu"
-        aria-label={endsAt ? `Sleep timer: ${left} minutes left. Change` : "Set a sleep timer"}
+        aria-label={
+          endsAt ? `Sleep timer: the radio turns off in ${left} minutes. Change` : "Sleep timer"
+        }
       >
         <Icon name="moon" size={16} />
-        {endsAt ? `${left} min` : "Sleep"}
+        {endsAt ? `Off in ${left} min` : "Sleep timer"}
       </button>
       <div
         id="sleep-menu"
@@ -137,7 +139,9 @@ function SleepTimer({ onAirNow }) {
             Sleep timer
           </p>
           <p className="sleep-sub">
-            {endsAt ? `The radio stops in ${left} min.` : "The radio fades out, then stops after…"}
+            {endsAt
+              ? `The radio turns off in ${left} min. Pick a new time, or cancel.`
+              : "Turn the radio off in"}
           </p>
         </div>
         <div className="sleep-grid">
@@ -156,8 +160,8 @@ function SleepTimer({ onAirNow }) {
           <button className="sleep-show" onClick={untilShowEnds}>
             <Art src={onAirNow.show.img} alt="" />
             <span>
-              <strong>End of {onAirNow.show.name}</strong>
-              <small>Stops at {localClock(onAirNow.endsAt)}</small>
+              <strong>When {onAirNow.show.name} ends</strong>
+              <small>at {localClock(onAirNow.endsAt)}</small>
             </span>
           </button>
         )}
@@ -169,7 +173,7 @@ function SleepTimer({ onAirNow }) {
               close();
             }}
           >
-            Turn off timer
+            Cancel timer
           </button>
         )}
       </div>

@@ -28,7 +28,7 @@ export const useReminderSettings = () => useLocalStore(remindersStore);
 export const setReminderLead = (lead) => remindersStore.set((c) => ({ ...c, lead }));
 export const disableReminders = () => remindersStore.set((c) => ({ ...c, enabled: false }));
 
-const OFF_IN_SETTINGS =
+export const OFF_IN_SETTINGS =
   "Notifications are off for WXPN. You can allow them in your phone’s Settings.";
 
 // Turning reminders on is the one moment the app asks for notification

@@ -2,6 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   activeUpdates,
+  alertPlan,
+  LIVE_ALERT_MINUTES,
   normalizeUpdates,
   youTubeEmbed,
   LIVE_ANNOUNCE_MINUTES,
@@ -74,6 +76,63 @@ test("a live video is announced before it starts, live while on, gone after", ()
   assert.equal(activeUpdates(list, at("2026-10-09T11:30:00-04:00")).live.state, "soon");
   assert.equal(activeUpdates(list, at("2026-10-09T12:05:00-04:00")).live.state, "live");
   assert.equal(activeUpdates(list, at("2026-10-09T13:00:00-04:00")).live, null);
+});
+
+test("notifications a listener asked for: live video just before, drive notices on time", () => {
+  const list = normalizeUpdates({
+    updates: [
+      {
+        ...FILE.updates[0],
+        notify: [
+          { at: "2026-10-05T08:00:00-04:00", title: "The drive is on", text: "Tap to donate." },
+          { at: "2026-10-16T08:00:00-04:00", title: "Last day" },
+          { at: "2026-10-20T08:00:00-04:00", title: "After the drive has ended" },
+          { at: "whenever", title: "A bad time" },
+          { at: "2026-10-06T08:00:00-04:00" },
+        ],
+      },
+      { ...FILE.updates[1], show: "freeatnoon" },
+      {
+        id: "quiet",
+        kind: "live",
+        title: "No notification",
+        watch: "https://youtu.be/abcdefghijk",
+        starts: "2026-10-09T15:00:00-04:00",
+        notify: false,
+      },
+    ],
+  });
+  const now = at("2026-10-06T09:00:00-04:00");
+  assert.deepEqual(alertPlan(list, {}, { now }), [], "nothing unless the listener asked");
+
+  const both = alertPlan(list, { live: true, drives: true }, { now });
+  assert.deepEqual(
+    both.map((a) => [a.title, new Date(a.at).toISOString()]),
+    [
+      ["Free at Noon: Wesley Stace", "2026-10-09T15:50:00.000Z"],
+      ["Last day", "2026-10-16T12:00:00.000Z"],
+    ],
+    "past, after-the-drive, undated and untitled notices are dropped",
+  );
+  assert.equal(
+    both[0].body,
+    `The live video starts in ${LIVE_ALERT_MINUTES} minutes. Tap to watch.`,
+  );
+  assert.equal(both[0].extra.action, "watch");
+  assert.equal(both[0].extra.live.watch, FILE.updates[1].watch);
+  assert.equal(both[1].body, "Tap to donate.", "a notice without text offers the banner's action");
+  assert.deepEqual(both[1].extra, { action: "open", url: "https://xpn.org/donate/" });
+  assert.equal(new Set(both.map((a) => a.key)).size, both.length);
+
+  assert.deepEqual(
+    alertPlan(list, { drives: true }, { now }).map((a) => a.title),
+    ["Last day"],
+  );
+  assert.deepEqual(
+    alertPlan(list, { live: true }, { now, remindedShows: ["freeatnoon"] }),
+    [],
+    "a show the listener is already reminded about gets no second notification",
+  );
 });
 
 test("YouTube links play in the app; others open in the browser", () => {

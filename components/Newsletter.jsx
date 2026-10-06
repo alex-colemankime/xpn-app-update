@@ -16,7 +16,13 @@ export function NewsletterPanel() {
         WXPN’s weekly email: top stories and music news, concert and event alerts, and special
         announcements.
       </p>
-      <a className="primary-button" href={ENEWS_URL} target="_blank" rel="noreferrer">
+      <a
+        className="secondary-button newsletter-button"
+        href={ENEWS_URL}
+        target="_blank"
+        rel="noreferrer"
+      >
+        <Icon name="mail" size={18} />
         Sign up for the e-news
         <Icon name="arrowUp" size={16} />
       </a>
@@ -33,7 +39,7 @@ export function NewsletterPanel() {
   );
 }
 
-// At the end of the concert listings: the same listings, weekly, by email.
+// At the end of the concert listings: concert news by email, from the e-news.
 export function NewsletterPrompt() {
   return (
     <a
@@ -44,8 +50,8 @@ export function NewsletterPrompt() {
     >
       <Icon name="mail" size={18} />
       <span>
-        <strong>Concert alerts every week</strong>
-        <small>Sign up for WXPN’s e-news</small>
+        <strong>Get concert news by email</strong>
+        <small>Sign up for WXPN’s free weekly e-news</small>
       </span>
       <Icon name="arrowUp" size={16} />
     </a>

@@ -35,6 +35,7 @@ import { useAudioFocus, useEpisodePlayer } from "./episode-player.js";
 import { Toast } from "./components/Toast.jsx";
 import { StationBanner } from "./components/StationUpdates.jsx";
 import { useStationUpdates } from "./hooks/useStationUpdates.js";
+import { useStationAlerts } from "./hooks/useStationAlerts.js";
 import { youTubeEmbed } from "./updates.js";
 import { startPlaylistSync } from "./playlist-sync.js";
 import { showToast } from "./toast.js";
@@ -167,6 +168,7 @@ export default function App() {
   );
   // Show heads-ups wait while the welcome is open, so they never cover it.
   useShowReminders(() => route.navigate("listen"), { paused: welcome });
+  useStationAlerts(updates.all, { onWatch: watch });
   const finishWelcome = () => {
     writeJson(ONBOARDED_KEY, true);
     setWelcome(false);
@@ -254,8 +256,14 @@ export default function App() {
             <Icon name="settings" size={18} />
             Settings
           </button>
-          <a className="sidebar-donate" href={DONATE_URL} target="_blank" rel="noreferrer">
-            Support WXPN
+          <a
+            className="sidebar-donate"
+            href={DONATE_URL}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Donate to WXPN (opens in a new tab)"
+          >
+            Donate
             <Icon name="arrowUp" size={16} />
           </a>
         </div>
@@ -277,14 +285,15 @@ export default function App() {
             <Wordmark dot />
           </button>
           <div className="topbar-actions">
+            {/* Giving happens on xpn.org, in the browser (App Review 3.2.2). */}
             <a
-              className="topbar-support"
+              className="topbar-donate"
               href={DONATE_URL}
               target="_blank"
               rel="noreferrer"
-              aria-label="Support WXPN (opens in a new tab)"
+              aria-label="Donate to WXPN (opens in a new tab)"
             >
-              Support
+              <span>Donate</span>
             </a>
             <button
               className="mobile-settings icon-button"
