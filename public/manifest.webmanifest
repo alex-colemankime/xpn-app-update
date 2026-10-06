@@ -3,7 +3,7 @@
   "lang": "en-US",
   "name": "WXPN — Listen live",
   "short_name": "WXPN",
-  "description": "Listen to WXPN 88.5 FM, XPN2 and Kids Corner. Discover shows, save songs, and find live music.",
+  "description": "Listen to WXPN 88.5 FM, XPN2 and Homegrown. Discover shows, save songs, and find live music.",
   "start_url": "./#/listen",
   "scope": "./",
   "display": "standalone",

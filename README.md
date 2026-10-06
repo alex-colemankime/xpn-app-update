@@ -34,6 +34,7 @@ Build-time settings are Vite env variables, set in the shell or a `.env.local` f
 | `VITE_XPN_LIVESTREAM_PAGE`   | Where the app finds the week's Free at Noon video. Default: the livestream page on xpn.org (WordPress REST). `off` turns it off. See "Station updates".               |
 | `VITE_SPOTIFY_CLIENT_ID`     | Turns on the Spotify playlist. See "Playlist sync".                                                                                                                   |
 | `VITE_APPLE_MUSIC_TOKEN_URL` | Turns on the Apple Music playlist: an endpoint returning `{ "token": "…" }`, a MusicKit developer token. (`VITE_APPLE_MUSIC_DEVELOPER_TOKEN` takes a token directly.) |
+| `VITE_SITE_URL`              | The address the build is served from. Adds the share image and link-preview tags (the Pages workflow sets it to the preview's address).                               |
 | `VITE_SHOW_SAMPLES=true`     | Placeholder episodes and sample station updates in a production build. Always on in `npm run dev`; set for the Pages preview; **never for a store build.**            |
 
 ## Station updates

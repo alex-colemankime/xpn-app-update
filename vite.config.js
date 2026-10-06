@@ -19,6 +19,35 @@ function noSamples() {
   };
 }
 
+// Link previews (Slack, iMessage, social): the share image and page address
+// need absolute URLs, so they are added only when the build knows where it
+// will live (VITE_SITE_URL, set by the Pages workflow).
+function shareTags(env) {
+  const site = (env.VITE_SITE_URL || "").replace(/\/?$/, "/");
+  return {
+    name: "wxpn-share-tags",
+    apply: "build",
+    transformIndexHtml: () =>
+      site === "/"
+        ? []
+        : [
+            ["og:url", site],
+            ["og:image", `${site}share-card.jpg`],
+            ["og:image:width", "1200"],
+            ["og:image:height", "630"],
+            ["og:image:alt", "The WXPN app on two phones: Listen live, and Recently played."],
+          ]
+            .map(([property, content]) => ({ tag: "meta", attrs: { property, content } }))
+            .concat(
+              [
+                ["twitter:card", "summary_large_image"],
+                ["twitter:image", `${site}share-card.jpg`],
+              ].map(([name, content]) => ({ tag: "meta", attrs: { name, content } })),
+            )
+            .map((tag) => ({ ...tag, injectTo: "head" })),
+  };
+}
+
 const origin = (url) => {
   try {
     return url ? new URL(url).origin : "";
@@ -89,6 +118,7 @@ export default defineConfig(({ mode }) => {
       // React Compiler: memoizes components and hooks automatically.
       babel({ presets: [reactCompilerPreset()] }),
       contentSecurityPolicy(env),
+      shareTags(env),
     ],
     define: {
       __SHOW_SAMPLES__: JSON.stringify(showSamples),
