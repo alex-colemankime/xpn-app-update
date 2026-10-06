@@ -90,7 +90,8 @@ function contentSecurityPolicy(env) {
           "font-src 'self'",
           "media-src 'self' https://wxpnhi.xpn.org https://wxpn.xpn.org blob:",
           `connect-src ${[...new Set(connect.filter(Boolean))].join(" ")}`,
-          "frame-src https://www.youtube-nocookie.com https://*.apple.com",
+          // The design preview shows the app in a frame of its own.
+          `frame-src ${env.VITE_DEVICE_PREVIEW === "true" ? "'self' " : ""}https://www.youtube-nocookie.com https://*.apple.com`,
           "worker-src 'self' blob:",
           "object-src 'none'",
           "base-uri 'self'",
@@ -122,6 +123,7 @@ export default defineConfig(({ mode }) => {
     ],
     define: {
       __SHOW_SAMPLES__: JSON.stringify(showSamples),
+      __DEVICE_PREVIEW__: JSON.stringify(env.VITE_DEVICE_PREVIEW === "true"),
       __APP_VERSION__: JSON.stringify(version),
     },
     build: {

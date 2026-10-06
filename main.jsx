@@ -13,10 +13,26 @@ if (typeof HTMLElement !== "undefined" && !("popover" in HTMLElement.prototype))
   await import("@oddbird/popover-polyfill").catch(() => {});
 }
 
-createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </StrictMode>,
-);
+// The shared design preview (VITE_DEVICE_PREVIEW, GitHub Pages only): on a
+// computer, the link opens the app inside a phone, tablet or laptop frame,
+// and the app itself runs in that frame (?frame=1). Phones and tablets, and
+// every other build, get the app directly.
+const devicePreview =
+  typeof __DEVICE_PREVIEW__ === "boolean" &&
+  __DEVICE_PREVIEW__ &&
+  window.self === window.top &&
+  !new URLSearchParams(window.location.search).has("frame") &&
+  window.matchMedia("(min-width: 900px) and (hover: hover) and (pointer: fine)").matches;
+
+if (devicePreview) {
+  const { mountDevicePreview } = await import("./preview-shell.js");
+  mountDevicePreview(document.getElementById("root"));
+} else {
+  createRoot(document.getElementById("root")).render(
+    <StrictMode>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </StrictMode>,
+  );
+}

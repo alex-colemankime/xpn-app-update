@@ -27,15 +27,16 @@ CI runs `lint`, `format:check`, `test` and `build` on every push and pull reques
 
 Build-time settings are Vite env variables, set in the shell or a `.env.local` file (git-ignored).
 
-| Variable                     | Effect                                                                                                                                                                |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VITE_XPN_CONCERTS_ENDPOINT` | The concert calendar. Default: xpn.org's own calendar (`https://xpn.org/wp-json/tribe/events/v1/events`). `off` removes the Concerts tab.                             |
-| `VITE_XPN_UPDATES_URL`       | The station updates file (banner, live video). Unset: no updates (preview builds show samples). See "Station updates".                                                |
-| `VITE_XPN_LIVESTREAM_PAGE`   | Where the app finds the week's Free at Noon video. Default: the livestream page on xpn.org (WordPress REST). `off` turns it off. See "Station updates".               |
-| `VITE_SPOTIFY_CLIENT_ID`     | Turns on the Spotify playlist. See "Playlist sync".                                                                                                                   |
-| `VITE_APPLE_MUSIC_TOKEN_URL` | Turns on the Apple Music playlist: an endpoint returning `{ "token": "…" }`, a MusicKit developer token. (`VITE_APPLE_MUSIC_DEVELOPER_TOKEN` takes a token directly.) |
-| `VITE_SITE_URL`              | The address the build is served from. Adds the share image and link-preview tags (the Pages workflow sets it to the preview's address).                               |
-| `VITE_SHOW_SAMPLES=true`     | Placeholder episodes and sample station updates in a production build. Always on in `npm run dev`; set for the Pages preview; **never for a store build.**            |
+| Variable                     | Effect                                                                                                                                                                                                                       |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_XPN_CONCERTS_ENDPOINT` | The concert calendar. Default: xpn.org's own calendar (`https://xpn.org/wp-json/tribe/events/v1/events`). `off` removes the Concerts tab.                                                                                    |
+| `VITE_XPN_UPDATES_URL`       | The station updates file (banner, live video). Unset: no updates (preview builds show samples). See "Station updates".                                                                                                       |
+| `VITE_XPN_LIVESTREAM_PAGE`   | Where the app finds the week's Free at Noon video. Default: the livestream page on xpn.org (WordPress REST). `off` turns it off. See "Station updates".                                                                      |
+| `VITE_SPOTIFY_CLIENT_ID`     | Turns on the Spotify playlist. See "Playlist sync".                                                                                                                                                                          |
+| `VITE_APPLE_MUSIC_TOKEN_URL` | Turns on the Apple Music playlist: an endpoint returning `{ "token": "…" }`, a MusicKit developer token. (`VITE_APPLE_MUSIC_DEVELOPER_TOKEN` takes a token directly.)                                                        |
+| `VITE_SITE_URL`              | The address the build is served from. Adds the share image and link-preview tags (the Pages workflow sets it to the preview's address).                                                                                      |
+| `VITE_DEVICE_PREVIEW=true`   | The shared design preview: on a computer, the page opens the app in a phone, tablet or laptop frame with buttons to switch (`?device=tablet`, keys 1–3). Phones and tablets get the app itself. **Never for a store build.** |
+| `VITE_SHOW_SAMPLES=true`     | Placeholder episodes and sample station updates in a production build. Always on in `npm run dev`; set for the Pages preview; **never for a store build.**                                                                   |
 
 ## Station updates
 

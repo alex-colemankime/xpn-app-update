@@ -11,7 +11,12 @@ export default [
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
-      globals: { ...globals.browser, __SHOW_SAMPLES__: "readonly", __APP_VERSION__: "readonly" },
+      globals: {
+        ...globals.browser,
+        __SHOW_SAMPLES__: "readonly",
+        __APP_VERSION__: "readonly",
+        __DEVICE_PREVIEW__: "readonly",
+      },
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
     rules: {

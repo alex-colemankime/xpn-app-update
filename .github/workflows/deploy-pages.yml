@@ -44,6 +44,8 @@ jobs:
         run: npm run build:pages
         env:
           VITE_SHOW_SAMPLES: "true"
+          # On a computer, the link opens in a phone, tablet or laptop frame.
+          VITE_DEVICE_PREVIEW: "true"
           # The preview's address, for link previews when it is shared.
           VITE_SITE_URL: https://alex-colemankime.github.io/xpn-app-update/
 

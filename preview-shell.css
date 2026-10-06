@@ -1,0 +1,230 @@
+/* The device preview around the shared Pages link (preview-shell.js). Uses
+   the app's own color tokens, so it follows the same light and dark theme. */
+
+html.device-preview {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+  --dp-backdrop: #eeeae2;
+  --dp-bezel: #141516;
+}
+html.device-preview[data-theme="dark"] {
+  --dp-backdrop: #151617;
+  --dp-bezel: #050505;
+}
+html.device-preview body {
+  background: var(--dp-backdrop);
+}
+
+.dp {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* The bar: the wordmark, the three sizes in the middle, tools at the end. */
+.dp-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  padding: 12px 28px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.dp-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  min-width: 0;
+}
+.dp-mark {
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.085em;
+  line-height: 1;
+}
+.dp-mark .w {
+  color: var(--brand-w);
+}
+.dp-mark .dot {
+  color: var(--accent);
+}
+.dp-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Phone, Tablet, Laptop: one outlined row of keys, as in the app's
+   Settings, with the chosen size lit in the accent. */
+.dp-switch {
+  display: inline-grid;
+  grid-auto-flow: column;
+  border: 1px solid var(--control-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg);
+}
+.dp-switch button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 18px;
+  font-size: 0.9375rem;
+  font-weight: 550;
+  color: var(--muted);
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+.dp-switch button + button {
+  box-shadow: inset 1px 0 var(--border);
+}
+.dp-switch button:hover {
+  color: var(--text);
+  background: var(--surface);
+}
+.dp-switch button[aria-pressed="true"] {
+  color: var(--accent-strong);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg));
+  font-weight: 750;
+}
+.dp-switch button:focus-visible,
+.dp-tool:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.dp-tools {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+.dp-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 550;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.dp-tool:hover {
+  color: var(--text);
+  background: var(--surface);
+}
+.dp-rotate[aria-pressed="true"] {
+  color: var(--accent-strong);
+}
+.dp-rotate[hidden] {
+  display: none;
+}
+
+/* The stage: the device, centered, scaled to fit the window. */
+.dp-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  min-height: 0;
+  padding: 24px;
+  overflow: hidden;
+}
+.dp-device {
+  position: relative;
+  flex-shrink: 0;
+}
+.dp-scaler {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+}
+.dp-frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--dp-bezel);
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 0.08),
+    0 28px 60px -18px rgb(0 0 0 / 0.4);
+}
+.dp-frame iframe {
+  display: block;
+  border: 0;
+  background: var(--bg);
+}
+
+/* Phone and tablet: a dark bezel with rounded corners. */
+.dp[data-device="phone"] .dp-frame {
+  padding: 12px;
+  border-radius: 56px;
+}
+.dp[data-device="phone"] .dp-frame iframe {
+  border-radius: 44px;
+}
+.dp[data-device="tablet"] .dp-frame {
+  padding: 16px;
+  border-radius: 36px;
+}
+.dp[data-device="tablet"] .dp-frame iframe {
+  border-radius: 20px;
+}
+
+/* Laptop: a browser window, its bar carrying the page's title. */
+.dp-window-bar {
+  display: none;
+}
+.dp[data-device="laptop"] .dp-frame {
+  padding: 0 1px 1px;
+  border-radius: 12px;
+  background: var(--border);
+  overflow: hidden;
+}
+.dp[data-device="laptop"] .dp-window-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 37px;
+  padding: 0 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--muted);
+}
+.dp-window-bar i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--border);
+}
+.dp-window-bar span {
+  margin-left: 14px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dp-caption {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1100px) {
+  .dp-title,
+  .dp-tool span {
+    display: none;
+  }
+}

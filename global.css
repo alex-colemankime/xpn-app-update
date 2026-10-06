@@ -903,6 +903,18 @@ h1 {
      player bar on a laptop screen. */
   --stage: min(400px, 100%, max(260px, calc(100svh - 590px)));
 }
+/* Beside the playlist the stage can be narrow (a tablet held sideways), so
+   the band's label and artwork step down to stay on one line. */
+@media (min-width: 768px) and (max-height: 900px) {
+  .on-air-art {
+    width: 48px;
+    height: 48px;
+  }
+  .on-air-label {
+    font-size: 0.8125rem;
+    letter-spacing: 0.06em;
+  }
+}
 @media (min-width: 1001px) {
   /* Sized by the window, not the column, since the column takes its width
      from the card. */
@@ -2985,6 +2997,7 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  white-space: nowrap;
   font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: 0.08em;
