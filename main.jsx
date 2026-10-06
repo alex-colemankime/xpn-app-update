@@ -26,7 +26,11 @@ const devicePreview =
 
 if (devicePreview) {
   const { mountDevicePreview } = await import("./preview-shell.js");
-  mountDevicePreview(document.getElementById("root"));
+  // This build's entry file name changes with every release, so the frame
+  // asks for the same release as the page around it, never a cached older one.
+  mountDevicePreview(document.getElementById("root"), {
+    build: new URL(import.meta.url).pathname.split("/").pop(),
+  });
 } else {
   createRoot(document.getElementById("root")).render(
     <StrictMode>

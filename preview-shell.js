@@ -60,7 +60,7 @@ function applyTheme() {
   document.documentElement.dataset.theme = dark ? "dark" : "light";
 }
 
-export function mountDevicePreview(root) {
+export function mountDevicePreview(root, { build = "" } = {}) {
   document.documentElement.classList.add("device-preview");
   document.title = "WXPN app preview";
   applyTheme();
@@ -118,7 +118,11 @@ export function mountDevicePreview(root) {
   const windowTitle = root.querySelector(".dp-window-bar span");
 
   // The app's own screen, from the address the preview was opened with.
-  iframe.src = `${BASE}?frame=1${window.location.hash}`;
+  // `build` keeps the frame on this release: GitHub Pages lets browsers
+  // cache the page for a few minutes, which could pair a new preview with
+  // an older app.
+  const frameUrl = (hash) => `${BASE}?frame=1${build ? `&build=${build}` : ""}${hash}`;
+  iframe.src = frameUrl(window.location.hash);
 
   const size = () => {
     const d = DEVICES[device];
@@ -162,7 +166,7 @@ export function mountDevicePreview(root) {
     if (`${window.location.search}${window.location.hash}` !== next) {
       window.history.replaceState(null, "", next);
     }
-    open.href = `${BASE}?frame=1${hash}`;
+    open.href = frameUrl(hash);
   }
 
   // Phones and tablets draw no scrollbar; a laptop's browser does.
