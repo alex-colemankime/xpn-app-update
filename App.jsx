@@ -31,7 +31,13 @@ import { useConcerts } from "./hooks/useConcerts.js";
 import { useRadioAlarm } from "./hooks/useRadioAlarm.js";
 import { useShowReminders } from "./hooks/useShowReminders.js";
 import { PlayerBar } from "./components/PlayerBar.jsx";
-import { useAudioFocus, useEpisodePlayer } from "./episode-player.js";
+import {
+  getEpisodeState,
+  pauseEpisode,
+  resumeEpisode,
+  useAudioFocus,
+  useEpisodePlayer,
+} from "./episode-player.js";
 import { Toast } from "./components/Toast.jsx";
 import { StationBanner } from "./components/StationUpdates.jsx";
 import { useStationUpdates } from "./hooks/useStationUpdates.js";
@@ -41,7 +47,7 @@ import { startPlaylistSync } from "./playlist-sync.js";
 import { showToast } from "./toast.js";
 import { readJson, writeJson } from "./storage.js";
 import { DONATE_URL } from "./links.js";
-import { CONCERTS_ENABLED } from "./config.js";
+import { CONCERTS_ENABLED, VIDEOS_ENABLED } from "./config.js";
 import { STREAMS } from "./streams.js";
 import { clockLabel } from "./time.js";
 import { ListenScreen } from "./screens/ListenScreen.jsx";
@@ -53,6 +59,7 @@ const NAV = [
   { id: "listen", label: "Listen live", short: "Listen", icon: "navLive" },
   { id: "favorites", label: "Favorites", short: "Favorites", icon: "heart" },
   { id: "shows", label: "Shows", short: "Shows", icon: "headphones" },
+  ...(VIDEOS_ENABLED ? [{ id: "videos", label: "Videos", short: "Videos", icon: "video" }] : []),
   ...(CONCERTS_ENABLED
     ? [{ id: "concerts", label: "Concerts", short: "Concerts", icon: "navConcerts" }]
     : []),
@@ -99,6 +106,9 @@ const Library = memo(LibraryScreen);
 const Concerts = lazy(() =>
   import("./screens/ConcertsScreen.jsx").then((m) => ({ default: memo(m.ConcertsScreen) })),
 );
+const Videos = lazy(() =>
+  import("./screens/VideosScreen.jsx").then((m) => ({ default: memo(m.VideosScreen) })),
+);
 const Settings = lazy(() =>
   import("./screens/SettingsScreen.jsx").then((m) => ({ default: memo(m.SettingsScreen) })),
 );
@@ -129,11 +139,28 @@ export default function App() {
   const updates = useStationUpdates();
   useEffect(startPlaylistSync, []);
 
-  // Watching a live video: YouTube plays in a sheet, with the radio paused
-  // (and offered back afterwards); any other link opens in the browser.
+  // Watching a video: Brightcove videos and YouTube play in a sheet, with
+  // the radio (or an archive episode) paused and offered back afterwards; any
+  // other link opens in the browser.
   const [watching, setWatching] = useState(null);
   const radioWasOn = useRef(false);
+  const episodeWasOn = useRef(false);
+  const pauseAudio = () => {
+    const { playing, status } = getPlayerSnapshot();
+    radioWasOn.current = playing || isConnecting(status);
+    if (radioWasOn.current) pauseStream();
+    const episode = getEpisodeState();
+    episodeWasOn.current =
+      Boolean(episode.episode) && (episode.status === "playing" || episode.status === "loading");
+    if (episodeWasOn.current) pauseEpisode();
+  };
   const watch = useCallback((live) => {
+    // The station's own videos play in its Brightcove Player, everywhere.
+    if (live.embed) {
+      pauseAudio();
+      setWatching(live);
+      return;
+    }
     // YouTube now refuses embeds without a web referrer, which the iOS app
     // (capacitor://localhost) can't send, so iOS opens the video in the
     // in-app browser instead; so does any link that isn't YouTube.
@@ -147,15 +174,15 @@ export default function App() {
       window.open(live.watch, "_blank", "noopener");
       return;
     }
-    const { playing, status } = getPlayerSnapshot();
-    radioWasOn.current = playing || isConnecting(status);
-    if (radioWasOn.current) pauseStream();
+    pauseAudio();
     setWatching(live);
   }, []);
   const stopWatching = () => {
     setWatching(null);
     if (radioWasOn.current)
       showToast("The radio paused for the video.", { label: "Resume", onClick: playStream });
+    else if (episodeWasOn.current)
+      showToast("The episode paused for the video.", { label: "Resume", onClick: resumeEpisode });
   };
   const alarm = useRadioAlarm();
   const [appearance, setAppearance] = useAppearance();
@@ -344,6 +371,11 @@ export default function App() {
           <Screen id="shows" label="Shows" current={route.screen}>
             <Shows onOpen={route.openShow} />
           </Screen>
+          {VIDEOS_ENABLED && (
+            <Screen id="videos" label="Videos" current={route.screen}>
+              <Videos onWatch={watch} />
+            </Screen>
+          )}
           {CONCERTS_ENABLED && (
             <Screen id="concerts" label="Concerts" current={route.screen}>
               <Concerts result={concerts} />
@@ -388,6 +420,8 @@ export default function App() {
           onCloseEpisode={route.closeEpisode}
           onClose={route.closeShow}
           onListen={() => route.navigate("listen")}
+          onNavigate={route.navigate}
+          onWatch={watch}
         />
       )}
       <Suspense fallback={null}>

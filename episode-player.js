@@ -85,6 +85,7 @@ export function toggleEpisode(episode) {
 }
 
 export const pauseEpisode = () => core.pause();
+export const getEpisodeState = () => core.getState();
 export const resumeEpisode = () => {
   tap("medium");
   core.resume();

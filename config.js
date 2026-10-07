@@ -65,3 +65,31 @@ export function parseArchiveFeeds(setting) {
 }
 export const ARCHIVE_FEEDS = parseArchiveFeeds(import.meta.env?.VITE_XPN_ARCHIVE_FEEDS);
 export const ARCHIVE_ENABLED = ARCHIVE_FEEDS.length > 0;
+
+// Videos (videos.js): Brightcove playlists, each a section of the Videos tab,
+// read with Brightcove's Playback API and played in a Brightcove Player.
+//   VITE_BRIGHTCOVE_ACCOUNT  the account the playlists live in. Default: the
+//                            NPR Music Video Network, whose World Cafe and
+//                            WXPN collections are livesessions.npr.org's.
+//   VITE_BRIGHTCOVE_PLAYER   the account's player (its id; default "default").
+//                            The app reads the player's public policy key
+//                            from its config, so nothing secret is built in.
+//   VITE_BRIGHTCOVE_VIDEOS   "Section name=playlist id" pairs, comma
+//                            separated, in order; "off" removes the tab.
+export const DEFAULT_VIDEO_SECTIONS = "World Cafe=1876180529963365406,WXPN=1874727417810648125";
+export function parseVideoSections(setting) {
+  if (setting === "off") return [];
+  return String(setting || DEFAULT_VIDEO_SECTIONS)
+    .split(",")
+    .map((pair) => pair.trim().split(/=(?=\d+$)/))
+    .filter(([label, id]) => label?.trim() && /^\d+$/.test(id || ""))
+    .map(([label, id]) => ({ label: label.trim(), playlist: id }));
+}
+export const VIDEO_ACCOUNT = /^\d+$/.test(import.meta.env?.VITE_BRIGHTCOVE_ACCOUNT || "")
+  ? import.meta.env.VITE_BRIGHTCOVE_ACCOUNT
+  : "6416366397001";
+export const VIDEO_PLAYER = /^[\w-]+$/.test(import.meta.env?.VITE_BRIGHTCOVE_PLAYER || "")
+  ? import.meta.env.VITE_BRIGHTCOVE_PLAYER
+  : "default";
+export const VIDEO_SECTIONS = parseVideoSections(import.meta.env?.VITE_BRIGHTCOVE_VIDEOS);
+export const VIDEOS_ENABLED = VIDEO_SECTIONS.length > 0;

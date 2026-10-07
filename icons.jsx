@@ -132,6 +132,13 @@ const ICONS = {
       <path d="M8 2v4M16 2v4M3 9h18" />
     </>,
   ],
+  video: [
+    outline(2, rounded),
+    <>
+      <rect x="2.5" y="5" width="19" height="14" rx="3" />
+      <path d="M10 9.3v5.4l4.6-2.7z" fill="currentColor" />
+    </>,
+  ],
   navLive: [
     outline(2, roundCaps),
     <>

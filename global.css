@@ -3953,6 +3953,185 @@ h1 {
     width: min(880px, 100%);
   }
 }
+.video-sheet-detail {
+  margin: -6px 0 10px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------
+   Videos: the newest video large, then the rest. On phones a list of rows
+   with a thumbnail; wider, a grid of cards.
+   ------------------------------------------------------------------------ */
+
+.videos {
+  max-width: 1180px;
+}
+.video-card {
+  display: grid;
+  grid-template-columns: 136px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  align-content: start;
+  width: 100%;
+  padding: 10px 0;
+  text-align: left;
+  color: var(--text);
+}
+.video-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--row-alt);
+}
+.video-thumb > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+@media (hover: hover) {
+  .video-card:hover .video-thumb > img {
+    transform: scale(1.03);
+  }
+}
+/* The length, on the picture, where every video service puts it. */
+.video-length {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.72);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.video-play {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.5);
+  color: #fff;
+  backdrop-filter: blur(4px);
+}
+.video-play .icon {
+  margin-left: 2px;
+}
+.video-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.video-text strong {
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.video-text small {
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.video-text .video-date {
+  font-size: 0.8125rem;
+}
+.video-grid .video-card + .video-card {
+  border-top: 1px solid var(--border);
+}
+
+/* The newest video: full width, the picture first. */
+.video-card.video-hero {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 0 0 22px;
+  border-bottom: 1px solid var(--border);
+}
+.video-hero .video-thumb {
+  border-radius: 14px;
+}
+.video-hero .video-play {
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  background: var(--action);
+  color: var(--action-ink);
+}
+.video-hero .video-length {
+  right: 10px;
+  bottom: 10px;
+  font-size: 0.8125rem;
+}
+.video-hero .video-text strong {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.video-hero .video-text small {
+  font-size: 1rem;
+}
+.video-more {
+  display: flex;
+  margin: 22px auto 0;
+}
+.skeleton-card .video-thumb {
+  border-radius: 8px;
+}
+.show-videos {
+  margin-bottom: 10px;
+}
+
+@media (min-width: 640px) {
+  .videos .video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+    gap: 30px 22px;
+  }
+  .videos .video-grid .video-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 0;
+    border-top: 0;
+  }
+  .videos .video-grid .video-play {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .videos .video-grid .video-card:is(:hover, :focus-visible) .video-play {
+    opacity: 1;
+  }
+}
+@media (min-width: 900px) {
+  .video-card.video-hero {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    gap: 32px;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 30px;
+  }
+  .video-hero .video-text strong {
+    font-size: 2rem;
+  }
+}
 
 @media (max-width: 767px) {
   .station-banner {

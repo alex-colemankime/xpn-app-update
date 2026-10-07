@@ -3,7 +3,10 @@ import { readFileSync } from "node:fs";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import { defineConfig, loadEnv } from "vite";
-import { parseArchiveFeeds as archiveFeeds } from "./config.js";
+import {
+  parseArchiveFeeds as archiveFeeds,
+  parseVideoSections as videoSections,
+} from "./config.js";
 
 const { version } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 
@@ -83,6 +86,10 @@ function contentSecurityPolicy(env) {
           origin(env.VITE_XPN_LIVESTREAM_PAGE),
           origin(env.VITE_APPLE_MUSIC_TOKEN_URL),
           ...archiveFeeds(env.VITE_XPN_ARCHIVE_FEEDS).map((f) => origin(f.url)),
+          // Videos: the player's config (its policy key) and the Playback API.
+          ...(videoSections(env.VITE_BRIGHTCOVE_VIDEOS).length
+            ? ["https://players.brightcove.net", "https://edge.api.brightcove.com"]
+            : []),
         ];
         const policy = [
           "default-src 'self'",
@@ -95,7 +102,7 @@ function contentSecurityPolicy(env) {
           "media-src 'self' https: blob:",
           `connect-src ${[...new Set(connect.filter(Boolean))].join(" ")}`,
           // The design preview shows the app in a frame of its own.
-          `frame-src ${env.VITE_DEVICE_PREVIEW === "true" ? "'self' " : ""}https://www.youtube-nocookie.com https://*.apple.com`,
+          `frame-src ${env.VITE_DEVICE_PREVIEW === "true" ? "'self' " : ""}https://www.youtube-nocookie.com https://players.brightcove.net https://*.apple.com`,
           "worker-src 'self' blob:",
           "object-src 'none'",
           "base-uri 'self'",

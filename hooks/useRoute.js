@@ -9,13 +9,14 @@ import { flushSync } from "react-dom";
 // Hash routing needs no server rewrites, so it works on GitHub Pages and in
 // the Capacitor webview alike.
 
-import { CONCERTS_ENABLED } from "../config.js";
+import { CONCERTS_ENABLED, VIDEOS_ENABLED } from "../config.js";
 
 const SCREENS = [
   "listen",
   "favorites",
   "shows",
   "settings",
+  ...(VIDEOS_ENABLED ? ["videos"] : []),
   ...(CONCERTS_ENABLED ? ["concerts"] : []),
 ];
 

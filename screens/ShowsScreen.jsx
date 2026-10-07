@@ -17,9 +17,11 @@ import { PROGRAM_GUIDE_URL } from "../links.js";
 import { SaveButton, ShowCard } from "../components/MusicRows.jsx";
 import { useNow } from "../hooks/useNow.js";
 import { enableReminders, useReminderSettings } from "../hooks/useShowReminders.js";
-import { ARCHIVE_ENABLED, SHOW_SAMPLES } from "../config.js";
+import { ARCHIVE_ENABLED, SHOW_SAMPLES, VIDEO_SECTIONS } from "../config.js";
 import { episodesOf, useArchive } from "../archive.js";
 import { ArchiveList, EpisodeDetail, EpisodeRow } from "../components/Archive.jsx";
+import { chooseVideoSection, useVideos } from "../videos.js";
+import { VideoCard } from "../components/VideoCard.jsx";
 
 // All shows, the week's schedule, and (when there is one) the audio archive.
 const MODES = ["All shows", "Schedule", ...(ARCHIVE_ENABLED || SHOW_SAMPLES ? ["Archive"] : [])];
@@ -269,7 +271,48 @@ function OnAirBand({ show, onListen }) {
   );
 }
 
-export function ShowDetail({ show, episodeId, onOpenEpisode, onCloseEpisode, onClose, onListen }) {
+// A show with a video collection of its own (World Cafe): its newest few,
+// and the way into the rest on the Videos tab.
+const videoSectionOf = (show) =>
+  VIDEO_SECTIONS.find((s) => s.label.toLowerCase() === show.name.toLowerCase());
+function ShowVideos({ show, onNavigate, onWatch }) {
+  const { sections } = useVideos();
+  const section = sections.find((s) => s.playlist === videoSectionOf(show)?.playlist);
+  if (!section?.videos.length) return null;
+  return (
+    <>
+      <div className="section-heading">
+        <h3>Videos</h3>
+        <button
+          className="text-button"
+          onClick={() => {
+            chooseVideoSection(section.label);
+            onNavigate("videos");
+          }}
+        >
+          All {show.name} videos
+          <Icon name="arrowRight" size={16} />
+        </button>
+      </div>
+      <div className="video-grid show-videos">
+        {section.videos.slice(0, 4).map((video) => (
+          <VideoCard key={video.id} video={video} onWatch={onWatch} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+export function ShowDetail({
+  show,
+  episodeId,
+  onOpenEpisode,
+  onCloseEpisode,
+  onClose,
+  onListen,
+  onNavigate,
+  onWatch,
+}) {
   // The show's archive episodes when it has a podcast feed (playable), else
   // the preview's sample episodes. A saved episode can still be opened after
   // it has left the feed.
@@ -332,6 +375,9 @@ export function ShowDetail({ show, episodeId, onOpenEpisode, onCloseEpisode, onC
             {offer && <ReminderOffer show={show} onDone={() => setOffer(false)} />}
             <OnAirBand show={show} onListen={listen} />
             <p className="show-description">{show.desc}</p>
+            {videoSectionOf(show) && onWatch && (
+              <ShowVideos show={show} onNavigate={onNavigate} onWatch={onWatch} />
+            )}
             {playable ? (
               <>
                 <div className="section-heading">
