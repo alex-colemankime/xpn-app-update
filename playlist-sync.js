@@ -23,6 +23,10 @@ import { showToast } from "./toast.js";
 
 const EMPTY = {
   service: null, // "spotify" | "apple"
+  // Who is signed in ("" where the service won't say), and whether the
+  // playlist below has been checked against them since the last sign-in.
+  account: "",
+  verified: false,
   playlistId: "",
   playlistUrl: "",
   matched: {}, // songId -> the service's track reference
@@ -31,10 +35,14 @@ const EMPTY = {
   status: "idle", // "idle" | "syncing" | "error" | "signed-out" | "not-allowed"
 };
 const MAX_FINDS_PER_RUN = 60;
+// What a different account starts from: no playlist yet, nothing in it.
+const FRESH_PLAYLIST = { playlistId: "", playlistUrl: "", matched: {}, missing: [] };
 
 const syncStore = createLocalStore("xpn.playlistSync", EMPTY, (v) => ({
   ...EMPTY,
   ...(v && typeof v === "object" ? v : {}),
+  account: typeof v?.account === "string" ? v.account : "",
+  verified: v?.verified === true,
   matched: v?.matched && typeof v.matched === "object" ? v.matched : {},
   missing: Array.isArray(v?.missing) ? v.missing : [],
   status: v?.status || "idle",
@@ -67,13 +75,18 @@ export function syncPlan(saved, state, canRemove) {
 
 let running = null;
 let again = false;
-// Bumped whenever the connection changes service, or ends. A run belongs to
-// the connection it started under; once that changes, the run stops writing
-// (its results would describe a playlist the listener no longer uses).
+// Bumped whenever the connection changes service, or ends, or turns out to
+// be another account. A run belongs to the connection it started under; once
+// that changes, the run stops writing (its results would describe a playlist
+// the listener no longer uses).
 let generation = 0;
 // Sign-in dialogs and OAuth exchanges can finish after another sign-in or
 // Disconnect. Their completion must not replace the listener's newer choice.
 let connectionAttempt = 0;
+// Changes whenever the signed-in account may have: a sign-in starting, and
+// again when it completes. An account check counts only if none happened
+// while it ran.
+let signIns = 0;
 
 export function syncNow() {
   if (running) {
@@ -93,8 +106,11 @@ export function syncNow() {
 }
 
 async function run(retried = false) {
-  const gen = generation;
+  let gen = generation;
   const current = () => gen === generation;
+  // The sign-in this run started under. Signing in again to the same service
+  // lets the run finish, but its view of the account no longer counts.
+  const signIn = signIns;
   // Writes only while this run's connection is still the current one.
   const update = (p) => current() && patch(p);
   const state = syncStore.getSnapshot();
@@ -102,7 +118,32 @@ async function run(retried = false) {
   if (!service || !service.available()) return;
   update({ status: "syncing" });
   try {
-    const playlist = await service.ensurePlaylist(state);
+    // After a sign-in, the playlist on record is kept only once it is known
+    // to belong to the account now signed in; otherwise this account starts
+    // its own.
+    if (!state.verified) {
+      const account = (await service.account?.()) || "";
+      if (!current()) return;
+      const sameAccount = Boolean(state.account && account && state.account === account);
+      const keep =
+        Boolean(state.playlistId) &&
+        (sameAccount || !service.owns || (await service.owns(state.playlistId, account)));
+      // Checked under a sign-in that has since been replaced: the next run
+      // (connect() starts one) checks the new account instead.
+      if (!current() || signIn !== signIns) {
+        // The new sign-in's own run takes over; this one stands down.
+        update({ status: "idle" });
+        return;
+      }
+      if (keep) update({ account, verified: true });
+      else {
+        // Another account: whatever is still working for the old one stops.
+        generation++;
+        gen = generation;
+        patch({ ...FRESH_PLAYLIST, account, verified: true });
+      }
+    }
+    const playlist = await service.ensurePlaylist(syncStore.getSnapshot());
     if (!current()) return;
     update(playlist);
     const plan = syncPlan(getSavedSongs(), syncStore.getSnapshot(), Boolean(service.remove));
@@ -170,7 +211,8 @@ async function run(retried = false) {
 // Start connecting a service. Spotify leaves the app to sign in and comes
 // back through finishConnect; Apple Music signs in in place. Signing in again
 // to the same service keeps its playlist and what it holds, so a reconnect
-// carries on with the same "WXPN Favorites" instead of starting another.
+// carries on with the same "WXPN Favorites" instead of starting another;
+// but only once the next run has checked the playlist is this account's.
 export async function connect(serviceId) {
   const service = SERVICES[serviceId];
   if (!service?.available()) {
@@ -179,17 +221,26 @@ export async function connect(serviceId) {
   }
   const before = syncStore.getSnapshot();
   const attempt = ++connectionAttempt;
+  signIns++;
   cancelAuthorization();
   const same = before.service === serviceId;
   // A different service (or none before) means a different playlist, so any
   // run still working for the old one must not write. Signing in again to
-  // the same service keeps the playlist, and a run in flight may finish.
+  // the same service keeps the playlist record, unverified: a run in flight
+  // may finish (the services refuse changes to another account's playlist,
+  // and stopping it midway could add its songs twice), and the next run
+  // checks the record against the account now signed in before using it.
   if (!same) generation++;
-  syncStore.set(same ? before : { ...EMPTY, service: serviceId });
+  syncStore.set(same ? { ...before, verified: false } : { ...EMPTY, service: serviceId });
   try {
     const result = await service.connect();
     if (attempt !== connectionAttempt) return;
-    if (result === "connected") afterConnect(service);
+    if (result === "connected") {
+      // Anything checked while the sign-in was open was about the old one.
+      signIns++;
+      patch({ verified: false });
+      afterConnect(service);
+    }
   } catch {
     if (attempt !== connectionAttempt) return;
     if (!same) {
@@ -216,7 +267,8 @@ export async function finishConnect(url) {
     const connected = await service.finish(url);
     if (attempt !== connectionAttempt) return;
     if (connected) {
-      patch({ service: service.id, status: "idle" });
+      signIns++;
+      patch({ service: service.id, status: "idle", verified: false });
       afterConnect(service);
       return;
     }
@@ -233,6 +285,7 @@ export async function finishConnect(url) {
 
 export function disconnect() {
   connectionAttempt++;
+  signIns++;
   generation++;
   forgetAuth();
   syncStore.set(EMPTY);

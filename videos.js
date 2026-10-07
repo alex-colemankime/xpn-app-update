@@ -15,6 +15,7 @@
 // `duration` seconds and `published` an ISO time.
 
 import { useSyncExternalStore } from "react";
+import { publicAsset } from "./assets.js";
 import { useEveryShow } from "./hooks/useEveryShow.js";
 import { VIDEO_ACCOUNT, VIDEO_PLAYER, VIDEO_SECTIONS } from "./config.js";
 import { withTimeout } from "./net.js";
@@ -97,6 +98,15 @@ export const playerUrl = (id, { account = VIDEO_ACCOUNT, player = VIDEO_PLAYER }
   `${PLAYERS}/${account}/${player}_default/index.html?videoId=${encodeURIComponent(id)}` +
   "&autoplay=play&playsinline=true&applicationId=wxpn-app";
 
+// The same player in the app's own frame (public/video-player.html), which
+// hides the title and description the player draws over the video. It
+// falls back to playerUrl if the player can't start there.
+export const framedPlayerUrl = (id, { account = VIDEO_ACCOUNT, player = VIDEO_PLAYER } = {}) =>
+  publicAsset(
+    `video-player.html?account=${account}&player=${encodeURIComponent(player)}` +
+      `&video=${encodeURIComponent(id)}`,
+  );
+
 // Searching what has loaded: artist, title, description and tags.
 export function matchVideos(videos, query) {
   const q = oneLine(query).toLowerCase();
@@ -156,50 +166,90 @@ export function findVideo(sections, id) {
 }
 
 // Every section's first page, shared by the Videos tab and show pages; the
-// last good lists are kept for a moment offline.
+// last good lists are kept for a moment offline. Each section keeps its own
+// state, so one failing collection shows its own error and retry while the
+// others play on:
+//   status      "loading" | "live" | "cache" (an earlier list, not refreshed)
+//               | "error" (nothing to show)
+//   more        whether Brightcove has further pages
+//   moreFailed  the last further page couldn't be loaded
+// A load that failed anywhere is tried again soon rather than after the
+// usual wait.
 const CACHE_KEY = "xpn.videos.cache";
 const STALE_MS = 30 * 60000;
+const RETRY_MS = 2 * 60000;
 const cached = readJson(CACHE_KEY, null);
 const fromCache = (playlist) =>
   (Array.isArray(cached?.[playlist]) ? cached[playlist] : []).filter(
     (v) => v && typeof v.id === "string" && typeof v.name === "string" && Array.isArray(v.tags),
   );
 const videoStore = createStore({
-  sections: VIDEO_SECTIONS.map((s) => ({ ...s, videos: fromCache(s.playlist), more: true })),
+  sections: VIDEO_SECTIONS.map((s) => {
+    const videos = fromCache(s.playlist);
+    return {
+      ...s,
+      videos,
+      more: true,
+      moreFailed: false,
+      status: videos.length ? "cache" : "loading",
+    };
+  }),
   section: VIDEO_SECTIONS[0]?.label || "",
-  status: VIDEO_SECTIONS.some((s) => fromCache(s.playlist).length) ? "cache" : "loading",
   loadedAt: 0,
+  complete: false,
 });
 let inflight = null;
+
+const updateSection = (playlist, change) =>
+  videoStore.set((s) => ({
+    ...s,
+    sections: s.sections.map((old) =>
+      old.playlist === playlist ? { ...old, ...change(old) } : old,
+    ),
+  }));
 
 export function loadVideos({ force = false } = {}) {
   const state = videoStore.getSnapshot();
   if (!VIDEO_SECTIONS.length || inflight) return inflight;
-  if (!force && state.loadedAt && Date.now() - state.loadedAt < STALE_MS) return null;
-  if (force && !state.sections.some((s) => s.videos.length)) {
-    videoStore.set({ ...state, status: "loading" });
+  const wait = state.complete ? STALE_MS : RETRY_MS;
+  if (!force && state.loadedAt && Date.now() - state.loadedAt < wait) return null;
+  if (force) {
+    videoStore.set({
+      ...state,
+      sections: state.sections.map((s) => (s.videos.length ? s : { ...s, status: "loading" })),
+    });
   }
   inflight = Promise.all(
     VIDEO_SECTIONS.map((s) =>
       fetchPlaylist(s.playlist).then(
-        (videos) => ({ ...s, videos, more: videos.length === PAGE_SIZE }),
-        () => null,
+        (videos) => ({ playlist: s.playlist, videos }),
+        () => ({ playlist: s.playlist, videos: null }),
       ),
     ),
   )
     .then((results) => {
-      const loaded = results.filter(Boolean);
-      if (!loaded.length) {
-        videoStore.set((s) => ({ ...s, status: "error", loadedAt: Date.now() }));
-        return;
-      }
-      writeJson(CACHE_KEY, Object.fromEntries(loaded.map((s) => [s.playlist, s.videos])));
       videoStore.set((s) => ({
         ...s,
-        sections: s.sections.map((old) => loaded.find((n) => n.playlist === old.playlist) || old),
-        status: "live",
+        sections: s.sections.map((old) => {
+          const { videos } = results.find((r) => r.playlist === old.playlist) || {};
+          if (videos) {
+            return {
+              ...old,
+              videos,
+              more: videos.length === PAGE_SIZE,
+              moreFailed: false,
+              status: "live",
+            };
+          }
+          return { ...old, status: old.videos.length ? "cache" : "error" };
+        }),
         loadedAt: Date.now(),
+        complete: results.every((r) => r.videos),
       }));
+      const { sections } = videoStore.getSnapshot();
+      if (results.some((r) => r.videos)) {
+        writeJson(CACHE_KEY, Object.fromEntries(sections.map((s) => [s.playlist, s.videos])));
+      }
     })
     .finally(() => {
       inflight = null;
@@ -207,31 +257,31 @@ export function loadVideos({ force = false } = {}) {
   return inflight;
 }
 
-// The next page of one section.
+// The next page of one section. A page that fails is marked, so the screen
+// can say so and offer it again.
 const loadingMore = new Set();
 export function loadMoreVideos(playlist) {
   const section = videoStore.getSnapshot().sections.find((s) => s.playlist === playlist);
-  if (!section?.more || loadingMore.has(playlist)) return;
+  if (!section?.more || loadingMore.has(playlist)) return null;
   loadingMore.add(playlist);
-  fetchPlaylist(playlist, section.videos.length)
+  updateSection(playlist, () => ({ moreFailed: false }));
+  return fetchPlaylist(playlist, section.videos.length)
     .then(
       (page) =>
-        videoStore.set((s) => ({
-          ...s,
-          sections: s.sections.map((old) => {
-            if (old.playlist !== playlist) return old;
-            const ids = new Set(old.videos.map((v) => v.id));
-            return {
-              ...old,
-              videos: [...old.videos, ...page.filter((v) => !ids.has(v.id))],
-              more: page.length === PAGE_SIZE,
-            };
-          }),
-        })),
-      () => {},
+        updateSection(playlist, (old) => {
+          const ids = new Set(old.videos.map((v) => v.id));
+          return {
+            videos: [...old.videos, ...page.filter((v) => !ids.has(v.id))],
+            more: page.length === PAGE_SIZE,
+          };
+        }),
+      () => updateSection(playlist, () => ({ moreFailed: true })),
     )
     .finally(() => loadingMore.delete(playlist));
 }
+
+// The videos as they stand, for code outside React.
+export const getVideos = () => videoStore.getSnapshot();
 
 export const chooseVideoSection = (label) => videoStore.set((s) => ({ ...s, section: label }));
 

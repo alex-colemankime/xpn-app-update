@@ -62,6 +62,8 @@ test("the current OAuth return still connects and starts synchronization", async
   memory.set("xpn.music.pkce", JSON.stringify({ state: "current", verifier: "v" }));
   Object.assign(SERVICES.spotify, {
     finish: async () => true,
+    account: async () => "listener",
+    owns: async () => true,
     ensurePlaylist: async () => ({ playlistId: "current-playlist", playlistUrl: "" }),
   });
   await finishConnect("https://app.test/?code=valid&state=current");
@@ -70,4 +72,28 @@ test("the current OAuth return still connects and starts synchronization", async
   assert.equal(state().service, "spotify");
   assert.equal(state().playlistId, "current-playlist");
   assert.equal(state().status, "idle");
+});
+
+test("an account check that straddles a new sign-in doesn't vouch for the new account", async () => {
+  const { syncNow } = await import("../playlist-sync.js");
+  disconnect();
+  // Signed in to Apple Music as one listener, with a playlist on record.
+  Object.assign(SERVICES.apple, {
+    available: () => true,
+    connect: async () => "connected",
+    ensurePlaylist: async (s) => ({ playlistId: s.playlistId || "first-playlist" }),
+    owns: async () => true,
+  });
+  let whoAsked = 0;
+  const firstCheck = deferred();
+  SERVICES.apple.account = () => (whoAsked++ === 0 ? firstCheck.promise : Promise.resolve("b"));
+  await connect("apple");
+  // The run's account check is still out when the listener signs in again.
+  const reconnect = connect("apple");
+  firstCheck.resolve("a");
+  await reconnect;
+  await syncNow();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(state().account, "b", "the account is the one signed in now");
+  assert.ok(whoAsked >= 2, "the new sign-in's account was checked");
 });

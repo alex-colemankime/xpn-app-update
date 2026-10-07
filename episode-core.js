@@ -10,7 +10,7 @@
 //   "playing"   audio is flowing
 //   "paused"    stopped by the listener (or the system), keeping its place
 //   "ended"     played to the end
-//   "error"     the audio could not be played
+//   "error"     the audio could not be played (`error` says why)
 
 export const SKIP_BACK_S = 15;
 export const SKIP_AHEAD_S = 30;
@@ -35,13 +35,26 @@ export function createEpisodePlayer({
   onChange = noop,
   onProgress = noop,
   onStart = noop,
+  // Why an episode couldn't play: "gone" (no longer in the archive),
+  // "offline" (the archive couldn't be read) or "audio" (the file failed).
+  onError = noop,
+  // Archive audio links are signed and run out after a while. Before an
+  // episode plays, `needsRefresh(episode)` says whether its link may have
+  // run out, and `refresh(episode)` resolves to a copy with a fresh one (or
+  // rejects with { reason }).
+  needsRefresh = () => false,
+  refresh = (episode) => Promise.resolve(episode),
   resolveUrl = (src) => src,
   now = () => Date.now(),
 }) {
   let audio = null;
-  let state = { episode: null, status: "idle", position: 0, duration: 0 };
+  let state = { episode: null, status: "idle", position: 0, duration: 0, error: null };
   let pendingSeek = null;
   let wantPlaying = false;
+  // Every play, pause and stop is a new request. Whatever arrives late for an
+  // older one (a play() promise settling, a fresh link) is ignored, so an
+  // episode replaced a moment ago can't touch the one playing now.
+  let request = 0;
   let lastSaved = 0;
   let lastPosition = 0;
 
@@ -100,6 +113,21 @@ export function createEpisodePlayer({
     });
   }
 
+  // Takes the file off the element, so nothing more is fetched for it.
+  const detach = () => {
+    audio.pause();
+    audio.removeAttribute("src");
+    audio.load?.();
+    pendingSeek = null;
+  };
+
+  function fail(reason) {
+    wantPlaying = false;
+    set({ status: "error", error: reason });
+    mediaSession.setPlaybackState({ playbackState: "paused" });
+    onError(reason, state.episode);
+  }
+
   function init() {
     if (audio) return audio;
     audio = createAudio();
@@ -126,8 +154,10 @@ export function createEpisodePlayer({
       if (Number.isFinite(audio.duration) && audio.duration > 0) set({ duration: audio.duration });
     });
     audio.addEventListener("playing", () => {
+      // Late, from a play the listener has since paused.
+      if (audio.paused || !state.episode) return;
       applyPendingSeek();
-      set({ status: "playing" });
+      set({ status: "playing", error: null });
       mediaSession.setPlaybackState({ playbackState: "playing" });
       positionState();
     });
@@ -145,7 +175,13 @@ export function createEpisodePlayer({
       if (Math.floor(position) % 5 === 0) positionState();
     });
     audio.addEventListener("pause", () => {
-      if (audio.ended || state.status === "ended") return;
+      if (audio.ended || state.status === "ended" || !audio.getAttribute("src")) return;
+      // Browsers deliver "pause" a moment late. One that arrives after a new
+      // play has begun belongs to the past: play() has already set the
+      // element playing again.
+      if (!audio.paused) return;
+      // Otherwise something outside the app paused it (a phone call,
+      // headphones unplugged), or the app itself did.
       wantPlaying = false;
       set({ status: "paused", position: audio.currentTime || state.position });
       mediaSession.setPlaybackState({ playbackState: "paused" });
@@ -158,51 +194,125 @@ export function createEpisodePlayer({
       saveProgress(true);
     });
     audio.addEventListener("error", () => {
-      if (!audio.getAttribute("src")) return;
-      wantPlaying = false;
-      set({ status: "error" });
-      mediaSession.setPlaybackState({ playbackState: "paused" });
+      if (!audio.getAttribute("src") || !state.episode) return;
+      // Failed while paused: nothing to say until the listener plays again.
+      if (!wantPlaying) return;
+      // A link that has run out mid-listen: carry on with a fresh one. (A
+      // link fresh enough to need no refresh failed for some other reason.)
+      if (needsRefresh(state.episode)) {
+        const at = audio.currentTime || state.position;
+        detach(); // the failed file is let go, so the fresh one loads
+        start(state.episode, at);
+        return;
+      }
+      fail("audio");
     });
     return audio;
   }
 
-  function startAudio() {
+  function startAudio(token) {
     wantPlaying = true;
     onStart();
     bindControls();
     const playing = audio.play();
-    playing?.catch?.((error) => {
-      if (!wantPlaying) return;
-      wantPlaying = false;
-      set({ status: error?.name === "NotAllowedError" ? "paused" : "error" });
+    playing?.then?.(noop, (error) => {
+      if (token !== request || !wantPlaying) return;
+      // Refused without a tap, or interrupted: it stays where it was, ready
+      // to play. Anything else means the file can't be played.
+      if (error?.name === "NotAllowedError" || error?.name === "AbortError") {
+        wantPlaying = false;
+        set({ status: "paused" });
+        mediaSession.setPlaybackState({ playbackState: "paused" });
+      } else {
+        fail("audio");
+      }
     });
+  }
+
+  // The element holds this episode's file, in working order: a pause, not a
+  // failure.
+  const holds = (episode) =>
+    Boolean(episode.audio) &&
+    audio.getAttribute("src") === episode.audio &&
+    !audio.error &&
+    state.status !== "error";
+
+  // Puts `episode` on the element at `at` seconds and plays it. A file
+  // already on the element (the episode was paused) just continues; one
+  // that failed is loaded again.
+  function begin(episode, at, token) {
+    if (!holds(episode)) {
+      const same = state.episode?.id === episode.id;
+      pendingSeek = at > 0 ? at : null;
+      lastPosition = at;
+      set({
+        episode,
+        status: "loading",
+        error: null,
+        position: at,
+        duration: (same && state.duration) || episode.duration || 0,
+      });
+      audio.src = episode.audio;
+      audio.load?.();
+    } else {
+      if (state.status === "ended") {
+        pendingSeek = null;
+        audio.currentTime = 0;
+        lastPosition = 0;
+      }
+      set({
+        episode,
+        status: state.status === "playing" ? "playing" : "loading",
+        error: null,
+        position: at,
+      });
+    }
+    startAudio(token);
+  }
+
+  // Starts `episode` at `at` seconds, first fetching a fresh link when a new
+  // file has to load and its link may have run out. Meanwhile it shows as
+  // loading and the station steps aside, so the tap is answered at once. A
+  // paused episode just continues: its file is already open, and if the
+  // link has run out by the time more is needed, the error handler fetches
+  // a fresh one then.
+  function start(episode, at) {
+    const token = ++request;
+    if (holds(episode) || !needsRefresh(episode)) {
+      begin(episode, at, token);
+      return;
+    }
+    detach();
+    wantPlaying = true;
+    set({
+      episode,
+      status: "loading",
+      error: null,
+      position: at,
+      duration: (state.episode?.id === episode.id && state.duration) || episode.duration || 0,
+    });
+    onStart();
+    bindControls();
+    refresh(episode).then(
+      (fresh) => {
+        if (token === request) begin({ ...episode, ...fresh }, at, token);
+      },
+      (error) => {
+        if (token === request) fail(error?.reason || "audio");
+      },
+    );
   }
 
   // Play an episode: a new one from its saved place (`from`, seconds), the
   // current one from where it is, or from the top once it has ended.
   function play(episode, from = 0) {
-    if (!init() || !episode?.audio) return;
-    if (state.episode?.id !== episode.id) {
-      saveProgress(true);
-      pendingSeek = from > 0 ? from : null;
-      lastPosition = from || 0;
-      set({
-        episode,
-        status: "loading",
-        position: from || 0,
-        duration: episode.duration || 0,
-      });
-      audio.src = episode.audio;
-      audio.load?.();
-    } else if (state.status === "ended") {
-      pendingSeek = null;
-      audio.currentTime = 0;
-      lastPosition = 0;
-      set({ status: "loading", position: 0 });
-    } else {
-      set({ status: state.status === "playing" ? "playing" : "loading" });
-    }
-    startAudio();
+    if (!init() || !episode) return;
+    const same = state.episode?.id === episode.id;
+    if (same && state.status === "playing") return;
+    if (!same) saveProgress(true);
+    const current = same ? state.episode : episode;
+    const at = !same ? Math.max(0, from || 0) : state.status === "ended" ? 0 : state.position;
+    start(current, at);
   }
 
   function resume() {
@@ -211,10 +321,12 @@ export function createEpisodePlayer({
 
   function pause() {
     if (!audio || !state.episode) return;
+    ++request; // a play still starting, or a link still on its way, is called off
     wantPlaying = false;
     audio.pause();
     // Browsers report "pause" a moment later; the place is known now.
     set({ status: "paused", position: audio.currentTime || state.position });
+    mediaSession.setPlaybackState({ playbackState: "paused" });
     saveProgress(true);
   }
 
@@ -240,16 +352,15 @@ export function createEpisodePlayer({
 
   const skip = (delta) => seek((audio?.currentTime ?? state.position) + delta);
 
-  // Put the episode away: playback stops and the bar goes back to the station.
+  // Put the episode away: playback stops and the bar goes back to the
+  // station, which takes the lock screen back (player.js).
   function stop() {
     if (!audio) return;
+    ++request;
     saveProgress(true);
     wantPlaying = false;
-    audio.pause();
-    audio.removeAttribute("src");
-    audio.load?.();
-    pendingSeek = null;
-    set({ episode: null, status: "idle", position: 0, duration: 0 });
+    detach();
+    set({ episode: null, status: "idle", position: 0, duration: 0, error: null });
   }
 
   return {

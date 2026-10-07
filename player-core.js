@@ -44,8 +44,10 @@ export function createPlayer({
   let attempt = 0;
   let retryTimer = null;
   let stallTimer = null;
+  let lastPlaying = false;
 
   const report = (playing, status) => {
+    lastPlaying = playing;
     onPlaying(playing);
     onStatus(status);
     mediaSession.setPlaybackState({ playbackState: playing ? "playing" : "paused" });
@@ -124,7 +126,13 @@ export function createPlayer({
 
   function updateMetadata() {
     if (!isActive()) return;
-    let artwork = stationArtwork;
+    let artwork = stationArtwork.map((art) => {
+      try {
+        return { ...art, src: resolveUrl(art.src) };
+      } catch {
+        return art;
+      }
+    });
     if (track?.img) {
       try {
         artwork = [{ src: resolveUrl(track.img) }];
@@ -201,6 +209,15 @@ export function createPlayer({
     }
   }
 
+  // The lock screen back from an archive episode: the station's own
+  // controls (no seeking), what it is playing, and no episode progress bar.
+  function takeControls() {
+    bindControls();
+    mediaSession.setPositionState?.();
+    updateMetadata();
+    mediaSession.setPlaybackState({ playbackState: lastPlaying ? "playing" : "paused" });
+  }
+
   function play() {
     if (!audio) init(onPlaying, onStatus);
     if (!audio || !stream?.url) return;
@@ -269,6 +286,7 @@ export function createPlayer({
     getStream: () => stream,
     setVolume,
     setMetadata,
+    takeControls,
     canCast,
     promptCast,
   };

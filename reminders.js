@@ -5,7 +5,9 @@
 import { upcomingStarts } from "./schedule.js";
 import { easternParts, easternToEpoch } from "./time.js";
 
-// iOS keeps at most 64 pending local notifications per app; leave headroom.
+// iOS keeps at most 64 pending local notifications per app, shared with the
+// alarm and the station's notifications (notifications.js keeps the total in
+// budget); a week of reminders rarely needs this many.
 export const MAX_REMINDERS = 48;
 export const LEAD_OPTIONS = [0, 5, 15];
 

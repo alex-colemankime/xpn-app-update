@@ -74,17 +74,65 @@ test("songs are added and removed through /playlists/{id}/items", async () => {
   assert.ok(requests.every((r) => !r.url.includes("/tracks") && !r.url.includes("/users/")));
 });
 
+const track = (uri, name, ...artists) => ({
+  uri,
+  name,
+  artists: artists.map((n) => ({ name: n })),
+});
+
 test("search stays within the new limit of 10", async () => {
   reply = () =>
-    new Response(JSON.stringify({ tracks: { items: [{ uri: "spotify:track:x" }] } }), {
-      status: 200,
-    });
+    new Response(
+      JSON.stringify({
+        tracks: { items: [track("spotify:track:x", "Lost Boys", "Phoebe Bridgers")] },
+      }),
+      { status: 200 },
+    );
   requests.length = 0;
   assert.equal(
     await spotify.find({ title: "Lost Boys", artist: "Phoebe Bridgers" }),
     "spotify:track:x",
   );
   assert.ok(Number(new URL(requests[0].url).searchParams.get("limit")) <= 10);
+});
+
+test("only the same song by the same artist is added; a near miss stays unmatched", async () => {
+  reply = () =>
+    new Response(
+      JSON.stringify({
+        tracks: {
+          items: [
+            track("spotify:track:cover", "Lost Boys", "A Tribute Band"),
+            track("spotify:track:other", "Lost Boys Club", "Phoebe Bridgers"),
+            track("spotify:track:real", "Lost Boys - Live", "Phoebe Bridgers", "boygenius"),
+          ],
+        },
+      }),
+      { status: 200 },
+    );
+  assert.equal(
+    await spotify.find({ title: "Lost Boys", artist: "Phoebe Bridgers" }),
+    "spotify:track:real",
+  );
+  reply = () =>
+    new Response(
+      JSON.stringify({ tracks: { items: [track("spotify:track:cover", "Lost Boys", "Someone")] } }),
+      { status: 200 },
+    );
+  assert.equal(await spotify.find({ title: "Lost Boys", artist: "Phoebe Bridgers" }), null);
+});
+
+test("the account and whether a playlist is its own", async () => {
+  reply = (url) =>
+    String(url).endsWith("/me")
+      ? new Response(JSON.stringify({ id: "listener-b" }), { status: 200 })
+      : String(url).includes("/playlists/gone")
+        ? new Response("{}", { status: 404 })
+        : new Response(JSON.stringify({ owner: { id: "listener-a" } }), { status: 200 });
+  assert.equal(await spotify.account(), "listener-b");
+  assert.equal(await spotify.owns("pl-a", "listener-b"), false, "someone else's playlist");
+  assert.equal(await spotify.owns("pl-a", "listener-a"), true);
+  assert.equal(await spotify.owns("gone", "listener-a"), false);
 });
 
 test("403 means this account isn't allowed (Development Mode), not signed out", async () => {

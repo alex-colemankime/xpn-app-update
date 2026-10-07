@@ -16,9 +16,11 @@ import {
   subscribeVolume,
 } from "./player.js";
 import { SHOWS } from "./catalog.js";
+import { findEpisode, freshCopy, linkIsFresh } from "./archive.js";
 import { tap } from "./haptics.js";
+import { showToast } from "./toast.js";
 
-const IDLE = { episode: null, status: "idle", position: 0, duration: 0 };
+const IDLE = { episode: null, status: "idle", position: 0, duration: 0, error: null };
 const episodeStore = createStore(IDLE);
 
 // Where each episode was left: { [id]: { at, of, done, t } } in seconds, the
@@ -33,6 +35,13 @@ const progressStore = createLocalStore("xpn.episodes.progress", {}, (value) => {
   return Object.fromEntries(entries.sort((a, b) => b[1].t - a[1].t).slice(0, KEEP));
 });
 
+// What the listener is told when an episode can't play.
+const CANT_PLAY = {
+  gone: "That broadcast is no longer in the xpn.org archive.",
+  offline: "Couldn’t reach xpn.org to start that broadcast. Check your connection and try again.",
+  audio: "That broadcast couldn’t play. Try again in a moment.",
+};
+
 const core = createEpisodePlayer({
   createAudio: () => (typeof Audio === "undefined" ? null : new Audio()),
   mediaSession: mediaControls,
@@ -45,6 +54,11 @@ const core = createEpisodePlayer({
     const { playing, status } = getPlayerSnapshot();
     if (playing || isConnecting(status)) pauseStream();
   },
+  // Signed archive links run out: one read too long ago is read again from
+  // the show's page first (archive.js).
+  needsRefresh: (episode) => !linkIsFresh(episode),
+  refresh: findEpisode,
+  onError: (reason) => showToast(CANT_PLAY[reason] || CANT_PLAY.audio),
   resolveUrl: (src) => new URL(src, window.location.href).href,
 });
 
@@ -71,7 +85,10 @@ export function playEpisode(episode) {
     core.play(current);
     return;
   }
-  core.play(withShow(episode), resumeAt(progressStore.getSnapshot()[episode.id], episode.duration));
+  // The archive's own copy, when its link is fresh, plays without a wait
+  // (a saved episode keeps no link of its own).
+  const playable = withShow({ ...episode, ...freshCopy(episode) });
+  core.play(playable, resumeAt(progressStore.getSnapshot()[episode.id], playable.duration));
 }
 
 export function toggleEpisode(episode) {

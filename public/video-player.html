@@ -1,0 +1,177 @@
+<!doctype html>
+<!--
+  The app's own frame for a Brightcove video (components/WatchPage.jsx).
+  Brightcove's player draws the video's title and description over the
+  picture whenever it is paused or touched; the watch page already shows
+  both under the video, so this page loads the same player into a frame the
+  app styles, and hides that overlay. The frame is sandboxed without
+  same-origin access, so the player can't reach the app or its storage, and
+  the page refuses to run anywhere else.
+  If the player can't start here, the page asks the app to show Brightcove's
+  own player page instead. The script's hash in the policy below is checked
+  by tests/video-player.test.mjs.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'sha256-+AwcodXHbZDwaSjYqubuSK4c//KedHjt3k2Nzxmtcgs=' https://players.brightcove.net; style-src 'unsafe-inline' https://players.brightcove.net; font-src https://players.brightcove.net data:; img-src https: data: blob:; media-src https: blob:; connect-src https:; worker-src blob:; frame-src https:"
+    />
+    <title>Video</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+      }
+      video-js,
+      .video-js {
+        width: 100%;
+        height: 100%;
+      }
+      /* The title and description the player draws over the video. */
+      .vjs-dock-text,
+      .vjs-dock-shelf,
+      .vjs-title-bar {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      (function () {
+        "use strict";
+        // Only ever run in the app's sandboxed frame, which has no origin of
+        // its own. Opened any other way (directly, or framed without the
+        // sandbox) it would run as the app, so it does nothing.
+        if (self.origin !== "null" || window.parent === window) return;
+        var params = new URLSearchParams(location.search);
+        var account = params.get("account") || "";
+        var player = params.get("player") || "default";
+        var video = params.get("video") || "";
+        var settled = false;
+        var started = false;
+
+        // Hand the video to Brightcove's own player page instead.
+        function fallBack(why) {
+          if (settled) return;
+          settled = true;
+          parent.postMessage({ type: "wxpn:video-fallback", why: why }, "*");
+        }
+        if (!/^\d+$/.test(account) || !/^[\w-]+$/.test(player) || !/^\d+$/.test(video)) {
+          fallBack("link");
+          return;
+        }
+
+        // Sandboxed, the frame has no storage or cookies; the player gets
+        // stand-ins kept in memory rather than errors.
+        function memoryStorage() {
+          var data = {};
+          return {
+            getItem: function (k) {
+              return Object.prototype.hasOwnProperty.call(data, k) ? data[k] : null;
+            },
+            setItem: function (k, v) {
+              data[k] = String(v);
+            },
+            removeItem: function (k) {
+              delete data[k];
+            },
+            clear: function () {
+              data = {};
+            },
+            key: function (i) {
+              return Object.keys(data)[i] || null;
+            },
+            get length() {
+              return Object.keys(data).length;
+            },
+          };
+        }
+        ["localStorage", "sessionStorage"].forEach(function (name) {
+          try {
+            window[name].getItem("wxpn");
+          } catch (e) {
+            try {
+              Object.defineProperty(window, name, { value: memoryStorage(), configurable: true });
+            } catch (e2) {
+              /* the player copes as it can */
+            }
+          }
+        });
+        try {
+          void document.cookie;
+        } catch (e) {
+          try {
+            Object.defineProperty(document, "cookie", {
+              get: function () {
+                return "";
+              },
+              set: function () {},
+              configurable: true,
+            });
+          } catch (e2) {
+            /* the player copes as it can */
+          }
+        }
+
+        var el = document.createElement("video-js");
+        el.setAttribute("data-account", account);
+        el.setAttribute("data-player", player);
+        el.setAttribute("data-embed", "default");
+        el.setAttribute("data-video-id", video);
+        el.setAttribute("data-application-id", "wxpn-app");
+        el.setAttribute("controls", "");
+        el.setAttribute("playsinline", "");
+        document.body.appendChild(el);
+
+        var timer = setTimeout(function () {
+          fallBack("timeout");
+        }, 10000);
+        var script = document.createElement("script");
+        script.src =
+          "https://players.brightcove.net/" + account + "/" + player + "_default/index.min.js";
+        script.onerror = function () {
+          fallBack("script");
+        };
+        script.onload = function () {
+          var vjs = window.videojs;
+          var p = null;
+          try {
+            p = (vjs && vjs.getPlayer && vjs.getPlayer(el)) || (window.bc && window.bc(el));
+          } catch (e) {
+            p = null;
+          }
+          if (!p || typeof p.ready !== "function") {
+            fallBack("player");
+            return;
+          }
+          p.ready(function () {
+            clearTimeout(timer);
+            p.on("error", function () {
+              if (!started) fallBack("error");
+            });
+            p.one("playing", function () {
+              started = true;
+              settled = true;
+            });
+            // Start at once: with sound where the browser allows it, else
+            // waiting for a tap.
+            var start = function () {
+              var result = p.play();
+              if (result && result.catch) result.catch(function () {});
+            };
+            if (p.readyState() >= 1) start();
+            else p.one("loadedmetadata", start);
+          });
+        };
+        document.head.appendChild(script);
+      })();
+    </script>
+  </body>
+</html>

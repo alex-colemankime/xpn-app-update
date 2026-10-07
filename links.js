@@ -17,13 +17,39 @@ export const TOP_STORIES_URL = "https://xpn.org/signup-xpn-top-stories/";
 
 // Opens a web page beside the app: in the phone apps, in the system browser
 // view over the app (so giving happens on xpn.org, never inside the app, as
-// App Review 3.2.2 asks); in a browser, in a new tab.
-export function openPage(url) {
+// App Review 3.2.2 asks); in a browser, in a new tab. `onClose` runs once
+// the listener is back in the app: the browser view closed, or (in a
+// browser) this tab in front again, or at once if no tab could open.
+export function openPage(url, { onClose } = {}) {
   if (!url) return;
-  const newTab = () => window.open(url, "_blank", "noopener");
-  if (Capacitor.isNativePlatform()) {
-    import("@capacitor/browser").then(({ Browser }) => Browser.open({ url })).catch(newTab);
-  } else {
+  let closed = false;
+  const back = () => {
+    if (closed) return;
+    closed = true;
+    onClose?.();
+  };
+  const newTab = () => {
+    window.open(url, "_blank", "noopener");
+    if (!onClose) return;
+    // A blocked tab leaves this one in front.
+    setTimeout(() => {
+      if (document.hasFocus()) back();
+      else window.addEventListener("focus", back, { once: true });
+    }, 1000);
+  };
+  if (!Capacitor.isNativePlatform()) {
     newTab();
+    return;
   }
+  import("@capacitor/browser")
+    .then(async ({ Browser }) => {
+      if (onClose) {
+        const listener = await Browser.addListener("browserFinished", () => {
+          listener.remove();
+          back();
+        });
+      }
+      await Browser.open({ url });
+    })
+    .catch(newTab);
 }

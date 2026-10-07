@@ -2,11 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseRoute, routeHash } from "../hooks/useRoute.js";
 
-const route = (screen, showId = null, episodeId = null, videoId = null) => ({
+const route = (screen, showId = null, episodeId = null, videoId = null, live = false) => ({
   screen,
   showId,
   episodeId,
   videoId,
+  live,
 });
 
 test("routes parse, round-trip, and fall back to Listen", () => {
@@ -32,6 +33,12 @@ test("a video opens over a screen, by its Brightcove id", () => {
     routeHash(route("listen", null, null, "6406083303112")),
     "#/listen/video/6406083303112",
   );
+});
+
+test("the live video is a route too, so Back closes it", () => {
+  assert.deepEqual(parseRoute("#/concerts/live"), route("concerts", null, null, null, true));
+  assert.equal(routeHash(parseRoute("#/listen/live")), "#/listen/live");
+  assert.equal(parseRoute("#/listen").live, false);
 });
 
 test("a malformed shared link falls back instead of throwing", () => {

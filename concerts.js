@@ -92,9 +92,11 @@ export function upcomingConcerts(events, today = easternToday()) {
 
 const FEED_TIMEOUT_MS = 12000;
 const PER_PAGE = 50;
-// Pages come soonest first, so a calendar longer than this loses only its
-// furthest-off shows (400 events is several months of WXPN listings).
-const MAX_PAGES = 8;
+// Every page the calendar reports is read, a few at a time. Past this many
+// (1,500 events, years of WXPN listings) the rest is left off, and the
+// result says how far it reaches.
+const MAX_PAGES = 30;
+const PAGE_CONCURRENCY = 4;
 const MONTHS_AHEAD = 12;
 
 // fetch with a timeout and an outside abort signal. Manual wiring rather
@@ -131,33 +133,45 @@ export function calendarPageUrl(endpoint, page, today = easternToday()) {
   return `${endpoint}${endpoint.includes("?") ? "&" : "?"}${params}`;
 }
 
-// Resolves to { concerts, source, partial } where source is:
+// Resolves to { concerts, source, partial, through } where source is:
 //   "live"          listings from the calendar
 //   "unconfigured"  no calendar (VITE_XPN_CONCERTS_ENDPOINT=off)
 //   "error"         the calendar failed; never replaced with made-up events
-// and `partial` is true when some later pages failed, so the screen can say
-// the list is incomplete and offer to try again.
+// `partial` is true when some later pages failed, so the screen can say the
+// list is incomplete and offer to try again; `through` is the last date
+// listed when the calendar ran past MAX_PAGES (otherwise "").
 export async function fetchConcertResult(signal, endpoint = CONCERTS_ENDPOINT) {
-  if (!endpoint) return { concerts: [], source: "unconfigured", partial: false };
+  if (!endpoint) return { concerts: [], source: "unconfigured", partial: false, through: "" };
   try {
     const first = await getJson(calendarPageUrl(endpoint, 1), signal);
-    const pages = Math.min(MAX_PAGES, Number(first?.total_pages) || 1);
+    const reported = Math.max(1, Number(first?.total_pages) || 1);
+    const pages = Math.min(MAX_PAGES, reported);
     let failed = 0;
-    const rest = await Promise.all(
-      Array.from({ length: pages - 1 }, (_, i) =>
-        getJson(calendarPageUrl(endpoint, i + 2), signal).then(eventsOf, () => {
-          failed++;
-          return [];
-        }),
-      ),
-    );
+    const later = Array.from({ length: pages - 1 }, (_, i) => i + 2);
+    const results = [];
+    // A few pages at a time, so a long calendar doesn't flood the site.
+    for (let i = 0; i < later.length; i += PAGE_CONCURRENCY) {
+      const batch = later.slice(i, i + PAGE_CONCURRENCY);
+      results.push(
+        ...(await Promise.all(
+          batch.map((page) =>
+            getJson(calendarPageUrl(endpoint, page), signal).then(eventsOf, () => {
+              failed++;
+              return [];
+            }),
+          ),
+        )),
+      );
+    }
+    const concerts = upcomingConcerts(eventsOf(first).concat(...results));
     return {
-      concerts: upcomingConcerts(eventsOf(first).concat(...rest)),
+      concerts,
       source: "live",
       partial: failed > 0,
+      through: reported > pages ? concerts.at(-1)?.date || "" : "",
     };
   } catch {
-    return { concerts: [], source: "error", partial: false };
+    return { concerts: [], source: "error", partial: false, through: "" };
   }
 }
 

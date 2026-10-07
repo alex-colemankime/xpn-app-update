@@ -343,3 +343,18 @@ test("the sleep timer fades over its last 20 seconds, then reaches silence", () 
   assert.equal(fadeLevel(0), 0);
   assert.equal(fadeLevel(-500), 0);
 });
+
+test("after an episode, the lock screen goes back to the station's own controls", () => {
+  const h = harness();
+  // An episode had the lock screen: its own play key, seeking, its title.
+  let episodeResumed = false;
+  h.actions.play = () => (episodeResumed = true);
+  h.actions.seekto = () => {};
+  h.metadata.push({ title: "Sunday, October 4", artist: "Sleepy Hollow" });
+  h.player.takeControls();
+  assert.equal(h.actions.seekto, null, "no seeking on a live station");
+  assert.equal(h.last(h.metadata).title, STREAMS.xpn.label, "the station is named again");
+  h.actions.play();
+  assert.equal(episodeResumed, false);
+  assert.equal(h.audio.src, STREAMS.xpn.url, "the lock screen's play starts the station");
+});

@@ -14,7 +14,8 @@ globalThis.window = {
 
 const { songId, toggleFavorite, getSavedSongs } = await import("../favorites.js");
 const { syncPlan, syncNow, usePlaylistSync } = await import("../playlist-sync.js");
-const { SERVICES, plainTitle, leadArtist } = await import("../music-services.js");
+const { SERVICES, plainTitle, leadArtist, sameSong } = await import("../music-services.js");
+const { connect } = await import("../playlist-sync.js");
 void usePlaylistSync;
 
 test("station titles and artists are simplified for the second search", () => {
@@ -22,9 +23,52 @@ test("station titles and artists are simplified for the second search", () => {
   assert.equal(plainTitle("Heroes - 2017 Remaster"), "Heroes");
   assert.equal(plainTitle("Lost Boys (Live at the Fillmore)"), "Lost Boys");
   assert.equal(plainTitle("Good Times // End Times"), "Good Times // End Times");
+  // The ways the services mark another version of the same recording.
+  assert.equal(plainTitle("Gimme Shelter (2019 Remaster)"), "Gimme Shelter");
+  assert.equal(plainTitle("Here Comes The Sun (2019 Mix)"), "Here Comes The Sun");
+  assert.equal(plainTitle("Waterloo Sunset - Mono"), "Waterloo Sunset");
+  assert.equal(plainTitle("Wichita Lineman - Single Version"), "Wichita Lineman");
+  assert.equal(plainTitle("Hard to Say (Mono Version)"), "Hard to Say");
+  // Words that are part of a title, and remixes, stay.
+  assert.equal(plainTitle("Mixed Up Confusion"), "Mixed Up Confusion");
+  assert.equal(plainTitle("With or Without You"), "With or Without You");
+  assert.equal(plainTitle("Live Forever"), "Live Forever");
+  assert.equal(plainTitle("Electric Feel (Justice Remix)"), "Electric Feel (Justice Remix)");
+  assert.equal(
+    plainTitle("Get Lucky (Daft Punk Remix - Radio Edit)"),
+    "Get Lucky (Daft Punk Remix - Radio Edit)",
+  );
+  assert.equal(plainTitle("Blue Monday (Extended Mix)"), "Blue Monday (Extended Mix)");
+  assert.equal(plainTitle("Song - X Remix / Radio Edit"), "Song - X Remix / Radio Edit");
   assert.equal(leadArtist("Prince & The Revolution"), "Prince");
   assert.equal(leadArtist("Kyle Dixon, Michael Stein"), "Kyle Dixon");
   assert.equal(leadArtist("Bright Eyes"), "Bright Eyes");
+});
+
+test("a catalog track matches only the same title by the same lead artist", () => {
+  const song = { title: "First Day Of My Life", artist: "Bright Eyes" };
+  assert.ok(sameSong(song, { title: "First Day of My Life", artists: ["Bright Eyes"] }));
+  assert.ok(
+    sameSong(song, { title: "First Day of My Life - 2005 Remaster", artists: ["Bright Eyes"] }),
+  );
+  assert.ok(
+    sameSong(
+      { title: "Rein Me In (ft. Olivia Dean)", artist: "Sam Fender & Olivia Dean" },
+      {
+        title: "Rein Me In (with Olivia Dean)",
+        artists: ["Sam Fender", "Olivia Dean"],
+      },
+    ),
+  );
+  assert.ok(
+    sameSong(
+      { title: "Heroes", artist: "The National" },
+      { title: "Heroes", artists: ["National"] },
+    ),
+  );
+  assert.ok(!sameSong(song, { title: "First Day of My Life", artists: ["A Cover Band"] }));
+  assert.ok(!sameSong(song, { title: "Lua", artists: ["Bright Eyes"] }));
+  assert.ok(!sameSong({ title: "", artist: "" }, { title: "", artists: [""] }));
 });
 
 test("a run adds new saves, removes unsaved songs, and skips known misses", () => {
@@ -54,6 +98,8 @@ test("syncing keeps the playlist in step with saves, against a fake service", as
   const calls = [];
   const fake = {
     available: () => true,
+    account: async () => "listener-1",
+    owns: async () => true,
     ensurePlaylist: async (s) =>
       s.playlistId ? s : { playlistId: "pl1", playlistUrl: "https://open.spotify.test/pl1" },
     find: async (song) => (song.title === "Missing" ? null : `uri:${song.title}`),
@@ -87,6 +133,8 @@ function fakeService(overrides = {}) {
   return {
     calls,
     available: () => true,
+    account: async () => "listener-1",
+    owns: async () => true,
     ensurePlaylist: async (s) => (s.playlistId ? s : { playlistId: "pl-new", playlistUrl: "" }),
     find: async (song) => `uri:${song.title}`,
     add: async (id, refs) => calls.push(["add", id, refs]),
@@ -286,4 +334,49 @@ test("more than 60 saved songs keep newest-first order across sync batches", asy
   await syncNow();
   await syncNow();
   assert.deepEqual(remote, expected);
+});
+
+test("signing in again as someone else starts their own playlist", async () => {
+  clearSongs();
+  await syncNow();
+  let signedIn = "listener-a";
+  let made = 0;
+  const owner = new Map();
+  const svc = fakeService({
+    account: async () => signedIn,
+    owns: async (id, account) => owner.get(id) === account,
+    ensurePlaylist: async (s) => {
+      if (s.playlistId) return s;
+      const playlistId = `pl-${++made}`;
+      owner.set(playlistId, signedIn);
+      return { playlistId, playlistUrl: "" };
+    },
+    connect: async () => "connected",
+  });
+  Object.assign(SERVICES.spotify, svc);
+
+  await connect("spotify");
+  toggleFavorite("songs", { title: "Lost Boys", artist: "Phoebe Bridgers" });
+  await syncNow();
+  assert.equal(syncState().account, "listener-a");
+  assert.equal(
+    syncState().playlistId,
+    "pl-1",
+    "the earlier playlist wasn't A's, so A has a new one",
+  );
+  assert.deepEqual(svc.calls.at(-1), ["add", "pl-1", ["uri:Lost Boys"]]);
+
+  signedIn = "listener-b";
+  await connect("spotify");
+  await syncNow();
+  assert.equal(syncState().account, "listener-b");
+  assert.equal(syncState().playlistId, "pl-2", "B gets a playlist of their own");
+  assert.deepEqual(svc.calls.at(-1), ["add", "pl-2", ["uri:Lost Boys"]], "B's gets the songs too");
+
+  // B signs in again: same account, same playlist, nothing added twice.
+  const sent = svc.calls.length;
+  await connect("spotify");
+  await syncNow();
+  assert.equal(syncState().playlistId, "pl-2");
+  assert.equal(svc.calls.length, sent);
 });

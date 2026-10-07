@@ -100,8 +100,9 @@ function contentSecurityPolicy(env) {
           // host, often through a measurement redirect or two).
           "media-src 'self' https: blob:",
           `connect-src ${[...new Set(connect.filter(Boolean))].join(" ")}`,
-          // The design preview shows the app in a frame of its own.
-          `frame-src ${env.VITE_DEVICE_PREVIEW === "true" ? "'self' " : ""}https://www.youtube-nocookie.com https://players.brightcove.net https://*.apple.com`,
+          // 'self': the app's own frame for Brightcove's player, and the
+          // design preview's frame around the app.
+          "frame-src 'self' https://www.youtube-nocookie.com https://players.brightcove.net https://*.apple.com",
           "worker-src 'self' blob:",
           "object-src 'none'",
           "base-uri 'self'",

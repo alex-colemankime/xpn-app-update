@@ -8,7 +8,7 @@ import { SaveButton } from "./MusicRows.jsx";
 import { useNow } from "../hooks/useNow.js";
 import { enableReminders, useReminderSettings } from "../hooks/useShowReminders.js";
 import { VIDEO_SECTIONS } from "../config.js";
-import { episodesOf, useArchive } from "../archive.js";
+import { episodesOf, hasLeftArchive, useArchive } from "../archive.js";
 import { EpisodeDetail, EpisodeRow } from "./Archive.jsx";
 import { chooseVideoSection, useVideos } from "../videos.js";
 import { VideoCard } from "./VideoCard.jsx";
@@ -121,15 +121,14 @@ export function ShowDetail({
   onWatch,
 }) {
   // The show's recent broadcasts from the archive. A saved episode still
-  // opens after it has left the archive.
+  // opens after it has left the archive (and says so if played).
   const archive = useArchive();
   const saved = useFavoriteItems("episodes");
   const archived = episodesOf(archive, show.id);
   const [offer, setOffer] = useState(false);
   const episode =
     episodeId &&
-    (archived.find((ep) => ep.id === episodeId) ||
-      saved.find((ep) => ep.id === episodeId && ep.audio));
+    (archived.find((ep) => ep.id === episodeId) || saved.find((ep) => ep.id === episodeId));
   const stream = showStream(show);
   const listen = () => {
     selectStream(stream);
@@ -140,7 +139,12 @@ export function ShowDetail({
     <Modal title={show.name} onClose={onClose}>
       <div className="detail-body">
         {episode ? (
-          <EpisodeDetail show={show} episode={episode} onBack={onCloseEpisode} />
+          <EpisodeDetail
+            show={show}
+            episode={episode}
+            gone={hasLeftArchive(archive, episode)}
+            onBack={onCloseEpisode}
+          />
         ) : (
           <>
             <div className="show-detail-hero">

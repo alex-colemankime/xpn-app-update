@@ -32,12 +32,27 @@
 .watch-page::backdrop {
   background: #000;
 }
+/* Under 1000px the video column is no box of its own, so the pinned
+   picture stays pinned all the way down Up next, not just past the
+   description. A phone held sideways has no room to pin it: the picture
+   scrolls away with the page. */
+.watch-main {
+  display: contents;
+}
 .watch-player {
   position: sticky;
   top: 0;
   z-index: 3;
   background: #000;
   padding-top: var(--safe-area-inset-top, env(safe-area-inset-top));
+}
+@media (orientation: landscape) and (max-width: 999px) {
+  .watch-main {
+    display: block;
+  }
+  .watch-player {
+    position: relative;
+  }
 }
 .watch-bar {
   display: flex;
@@ -83,11 +98,31 @@
   gap: 14px;
   padding: 16px 16px 6px;
 }
+/* The title, with the video's heart beside it. */
+.watch-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
 .watch-title {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   font-size: 1.1875rem;
   font-weight: 700;
   line-height: 1.3;
+}
+/* What kind of video it is ("Studio Session & Interview"), under the title. */
+.watch-kind {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.watch-save {
+  flex-shrink: 0;
+  margin: -6px -8px 0 0;
 }
 .watch-channel {
   display: flex;
@@ -118,33 +153,12 @@
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.watch-follow,
-.watch-save {
+.watch-follow {
   min-height: 38px;
   padding: 6px 16px;
   border-radius: 999px;
   font-size: 0.875rem;
   font-weight: 650;
-}
-/* The show and the actions: one row when there is room, as video apps do;
-   on phones the actions wrap beneath. */
-.watch-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px 24px;
-}
-.watch-row .watch-channel {
-  flex: 1 1 300px;
-  min-width: 0;
-}
-.watch-actions {
-  display: flex;
-  gap: 8px;
-}
-.watch-save {
-  border-color: transparent;
-  background: var(--surface);
 }
 .watch-about {
   padding: 12px 14px;
@@ -194,6 +208,15 @@
 .next-card .video-thumb {
   border-radius: 12px;
 }
+/* Under the video, the first three lead (UP_NEXT_FIRST in WatchPage.jsx)
+   until "See more"; beside it (wide screens) the whole list shows. */
+.watch-next:not([data-all]) .next-card:nth-of-type(n + 4) {
+  display: none;
+}
+.next-more {
+  justify-self: stretch;
+  justify-content: center;
+}
 .next-text {
   display: grid;
   gap: 3px;
@@ -226,6 +249,10 @@
     max-width: 1640px;
     margin: 0 auto;
     padding: 12px 32px 40px;
+  }
+  .watch-main {
+    display: block;
+    min-width: 0;
   }
   .watch-player {
     position: static;
@@ -267,6 +294,12 @@
   }
   .next-card .video-thumb {
     border-radius: 8px;
+  }
+  .watch-next:not([data-all]) .next-card:nth-of-type(n + 4) {
+    display: grid;
+  }
+  .next-more {
+    display: none;
   }
 }
 

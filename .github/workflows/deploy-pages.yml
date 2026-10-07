@@ -30,6 +30,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Known vulnerabilities in what ships in the app (the native runtime
+      # included), not in build tools.
+      - name: Security audit
+        run: npm audit --omit=dev --audit-level=high
+        # The preview still deploys; the failed step flags the advisory.
+        continue-on-error: true
+
       - name: Lint
         run: npm run lint
 

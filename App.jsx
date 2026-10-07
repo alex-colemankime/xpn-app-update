@@ -78,7 +78,7 @@ export default function App() {
   const updates = useStationUpdates();
   const alarm = useRadioAlarm();
   const [appearance, setAppearance] = useAppearance();
-  const watching = useWatching(route);
+  const watching = useWatching(route, updates.live, updates.loaded);
   useEffect(startPlaylistSync, []);
   useSpaceToPlay();
 

@@ -17,8 +17,9 @@ import {
 const showName = (episode) => episode.showName || SHOWS[episode.show]?.name || "WXPN";
 const showArt = (episode) => episode.image || episode.img || SHOWS[episode.show]?.img;
 
-// What a saved episode needs to be shown and played from Favorites, even
-// after it has left the feed.
+// What a saved episode needs to be shown in Favorites, even after it has
+// left the feed. Not its audio link, which runs out: playing it reads a
+// fresh one (archive.js, findEpisode).
 const savedEpisodeItem = (episode) => ({
   id: episode.id,
   show: episode.show,
@@ -27,7 +28,6 @@ const savedEpisodeItem = (episode) => ({
   title: episode.title,
   date: episode.date,
   duration: episode.duration,
-  audio: episode.audio,
   image: episode.image,
   img: episode.image,
   summary: episode.summary,
@@ -104,8 +104,9 @@ function ProgressLine({ position, duration, ended }) {
 // An episode in a list: its title (the day it aired, or who it features),
 // how long it is or how much is left, its heart and play key. Among one
 // show's episodes that is all; where shows mix (Favorites), the show's art
-// and name lead. The row opens the episode.
-export function EpisodeRow({ episode, onOpen, showShow = true }) {
+// and name lead. The row opens the episode. A saved episode known to have
+// left the archive (`gone`) says so, with no play key.
+export function EpisodeRow({ episode, onOpen, showShow = true, gone = false }) {
   const s = useEpisodeState(episode);
   return (
     <div
@@ -120,8 +121,8 @@ export function EpisodeRow({ episode, onOpen, showShow = true }) {
           <strong>{episode.title}</strong>
           <small className="archive-meta">
             {s.playing && <span className="eq-dot" aria-hidden="true" />}
-            {rowMeta(episode, s)}
-            <ProgressLine {...s} />
+            {gone ? "No longer in the xpn.org archive" : rowMeta(episode, s)}
+            {!gone && <ProgressLine {...s} />}
           </small>
         </span>
       </button>
@@ -130,7 +131,7 @@ export function EpisodeRow({ episode, onOpen, showShow = true }) {
         item={savedEpisodeItem(episode)}
         name={`${showName(episode)}, ${episode.title}`}
       />
-      <EpisodePlayKey episode={episode} />
+      {!gone && <EpisodePlayKey episode={episode} />}
     </div>
   );
 }
@@ -279,8 +280,9 @@ export function EpisodeScrubber({ episode, compact = false }) {
 }
 
 // One episode, in its show's sheet: what it is, Play (or Resume), the
-// scrubber while it is loaded, and the description.
-export function EpisodeDetail({ episode, show, onBack }) {
+// scrubber while it is loaded, and the description. A saved episode that
+// has left the archive says so in place of Play.
+export function EpisodeDetail({ episode, show, onBack, gone = false }) {
   const s = useEpisodeState(episode);
   const label =
     s.playing || s.busy
@@ -309,14 +311,18 @@ export function EpisodeDetail({ episode, show, onBack }) {
         </div>
       </div>
       <div className="episode-actions">
-        <button
-          className="primary-button"
-          data-busy={s.busy || undefined}
-          onClick={() => (s.playing || s.busy ? toggleEpisode(episode) : playEpisode(episode))}
-        >
-          <Icon name={s.playing || s.busy ? "pause" : "play"} size={18} />
-          {label}
-        </button>
+        {gone ? (
+          <p className="data-note">This broadcast is no longer in the xpn.org archive.</p>
+        ) : (
+          <button
+            className="primary-button"
+            data-busy={s.busy || undefined}
+            onClick={() => (s.playing || s.busy ? toggleEpisode(episode) : playEpisode(episode))}
+          >
+            <Icon name={s.playing || s.busy ? "pause" : "play"} size={18} />
+            {label}
+          </button>
+        )}
         <SaveButton type="episodes" item={savedEpisodeItem(episode)} className="secondary-button">
           {(saved) => (saved ? "Saved" : "Save")}
         </SaveButton>

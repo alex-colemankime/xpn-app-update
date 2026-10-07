@@ -176,3 +176,197 @@ test("where an episode resumes", () => {
   assert.equal(resumeAt({ at: 590, of: 600 }, 600), 0, "nearly finished starts over");
   assert.equal(resumeAt({ at: 300, of: 600, done: true }, 600), 0);
 });
+
+// Real media elements settle play() later and deliver "pause" as a queued
+// event; these hold both until the test lets them go.
+function deferredSetup() {
+  const ctx = setup();
+  const { audio } = ctx;
+  const plays = [];
+  audio.play = function () {
+    this.paused = false;
+    this.plays++;
+    let settle;
+    const promise = new Promise((resolve, reject) => (settle = { resolve, reject }));
+    plays.push(settle);
+    return promise;
+  };
+  const queued = [];
+  audio.pause = function () {
+    this.paused = true;
+    queued.push("pause");
+  };
+  const flushPauses = () => queued.splice(0).forEach((name) => audio.fire(name));
+  return { ...ctx, plays, flushPauses };
+}
+
+const B = {
+  ...EPISODE,
+  id: "worldcafe-2",
+  title: "Friko",
+  audio: "https://audio.example.org/friko.mp3",
+};
+const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+test("an older episode's play failing late doesn't touch the episode playing now", async () => {
+  const { audio, player, plays } = deferredSetup();
+  player.play(EPISODE);
+  player.play(B);
+  audio.fire("playing");
+  // Replacing the file rejects the first play.
+  plays[0].reject(Object.assign(new Error("interrupted"), { name: "AbortError" }));
+  await tick();
+  assert.equal(player.getState().episode.id, B.id);
+  assert.equal(player.getState().status, "playing");
+  assert.equal(audio.paused, false);
+});
+
+test("a late pause event from before the latest play is ignored", async () => {
+  const { audio, player, flushPauses } = deferredSetup();
+  player.play(EPISODE);
+  audio.fire("playing");
+  player.pause();
+  player.resume();
+  audio.fire("playing");
+  flushPauses(); // the first pause, delivered after the resume
+  assert.equal(player.getState().status, "playing");
+});
+
+test("a pause while playing is still starting calls the play off", async () => {
+  const { player, plays } = deferredSetup();
+  player.play(EPISODE);
+  player.pause();
+  plays[0].reject(Object.assign(new Error("interrupted"), { name: "AbortError" }));
+  await tick();
+  assert.equal(player.getState().status, "paused");
+  assert.equal(player.getState().error, null);
+});
+
+function refreshSetup({ answer, needsRefresh = (ep) => !ep.fresh }) {
+  const audio = new FakeAudio();
+  const errors = [];
+  let pending = [];
+  const player = createEpisodePlayer({
+    createAudio: () => audio,
+    mediaSession: {
+      setActionHandler() {},
+      setMetadata() {},
+      setPlaybackState() {},
+      setPositionState() {},
+    },
+    onError: (reason) => errors.push(reason),
+    needsRefresh: (ep) => needsRefresh(ep),
+    refresh: (ep) =>
+      new Promise((resolve, reject) => pending.push(() => answer(ep, resolve, reject))),
+  });
+  const answerAll = async () => {
+    const now = pending;
+    pending = [];
+    now.forEach((fn) => fn());
+    await tick();
+  };
+  return { audio, player, errors, answerAll };
+}
+
+test("an episode saved earlier gets a fresh link before it plays", async () => {
+  const { audio, player, answerAll } = refreshSetup({
+    answer: (ep, resolve) => resolve({ ...ep, audio: `${EPISODE.audio}?key=new`, fresh: true }),
+  });
+  // Saved without its link, which would have run out.
+  const saved = { ...EPISODE, audio: "", fresh: false };
+  player.play(saved, 120);
+  assert.equal(player.getState().status, "loading", "the tap is answered at once");
+  assert.equal(audio.getAttribute("src"), null, "nothing plays from an old link");
+  await answerAll();
+  assert.equal(audio.src, `${EPISODE.audio}?key=new`);
+  assert.equal(player.getState().position, 120, "from its saved place");
+  assert.equal(audio.plays, 1);
+});
+
+test("an episode no longer in the archive says so instead of playing", async () => {
+  const { audio, player, errors, answerAll } = refreshSetup({
+    answer: (_ep, _resolve, reject) => reject({ reason: "gone" }),
+  });
+  player.play({ ...EPISODE, fresh: false });
+  await answerAll();
+  assert.equal(player.getState().status, "error");
+  assert.equal(player.getState().error, "gone");
+  assert.deepEqual(errors, ["gone"]);
+  assert.equal(audio.plays, 0);
+});
+
+test("a fresh link arriving after the listener moved on is ignored", async () => {
+  const { audio, player, answerAll } = refreshSetup({
+    answer: (ep, resolve) => resolve({ ...ep, fresh: true }),
+  });
+  player.play({ ...EPISODE, fresh: false });
+  player.pause();
+  await answerAll();
+  assert.equal(player.getState().status, "paused");
+  assert.equal(audio.plays, 0);
+});
+
+test("a link that runs out mid-listen is replaced and playback carries on", async () => {
+  let expired = false;
+  const { audio, player, errors, answerAll } = refreshSetup({
+    answer: (ep, resolve) => resolve({ ...ep, audio: `${EPISODE.audio}?key=new` }),
+    needsRefresh: (ep) => expired && ep.audio === EPISODE.audio,
+  });
+  player.play(EPISODE);
+  audio.metadata(684);
+  audio.fire("playing");
+  audio.advanceTo(300);
+  expired = true;
+  audio.fire("error");
+  await answerAll();
+  assert.equal(audio.src, `${EPISODE.audio}?key=new`);
+  assert.equal(player.getState().position, 300);
+  assert.deepEqual(errors, []);
+});
+
+test("a paused episode resumes from its open file, without reading the archive again", async () => {
+  let reads = 0;
+  const { audio, player, answerAll } = refreshSetup({
+    answer: (ep, resolve) => {
+      reads++;
+      resolve(ep);
+    },
+    // Its link has since grown old.
+    needsRefresh: () => true,
+  });
+  player.play({ ...EPISODE });
+  await answerAll();
+  const before = reads;
+  audio.metadata(684);
+  audio.fire("playing");
+  audio.advanceTo(200);
+  player.pause();
+  player.resume();
+  assert.equal(reads, before, "no new read");
+  assert.equal(audio.src, EPISODE.audio, "the same file continues");
+  assert.equal(audio.currentTime, 200);
+});
+
+test("a real pause while buffering is respected", () => {
+  const { audio, player } = setup();
+  player.play(EPISODE);
+  // Headphones unplugged before the first sound.
+  audio.paused = true;
+  audio.fire("pause");
+  assert.equal(player.getState().status, "paused");
+});
+
+test("after a failure, trying again loads the file afresh", () => {
+  const { audio, player } = setup();
+  let loads = 0;
+  audio.load = () => loads++;
+  player.play(EPISODE);
+  audio.error = { code: 2 };
+  audio.fire("error");
+  assert.equal(player.getState().status, "error");
+  const before = loads;
+  audio.error = null;
+  player.play(EPISODE);
+  assert.ok(loads > before, "the file is loaded again rather than replayed as it was");
+  assert.equal(player.getState().status, "loading");
+});

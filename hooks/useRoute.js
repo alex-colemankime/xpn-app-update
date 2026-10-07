@@ -7,6 +7,7 @@ import { flushSync } from "react-dom";
 //   #/favorites/show/worldcafe             a show, open over that screen
 //   #/favorites/show/worldcafe/episode/x   one of its episodes
 //   #/videos/video/6406083303112           a video, full screen over that screen
+//   #/listen/live                          the station's live video, the same way
 // Hash routing needs no server rewrites, so it works on GitHub Pages and in
 // the Capacitor webview alike.
 
@@ -37,12 +38,14 @@ export function parseRoute(hash) {
   const showId = parts[1] === "show" && parts[2] ? parts[2] : null;
   const episodeId = showId && parts[3] === "episode" && parts[4] ? parts[4] : null;
   const videoId = parts[1] === "video" && /^\d+$/.test(parts[2] || "") ? parts[2] : null;
-  return { screen, showId, episodeId, videoId };
+  const live = parts[1] === "live";
+  return { screen, showId, episodeId, videoId, live };
 }
 
-export function routeHash({ screen, showId, episodeId, videoId }) {
+export function routeHash({ screen, showId, episodeId, videoId, live }) {
   let hash = `#/${screen}`;
   if (videoId) return `${hash}/video/${encodeURIComponent(videoId)}`;
+  if (live) return `${hash}/live`;
   if (showId) hash += `/show/${encodeURIComponent(showId)}`;
   if (showId && episodeId) hash += `/episode/${encodeURIComponent(episodeId)}`;
   return hash;
@@ -63,6 +66,8 @@ const getHash = () => window.location.hash;
 // listener went, and a sheet opened from a shared link closes in place
 // instead of navigating out of the app.
 const depth = () => window.history.state?.depth || 0;
+// The current entry's state as it is, for a replace that stands in for it.
+const entryState = () => window.history.state ?? { depth: depth() };
 // pushState and replaceState fire no event of their own.
 const announce = () => window.dispatchEvent(new PopStateEvent("popstate"));
 const push = (route, state) => {
@@ -115,10 +120,19 @@ const actions = {
   },
   // A video opens over the screen (from a show's sheet too, which Back then
   // returns to); picking the next one replaces it, so Back always closes.
+  // The live video works the same way.
+  // Replacing one video with another keeps the entry's own state, so Close
+  // still knows to step Back.
   openVideo(videoId) {
     const route = current();
-    if (route.videoId) replace({ screen: route.screen, videoId });
+    if (route.videoId || route.live) replace({ screen: route.screen, videoId }, entryState());
     else push({ screen: route.screen, videoId }, { depth: depth() + 1, fromScreen: true });
+  },
+  openLive() {
+    const route = current();
+    if (route.live) return;
+    if (route.videoId) replace({ screen: route.screen, live: true }, entryState());
+    else push({ screen: route.screen, live: true }, { depth: depth() + 1, fromScreen: true });
   },
   closeVideo() {
     if (window.history.state?.fromScreen) window.history.back();

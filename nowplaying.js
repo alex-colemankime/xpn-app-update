@@ -41,9 +41,10 @@ export function mergeTracks(lists) {
     })
     .sort((a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`));
 }
-// A song reported longer ago than this is no longer presented as playing,
-// unless the station says how long it runs: then until it should have ended,
-// plus a little slack (so a 20-minute jam stays "now playing" to the end).
+// A song is presented as playing until it should have ended, plus a little
+// slack, when the station says how long it runs (so a 20-minute jam stays
+// "now playing" to the end, and a 3-minute song isn't still "playing" ten
+// minutes later through the host's talk); otherwise for this long.
 const FRESH_MINUTES = 15;
 const SLACK_MINUTES = 3;
 
@@ -59,7 +60,7 @@ function reportAge(track, now) {
 export function isFresh(track, now = new Date()) {
   if (!track) return false;
   const age = reportAge(track, now);
-  const window = Math.max(FRESH_MINUTES, (track.minutes || 0) + SLACK_MINUTES);
+  const window = track.minutes > 0 ? track.minutes + SLACK_MINUTES : FRESH_MINUTES;
   return age !== null && age < window;
 }
 

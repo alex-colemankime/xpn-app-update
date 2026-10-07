@@ -6,15 +6,23 @@
 //
 //   - xpn.org's pages allow cross-origin reads, so the browser preview loads
 //     the real archive; the phone apps read with native networking anyway.
-//   - The audio links on xpn.org are signed, so they are always taken fresh
-//     from the page, never stored in the app.
+//   - The audio links on xpn.org are signed and run out after a few hours.
+//     Each episode notes when its link was read (`fetchedAt`); one read too
+//     long ago is read again from its show's page just before it plays
+//     (findEpisode), and favorites never keep a link at all.
 // Audio plays in an <audio> element, which needs no CORS at all.
 //
 // An episode: { id, show, title, date, duration, audio, image, summary, page,
-// aired, feature } where `show` is a show id from the catalog, `date` an ISO
+// aired, feature, fetchedAt } where `show` is a show id from the catalog, `date` an ISO
 // time (when it aired, as near as is known), `duration` seconds (or null
 // until the file reports it), `aired` the slot it filled ("6am–10am") and
 // `feature` who it was about, when the archive names someone.
+
+// How long an audio link is trusted after it was read. Well inside the
+// signature's life, so a link is never used near the end of it.
+export const LINK_FRESH_MS = 20 * 60000;
+export const linkIsFresh = (episode, now = Date.now()) =>
+  Boolean(episode?.audio) && now - (Number(episode.fetchedAt) || 0) < LINK_FRESH_MS;
 
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
 import { useSyncExternalStore } from "react";
@@ -193,6 +201,7 @@ export function normalizeEpisodes(list) {
       summary: typeof e.summary === "string" ? e.summary : "",
       aired: typeof e.aired === "string" ? e.aired : "",
       feature: typeof e.feature === "string" ? e.feature : "",
+      fetchedAt: Number.isFinite(e.fetchedAt) ? e.fetchedAt : 0,
     }))
     .sort((a, b) => b.date.localeCompare(a.date));
 }
@@ -225,51 +234,77 @@ export function parseSource(text, show) {
   return episodes.map((e) => ({ ...e, image: e.image || info.img || "" }));
 }
 
-// Resolves to { episodes, source } where source is "live" or "error" (when
-// no source could be read at all).
-async function fetchArchive(signal, feeds = ARCHIVE_FEEDS) {
+// One source's episodes, read now.
+async function readFeed(feed, signal) {
+  const text = await readSource(feed.url, signal);
+  const fetchedAt = Date.now();
+  return parseSource(text, feed.show).map((e) => ({ ...e, fetchedAt }));
+}
+
+const newestFirst = (a, b) => b.date.localeCompare(a.date);
+
+// Every source, read at once. A source that can't be read keeps the episodes
+// it had (`previous`), so one failing page never empties its show. Resolves
+// to { episodes, source, failed } where source is "live", or "error" when no
+// source could be read at all, and `failed` lists the shows not read.
+async function fetchArchive(previous = [], feeds = ARCHIVE_FEEDS) {
   const results = await Promise.all(
     feeds.map((feed) =>
-      readSource(feed.url, signal).then(
-        (text) => parseSource(text, feed.show),
-        () => null,
+      readFeed(feed).then(
+        (episodes) => ({ show: feed.show, episodes }),
+        () => ({ show: feed.show, episodes: null }),
       ),
     ),
   );
-  const loaded = results.filter(Boolean);
-  if (!loaded.length) return { episodes: [], source: "error" };
+  const failed = results.filter((r) => !r.episodes).map((r) => r.show);
+  if (failed.length === feeds.length) return { episodes: previous, source: "error", failed };
+  const kept = previous.filter((e) => failed.includes(e.show));
   return {
-    episodes: loaded.flat().sort((a, b) => b.date.localeCompare(a.date)),
+    episodes: [...results.flatMap((r) => r.episodes || []), ...kept].sort(newestFirst),
     source: "live",
+    failed,
   };
 }
 
 // Shared by every screen that shows episodes: loaded once when first needed,
-// refreshed when stale, and the last good list kept for offline use.
+// refreshed when stale, and the last good list kept for offline use. A load
+// that failed, wholly or in part, is tried again soon rather than after the
+// usual wait. `listed` holds the shows whose page was read this session, so
+// a saved episode missing from one is known to have left the archive.
 const CACHE_KEY = "xpn.archive.cache";
-const STALE_MS = 60 * 60000;
+const STALE_MS = 30 * 60000;
+const RETRY_MS = 2 * 60000;
 const cached = readJson(CACHE_KEY, null);
 const archiveStore = createStore({
   episodes: normalizeEpisodes(cached?.episodes),
   source: cached?.episodes?.length ? "cache" : "loading",
   loadedAt: 0,
+  complete: false,
+  listed: [],
 });
 let inflight = null;
+
+const saveCache = (episodes) => writeJson(CACHE_KEY, { episodes });
 
 export function loadArchive({ force = false } = {}) {
   const state = archiveStore.getSnapshot();
   if (!ARCHIVE_FEEDS.length || inflight) return inflight;
-  if (!force && state.loadedAt && Date.now() - state.loadedAt < STALE_MS) return null;
+  const wait = state.complete ? STALE_MS : RETRY_MS;
+  if (!force && state.loadedAt && Date.now() - state.loadedAt < wait) return null;
   if (force && !state.episodes.length) archiveStore.set({ ...state, source: "loading" });
-  inflight = fetchArchive()
-    .then((result) => {
-      if (result.source === "error" && archiveStore.getSnapshot().episodes.length) {
-        // Keep the list on screen; it is only out of date.
-        archiveStore.set((s) => ({ ...s, source: "cache", loadedAt: Date.now() }));
-        return;
-      }
-      if (result.source === "live") writeJson(CACHE_KEY, { episodes: result.episodes });
-      archiveStore.set({ ...result, loadedAt: Date.now() });
+  inflight = fetchArchive(state.episodes)
+    .then(({ episodes, source, failed }) => {
+      const read = ARCHIVE_FEEDS.map((f) => f.show).filter((show) => !failed.includes(show));
+      if (source === "live") saveCache(episodes);
+      archiveStore.set((s) => ({
+        episodes,
+        // Nothing could be read: a list already on screen stays, only out
+        // of date.
+        source: source === "error" && episodes.length ? "cache" : source,
+        loadedAt: Date.now(),
+        complete: !failed.length,
+        listed: [...new Set([...s.listed, ...read])],
+      }));
     })
     .finally(() => {
       inflight = null;
@@ -277,10 +312,68 @@ export function loadArchive({ force = false } = {}) {
   return inflight;
 }
 
+// The archive as it stands, for code outside React.
+export const getArchive = () => archiveStore.getSnapshot();
+
+// The archive as loaded so far, without asking for a load (Favorites, which
+// shouldn't read four pages just to show saved episodes).
+export const useArchiveState = () =>
+  useSyncExternalStore(archiveStore.subscribe, archiveStore.getSnapshot);
+
 export function useArchive() {
   useEveryShow(loadArchive, []);
-  return useSyncExternalStore(archiveStore.subscribe, archiveStore.getSnapshot);
+  return useArchiveState();
 }
 
 // One show's archive episodes.
 export const episodesOf = (archive, showId) => archive.episodes.filter((e) => e.show === showId);
+
+// The archive's own copy of an episode, when its link is fresh enough to
+// play straight away.
+export function freshCopy(episode) {
+  const listed = archiveStore.getSnapshot().episodes.find((e) => e.id === episode?.id);
+  return linkIsFresh(listed) ? listed : null;
+}
+
+// Whether a saved episode has left the archive: its show's page was read
+// this session and no longer lists it.
+export const hasLeftArchive = (archive, episode) =>
+  archive.listed.includes(episode.show) && !archive.episodes.some((e) => e.id === episode.id);
+
+// A playable copy of an episode with a fresh audio link, read again from its
+// show's page when the one on hand is too old. Rejects with { reason }:
+// "gone" once the archive no longer lists it, "offline" when the page can't
+// be read. Several taps at once share one read.
+const reading = new Map();
+const unavailable = (reason) => Object.assign(new Error(`Episode ${reason}`), { reason });
+
+export async function findEpisode(episode) {
+  const copy = freshCopy(episode);
+  if (copy) return copy;
+  const feed = ARCHIVE_FEEDS.find((f) => f.show === episode?.show);
+  if (!feed) throw unavailable("gone");
+  let read = reading.get(feed.show);
+  if (!read) {
+    read = readFeed(feed).finally(() => reading.delete(feed.show));
+    reading.set(feed.show, read);
+  }
+  let episodes;
+  try {
+    episodes = await read;
+  } catch {
+    throw unavailable("offline");
+  }
+  // The show's list on screen is now the fresh one too.
+  const s = archiveStore.getSnapshot();
+  const merged = [...s.episodes.filter((e) => e.show !== feed.show), ...episodes].sort(newestFirst);
+  saveCache(merged);
+  archiveStore.set({
+    ...s,
+    episodes: merged,
+    source: s.source === "loading" || s.source === "error" ? "live" : s.source,
+    listed: s.listed.includes(feed.show) ? s.listed : [...s.listed, feed.show],
+  });
+  const found = episodes.find((e) => e.id === episode.id);
+  if (!found) throw unavailable("gone");
+  return found;
+}

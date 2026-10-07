@@ -8,6 +8,9 @@
 // what new apps and apps in Development Mode must use.
 // Each service exposes the same small interface:
 //   connect()            start signing in (may leave the page and come back)
+//   account()            who is signed in (an id), or "" where the service
+//                        won't say (Apple Music)
+//   owns(id, account)    whether that playlist is this account's
 //   ensurePlaylist(s)    { playlistId, playlistUrl }, creating it if needed
 //   find(song)           the service's track reference, or null
 //   add(id, refs)        add tracks, newest first
@@ -35,19 +38,53 @@ export class NotAllowedError extends Error {}
 
 // Station playlists carry featured artists, live tags and remaster notes the
 // services file differently, so a second, plainer search follows the exact one.
+// Words that mark a version of the same song rather than a different one:
+// "(2019 Remaster)", "(feat. X)", "- Mono", "- Single Version", "(Live)".
+// A remix, a club or extended mix, or an instrumental stays a different
+// recording, whatever else its suffix says.
+const VERSION =
+  "feat\\.?|ft\\.?|featuring|with|live|remaster(?:ed)?|mix|mono|stereo|version|edit|demo|acoustic";
+const BRACKETED = new RegExp(`\\s*[([][^)\\]]*\\b(?:${VERSION})(?:\\b|\\s|$)[^)\\]]*[)\\]]`, "gi");
+// A dashed suffix runs to the end of the title, outside any brackets.
+const DASHED = new RegExp(`\\s+[-–—]\\s+[^-–—)\\]]*\\b(?:${VERSION})(?:\\b|\\s|$)[^)\\]]*$`, "i");
+const DIFFERENT = /\b(?:re-?mix|rmx|extended|club|dub|dance|instrumental|a ?cappella|karaoke)\b/i;
+const unlessDifferent = (part) => (DIFFERENT.test(part) ? part : "");
 export function plainTitle(title) {
   return String(title || "")
-    .replace(
-      /\s*[([](feat\.?|ft\.?|featuring|with|live|remaster(ed)?|radio edit|single version)[^)\]]*[)\]]/gi,
-      "",
-    )
-    .replace(/\s+-\s+(live|remaster(ed)?|\d{4} remaster|radio edit).*$/i, "")
+    .replace(BRACKETED, unlessDifferent)
+    .replace(DASHED, unlessDifferent)
     .trim();
 }
 export function leadArtist(artist) {
   return String(artist || "")
     .split(/\s+(?:&|and|feat\.?|ft\.?|featuring|with|x)\s+|,\s*/i)[0]
     .trim();
+}
+
+// --- Matching ---------------------------------------------------------------
+
+// For comparing names: lower case, accents and punctuation gone, "&" read as
+// "and", a leading "The" dropped.
+const fold = (text) =>
+  String(text || "")
+    .normalize("NFKD")
+    .replace(/\p{M}+/gu, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
+    .replace(/^the /, "");
+
+// Whether a catalog track is the song the station played: the same title
+// (versions and featured artists aside) by the same lead artist. A near miss
+// stays unmatched rather than putting the wrong song in someone's playlist.
+export function sameSong(song, { title, artists = [] }) {
+  const wanted = fold(plainTitle(song.title));
+  if (!wanted || fold(plainTitle(title)) !== wanted) return false;
+  const lead = fold(leadArtist(song.artist));
+  return (
+    Boolean(lead) && artists.some((name) => fold(name) === lead || fold(leadArtist(name)) === lead)
+  );
 }
 
 // --- Spotify ----------------------------------------------------------------
@@ -188,6 +225,20 @@ const spotify = {
     });
     return true;
   },
+  async account() {
+    return (await spotifyFetch("/me"))?.id || "";
+  },
+  async owns(playlistId, account) {
+    try {
+      const playlist = await spotifyFetch(
+        `/playlists/${encodeURIComponent(playlistId)}?fields=owner(id)`,
+      );
+      return Boolean(account) && playlist?.owner?.id === account;
+    } catch (error) {
+      if (error?.status === 404) return false;
+      throw error;
+    }
+  },
   async ensurePlaylist({ playlistId, playlistUrl }) {
     if (playlistId) return { playlistId, playlistUrl };
     const created = await spotifyFetch("/me/playlists", {
@@ -207,10 +258,14 @@ const spotify = {
     ];
     for (const q of queries) {
       const json = await spotifyFetch(
-        `/search?${new URLSearchParams({ q, type: "track", limit: "1" })}`,
+        `/search?${new URLSearchParams({ q, type: "track", limit: "5" })}`,
       );
-      const track = json?.tracks?.items?.[0];
-      if (track?.uri) return track.uri;
+      const track = (json?.tracks?.items || []).find(
+        (t) =>
+          t?.uri &&
+          sameSong(song, { title: t.name, artists: (t.artists || []).map((a) => a?.name) }),
+      );
+      if (track) return track.uri;
     }
     return null;
   },
@@ -311,6 +366,20 @@ const appleMusic = {
     saveAuth({ service: "apple", userToken, developerToken: token });
     return "connected";
   },
+  // Apple Music names no account; whether the playlist is in this library
+  // says whether it is the same one.
+  async account() {
+    return "";
+  },
+  async owns(playlistId) {
+    try {
+      await appleFetch(`/v1/me/library/playlists/${encodeURIComponent(playlistId)}`);
+      return true;
+    } catch (error) {
+      if (error?.status === 404) return false;
+      throw error;
+    }
+  },
   async ensurePlaylist({ playlistId, playlistUrl }) {
     if (playlistId) return { playlistId, playlistUrl };
     const json = await appleFetch("/v1/me/library/playlists", {
@@ -340,9 +409,9 @@ const appleMusic = {
       `/v1/catalog/${storefront}/search?${new URLSearchParams({ term, types: "songs", limit: "5" })}`,
     );
     const songs = json?.results?.songs?.data || [];
-    const artist = leadArtist(song.artist).toLowerCase();
-    const best =
-      songs.find((s) => s.attributes?.artistName?.toLowerCase().includes(artist)) || songs[0];
+    const best = songs.find((s) =>
+      sameSong(song, { title: s.attributes?.name, artists: [s.attributes?.artistName] }),
+    );
     return best?.id || null;
   },
   async add(playlistId, refs) {

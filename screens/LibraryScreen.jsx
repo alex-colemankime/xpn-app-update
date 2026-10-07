@@ -6,6 +6,7 @@ import { easternToday } from "../concerts.js";
 import { ARCHIVE_ENABLED, CONCERTS_ENABLED, VIDEOS_ENABLED } from "../config.js";
 import { VideoCard } from "../components/VideoCard.jsx";
 import { EpisodeRow } from "../components/Archive.jsx";
+import { hasLeftArchive, useArchiveState } from "../archive.js";
 import { showToast } from "../toast.js";
 import { TrackRow, ShowCard, SaveButton } from "../components/MusicRows.jsx";
 import { ConcertRow } from "../components/ConcertRow.jsx";
@@ -59,11 +60,11 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
   const videos = useFavoriteItems("videos");
   const today = easternToday();
 
-  // Episodes are archive broadcasts, so only those that can play.
+  const archive = useArchiveState();
   const items = {
     songs,
     shows,
-    ...(ARCHIVE_ENABLED ? { episodes: episodes.filter((ep) => ep.audio) } : {}),
+    ...(ARCHIVE_ENABLED ? { episodes } : {}),
     ...(VIDEOS_ENABLED ? { videos } : {}),
     // Saved with their details, so they show even while the feed is down;
     // past dates drop off.
@@ -165,6 +166,7 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
           <EpisodeRow
             key={ep.id}
             episode={ep}
+            gone={hasLeftArchive(archive, ep)}
             onOpen={(e) => onOpenShow(e.show || e.showId, e.id)}
           />
         ))

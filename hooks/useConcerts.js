@@ -44,6 +44,7 @@ export function useConcerts() {
       concerts: result?.concerts || [],
       source: loaded ? result.source : "loading",
       partial: loaded && Boolean(result.partial),
+      through: (loaded && result.through) || "",
       retry,
     }),
     [result, loaded, retry],

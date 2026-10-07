@@ -20,20 +20,80 @@ import { tap } from "./haptics.js";
 
 // A media-controls failure should degrade silently (no lock-screen metadata),
 // never break audio or the app.
+const callMediaSession = (method, args) => {
+  try {
+    const result = NativeMediaSession[method]?.(...args);
+    result?.catch?.(() => {});
+    return result;
+  } catch {
+    /* unsupported platform */
+  }
+};
+
+// The phone apps' lock screens load artwork themselves, outside the web
+// view, so they can't reach the app's own files (the station logo, show
+// art). Those go as data: URLs, read once each.
+const NATIVE = Capacitor.isNativePlatform();
+const artCache = new Map();
+function loadableArt(src) {
+  // Remote art loads as it is; the app's own (capacitor://localhost on iOS,
+  // https://localhost on Android) can't be reached from outside the web view.
+  let own = true;
+  try {
+    own = new URL(src, window.location.href).origin === window.location.origin;
+  } catch {
+    /* unreadable: treated as the app's own */
+  }
+  if (!NATIVE || (/^https:/i.test(src) && !own)) return Promise.resolve(src);
+  if (!artCache.has(src)) {
+    artCache.set(
+      src,
+      fetch(src)
+        .then((response) => response.blob())
+        .then(
+          (blob) =>
+            new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            }),
+        )
+        .catch(() => null),
+    );
+  }
+  return artCache.get(src);
+}
+let metadataCalls = 0;
+
 const mediaSession = new Proxy(
   {},
   {
-    get:
-      (_, method) =>
-      (...args) => {
-        try {
-          const result = NativeMediaSession[method]?.(...args);
-          result?.catch?.(() => {});
-          return result;
-        } catch {
-          /* unsupported platform */
-        }
-      },
+    get: (_, method) => {
+      if (method === "setMetadata" && NATIVE) {
+        // The newest call wins, even if an older one's artwork loads later.
+        return (metadata) => {
+          const call = ++metadataCalls;
+          return Promise.all(
+            (metadata.artwork || []).map((art) =>
+              loadableArt(art.src).then((src) => (src ? { ...art, src } : null)),
+            ),
+          ).then((artwork) => {
+            if (call !== metadataCalls) return;
+            callMediaSession("setMetadata", [{ ...metadata, artwork: artwork.filter(Boolean) }]);
+          });
+        };
+      }
+      if (method === "setPositionState" && NATIVE) {
+        // Called with nothing, the web clears the progress bar; the phone
+        // apps keep their last values unless given new ones.
+        return (state) =>
+          callMediaSession("setPositionState", [
+            state || { duration: 0, position: 0, playbackRate: 1 },
+          ]);
+      }
+      return (...args) => callMediaSession(method, args);
+    },
   },
 );
 
@@ -101,6 +161,11 @@ export function setTemporaryVolume(percent) {
 const AUDIBLE = ["loading", "reconnecting", "playing"];
 
 if (typeof window !== "undefined") {
+  // When an episode gives up the lock screen (closed, or the station played
+  // again), the station's controls and song info go back on it.
+  subscribeFocus(() => {
+    if (focusStore.getSnapshot() === "live") player.takeControls();
+  });
   // No network is used until play: the element is created with preload=none.
   player.init(
     (playing) => update({ playing }),

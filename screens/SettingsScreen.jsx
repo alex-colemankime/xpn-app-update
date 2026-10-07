@@ -6,6 +6,7 @@ import { NewsletterPanel } from "../components/Newsletter.jsx";
 import { ShowReminders, StationAlerts } from "../components/NotificationSettings.jsx";
 import { PlaylistSyncPanel } from "../components/PlaylistSync.jsx";
 import { RadioAlarmPanel } from "../components/RadioAlarm.jsx";
+import { useNotificationTrouble } from "../notifications.js";
 import { CONCERTS_ENABLED } from "../config.js";
 import { CALENDAR_URL, DONATE_URL, PRIVACY_URL, STATION_EMAIL } from "../links.js";
 
@@ -42,6 +43,7 @@ export function SettingsScreen({
 }) {
   const volume = useVolume();
   const { castAvailable } = usePlayer();
+  const trouble = useNotificationTrouble();
   return (
     <>
       <div className="page-heading">
@@ -49,6 +51,12 @@ export function SettingsScreen({
           <h1>Settings</h1>
         </div>
       </div>
+      {trouble && (
+        <p className="data-note" role="status">
+          This phone didn’t take every notification WXPN set up (the alarm, reminders or station
+          notifications). WXPN tries again each time you open it.
+        </p>
+      )}
       <div className="settings-grid">
         <RadioAlarmPanel
           alarm={alarm}

@@ -123,6 +123,9 @@ test("a long song stays now playing until it should have ended", () => {
   const plain = { ...jam, minutes: undefined };
   assert.equal(isFresh(plain, at("21:14")), true);
   assert.equal(isFresh(plain, at("21:16")), false, "without a length, 15 minutes");
+  const short = { ...jam, minutes: 4 };
+  assert.equal(isFresh(short, at("21:06")), true, "a 4-minute song, 5 minutes on");
+  assert.equal(isFresh(short, at("21:08")), false, "over once its length and slack have passed");
 });
 
 test("encoded playlist titles display as text and still match song duration", () => {

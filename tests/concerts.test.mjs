@@ -165,6 +165,7 @@ test("every page of the calendar is loaded; failures are errors or marked partia
       concerts: [],
       source: "live",
       partial: false,
+      through: "",
     });
 
     globalThis.fetch = async () => ({ ok: false, status: 500, json: async () => ({}) });
@@ -172,11 +173,13 @@ test("every page of the calendar is loaded; failures are errors or marked partia
       concerts: [],
       source: "error",
       partial: false,
+      through: "",
     });
     assert.deepEqual(await fetchConcertResult(undefined, ""), {
       concerts: [],
       source: "unconfigured",
       partial: false,
+      through: "",
     });
   } finally {
     globalThis.fetch = real;
@@ -219,4 +222,48 @@ test("filters combine: WXPN Welcomes in the Philadelphia Area, not one or the ot
     "search reads artist, venue and city",
   );
   assert.deepEqual(ids({}), ["welcomes-philly", "welcomes-delaware", "philly", "lehigh"]);
+});
+
+test("a long calendar is read to its last page; past the limit it says how far it reaches", async () => {
+  const real = globalThis.fetch;
+  const day = (n) => {
+    const d = new Date(Date.UTC(2099, 0, 1 + n));
+    return {
+      year: String(d.getUTCFullYear()),
+      month: String(d.getUTCMonth() + 1),
+      day: String(d.getUTCDate()),
+    };
+  };
+  const requested = [];
+  let total = 9;
+  try {
+    globalThis.fetch = async (url) => {
+      const page = Number(new URL(url).searchParams.get("page"));
+      requested.push(page);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          events: [tecEvent({ id: page, start_date_details: day(page) })],
+          total_pages: total,
+        }),
+      };
+    };
+    const nine = await fetchConcertResult(undefined, "https://x.test/events");
+    assert.deepEqual(
+      [...new Set(requested)].sort((a, b) => a - b),
+      [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    );
+    assert.equal(nine.concerts.length, 9, "the ninth page is not dropped");
+    assert.equal(nine.partial, false);
+    assert.equal(nine.through, "", "the whole calendar");
+
+    total = 45;
+    requested.length = 0;
+    const capped = await fetchConcertResult(undefined, "https://x.test/events");
+    assert.equal(capped.concerts.length, 30);
+    assert.equal(capped.through, capped.concerts.at(-1).date, "says how far the list reaches");
+  } finally {
+    globalThis.fetch = real;
+  }
 });

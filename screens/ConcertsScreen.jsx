@@ -4,6 +4,7 @@ import { useFavoriteItems } from "../favorites.js";
 import { ConcertRow } from "../components/ConcertRow.jsx";
 import { easternToday, filterConcerts } from "../concerts.js";
 import { CALENDAR_URL, SUBMIT_CONCERT_URL } from "../links.js";
+import { mediumDay } from "../time.js";
 import { NewsletterPrompt } from "../components/Newsletter.jsx";
 
 const PAGE = 40;
@@ -70,7 +71,7 @@ export function ConcertsScreen({ result }) {
   const [shown, setShown] = useState(PAGE);
   const saved = useFavoriteItems("concerts");
   const savedIds = useMemo(() => new Set(saved.map((c) => c.id)), [saved]);
-  const { concerts, source, partial } = result;
+  const { concerts, source, partial, through } = result;
   const today = easternToday();
 
   const regionOptions = useMemo(() => {
@@ -151,6 +152,14 @@ export function ConcertsScreen({ result }) {
             <button className="text-button" onClick={result.retry}>
               Try again
             </button>
+          </p>
+        )}
+        {through && (
+          <p className="info-note concert-partial">
+            <span>Showing concerts through {mediumDay(`${through}T12:00:00`)}.</span>
+            <a className="text-button" href={CALENDAR_URL} target="_blank" rel="noreferrer">
+              Full calendar
+            </a>
           </p>
         )}
         {filtered.slice(0, shown).map((c) => (

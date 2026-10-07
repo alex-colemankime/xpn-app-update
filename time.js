@@ -105,7 +105,12 @@ export function localClock(epoch, timeZone) {
 export function localWhen(epoch, now = Date.now()) {
   const day = localDateFormat.format(new Date(epoch));
   const today = localDateFormat.format(new Date(now));
-  const tomorrow = localDateFormat.format(new Date(now + 86400000));
+  // The next calendar day, not 24 hours on, which lands on the wrong day
+  // when the clocks change overnight.
+  const n = new Date(now);
+  const tomorrow = localDateFormat.format(
+    new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 12),
+  );
   const when =
     day === today ? "Today" : day === tomorrow ? "Tomorrow" : localWeekday.format(new Date(epoch));
   return `${when} at ${localClock(epoch)}`;

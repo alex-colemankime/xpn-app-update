@@ -48,25 +48,29 @@ export function VideosScreen({ onWatch }) {
   const shown = searching ? found : rest.slice(0, count);
   const more = !searching && (rest.length > count || section?.more);
   const showMore = () => {
+    if (section.moreFailed) {
+      loadMoreVideos(section.playlist);
+      return;
+    }
     const next = count + SHOW_STEP;
     setCount(next);
     if (next + SHOW_STEP > rest.length) loadMoreVideos(section.playlist);
   };
 
+  const retry = () => loadVideos({ force: true });
   let content;
   if (!videos.length) {
     content =
-      state.status === "error" ? (
-        <Empty
-          icon="video"
-          title="Videos are unavailable"
-          action="Try again"
-          onAction={() => loadVideos({ force: true })}
-        >
+      section?.status === "error" ? (
+        <Empty icon="video" title="Videos are unavailable" action="Try again" onAction={retry}>
           Check your connection and try again.
         </Empty>
-      ) : (
+      ) : section?.status === "loading" ? (
         <SkeletonVideos />
+      ) : (
+        <Empty icon="video" title="No videos here yet">
+          New sessions appear here as they are posted.
+        </Empty>
       );
   } else if (!found.length) {
     content = (
@@ -82,15 +86,28 @@ export function VideosScreen({ onWatch }) {
   } else {
     content = (
       <>
+        {section.status === "cache" && state.loadedAt > 0 && (
+          <p className="data-note">
+            These may not be the newest videos: the collection couldn’t be refreshed.{" "}
+            <button className="text-button" onClick={retry}>
+              Try again
+            </button>
+          </p>
+        )}
         {!searching && <VideoCard video={hero} onWatch={onWatch} hero />}
         <div className="video-grid">
           {shown.map((video) => (
             <VideoCard key={video.id} video={video} onWatch={onWatch} />
           ))}
         </div>
+        {section.moreFailed && (
+          <p className="data-note" role="status">
+            Couldn’t load more videos. Check your connection and try again.
+          </p>
+        )}
         {more && (
           <button className="secondary-button video-more" onClick={showMore}>
-            More videos
+            {section.moreFailed ? "Try again" : "More videos"}
           </button>
         )}
         {searching && section?.more && (

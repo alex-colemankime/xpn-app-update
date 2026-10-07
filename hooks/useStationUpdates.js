@@ -51,6 +51,9 @@ async function loadLivestream(signal) {
 export function useStationUpdates() {
   const [posted, setPosted] = useState(() => normalizeUpdates(readJson(CACHE_KEY, null)));
   const [livestream, setLivestream] = useState(null);
+  // Whether the first check has finished, so a link to the live video isn't
+  // judged "over" before the app has looked.
+  const [loaded, setLoaded] = useState(false);
   const dismissed = useLocalStore(dismissedStore);
   const now = useNow();
 
@@ -59,13 +62,17 @@ export function useStationUpdates() {
     const refresh = () => {
       if (document.visibilityState === "hidden") return;
       controller?.abort();
-      controller = new AbortController();
-      loadUpdates(controller.signal).then(setPosted, () => {
-        /* keep what we have */
-      });
-      loadLivestream(controller.signal).then(setLivestream, () => {
-        /* keep what we have */
-      });
+      const { signal } = (controller = new AbortController());
+      const checks = [
+        loadUpdates(signal).then(setPosted, () => {
+          /* keep what we have */
+        }),
+        loadLivestream(signal).then(setLivestream, () => {
+          /* keep what we have */
+        }),
+      ];
+      // A check cut short by a newer one hasn't looked yet.
+      Promise.all(checks).then(() => signal.aborted || setLoaded(true));
     };
     refresh();
     const timer = setInterval(refresh, REFRESH_MS);
@@ -100,8 +107,9 @@ export function useStationUpdates() {
       live: liveKey ? live : null,
       liveDismissed: Boolean(live && dismissed.includes(live.id)),
       all,
+      loaded,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [bannerKey, liveKey, dismissed, all],
+    [bannerKey, liveKey, dismissed, all, loaded],
   );
 }
