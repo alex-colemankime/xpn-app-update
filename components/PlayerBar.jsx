@@ -1,11 +1,10 @@
-import { Capacitor } from "@capacitor/core";
-import { setVolume, togglePlayback } from "../player.js";
+import { setVolume, togglePlayback, VOLUME_SETTABLE } from "../player.js";
 import { Icon, Art } from "../ui.jsx";
 import { SaveSong } from "./MusicRows.jsx";
 import { usePlayer, useVolume, chooseAudioOutput } from "../hooks/usePlayer.js";
 import { playbackText } from "../playback-text.js";
 import { useLiveSong } from "../nowplaying.js";
-import { clockTime, lengthLabel } from "../archive.js";
+import { clockTime, lengthLabel } from "../time.js";
 import {
   closeEpisode,
   resumeEpisode,
@@ -14,10 +13,6 @@ import {
   useEpisodePlayer,
 } from "../episode-player.js";
 import { EpisodeScrubber } from "./Archive.jsx";
-
-// iOS sets volume only with the device's buttons, so the app offers no slider
-// there (as in Settings).
-const VOLUME_SETTABLE = Capacitor.getPlatform() !== "ios";
 
 // The bar while an archive episode has it: play, the episode (tap to open
 // it), the scrubber on larger screens and a thin progress line on phones,

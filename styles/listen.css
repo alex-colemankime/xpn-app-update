@@ -1,0 +1,299 @@
+/* ---------------------------------------------------------------------------
+   Listen: the heading and station tabs, the stage beside the lists,
+   Recently played and saved songs.
+   ------------------------------------------------------------------------ */
+
+/* Listening is the home screen: one current song, transport, and the real playlist. */
+.listen-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+}
+.listen-heading h1 {
+  padding-bottom: 12px;
+}
+.station-switcher.segmented {
+  border-bottom: 0;
+  gap: 6px;
+}
+.station-switcher.segmented button {
+  min-height: 48px;
+  padding: 0 14px;
+  white-space: nowrap;
+  margin-bottom: -1px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.listen-heading h1,
+.page-heading h1 {
+  font-size: clamp(2rem, 2.5vw, 2.25rem);
+  margin: 0;
+  letter-spacing: -0.045em;
+}
+/* Two columns on a wide screen: the stage, as wide as its artwork and set
+   against the left edge under the heading, then the playlist taking the
+   rest, so nothing floats in the middle of an empty column. */
+.live-workspace {
+  display: grid;
+  grid-template-columns: auto minmax(320px, 1fr);
+  gap: clamp(40px, 5vw, 72px);
+  align-items: start;
+}
+.now-card {
+  min-width: 0;
+  /* One column width for the band, the artwork, the song and Listen live,
+     also bounded by the window's height (less any banner across the top)
+     so Listen live stays above the player bar without scrolling. */
+  --stage-room: calc(100svh - 490px - var(--banner-h, 0px) - var(--alarm-h, 0px));
+  --stage: min(400px, 100%, max(220px, var(--stage-room)));
+}
+@media (min-width: 1001px) {
+  /* Sized by the window, not the column, since the column takes its width
+     from the card. */
+  .now-card {
+    --stage: min(400px, max(220px, var(--stage-room)));
+    width: var(--stage);
+  }
+  .now-stage,
+  .on-air {
+    margin-left: 0;
+  }
+}
+.live-lists {
+  min-width: 0;
+}
+
+/* The stage: artwork, the song, and the station's main action, in one
+   column the width of the artwork, so every edge lines up. */
+.now-stage {
+  width: var(--stage);
+  margin: 0 auto;
+}
+.now-art {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  margin: 0 0 18px;
+  aspect-ratio: 1;
+}
+.now-art > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: 0 16px 36px -22px rgb(0 0 0 / 0.45);
+}
+.station-art {
+  background: var(--action);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: var(--action-ink);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: none;
+}
+.station-art strong {
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 800;
+  letter-spacing: -0.08em;
+}
+.now-meta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label actions"
+    "info info";
+  align-items: center;
+}
+.now-eyebrow {
+  grid-area: label;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.now-info {
+  grid-area: info;
+  min-width: 0;
+}
+/* The song: title (two lines at most), then artist and album on one line,
+   so the block keeps the same height from song to song. */
+.now-info h2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: 1.375rem;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 2px 0 3px;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+.now-artist {
+  font-size: 1rem;
+  margin: 0;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.now-album {
+  color: var(--muted);
+}
+/* Heart and menu on the label's line, their glyphs lined up with the
+   artwork's right edge. */
+.now-song-actions {
+  grid-area: actions;
+  display: flex;
+  gap: 0;
+  margin: -6px -12px -6px 0;
+}
+.now-controls {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  margin: 18px 0 4px;
+}
+/* The station's main action, labeled: "Listen live" / "Pause". */
+.now-controls .hero-play {
+  flex: 1;
+  min-height: 56px;
+  padding: 0 24px;
+  border-radius: 16px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+}
+.hero-play[data-busy] {
+  animation: busy-pulse 0.9s ease-in-out infinite alternate;
+}
+/* Cast / AirPlay, one tap from the main action, as on a station's own app. */
+.hero-cast {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  min-height: 56px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  color: var(--text);
+  transition: background-color 0.15s;
+}
+.hero-cast:hover {
+  background: var(--row-alt);
+}
+.now-status {
+  font-size: 0.875rem;
+  color: var(--muted);
+  min-height: 20px;
+  line-height: 1.5;
+}
+.now-footer {
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 51px;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.now-footer .text-button {
+  font-size: 0.875rem;
+}
+.recent-panel > .section-heading,
+.saved-preview > .section-heading {
+  min-height: 40px;
+  margin-bottom: 10px;
+}
+.live-lists .section-heading h2 {
+  font-size: 1.3125rem;
+}
+.live-lists .track-row {
+  padding-block: 12px;
+  gap: 13px;
+}
+.live-lists .track-row > img {
+  width: 46px;
+  height: 46px;
+}
+/* A saved song's row, washed very lightly in its heart's color. */
+.track-row[data-saved] {
+  --row-tint: var(--tint-light, var(--accent));
+  background-color: color-mix(in srgb, var(--row-tint) 7%, var(--bg));
+  background-image: none;
+}
+:root[data-theme="dark"] .track-row[data-saved] {
+  --row-tint: var(--tint-dark, var(--accent));
+  background-color: color-mix(in srgb, var(--row-tint) 9%, var(--bg));
+}
+.track-row[data-saved] + .track-row[data-saved] {
+  margin-top: 2px;
+}
+/* The divider above a highlighted row steps aside too. */
+.track-row:has(+ .track-row[data-saved]) {
+  background-image: none;
+}
+@media (forced-colors: active) {
+  .track-row[data-saved] {
+    border: 1px solid CanvasText;
+  }
+}
+.track-time {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.track-row > .icon-button {
+  width: 44px;
+}
+.playlist-more {
+  margin-top: 10px;
+}
+.saved-preview {
+  margin-top: 30px;
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+}
+.saved-empty {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 3px 0;
+}
+.playlist-empty {
+  padding: 48px 20px;
+  color: var(--muted);
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.playlist-empty p {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin: 14px 0 3px;
+}
+.player-track > img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.player-track > span:last-child {
+  min-width: 0;
+}
+.player-track strong,
+.player-track small {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}

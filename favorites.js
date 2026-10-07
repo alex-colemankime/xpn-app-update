@@ -25,7 +25,7 @@ const VALID = {
   concerts: (item) => isText(item.id) && isText(item.artist) && isText(item.date),
   videos: (item) => isText(item.id) && isText(item.name),
 };
-export const FAVORITE_TYPES = Object.keys(VALID);
+const FAVORITE_TYPES = Object.keys(VALID);
 
 const keyFor = (type, item) => (type === "songs" ? songId(item) : item.id);
 

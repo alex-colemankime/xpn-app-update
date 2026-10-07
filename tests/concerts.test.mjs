@@ -8,8 +8,6 @@ import {
   filterConcerts,
   isoDate,
   normalizeEvent,
-  plainText,
-  safeUrl,
   upcomingConcerts,
 } from "../concerts.js";
 
@@ -21,28 +19,6 @@ test("concert dates keep the Eastern calendar day for evening events", () => {
   assert.equal(isoDate("2026-06-12"), "2026-06-12");
   assert.equal(isoDate("not a date"), "");
   assert.equal(isoDate(undefined), "");
-});
-
-test("feed text is stripped of markup and fully entity-decoded", () => {
-  assert.equal(plainText("Hall &#038; Oates"), "Hall & Oates");
-  assert.equal(plainText("Guns N&#8217; Roses"), "Guns N’ Roses");
-  assert.equal(plainText("<em>Sold</em> &ndash; out &hellip;"), "Sold – out …");
-  assert.equal(plainText("&#x1F3B8; night"), "🎸 night");
-  assert.equal(
-    plainText("&lt;script&gt;"),
-    "<script>",
-    "decoded text is never re-parsed as markup",
-  );
-  assert.equal(plainText("  A \n  B "), "A B");
-  assert.equal(plainText("&bogus; &#0;"), "&bogus; &#0;");
-});
-
-test("only web links survive as ticket URLs", () => {
-  assert.equal(safeUrl("https://tickets.test/x"), "https://tickets.test/x");
-  assert.equal(safeUrl("javascript:alert(1)"), "");
-  assert.equal(safeUrl("data:text/html,hi"), "");
-  assert.equal(safeUrl("/relative"), "");
-  assert.equal(safeUrl(undefined), "");
 });
 
 test("a feed becomes upcoming concerts, soonest first", () => {

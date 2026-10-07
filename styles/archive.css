@@ -1,0 +1,456 @@
+/* ---------------------------------------------------------------------------
+   Audio archive: episode rows, the episode sheet, and the bar in episode mode
+   ------------------------------------------------------------------------ */
+
+.archive-list {
+  margin-top: 4px;
+  max-width: 900px;
+}
+/* A show in the archive: its art, name and slot leading its latest
+   broadcasts, so the list reads as shows' episodes, never as songs. */
+.archive-show {
+  margin-bottom: 30px;
+}
+.archive-show-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 6px 0 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.archive-show-head > img {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.archive-show-head > span:not(.icon) {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.archive-show-head strong {
+  font-size: 1.1875rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.archive-show-head small {
+  font-size: 0.875rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.archive-show-head > .icon {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+.archive-more {
+  margin-top: 6px;
+}
+/* Within one show's list the rows need no art: the day leads. */
+.archive-row[data-plain] {
+  contain-intrinsic-size: auto 68px;
+}
+.archive-row[data-plain] .archive-text strong {
+  font-size: 1.0625rem;
+}
+.episode-feature {
+  margin: 4px 0 0;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+/* The show page while the show is on: the same band as on Listen, a button
+   that plays the station. A broadcast key at the end, not an orange Play,
+   because it is the radio, not an episode. */
+.show-on-air {
+  --band: var(--tint-light, var(--accent));
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin: 20px 0 4px;
+  padding: 12px 12px 12px 16px;
+  border-radius: 12px;
+  text-align: left;
+  color: var(--text);
+  background: color-mix(in srgb, var(--band) 13%, var(--bg));
+  transition: background-color 0.15s;
+}
+:root[data-theme="dark"] .show-on-air {
+  --band: var(--tint-dark, var(--accent));
+  background: color-mix(in srgb, var(--band) 17%, var(--bg));
+}
+@media (hover: hover) {
+  .show-on-air:hover {
+    background: color-mix(in srgb, var(--band) 20%, var(--bg));
+  }
+}
+.show-on-air-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.show-on-air-text .on-air-label {
+  font-size: 0.8125rem;
+}
+.show-on-air-text strong {
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+.show-on-air-key {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--text) 55%, transparent);
+  color: var(--text);
+}
+
+/* An episode: art, show and date, title, time left with a progress line,
+   its heart and its play key. Dividers inset like the song rows. */
+.archive-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline: -10px;
+  padding: 12px 10px;
+  border-radius: 10px;
+  background-image: linear-gradient(var(--border), var(--border));
+  background-size: calc(100% - 20px) 1px;
+  background-position: 50% 100%;
+  background-repeat: no-repeat;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 88px;
+}
+.archive-row[data-active] {
+  background-color: color-mix(in srgb, var(--accent) 7%, var(--bg));
+  background-image: none;
+}
+.archive-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+}
+.archive-open > img {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  object-fit: cover;
+}
+.archive-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.archive-text strong {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.archive-eyebrow {
+  display: flex;
+  gap: 8px;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--muted);
+}
+.archive-eyebrow > span + span::before {
+  content: "·";
+  margin-right: 8px;
+}
+.archive-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.875rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.archive-row[data-active] .archive-meta {
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+.eq-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: live-pulse 2s ease-in-out infinite;
+}
+.episode-progress {
+  flex: 0 1 72px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+.episode-progress i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.archive-skeleton-art {
+  flex: none;
+  width: 64px;
+  height: 64px;
+}
+
+/* The play key on a row: an outlined circle, filled orange while its
+   episode plays. */
+.episode-key {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--control-border);
+  color: var(--text);
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+.episode-key .icon {
+  margin-left: 1px;
+}
+.episode-key[data-on] {
+  background: var(--action);
+  border-color: var(--action);
+  color: var(--action-ink);
+}
+.episode-key[data-on] .icon {
+  margin-left: 0;
+}
+.episode-key[data-busy] {
+  animation: busy-pulse 0.9s ease-in-out infinite alternate;
+}
+@media (hover: hover) {
+  .episode-key:not([data-on]):hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+}
+.episode-key:active {
+  transform: scale(0.94);
+}
+
+/* The episode sheet. */
+.episode-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.episode-cover {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.episode-hero .episode-title {
+  margin: 6px 0 6px;
+  font-size: 1.375rem;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+.episode-when {
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+}
+.episode-actions {
+  display: flex;
+  gap: 10px;
+  margin: 22px 0 6px;
+}
+.episode-actions .primary-button {
+  flex: 1;
+  min-height: 52px;
+  border-radius: 14px;
+  font-size: 1rem;
+}
+.episode-actions .primary-button[data-busy] {
+  animation: busy-pulse 0.9s ease-in-out infinite alternate;
+}
+.episode-actions .secondary-button {
+  min-height: 52px;
+  border-radius: 14px;
+  padding: 0 18px;
+}
+
+/* Position: back 15, elapsed, the slider, time left, ahead 30. */
+.episode-scrubber {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 4px;
+}
+.episode-scrubber .slim-range {
+  flex: 1;
+  width: auto;
+  min-width: 60px;
+}
+.scrub-time {
+  min-width: 3.4em;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  text-align: center;
+}
+.skip-key {
+  color: var(--text);
+}
+.skip-key:disabled {
+  opacity: 0.35;
+}
+
+/* The bar in episode mode. */
+.player-progress {
+  display: none;
+}
+.player-seek {
+  flex: 1;
+  min-width: 0;
+  max-width: 560px;
+  margin-inline: auto;
+}
+.player-seek .episode-scrubber {
+  margin: 0;
+}
+.player-bar[data-source="episode"] .player-now {
+  flex: 0 1 300px;
+}
+.player-bar[data-source="episode"] .player-utilities {
+  margin-left: 0;
+  padding-left: 8px;
+}
+.player-close {
+  flex-shrink: 0;
+}
+.live-badge[data-state="archive"] {
+  background: color-mix(in srgb, var(--muted) 16%, transparent);
+  color: var(--text);
+}
+.live-badge[data-state="archive"]::before {
+  content: none;
+}
+@media (max-width: 1100px) and (min-width: 768px) {
+  .player-bar[data-source="episode"] .player-volume input {
+    display: none;
+  }
+}
+@media (max-width: 767px) {
+  .archive-open > img,
+  .archive-skeleton-art {
+    width: 56px;
+    height: 56px;
+  }
+  .archive-open {
+    gap: 12px;
+  }
+  .archive-text strong {
+    font-size: 0.9375rem;
+  }
+  .episode-cover {
+    width: 96px;
+    height: 96px;
+  }
+  .episode-hero .episode-title {
+    font-size: 1.25rem;
+  }
+  /* The mini player: a thin progress line along its top edge instead of the
+     scrubber (which is in the episode's sheet, a tap away). */
+  .player-progress {
+    display: block;
+    position: absolute;
+    top: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--border);
+  }
+  .player-progress i {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+  }
+  .player-seek {
+    display: none;
+  }
+  .player-bar[data-source="episode"] .player-now {
+    flex: 1;
+  }
+  .player-close {
+    order: 1;
+    width: 40px;
+  }
+  /* Closing is offered once the episode is paused, never beside a playing
+     episode's pause key. */
+  .player-bar[data-playing] .player-close {
+    display: none;
+  }
+  .player-bar[data-source="episode"] .player-play {
+    order: 2;
+  }
+}
+
+/* Newsletter: the panel in Settings, and the invitation after concerts. */
+/* An outlined key with the envelope in the station's color: an
+   invitation, kept apart from orange Donate and Listen. */
+.newsletter-button {
+  margin-top: 4px;
+  gap: 10px;
+  font-weight: 650;
+}
+.newsletter-button > .icon:first-child {
+  color: var(--accent);
+}
+.newsletter-button > .icon:last-child {
+  color: var(--muted);
+}
+.newsletter-offer {
+  display: flex;
+  margin-top: 10px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+.newsletter-prompt {
+  margin-top: 24px;
+  padding-block: 12px;
+  text-decoration: none;
+  color: var(--text);
+}
+.newsletter-prompt > span {
+  display: grid;
+  gap: 2px;
+}
+.newsletter-prompt strong {
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+.newsletter-prompt small {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.newsletter-prompt > .icon:last-child {
+  color: var(--muted);
+}

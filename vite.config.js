@@ -18,8 +18,7 @@ function noSamples() {
     name: "wxpn-no-samples",
     enforce: "pre",
     resolveId: (source) => (/(^|\/)samples\.js$/.test(source) ? id : null),
-    load: (key) =>
-      key === id ? "export const SAMPLE_EPISODES = {}; export const SAMPLE_UPDATES = {};" : null,
+    load: (key) => (key === id ? "export const SAMPLE_UPDATES = {};" : null),
   };
 }
 
@@ -97,8 +96,8 @@ function contentSecurityPolicy(env) {
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' https: data: blob:",
           "font-src 'self'",
-          // Archive episodes play from wherever their podcast hosts them,
-          // often through a measurement redirect or two.
+          // Archive episodes stream from StreamGuys (or a podcast feed's
+          // host, often through a measurement redirect or two).
           "media-src 'self' https: blob:",
           `connect-src ${[...new Set(connect.filter(Boolean))].join(" ")}`,
           // The design preview shows the app in a frame of its own.
@@ -119,7 +118,7 @@ function contentSecurityPolicy(env) {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
-  // Sample episodes and updates: on in `npm run dev`, and in builds made with
+  // Sample content (see config.js): on in `npm run dev`, and in builds made with
   // VITE_SHOW_SAMPLES=true. Defined as a literal so production builds drop
   // every branch that uses them.
   const showSamples = mode === "development" || env.VITE_SHOW_SAMPLES === "true";

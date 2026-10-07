@@ -10,6 +10,7 @@
 //   1. UIBackgroundModes: audio in Info.plist
 //   2. AVAudioSession category .playback in AppDelegate
 
+import { Capacitor } from "@capacitor/core";
 import { MediaSession as NativeMediaSession } from "@capgo/capacitor-media-session";
 import { publicAsset } from "./assets.js";
 import { createPlayer, fadeLevel } from "./player-core.js";
@@ -78,6 +79,10 @@ const volumeStore = createLocalStore("xpn.volume", 70, (value) => {
 });
 export const subscribeVolume = volumeStore.subscribe;
 export const getVolume = volumeStore.getSnapshot;
+
+// iOS sets volume only with the device's buttons, so the app offers no
+// volume slider there.
+export const VOLUME_SETTABLE = Capacitor.getPlatform() !== "ios";
 
 // The alarm plays at its own volume without touching the listener's saved
 // one, which comes back as soon as playback stops.

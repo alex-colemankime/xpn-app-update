@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import { Capacitor } from "@capacitor/core";
 import { useFavoriteItems } from "../favorites.js";
+import { openPage } from "../links.js";
 import {
   notificationsAreNative,
   onNotification,
@@ -12,6 +12,7 @@ import { createLocalStore, useLocalStore } from "../storage.js";
 import { showToast } from "../toast.js";
 import { alertPlan } from "../updates.js";
 import { OFF_IN_SETTINGS, useReminderSettings } from "./useShowReminders.js";
+import { useEveryShow } from "./useEveryShow.js";
 
 // Notifications from the station that a listener has asked for in Settings:
 // live video (Free at Noon and other sessions) and member drives. Both are
@@ -48,20 +49,6 @@ export async function setAlert(topic, on) {
   return true;
 }
 
-// Open the station's page for a notice (the donate page in a drive) the way
-// a live video opens on iOS: in the phone's browser view, so giving happens
-// on xpn.org, never inside the app (App Review 3.2.2).
-function openPage(url) {
-  if (!url) return;
-  if (Capacitor.isNativePlatform()) {
-    import("@capacitor/browser")
-      .then(({ Browser }) => Browser.open({ url }))
-      .catch(() => window.open(url, "_blank", "noopener"));
-  } else {
-    window.open(url, "_blank", "noopener");
-  }
-}
-
 // `updates`: every update in the station's file (not only those showing
 // now). `onWatch(live)` opens a live video.
 export function useStationAlerts(updates, { onWatch }) {
@@ -76,34 +63,29 @@ export function useStationAlerts(updates, { onWatch }) {
     watch.current = onWatch;
   });
 
-  useEffect(() => {
+  useEveryShow(() => {
     if (!notificationsAreNative()) return;
-    const sync = () => {
-      const plan = alertPlan(updates, settings, {
-        remindedShows: reminded ? reminded.split(",") : [],
-      }).map(({ key, at, title, body, extra }) => ({
-        id: reminderId(`alert:${key}`, at),
-        at,
-        title,
-        body,
-        extra,
-      }));
-      syncNotifications("station-alert", plan)
-        .then((permission) => {
-          if ((settings.live || settings.drives) && permission === "denied") {
-            alertsStore.set({ live: false, drives: false });
-            showToast(OFF_IN_SETTINGS);
-          }
-        })
-        .catch(() => {});
-    };
-    sync();
-    const onVisible = () => document.visibilityState === "visible" && sync();
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+    const plan = alertPlan(updates, settings, {
+      remindedShows: reminded ? reminded.split(",") : [],
+    }).map(({ key, at, title, body, extra }) => ({
+      id: reminderId(`alert:${key}`, at),
+      at,
+      title,
+      body,
+      extra,
+    }));
+    syncNotifications("station-alert", plan)
+      .then((permission) => {
+        if ((settings.live || settings.drives) && permission === "denied") {
+          alertsStore.set({ live: false, drives: false });
+          showToast(OFF_IN_SETTINGS);
+        }
+      })
+      .catch(() => {});
   }, [updates, settings, reminded]);
 
-  // A tap opens what the notice is about: the video, or the station's page.
+  // A tap opens what the notice is about: the video, or the station's page
+  // (the donate page in a drive).
   useEffect(
     () =>
       onNotification("station-alert", (extra) => {

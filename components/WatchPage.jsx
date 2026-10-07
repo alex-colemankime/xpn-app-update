@@ -4,8 +4,7 @@ import { SaveButton } from "./MusicRows.jsx";
 import { Toast, modalClosed, modalOpened } from "./Toast.jsx";
 import { SHOWS } from "../catalog.js";
 import { STATION_ART } from "../assets.js";
-import { clockTime, lengthLabel } from "../archive.js";
-import { localWhen } from "../time.js";
+import { clockTime, lengthLabel, localWhen, mediumDay } from "../time.js";
 import { fetchVideo, findVideo, playerUrl, savedVideoItem, useVideos } from "../videos.js";
 import { youTubeEmbed } from "../updates.js";
 
@@ -17,11 +16,6 @@ import { youTubeEmbed } from "../updates.js";
 // A station video comes by Brightcove id (`videoId`); a live video (Free at
 // Noon) comes as the station update itself (`live`).
 
-const LONG_DAY = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
 const UP_NEXT = 12;
 
 // Who a video is from: the show it is tagged with, else the station.
@@ -81,12 +75,7 @@ function NextCard({ video, onPick }) {
       <span className="next-text">
         <strong>{video.name.replace(/\s*\|\s*/g, " · ")}</strong>
         <small>
-          {[
-            video.published && LONG_DAY.format(new Date(video.published)),
-            lengthLabel(video.duration),
-          ]
-            .filter(Boolean)
-            .join(" · ")}
+          {[mediumDay(video.published), lengthLabel(video.duration)].filter(Boolean).join(" · ")}
         </small>
       </span>
     </button>
@@ -136,9 +125,7 @@ export function WatchPage({ videoId, live, onPick, onClose }) {
   const src = video ? playerUrl(video.id) : live ? youTubeEmbed(live.watch) : null;
   const title = video ? video.name.replace(/\s*\|\s*/g, " · ") : live?.title || "";
   const meta = video
-    ? [video.published && LONG_DAY.format(new Date(video.published)), lengthLabel(video.duration)]
-        .filter(Boolean)
-        .join(" · ")
+    ? [mediumDay(video.published), lengthLabel(video.duration)].filter(Boolean).join(" · ")
     : live
       ? live.state === "live"
         ? "Live now"

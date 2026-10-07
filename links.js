@@ -1,3 +1,5 @@
+import { Capacitor } from "@capacitor/core";
+
 // Every xpn.org address the app links to, in one place.
 export const DONATE_URL = "https://xpn.org/donate/";
 export const PLAYLIST_URL = "https://xpn.org/wxpn-playlists/";
@@ -13,8 +15,15 @@ export const STATION_EMAIL = "wxpndesk@xpn.org";
 export const ENEWS_URL = "https://xpn.org/enews/";
 export const TOP_STORIES_URL = "https://xpn.org/signup-xpn-top-stories/";
 
-// Show pages that exist on xpn.org. Other shows have no page of their own.
-export const SHOW_PAGES = {
-  freeatnoon: "https://xpn.org/free-at-noon/",
-  worldcafe: "https://xpn.org/program/world-cafe/",
-};
+// Opens a web page beside the app: in the phone apps, in the system browser
+// view over the app (so giving happens on xpn.org, never inside the app, as
+// App Review 3.2.2 asks); in a browser, in a new tab.
+export function openPage(url) {
+  if (!url) return;
+  const newTab = () => window.open(url, "_blank", "noopener");
+  if (Capacitor.isNativePlatform()) {
+    import("@capacitor/browser").then(({ Browser }) => Browser.open({ url })).catch(newTab);
+  } else {
+    newTab();
+  }
+}

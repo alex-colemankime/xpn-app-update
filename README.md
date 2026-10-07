@@ -1,6 +1,6 @@
 # WXPN app
 
-A radio-first app for WXPN 88.5 FM, XPN2 and Homegrown: listen live, see what's playing, save songs, follow shows and get reminded when they start, wake up to the station, and find concerts. React + Vite on the web, packaged for iOS and Android with Capacitor.
+A radio-first app for WXPN 88.5 FM, XPN2 and Homegrown: listen live, see what's playing, save songs, follow shows and get reminded when they start, play archived broadcasts, watch the station's videos, wake up to the station, and find concerts. React + Vite on the web, packaged for iOS and Android with Capacitor.
 
 ## Run
 
@@ -43,7 +43,7 @@ Build-time settings are Vite env variables, set in the shell or a `.env.local` f
 | `VITE_APPLE_MUSIC_TOKEN_URL` | Turns on the Apple Music playlist: an endpoint returning `{ "token": "…" }`, a MusicKit developer token. (`VITE_APPLE_MUSIC_DEVELOPER_TOKEN` takes a token directly.)                                                                                          |
 | `VITE_SITE_URL`              | The address the build is served from. Adds the share image and link-preview tags (the Pages workflow sets it to the preview's address).                                                                                                                        |
 | `VITE_DEVICE_PREVIEW=true`   | The shared design preview: on a computer, the page opens the app in a phone, tablet or laptop frame with buttons to switch (`?device=tablet`, keys 1–3). Phones and tablets get the app itself. **Never for a store build.**                                   |
-| `VITE_SHOW_SAMPLES=true`     | Placeholder episodes and sample station updates in a production build. Always on in `npm run dev`; set for the Pages preview; **never for a store build.**                                                                                                     |
+| `VITE_SHOW_SAMPLES=true`     | Sample station updates (a member drive banner and a live video) in a production build. Always on in `npm run dev`; set for the Pages preview; **never for a store build.**                                                                                     |
 
 ## Station updates
 
@@ -103,8 +103,8 @@ Use Node 22 or newer (`.nvmrc` pins 24, as CI does).
    - A notification cannot start audio by itself on either platform: the alarm notification wakes the listener, and tapping it starts the station.
 6. **Spotify sign-in return** (only with playlist sync): register the URL scheme `org.xpn.wxpn` (iOS: Info › URL Types; Android: an intent filter with `android:scheme="org.xpn.wxpn"` on the main activity). `@capacitor/app` delivers the return trip and `@capacitor/browser` shows the sign-in page.
 7. **Calendar** (adding saved concerts): `@ebarooni/capacitor-calendar` opens the system's New Event sheet. iOS needs `NSCalendarsWriteOnlyAccessUsageDescription` (and `NSCalendarsUsageDescription` for iOS 16) in Info.plist, for example "WXPN adds the concerts you choose to your calendar." Android needs `WRITE_CALENDAR` in the manifest.
-8. **Store requirements in 2026:** App Store uploads must be built with Xcode 26 and the iOS 26 SDK (since April 28, 2026). Google Play requires new apps and updates to target Android 16 (API 36) from August 31, 2026; Capacitor 8 targets it. Android 15+ draws apps edge to edge with no opt-out; the CSS reads Capacitor's `--safe-area-inset-*` values for that (see `global.css`).
-9. **Video on iOS:** YouTube refuses embedded players that can't send a web referrer, which an iOS app (`capacitor://localhost`) can't, so on iOS a station video opens in the in-app browser instead of the sheet.
+8. **Store requirements in 2026:** App Store uploads must be built with Xcode 26 and the iOS 26 SDK (since April 28, 2026). Google Play requires new apps and updates to target Android 16 (API 36) from August 31, 2026; Capacitor 8 targets it. Android 15+ draws apps edge to edge with no opt-out; the CSS reads Capacitor's `--safe-area-inset-*` values for that (see `styles/base.css`).
+9. **Video on iOS:** YouTube refuses embedded players that can't send a web referrer, which an iOS app (`capacitor://localhost`) can't, so on iOS a live YouTube video (Free at Noon) opens in the in-app browser instead of the watch page. Brightcove videos play in the app everywhere.
 10. **Status bar**: `@capacitor/status-bar` switches the status bar text between light and dark with the app's theme, so it stays readable when the app and phone themes differ. No setup needed.
 11. After any web change: `npm run cap:sync`, then build from Xcode / Android Studio.
 
@@ -120,9 +120,9 @@ The Android back button steps back through screens and closes the show sheet, be
 - **Concerts** (`concerts.js`): xpn.org's own calendar (The Events Calendar's REST API), the next year of shows, all pages. Regions, WXPN Welcomes and Free at Noon come from its categories; ages from its age field, fetched only for shows on screen. Filters match the website: tonight, this weekend, next 7 days, by region, WXPN Welcomes, Free at Noon, saved. A failing calendar shows an error, never invented events. Saved concerts keep their details, so they stay in Favorites while the calendar is down.
 - **Favorites, appearance, volume** (`favorites.js`, `storage.js`): stored on the device under the original `xpn.*` keys, so they carry over from earlier versions. Removing a favorite offers Undo, which puts it back in its old place; the first save says where saved things go. A saved heart takes its color from the item's artwork (`art-tint.js`), adjusted per theme to keep 3:1 contrast; show tints are stored in `shows.json`, song tints are read from the album art (Spotify's image CDN allows it), and art with no vivid color keeps the accent. Everything read back is repaired or dropped if damaged, so bad stored data cannot break a screen. Song ids keep letters from every script.
 - **Radio alarm** (`alarm.js`, `hooks/useRadioAlarm.js`): in the native apps a week of alarms is scheduled as notifications, so it works with the app closed; tapping it starts the wake-up station. In a browser it only plays while the page is open and the device awake.
-- **Notifications** (`notifications.js`): shared by reminders and the alarm. Each sync replaces that feature's pending notifications as the phone reports them, one sync at a time; if notifications are turned off in the phone's Settings, the feature turns itself off and says why.
-- **Performance**: the React Compiler (`babel-plugin-react-compiler`, set up in `vite.config.js`) memoizes components automatically. Screens not in front are kept in a React `Activity` set to hidden, so they keep their state but stop their effects and subscriptions. Concerts, Settings, the welcome and the video sheet load separately from the first download. Long lists skip off-screen rows (`content-visibility`). The app's network requests time out after 10 seconds.
-- **Security**: production builds carry a Content Security Policy (added by `vite.config.js`): scripts only from the app and Apple's MusicKit, network only to WXPN's feeds, Spotify, Apple Music and the configured update and token URLs. If you add a service, add its address there. Sample content isn't included in production builds at all.
+- **Notifications** (`notifications.js`): shared by reminders, the alarm and the station's notifications. Each sync replaces that feature's pending notifications as the phone reports them, one sync at a time; if notifications are turned off in the phone's Settings, the feature turns itself off and says why.
+- **Performance**: the React Compiler (`babel-plugin-react-compiler`, set up in `vite.config.js`) memoizes components automatically. Screens not in front are kept in a React `Activity` set to hidden, so they keep their state but stop their effects and subscriptions. Concerts, Videos, Settings, the welcome and the watch page load separately from the first download. Long lists skip off-screen rows (`content-visibility`). The app's network requests time out after 10 seconds.
+- **Security**: production builds carry a Content Security Policy (added by `vite.config.js`): scripts only from the app and Apple's MusicKit, network only to WXPN's feeds, Brightcove, Spotify, Apple Music and the configured update and token URLs; video frames only from Brightcove and YouTube. If you add a service, add its address there. Sample content isn't included in production builds at all.
 - **Interface**: screens cross-fade (View Transitions) and the show sheet slides in, as a bottom sheet on phones; both are skipped under reduced motion. Space plays and pauses unless focus is on a control. Layout respects the notch and rounded corners in the native apps, and there are high-contrast and forced-colors adaptations.
 - **First launch** (`components/Welcome.jsx`): follow a few shows, turn on reminders for them, then connect Spotify or Apple Music so hearted songs build a playlist. Steps with nothing to offer are left out (no reminders without a followed show, no playlist step when no service is configured). Closing it any way counts as done (`xpn.onboarded`), and it never covers a shared show link.
 - **Show reminders** (`reminders.js`, `hooks/useShowReminders.js`): reminders for followed shows, at the start or 5 or 15 minutes before, set in Settings or offered in the show sheet right after following. In the native apps they are local notifications for the coming week, rescheduled whenever follows or settings change and each time the app returns to the foreground; iOS allows 64 pending, so at most 48 are scheduled. Tapping one opens Listen and starts WXPN. Permission is only asked when the listener turns reminders on. In a browser, a reminder appears in the app (with a Listen button) while it is open. Times are Eastern and handle daylight-saving changes.
@@ -133,46 +133,60 @@ The Android back button steps back through screens and closes the show sheet, be
 ## Layout
 
 ```
-App.jsx            app shell: layout, navigation, show sheet
-screens/           one file per screen
-components/        player bar, rows and cards shared by screens
-hooks/             player, route, alarm, reminders, concerts, appearance, clock
-player-core.js     playback state machine (no browser or framework imports)
-player.js          wires the core to <audio>, media session and React
-playback-text.js   every word the player shows
-streams.js         the station's stream URLs (with backups) and lettering
-art-tint.js        heart colors from artwork
-calendar.js        saved concerts into the listener's calendar
-nowplaying.js      playlist feed, freshness
-concerts.js        concert calendar (xpn.org)
-updates.js         station updates: format, timing, YouTube links
-playlist-sync.js   keeping the saved-songs playlist in step
-music-services.js  Spotify and Apple Music
-samples.js         placeholder episodes and updates (dev and preview only)
-tools/             updates-composer.html, for writing station updates
-catalog.js         show directory and schedule, from shows.json
-schedule.js        what is on air, next airings, air-time wording
-favorites.js       saved songs, shows, episodes and concerts
-alarm.js           alarm settings, "should it ring", the native alarm plan
-reminders.js       which show reminders to schedule, and their text
-notifications.js   the phone's notifications, for reminders and the alarm
-links.js           every xpn.org address the app uses
-storage.js         small stores, in memory or on the device
-time.js            Eastern and local time helpers
-config.js          build-time switches
-tests/             node:test suites, importing the real modules
-brand/             logo source files (not shipped with the app)
+main.jsx             entry: error boundary, design preview frame
+App.jsx              app shell: screens, banners, show page, watch page
+screens/             one file per tab
+components/          everything shared or split out of a screen: navigation,
+                     player bar, rows and cards, show page, watch page,
+                     sleep timer, settings panels
+hooks/               player, route, alarm, reminders, station updates and
+                     alerts, watching, concerts, appearance, clock
+player-core.js       playback state machine (no browser or framework imports)
+player.js            wires the core to <audio>, media session and React
+episode-core.js      archive episode playback state (no browser imports)
+episode-player.js    wires it to its own <audio> and the lock screen
+playback-text.js     every word the player shows
+streams.js           the station's stream URLs (with backups) and lettering
+nowplaying.js        playlist feed, freshness
+catalog.js           show directory and schedule, from shows.json
+schedule.js          what is on air, next airings, air-time wording
+archive.js           archived broadcasts, read from xpn.org's show pages
+videos.js            Brightcove playlists, for Videos and show pages
+concerts.js          concert calendar (xpn.org)
+calendar.js          saved concerts into the listener's calendar
+updates.js           station updates: format, timing, notifications, YouTube
+favorites.js         saved songs, shows, episodes, videos and concerts
+art-tint.js          heart colors from artwork
+playlist-sync.js     keeping the saved-songs playlist in step
+music-services.js    Spotify and Apple Music
+alarm.js             alarm settings, "should it ring", the native alarm plan
+reminders.js         which show reminders to schedule, and their text
+notifications.js     the phone's notifications, for every feature that uses them
+links.js             every xpn.org address the app uses, and opening pages
+text.js              feed text: entities, plain text, one-line titles, safe URLs
+time.js              Eastern and local time, dates, lengths
+net.js               fetch with a timeout
+storage.js           small stores, in memory or on the device
+toast.js, haptics.js notices and taps
+samples.js           a sample station update (dev and preview only)
+config.js            build-time switches
+assets.js            files in public/, at the deploy base
+preview-shell.js     the phone, tablet and laptop frame of the shared preview
+global.css           imports every style sheet in styles/, in cascade order
+styles/              tokens and shell first, then each screen and feature
+tools/               updates-composer.html, for writing station updates
+design/screens/      the screens page (every screen, light and dark)
+tests/               node:test suites, importing the real modules
+brand/               logo source files (not shipped with the app)
 ```
 
 ## Known gaps before a store release
 
-- **Real content feeds.** Episodes and concerts are placeholders until feeds exist; production builds hide them (see Configuration).
 - **iOS/Android device testing**, especially background audio, lock-screen controls and song updates while locked, interruptions such as phone calls, the Android back button, and notifications (reminders and the alarm arriving with the app closed, tapping one to start the stream).
 - **Larger text on iPhone:** browser zoom and Android's font size scale the app, but iOS's Text Size setting does not reach a web view. Adding `@capacitor/text-zoom` and applying its preferred zoom at launch would cover it.
 - **Station updates hosting:** choose where `updates.json` lives and who edits it.
 - **Playlist sync accounts:** a Spotify app (with extended quota) and an Apple Music developer token.
 - **Crash and usage reporting** are not wired up.
-- **A Content-Security-Policy** should be added once the final feed domains are known.
 
 ## Design basis
 

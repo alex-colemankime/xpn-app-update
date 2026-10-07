@@ -36,21 +36,13 @@
 // Times are ISO 8601 with an offset. Anything malformed is ignored rather
 // than shown half-broken. Everything here is pure, so it can be tested.
 
+import { oneLine, plainText, webUrl } from "./text.js";
+
 export const LIVE_ANNOUNCE_MINUTES = 120; // a live video is announced this long before it starts
 export const LIVE_ALERT_MINUTES = 10; // and notified this long before, to those who asked
 const MAX_NOTICES = 6; // per banner
 
-const text = (value, max = 280) =>
-  typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, max) : "";
-
-const web = (value) => {
-  try {
-    const url = new URL(String(value || ""));
-    return url.protocol === "https:" ? url.href : "";
-  } catch {
-    return "";
-  }
-};
+const text = (value, max = 280) => (typeof value === "string" ? oneLine(value, max) : "");
 
 const time = (value) => {
   if (value == null || value === "") return null;
@@ -59,7 +51,7 @@ const time = (value) => {
 };
 
 // One update in the app's shape, or null if it is unusable.
-export function normalizeUpdate(raw) {
+function normalizeUpdate(raw) {
   if (!raw || typeof raw !== "object") return null;
   const id = text(raw.id, 80);
   const kind = raw.kind === "live" ? "live" : raw.kind === "banner" ? "banner" : null;
@@ -70,7 +62,7 @@ export function normalizeUpdate(raw) {
     const message = text(raw.text);
     if (!message) return null;
     const label = text(raw.action?.label, 24);
-    const url = web(raw.action?.url);
+    const url = webUrl(raw.action?.url);
     return {
       id,
       kind,
@@ -86,7 +78,7 @@ export function normalizeUpdate(raw) {
     };
   }
   const title = text(raw.title, 120);
-  const watch = web(raw.watch);
+  const watch = webUrl(raw.watch);
   if (!title || !watch || starts === null) return null; // a live video needs a start time
   return {
     id,
@@ -94,7 +86,7 @@ export function normalizeUpdate(raw) {
     title,
     text: text(raw.text, 160),
     watch,
-    image: web(raw.image),
+    image: webUrl(raw.image),
     show: text(raw.show, 40),
     starts,
     ends: ends ?? starts + 60 * 60000,
@@ -137,7 +129,7 @@ export function activeUpdates(updates, now = Date.now()) {
 //   - a member drive banner, at each time in its "notify" list.
 // Only what is still ahead and within `days`, soonest first. A phone learns
 // of a new notice when the app next opens, so the station posts them ahead.
-export const MAX_ALERTS = 12;
+const MAX_ALERTS = 12;
 export function alertPlan(
   updates,
   { live = false, drives = false } = {},
@@ -205,20 +197,6 @@ export function youTubeEmbed(url) {
 // to be last week's, and offers nothing.
 const WEEK_MS = 7 * 24 * 3600000;
 
-// A numeric entity's character; an out-of-range one (&#99999999;) is dropped
-// rather than throwing.
-const codePoint = (n) =>
-  Number.isInteger(n) && n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : "";
-const decodeEntities = (html) =>
-  String(html || "")
-    .replace(/<[^>]*>/g, "")
-    .replace(/&#(\d+);/g, (_, n) => codePoint(Number(n)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, n) => codePoint(parseInt(n, 16)))
-    .replace(
-      /&(amp|quot|apos|lt|gt|nbsp);/g,
-      (_, e) => ({ amp: "&", quot: '"', apos: "'", lt: "<", gt: ">", nbsp: " " })[e],
-    );
-
 export function livestreamUpdate(page, airing) {
   const entry = Array.isArray(page) ? page[0] : page;
   const html = entry?.content?.rendered;
@@ -228,12 +206,9 @@ export function livestreamUpdate(page, airing) {
   const video = /youtube(?:-nocookie)?\.com\/embed\/([\w-]{6,20})/.exec(html)?.[1];
   if (!video || video === "live_stream") return null;
   // "Free At Noon livestream: Mikaela Davis" -> the artist.
-  const frameTitle = decodeEntities(/<iframe[^>]*\btitle="([^"]*)"/i.exec(html)?.[1]);
+  const frameTitle = plainText(/<iframe[^>]*\btitle="([^"]*)"/i.exec(html)?.[1]);
   const artist = text(/livestream:\s*(.+)$/i.exec(frameTitle)?.[1], 80);
-  const pageTitle = text(
-    decodeEntities(entry.title?.rendered).replace(/^watch live:\s*/i, ""),
-    120,
-  );
+  const pageTitle = text(plainText(entry.title?.rendered).replace(/^watch live:\s*/i, ""), 120);
   return normalizeUpdate({
     id: `livestream-${video}`,
     kind: "live",

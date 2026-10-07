@@ -21,6 +21,8 @@ export default [
     },
     rules: {
       "no-unused-vars": ["error", { argsIgnorePattern: "^_", caughtErrors: "none" }],
+      // useEveryShow takes deps like useEffect; check them the same way.
+      "react-hooks/exhaustive-deps": ["warn", { additionalHooks: "^useEveryShow$" }],
     },
   },
   {

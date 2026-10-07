@@ -15,7 +15,7 @@ export const notificationsAreNative = () => Capacitor.isNativePlatform();
 
 // "granted", "denied" or "prompt". The web reports "granted": nothing is
 // scheduled there, and in-app messages need no permission.
-export async function notificationPermission() {
+async function notificationPermission() {
   if (!notificationsAreNative()) return "granted";
   try {
     const { display } = await LocalNotifications.checkPermissions();

@@ -155,7 +155,6 @@ export function Segmented({
             onClick={() => onChange(o.value)}
           >
             {o.label}
-            {o.count !== undefined && <span className="tab-count">{o.count}</span>}
           </button>
         );
       })}
@@ -246,5 +245,23 @@ export function ChoiceSetting({ label, value, onChange, options, disabled = fals
         disabled={disabled}
       />
     </div>
+  );
+}
+
+// An on/off switch. `label` names it, or `labelledBy` and `describedBy` point
+// at the words beside it.
+export function Switch({ on, onChange, label, labelledBy, describedBy }) {
+  return (
+    <button
+      className={`switch ${on ? "checked" : ""}`}
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      aria-labelledby={labelledBy}
+      aria-describedby={describedBy}
+      onClick={() => onChange(!on)}
+    >
+      <span />
+    </button>
   );
 }

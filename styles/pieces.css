@@ -1,0 +1,54 @@
+/* ---------------------------------------------------------------------------
+   Small pieces
+   ------------------------------------------------------------------------ */
+
+/* A sheet's title takes focus when it opens (for screen readers) but is not
+   a control, so it shows no ring. */
+.dialog-title:focus {
+  outline: none;
+}
+.show-times {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.expand-chevron {
+  display: inline-flex;
+  transition: rotate 0.2s ease-out;
+}
+.expand-chevron.up {
+  rotate: 180deg;
+}
+.appearance-settings .segmented {
+  display: grid;
+  width: 100%;
+  max-width: 440px;
+  margin-top: 12px;
+}
+/* The status line keeps its height, so messages come and go without the
+   page jumping. */
+.now-status:empty::before {
+  content: "\00a0";
+}
+
+.reminder-offer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--row-alt);
+  font-size: 0.875rem;
+}
+.reminder-offer > span:not(.icon) {
+  flex: 1;
+  min-width: 12em;
+}
+.reminder-offer .icon {
+  color: var(--accent);
+}

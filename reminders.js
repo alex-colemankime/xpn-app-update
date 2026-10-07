@@ -21,7 +21,7 @@ export function reminderId(showId, startsAt) {
   return (h >>> 1) | 0x10000;
 }
 
-export function reminderText(show, leadMinutes) {
+function reminderText(show, leadMinutes) {
   return {
     title: leadMinutes ? `${show.name} starts in ${leadMinutes} minutes` : `${show.name} is on now`,
     body: `${show.host ? `${show.host} on ` : "On "}WXPN 88.5. Tap to listen.`,

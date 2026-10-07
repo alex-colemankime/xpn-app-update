@@ -1,0 +1,179 @@
+/* ---------------------------------------------------------------------------
+   Foundations: safe areas, the color and spacing tokens for both themes,
+   and the defaults for plain elements.
+   ------------------------------------------------------------------------ */
+
+/* Safe areas: Capacitor 8 sets --safe-area-inset-* on Android, where apps
+   now draw edge to edge (required from Android 15/16) and the web view's own
+   env() values can be 0; iOS and browsers fall back to env(). */
+
+/* Shared semantic colors keep every screen and native control theme-aware. */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #faf8f3;
+  --surface: #f2efe7;
+  --text: #211f1c;
+  --muted: #64605a;
+  --border: #ded9cf;
+  --control-border: #8e897f;
+  --accent: #b83d1c;
+  /* The accent as text on an accent-tinted fill (a chosen key, the LIVE
+     tag), a step darker so it keeps 4.5:1 there. */
+  --accent-strong: #983012;
+  --action: #ef7149;
+  --action-ink: #241710;
+  --row-alt: #eeeae1;
+  /* A control raised above its track (the chosen station). */
+  --raised: #fffdf8;
+  /* Notices: the page's colors turned around. */
+  --inverse-bg: #2a2724;
+  --inverse-text: #f6f2ea;
+  --inverse-accent: #ff9875;
+  /* The lighter "w" in the wordmark. */
+  --brand-w: #f2b28f;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #202224;
+  --surface: #292c2f;
+  --text: #eeede8;
+  --muted: #b6b7b3;
+  --border: #44484a;
+  --control-border: #797b7c;
+  --accent: #ff9875;
+  --accent-strong: #ffa585;
+  --action: #ef7149;
+  --action-ink: #241710;
+  --row-alt: #2b2e30;
+  --raised: #32363a;
+  --inverse-bg: #f3f1eb;
+  --inverse-text: #211f1c;
+  --inverse-accent: #b83d1c;
+  --brand-w: #bf917c;
+}
+
+:root {
+  font-family:
+    "Figtree Variable",
+    "Figtree",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  /* Layout: the desktop player bar, and on phones the tab bar and the mini
+     player that sits on it. */
+  --player-h: 4.75rem;
+  --sidebar-w: 232px;
+  --tabbar-h: 4.1875rem;
+  --mini-h: 4.75rem;
+  --page-gutter: clamp(28px, 3.5vw, 56px);
+  /* Stacking, lowest to highest. */
+  --z-sidebar: 20;
+  --z-banner: 25;
+  --z-bars: 30;
+  --z-toast: 90;
+  --z-skip: 100;
+}
+* {
+  box-sizing: border-box;
+}
+html {
+  /* No layout jump when a screen gains or loses a scrollbar. */
+  scrollbar-gutter: stable;
+  scroll-padding-block: 24px
+    calc(var(--player-h) + 24px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+  /* Stop iOS enlarging text on rotation. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  font-size: 1rem;
+  -webkit-font-smoothing: antialiased;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  -webkit-user-select: none;
+  user-select: none;
+}
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 0.18s,
+    color 0.18s,
+    border-color 0.18s,
+    opacity 0.18s,
+    transform 0.12s;
+  touch-action: manipulation;
+}
+/* A long press on a control should not start a text selection. */
+button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+summary:focus-visible,
+[tabindex="0"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+img {
+  max-width: 100%;
+  display: block;
+}
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+.skip-link {
+  position: fixed;
+  left: 15px;
+  top: -100px;
+  z-index: var(--z-skip);
+  background: var(--action);
+  color: var(--action-ink);
+  padding: 15px;
+  border-radius: 5px;
+}
+.skip-link:focus {
+  top: 15px;
+}

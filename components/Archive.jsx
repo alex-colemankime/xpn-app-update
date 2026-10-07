@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Art, Empty, Icon } from "../ui.jsx";
 import { SaveButton } from "./MusicRows.jsx";
 import { SHOWS } from "../catalog.js";
-import { clockTime, lengthLabel, loadArchive, useArchive } from "../archive.js";
+import { loadArchive, useArchive } from "../archive.js";
+import { clockTime, lengthLabel, shortDay } from "../time.js";
 import { SKIP_AHEAD_S, SKIP_BACK_S } from "../episode-core.js";
 import {
   playEpisode,
@@ -13,23 +14,12 @@ import {
   useEpisodeProgress,
 } from "../episode-player.js";
 
-// "Oct 2", or "Oct 2, 2025" when it isn't this year.
-const DAY = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
-const DAY_YEAR = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
-export const episodeDay = (iso) => {
-  const d = new Date(iso);
-  return d.getFullYear() === new Date().getFullYear() ? DAY.format(d) : DAY_YEAR.format(d);
-};
 const showName = (episode) => episode.showName || SHOWS[episode.show]?.name || "WXPN";
 const showArt = (episode) => episode.image || episode.img || SHOWS[episode.show]?.img;
 
 // What a saved episode needs to be shown and played from Favorites, even
 // after it has left the feed.
-export const savedEpisodeItem = (episode) => ({
+const savedEpisodeItem = (episode) => ({
   id: episode.id,
   show: episode.show,
   showId: episode.show,
@@ -74,13 +64,13 @@ function rowMeta(episode, { ended, started, position, duration }) {
     : started && duration
       ? `${lengthLabel(duration - position)} left`
       : lengthLabel(duration) || episode.aired;
-  return [episode.feature, !episode.aired && episodeDay(episode.date), time]
+  return [episode.feature, !episode.aired && shortDay(episode.date), time]
     .filter(Boolean)
     .join(" · ");
 }
 
 // The round play key on an episode row.
-export function EpisodePlayKey({ episode }) {
+function EpisodePlayKey({ episode }) {
   const s = useEpisodeState(episode);
   const verb = s.playing || s.busy ? "Pause" : s.started && !s.ended ? "Resume" : "Play";
   const label = `${verb} ${showName(episode)}, ${episode.title}`;
@@ -171,8 +161,7 @@ export function ArchiveList({ query, onOpen, onOpenShow, onClearQuery }) {
   const q = query.trim().toLowerCase();
   const list = archive.episodes.filter(
     (e) =>
-      !q ||
-      `${e.title} ${e.feature} ${showName(e)} ${episodeDay(e.date)}`.toLowerCase().includes(q),
+      !q || `${e.title} ${e.feature} ${showName(e)} ${shortDay(e.date)}`.toLowerCase().includes(q),
   );
   if (!archive.episodes.length) {
     if (archive.source === "loading") return <SkeletonEpisodes />;
@@ -311,7 +300,7 @@ export function EpisodeDetail({ episode, show, onBack }) {
         <Art className="episode-cover" src={showArt(episode) || show.img} alt="" />
         <div>
           <span className="eyebrow episode-when">
-            {[episode.aired || episodeDay(episode.date), lengthLabel(s.duration)]
+            {[episode.aired || shortDay(episode.date), lengthLabel(s.duration)]
               .filter(Boolean)
               .join(" · ")}
           </span>

@@ -1,6 +1,6 @@
 import { CONCERTS_ENDPOINT } from "./config.js";
 import { withTimeout } from "./net.js";
-import { decodeFeedText } from "./feed-text.js";
+import { plainText, webUrl } from "./text.js";
 import { shiftDate } from "./time.js";
 
 // Feeds report local Eastern datetimes ("2026-06-12 20:00:00"). Parsing
@@ -26,26 +26,6 @@ export function isoDate(value) {
 
 // Today in the station's zone, as YYYY-MM-DD.
 export const easternToday = (now = new Date()) => easternDate.format(now);
-
-// WordPress titles arrive as HTML: tags are stripped first, then entities
-// decoded, so a decoded "<" can never be mistaken for markup.
-
-export function plainText(value) {
-  return decodeFeedText(String(value ?? "").replace(/<[^>]*>/g, ""))
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-// Only web links become ticket buttons; anything else (javascript:, data:,
-// relative paths from a misconfigured feed) is dropped at the source.
-export function safeUrl(value) {
-  try {
-    const url = new URL(String(value ?? "").trim());
-    return url.protocol === "https:" || url.protocol === "http:" ? url.href : "";
-  } catch {
-    return "";
-  }
-}
 
 // The station's calendar is The Events Calendar on xpn.org. Its categories
 // carry the regions plus two special ones; one parent category is internal.
@@ -86,9 +66,9 @@ export function normalizeEvent(event) {
     freeAtNoon: ids.includes(CATEGORY.freeAtNoon),
     // Tickets: the event's own link (venue or ticket seller); its xpn.org page
     // is kept separately.
-    ticketUrl: safeUrl(event.website || event.ticket_url || event.acf?.ticket_url),
-    pageUrl: safeUrl(event.url),
-    image: safeUrl(event.image?.url),
+    ticketUrl: webUrl(event.website || event.ticket_url || event.acf?.ticket_url, { http: true }),
+    pageUrl: webUrl(event.url, { http: true }),
+    image: webUrl(event.image?.url, { http: true }),
     hidden: Boolean(event.hide_from_listings),
   };
 }
@@ -239,7 +219,7 @@ export function subscribeAges(listener) {
 //   words    search words, each found in artist, venue or city
 //   when     "all", "today", "weekend" (Friday to Sunday) or "week"
 //   regions  region names; tags  "welcomes", "fan" (Free at Noon), "saved"
-export function inRange(date, when, today) {
+function inRange(date, when, today) {
   if (when === "today") return date === today;
   if (when === "week") return date >= today && date <= shiftDate(today, 6);
   if (when === "weekend") {

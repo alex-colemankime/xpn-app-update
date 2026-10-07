@@ -1,0 +1,113 @@
+/* ---------------------------------------------------------------------------
+   The ringing alarm.
+   ------------------------------------------------------------------------ */
+
+/* The wake-up alarm: the one moment the app must be impossible to miss. */
+.alarm-banner {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-banner);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 24px;
+  /* The station's orange in both themes, with near-black lettering: every
+     word on it is dark, so nothing on the band is orange-on-orange. */
+  background: var(--action);
+  color: var(--action-ink);
+  padding: 16px max(var(--page-gutter), var(--safe-area-inset-right, env(safe-area-inset-right)))
+    16px max(var(--page-gutter), var(--safe-area-inset-left, env(safe-area-inset-left)));
+}
+.alarm-banner-title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 12ch;
+}
+.alarm-banner-title strong {
+  display: block;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.alarm-banner-title small {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
+}
+/* The bell sits in a dark disc and rings. */
+.alarm-bell {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--action-ink);
+  color: #fff;
+}
+.alarm-bell .icon {
+  transform-origin: 50% 15%;
+  animation: alarm-ring 1.2s ease-in-out infinite;
+}
+@keyframes alarm-ring {
+  0%,
+  50%,
+  100% {
+    rotate: 0deg;
+  }
+  10%,
+  30% {
+    rotate: 14deg;
+  }
+  20%,
+  40% {
+    rotate: -14deg;
+  }
+}
+.alarm-banner-actions {
+  display: flex;
+  gap: 10px;
+}
+.alarm-banner button {
+  min-height: 46px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+/* Snooze is the big, easy target: white on near-black. */
+.alarm-banner .alarm-snooze {
+  background: var(--action-ink);
+  color: #fff;
+}
+.alarm-banner .alarm-dismiss {
+  border: 1.5px solid var(--action-ink);
+  color: var(--action-ink);
+}
+@media (hover: hover) {
+  .alarm-banner .alarm-snooze:hover {
+    background: #000;
+  }
+  .alarm-banner .alarm-dismiss:hover {
+    background: rgb(36 23 16 / 0.1);
+  }
+}
+@media (max-width: 767px) {
+  /* Label on its own line, then two equal thumb-sized actions. */
+  .alarm-banner {
+    padding-block: 14px 16px;
+    padding-inline: max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+  }
+  .alarm-banner-title,
+  .alarm-banner-actions {
+    flex-basis: 100%;
+  }
+  .alarm-banner-actions > button {
+    flex: 1;
+    min-height: 50px;
+  }
+}

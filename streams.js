@@ -40,3 +40,6 @@ export const STREAMS = {
 };
 
 export const STREAM_IDS = Object.keys(STREAMS);
+
+// The stations as a choice (the station tabs, the alarm's Wake up to).
+export const STATION_OPTIONS = Object.values(STREAMS).map((s) => ({ value: s.id, label: s.label }));

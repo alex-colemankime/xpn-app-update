@@ -1,0 +1,240 @@
+/* ---------------------------------------------------------------------------
+   The error screen, then states shared by every screen.
+   ------------------------------------------------------------------------ */
+
+.app-error {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 15vh 24px 0;
+  text-align: center;
+}
+.app-error h1 {
+  font-size: 1.375rem;
+  margin: 0 0 12px;
+}
+.app-error p {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 24px;
+}
+.app-error-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+/* ---------------------------------------------------------------------------
+   Interaction states
+   ------------------------------------------------------------------------ */
+
+/* Hover only where a pointer can hover: on touch screens a tapped control
+   would otherwise stay "hovered" until the next tap elsewhere. */
+@media (hover: hover) {
+  .nav-button:hover {
+    background: var(--surface);
+    color: var(--text);
+  }
+  .text-button:hover {
+    color: var(--accent);
+  }
+  .show-card:hover .show-cover img {
+    transform: scale(1.04);
+  }
+  .icon-button:hover {
+    background: var(--row-alt);
+    color: var(--accent);
+  }
+  .player-play:hover {
+    background: color-mix(in srgb, var(--action) 88%, var(--text));
+  }
+  .secondary-button:hover {
+    background: var(--surface);
+  }
+}
+
+/* Pressed feedback, since the platform tap highlight is switched off. Keys
+   in a joined control darken rather than shrink out of line. */
+:is(.segmented-pill, .repeat-days, .day-picker) button:active {
+  background: color-mix(in srgb, var(--accent) 22%, var(--bg));
+}
+:is(
+  .primary-button,
+  .secondary-button,
+  .player-play,
+  .icon-button,
+  .show-card,
+  .mobile-nav button,
+  .alarm-banner button
+):active {
+  transform: scale(0.96);
+}
+:is(.schedule-row, .player-track, .nav-button):active {
+  opacity: 0.65;
+}
+
+/* Tab bar: the active tab gets a pill behind its icon as well as color, so
+   the current screen is never signalled by color alone (WCAG 1.4.1). */
+@media (max-width: 767px) {
+  .mobile-nav .icon {
+    width: 56px;
+    height: 30px;
+    border-radius: 15px;
+    transition: background 0.2s;
+  }
+  .mobile-nav button.active .icon {
+    background: var(--row-alt);
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+  }
+  .mobile-nav button.active span {
+    font-weight: 650;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Live and loading feedback
+   ------------------------------------------------------------------------ */
+
+@keyframes live-pulse {
+  50% {
+    opacity: 0.35;
+    scale: 0.7;
+  }
+}
+
+/* An outline pulses around the play button while connecting or reconnecting. */
+.player-play[data-busy]::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 17px;
+  border: 2px solid var(--action);
+  animation: busy-pulse 0.9s ease-in-out infinite alternate;
+}
+@keyframes busy-pulse {
+  from {
+    opacity: 0.2;
+  }
+}
+
+/* Placeholder rows while the playlist loads: the layout appears at once and
+   the songs fill in, instead of a line of text swapping for a list. */
+.skeleton-row {
+  pointer-events: none;
+}
+.skeleton-block {
+  display: block;
+  border-radius: 4px;
+  background: var(--row-alt);
+  background:
+    linear-gradient(
+        90deg,
+        transparent 20%,
+        color-mix(in srgb, var(--bg) 60%, transparent) 50%,
+        transparent 80%
+      )
+      0 0 / 200% 100% no-repeat,
+    color-mix(in srgb, var(--border) 55%, transparent);
+  animation: shimmer 1.4s linear infinite;
+}
+/* Square, like the artwork it stands in for (a row's spans otherwise
+   stretch to fill it). */
+.skeleton-row .skeleton-art {
+  flex: none;
+  width: 46px;
+  height: 46px;
+}
+.skeleton-row .skeleton-lines {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+}
+.skeleton-row .skeleton-line {
+  height: 12px;
+  width: 62%;
+}
+.skeleton-row .skeleton-line + .skeleton-line {
+  width: 38%;
+}
+@keyframes shimmer {
+  from {
+    background-position:
+      150% 0,
+      0 0;
+  }
+  to {
+    background-position:
+      -50% 0,
+      0 0;
+  }
+}
+
+@starting-style {
+  .toast {
+    opacity: 0;
+    translate: 0 10px;
+  }
+}
+
+/* Screen changes cross-fade (see hooks/useRoute.js). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.16s;
+}
+
+/* ---------------------------------------------------------------------------
+   Accessibility preferences
+   ------------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  :is(button, a):active {
+    transform: none;
+  }
+}
+
+/* Stronger secondary text and dividers when the system asks for contrast. */
+@media (prefers-contrast: more) {
+  :root,
+  :root[data-theme="light"] {
+    --muted: #45463f;
+    --border: #8a8b83;
+  }
+  :root[data-theme="dark"] {
+    --muted: #d2d1cb;
+    --border: #7a7c7c;
+  }
+}
+
+/* Windows High Contrast and other forced-color modes replace backgrounds,
+   which would erase the switch and every selected state. */
+@media (forced-colors: active) {
+  .switch {
+    border: 1px solid ButtonText;
+  }
+  .switch > span {
+    background: ButtonText;
+  }
+  .switch.checked > span {
+    background: Highlight;
+  }
+  :is(
+    .nav-button.active,
+    .segmented button.active,
+    .day-picker button.active,
+    .repeat-days button.active,
+    .mobile-nav button.active
+  ) {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+  .player-play,
+  .primary-button,
+  .alarm-banner button {
+    border: 1px solid ButtonText;
+  }
+}

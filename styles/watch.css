@@ -1,0 +1,288 @@
+/* ---------------------------------------------------------------------------
+   The watch page: a video full screen, the way video apps show one. On
+   phones the picture is pinned to the top, edge to edge, on black, while the
+   title, the show, the description and what's next scroll beneath; wider,
+   the next videos sit beside it.
+   ------------------------------------------------------------------------ */
+
+.watch-page {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--bg);
+  color: var(--text);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transition:
+    opacity 0.2s ease-out,
+    translate 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@starting-style {
+  .watch-page[open] {
+    opacity: 0;
+    translate: 0 32px;
+  }
+}
+.watch-page::backdrop {
+  background: #000;
+}
+.watch-player {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #000;
+  padding-top: var(--safe-area-inset-top, env(safe-area-inset-top));
+}
+.watch-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 46px;
+  padding: 0 6px;
+  color: #fff;
+}
+.watch-bar > span {
+  font-size: 0.875rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+.watch-close {
+  color: inherit;
+}
+.watch-close-wide {
+  display: none;
+}
+.watch-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+.watch-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.watch-status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: rgb(255 255 255 / 0.7);
+}
+.watch-info {
+  display: grid;
+  gap: 14px;
+  padding: 16px 16px 6px;
+}
+.watch-title {
+  margin: 0;
+  font-size: 1.1875rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.watch-channel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.watch-channel img {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.watch-channel > span {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+.watch-channel strong {
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+.watch-channel small {
+  overflow: hidden;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.watch-follow,
+.watch-save {
+  min-height: 38px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+/* The show and the actions: one row when there is room, as video apps do;
+   on phones the actions wrap beneath. */
+.watch-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 24px;
+}
+.watch-row .watch-channel {
+  flex: 1 1 300px;
+  min-width: 0;
+}
+.watch-actions {
+  display: flex;
+  gap: 8px;
+}
+.watch-save {
+  border-color: transparent;
+  background: var(--surface);
+}
+.watch-about {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--surface);
+}
+.watch-meta {
+  margin: 0 0 4px;
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+.watch-description {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+.watch-about[data-open] .watch-description {
+  display: block;
+}
+.watch-about .text-button {
+  margin-top: 2px;
+  font-weight: 650;
+}
+.watch-next {
+  display: grid;
+  gap: 20px;
+  padding: 10px 16px calc(28px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+}
+.watch-next h3 {
+  margin: 8px 0 -4px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+.next-card {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  color: var(--text);
+}
+.next-card .video-thumb {
+  border-radius: 12px;
+}
+.next-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.next-text strong {
+  font-size: 0.9375rem;
+  font-weight: 650;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.next-text small {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+@media (hover: hover) {
+  .next-card:hover .video-thumb > img {
+    transform: scale(1.03);
+  }
+}
+@media (min-width: 1000px) {
+  .watch-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 32px;
+    max-width: 1640px;
+    margin: 0 auto;
+    padding: 12px 32px 40px;
+  }
+  .watch-player {
+    position: static;
+    padding-top: 0;
+    background: transparent;
+  }
+  .watch-bar {
+    padding: 0;
+    color: var(--text);
+  }
+  .watch-bar > span {
+    color: var(--muted);
+    opacity: 1;
+  }
+  .watch-close-phone {
+    display: none;
+  }
+  .watch-close-wide {
+    display: inline-flex;
+  }
+  .watch-frame {
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .watch-info {
+    padding: 18px 0 0;
+  }
+  .watch-title {
+    font-size: 1.5rem;
+  }
+  .watch-next {
+    align-content: start;
+    gap: 14px;
+    padding: 58px 0 0;
+  }
+  .next-card {
+    grid-template-columns: 168px minmax(0, 1fr);
+    align-items: start;
+  }
+  .next-card .video-thumb {
+    border-radius: 8px;
+  }
+}
+
+/* Favorites › Videos: the rows, each with its heart. */
+.saved-videos {
+  max-width: 900px;
+}
+.saved-video {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.saved-video .video-card {
+  flex: 1;
+  min-width: 0;
+}
+.saved-video + .saved-video {
+  border-top: 1px solid var(--border);
+}

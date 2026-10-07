@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getPlayerSnapshot } from "./player.js";
 import { useNow } from "./hooks/useNow.js";
-import { decodeFeedText } from "./feed-text.js";
+import { decodeEntities } from "./text.js";
 import {
   clockLabel,
   easternParts,
@@ -72,8 +72,8 @@ export function durationMinutes(text) {
 }
 
 const sameSong = (a, b) =>
-  a.artist.trim().toLowerCase() === decodeFeedText(b.artist).trim().toLowerCase() &&
-  a.title.trim().toLowerCase() === decodeFeedText(b.song).trim().toLowerCase();
+  a.artist.trim().toLowerCase() === decodeEntities(b.artist).trim().toLowerCase() &&
+  a.title.trim().toLowerCase() === decodeEntities(b.song).trim().toLowerCase();
 
 // Adds what the now-playing file knows to the latest playlist entry when they
 // are the same song: its length, and its artwork if the playlist has none yet.
@@ -121,9 +121,9 @@ export function normalizePlaylist(data) {
         t.song.trim(),
     )
     .map((t) => ({
-      title: decodeFeedText(t.song).trim(),
-      artist: decodeFeedText(t.artist).trim(),
-      album: decodeFeedText(t.album).trim(),
+      title: decodeEntities(t.song).trim(),
+      artist: decodeEntities(t.artist).trim(),
+      album: decodeEntities(t.album).trim(),
       img: /^https?:\/\//.test(t.image || "") ? t.image : "",
       time: String(t.timeslice || "").slice(11, 16),
       date: String(t.timeslice || "").slice(0, 10),

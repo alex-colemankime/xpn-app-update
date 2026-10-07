@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Icon, Art, Segmented, Empty, SearchField, shareText } from "../ui.jsx";
+import { Icon, Segmented, Empty, SearchField, shareText } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { useFavoriteItems } from "../favorites.js";
 import { easternToday } from "../concerts.js";
-import { ARCHIVE_ENABLED, CONCERTS_ENABLED, SHOW_SAMPLES, VIDEOS_ENABLED } from "../config.js";
+import { ARCHIVE_ENABLED, CONCERTS_ENABLED, VIDEOS_ENABLED } from "../config.js";
 import { VideoCard } from "../components/VideoCard.jsx";
 import { EpisodeRow } from "../components/Archive.jsx";
 import { showToast } from "../toast.js";
@@ -59,13 +59,11 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
   const videos = useFavoriteItems("videos");
   const today = easternToday();
 
-  // Episodes come from the archive; in preview builds also the samples.
+  // Episodes are archive broadcasts, so only those that can play.
   const items = {
     songs,
     shows,
-    ...(ARCHIVE_ENABLED || SHOW_SAMPLES
-      ? { episodes: SHOW_SAMPLES ? episodes : episodes.filter((ep) => ep.audio) }
-      : {}),
+    ...(ARCHIVE_ENABLED ? { episodes: episodes.filter((ep) => ep.audio) } : {}),
     ...(VIDEOS_ENABLED ? { videos } : {}),
     // Saved with their details, so they show even while the feed is down;
     // past dates drop off.
@@ -163,29 +161,13 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
           ))}
         </div>
       ) : (
-        filtered.map((ep) =>
-          ep.audio ? (
-            <EpisodeRow
-              key={ep.id}
-              episode={ep}
-              onOpen={(e) => onOpenShow(e.show || e.showId, e.id)}
-            />
-          ) : (
-            <div className="episode-row" key={ep.id}>
-              <button className="episode-open" onClick={() => onOpenShow(ep.showId, ep.id)}>
-                <Art src={ep.img} alt="" />
-                <span>
-                  <strong>{ep.title}</strong>
-                  <small>
-                    {ep.showName} · {ep.date}
-                  </small>
-                </span>
-                <Icon name="chev" size={18} />
-              </button>
-              <SaveButton type="episodes" item={ep} name={ep.title} />
-            </div>
-          ),
-        )
+        filtered.map((ep) => (
+          <EpisodeRow
+            key={ep.id}
+            episode={ep}
+            onOpen={(e) => onOpenShow(e.show || e.showId, e.id)}
+          />
+        ))
       )}
     </>
   );

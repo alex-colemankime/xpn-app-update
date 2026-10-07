@@ -1,7 +1,7 @@
 // Build-time switches (see README).
 
-// Placeholder content (sample show episodes and sample concerts) exists for
-// design review only. It appears in `npm run dev` and in builds made with
+// Placeholder content (sample station updates, and music services shown before
+// they are configured) exists for design review only. It appears in `npm run dev` and in builds made with
 // VITE_SHOW_SAMPLES=true, such as the GitHub Pages preview, and never in a
 // production build of the app. vite.config.js defines __SHOW_SAMPLES__ as a
 // literal, so production builds drop the samples entirely; outside Vite (unit
@@ -49,7 +49,7 @@ export const APPLE_MUSIC_DEVELOPER_TOKEN = import.meta.env?.VITE_APPLE_MUSIC_DEV
 // shows.json and the URL is the show's page on xpn.org (its archive list) or
 // a podcast feed. Default: every show xpn.org archives. "off" removes the
 // Archive tab.
-export const DEFAULT_ARCHIVE_FEEDS = [
+const DEFAULT_ARCHIVE_FEEDS = [
   "sleepyhollow=https://xpn.org/program/sleepy-hollow/",
   "funky=https://xpn.org/program/funky-friday/",
   "landlost=https://xpn.org/program/land-of-the-lost/",
@@ -76,7 +76,7 @@ export const ARCHIVE_ENABLED = ARCHIVE_FEEDS.length > 0;
 //                            from its config, so nothing secret is built in.
 //   VITE_BRIGHTCOVE_VIDEOS   "Section name=playlist id" pairs, comma
 //                            separated, in order; "off" removes the tab.
-export const DEFAULT_VIDEO_SECTIONS = "World Cafe=1876180529963365406,WXPN=1874727417810648125";
+const DEFAULT_VIDEO_SECTIONS = "World Cafe=1876180529963365406,WXPN=1874727417810648125";
 export function parseVideoSections(setting) {
   if (setting === "off") return [];
   return String(setting || DEFAULT_VIDEO_SECTIONS)

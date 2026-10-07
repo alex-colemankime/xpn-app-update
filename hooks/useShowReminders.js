@@ -11,6 +11,7 @@ import { playStream, selectStream } from "../player.js";
 import { LEAD_OPTIONS, reminderPlan } from "../reminders.js";
 import { createLocalStore, useLocalStore } from "../storage.js";
 import { showToast } from "../toast.js";
+import { useEveryShow } from "./useEveryShow.js";
 
 // Reminders before followed shows start.
 //   - In the iOS and Android apps they are notifications scheduled on the
@@ -66,35 +67,29 @@ export function useShowReminders(onListen, { paused = false } = {}) {
   // roll the week forward whenever the app comes back to the foreground. If
   // notifications were switched off in the phone's Settings, reminders turn
   // off here too, so the switch never claims they will arrive.
-  useEffect(() => {
+  useEveryShow(() => {
     if (!notificationsAreNative()) return;
-    const sync = () => {
-      const plan = settings.enabled
-        ? reminderPlan({
-            shows: SHOWS,
-            showIds: ids ? ids.split(",") : [],
-            leadMinutes: settings.lead,
-          }).map(({ id, at, title, body, showId }) => ({
-            id,
-            at,
-            title,
-            body,
-            extra: { showId },
-          }))
-        : [];
-      syncNotifications("show-reminder", plan)
-        .then((permission) => {
-          if (settings.enabled && permission === "denied") {
-            disableReminders();
-            showToast(OFF_IN_SETTINGS);
-          }
-        })
-        .catch(() => {});
-    };
-    sync();
-    const onVisible = () => document.visibilityState === "visible" && sync();
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+    const plan = settings.enabled
+      ? reminderPlan({
+          shows: SHOWS,
+          showIds: ids ? ids.split(",") : [],
+          leadMinutes: settings.lead,
+        }).map(({ id, at, title, body, showId }) => ({
+          id,
+          at,
+          title,
+          body,
+          extra: { showId },
+        }))
+      : [];
+    syncNotifications("show-reminder", plan)
+      .then((permission) => {
+        if (settings.enabled && permission === "denied") {
+          disableReminders();
+          showToast(OFF_IN_SETTINGS);
+        }
+      })
+      .catch(() => {});
   }, [settings.enabled, settings.lead, ids]);
 
   // Native: tapping a reminder opens Listen and starts the station.

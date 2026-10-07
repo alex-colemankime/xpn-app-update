@@ -30,7 +30,7 @@ test("artwork color: the prominent vivid hue, or none for grey art", () => {
 });
 
 test("hearts keep 3:1 contrast in both themes, even for pale or dark art", () => {
-  // The app's backgrounds (global.css): page, surface, alternate row, player.
+  // The app's backgrounds (styles/base.css): page, surface, alternate row, player.
   const LIGHT = ["#faf8f3", "#f2efe7", "#eeeae1", "#fffdf8"];
   const DARK = ["#202224", "#292c2f", "#2b2e30", "#32363a"];
   for (const art of [

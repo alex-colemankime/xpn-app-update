@@ -1,0 +1,199 @@
+/* ---------------------------------------------------------------------------
+   Concerts: filters, then the list.
+   ------------------------------------------------------------------------ */
+
+/* Concert filters: search, then rows of chips (When, Region, Show only). */
+.concert-filters {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.concert-refine {
+  border-bottom: 1px solid var(--border);
+}
+.concert-refine summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.concert-refine summary::-webkit-details-marker {
+  display: none;
+}
+.concert-refine[open] summary > .icon {
+  rotate: 180deg;
+}
+.filter-count {
+  margin-left: 12px;
+  color: var(--accent);
+  font-size: 0.875rem;
+}
+.filter-options {
+  display: grid;
+  gap: 20px;
+  padding: 8px 0 24px;
+}
+.filter-label {
+  margin: 0 0 10px;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+/* Filter chips: compact keys in the same family as the settings controls
+   (the chosen one lit in the accent), with a full-size touch target. */
+.chip {
+  position: relative;
+  min-height: 38px;
+  margin-block: 3px;
+  padding: 0 14px;
+  border: 1px solid var(--control-border);
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 550;
+  color: var(--text);
+  white-space: nowrap;
+}
+.chip::after {
+  content: "";
+  position: absolute;
+  inset: -4px 0;
+}
+.chip[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg));
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+:root[data-theme="dark"] .chip[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 20%, var(--bg));
+}
+@media (hover: hover) {
+  .chip:not([aria-pressed="true"]):hover {
+    border-color: var(--text);
+  }
+}
+.concert-count {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.concert-count .text-button {
+  min-height: 44px;
+  color: var(--accent);
+}
+.show-more {
+  display: flex;
+  margin: 24px auto 0;
+}
+.concert-partial {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 8px 0;
+}
+/* Rows of long lists skip layout and paint while off screen. */
+.concert-row,
+.schedule-row,
+.track-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 72px;
+}
+
+/* A concert: the date, then who and where, with Tickets and (once saved)
+   Add to calendar as quiet text actions under it; the heart at the end. */
+.concert-row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  column-gap: 20px;
+  align-items: start;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.concert-date {
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  padding-top: 2px;
+}
+.concert-date > span {
+  font-size: 0.875rem;
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.concert-date strong {
+  font-size: 1.625rem;
+  display: block;
+  font-weight: 600;
+  line-height: 1.15;
+}
+.concert-date small {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.concert-body {
+  min-width: 0;
+}
+.concert-info {
+  display: block;
+}
+.concert-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  color: var(--accent);
+  font-size: 0.875rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.concert-info h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 2px 0;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+}
+.concert-meta {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--muted);
+  margin: 0;
+}
+.concert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 18px;
+  margin-top: 2px;
+}
+.concert-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.concert-row > .icon-button {
+  margin-top: -6px;
+}
+.loading-state {
+  padding: 45px 20px;
+  text-align: center;
+}

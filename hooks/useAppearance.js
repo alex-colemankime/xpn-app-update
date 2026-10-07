@@ -3,7 +3,7 @@ import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { createLocalStore, useLocalStore } from "../storage.js";
 
-// Kept in step with --bg in global.css and the inline script in index.html.
+// Kept in step with --bg in styles/base.css and the inline script in index.html.
 const BACKGROUND = { light: "#faf8f3", dark: "#202224" };
 
 const appearanceStore = createLocalStore("xpn.appearance", "system", (value) =>

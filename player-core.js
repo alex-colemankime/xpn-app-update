@@ -17,7 +17,7 @@
 const noop = () => {};
 
 export const RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 15000];
-export const STALL_TIMEOUT_MS = 15000;
+const STALL_TIMEOUT_MS = 15000;
 
 export function createPlayer({
   createAudio,

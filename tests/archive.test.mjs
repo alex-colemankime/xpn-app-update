@@ -1,14 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import {
-  clockTime,
-  lengthLabel,
-  normalizeEpisodes,
-  parseArchivePage,
-  parseDuration,
-  parsePodcastFeed,
-  parseSource,
-} from "../archive.js";
+import { normalizeEpisodes, parseArchivePage, parsePodcastFeed, parseSource } from "../archive.js";
+import { clockTime, lengthLabel, parseDuration } from "../time.js";
 import { parseArchiveFeeds } from "../config.js";
 
 const FEED = `<?xml version="1.0" encoding="UTF-8"?>

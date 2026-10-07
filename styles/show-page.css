@@ -1,0 +1,132 @@
+/* ---------------------------------------------------------------------------
+   The show page: a dialog, as a side panel or a bottom sheet.
+   ------------------------------------------------------------------------ */
+
+.detail-dialog {
+  padding: 0;
+  position: fixed;
+  inset: 0 0 0 auto;
+  margin: 0;
+  width: min(570px, 100%);
+  max-width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  border: 0;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  overflow-y: auto;
+  /* Scrolling to the end of the sheet must not scroll the page behind it. */
+  overscroll-behavior: contain;
+  /* Slides in from the edge it is attached to; @starting-style gives the
+     first frame. Browsers without it simply show the sheet. */
+  transition:
+    translate 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.2s ease-out;
+}
+@starting-style {
+  .detail-dialog[open] {
+    translate: 48px 0;
+    opacity: 0;
+  }
+}
+.detail-dialog::backdrop {
+  background: #0009;
+  backdrop-filter: blur(3px);
+  transition: opacity 0.25s ease-out;
+}
+@starting-style {
+  .detail-dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+.dialog-header {
+  /* Close stays in reach however far down the sheet the listener scrolls. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: calc(26px + var(--safe-area-inset-top, env(safe-area-inset-top))) 28px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.dialog-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 10px 0 0;
+}
+.dialog-header .eyebrow {
+  font-size: 0.875rem;
+}
+.detail-body {
+  padding: 28px;
+}
+.show-detail-hero {
+  display: flex;
+  gap: 23px;
+  align-items: center;
+}
+.show-detail-hero > img {
+  width: 146px;
+  height: 146px;
+  object-fit: cover;
+  border-radius: 7px;
+}
+.show-detail-hero h3 {
+  font-weight: 550;
+  font-size: 1.25rem;
+  margin: 9px 0;
+}
+.show-detail-hero p {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.show-detail-hero .eyebrow {
+  font-size: 0.875rem;
+}
+.show-description {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--muted);
+  margin: 25px 0;
+}
+.detail-body .section-heading > h3 {
+  font-size: 1.25rem;
+  margin: 0;
+  font-weight: 550;
+}
+.back-button {
+  margin-bottom: 20px;
+}
+.episode-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 10px 0;
+}
+.info-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-top: 27px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  background: var(--row-alt);
+}
+.info-note p {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin: 8px 0;
+}
+.playlist-more {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 16px;
+}

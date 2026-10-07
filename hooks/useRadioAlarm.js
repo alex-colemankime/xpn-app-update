@@ -19,6 +19,7 @@ import {
 } from "../player.js";
 import { STREAMS } from "../streams.js";
 import { showToast } from "../toast.js";
+import { useEveryShow } from "./useEveryShow.js";
 
 // Starts the wake-up station at the alarm volume. The station is selected
 // first: switching while paused reports "paused", which would otherwise
@@ -89,30 +90,26 @@ export function useRadioAlarm() {
   // whenever the app comes back to the foreground.
   const { enabled, time, streamId, snoozeUntil, lastTriggeredDate } = alarm;
   const days = alarm.repeatDays.join();
-  useEffect(() => {
+  useEveryShow(() => {
     if (!notificationsAreNative()) return;
-    const sync = () => {
-      const station = STREAMS[latest.current.streamId].label;
-      const plan = alarmPlan(latest.current).map((a) => ({
-        ...a,
-        title: "Radio alarm",
-        body: `Good morning. Tap to wake up to ${station}.`,
-      }));
-      syncNotifications("radio-alarm", plan)
-        .then((permission) => {
-          if (latest.current.enabled && permission === "denied") {
-            updateAlarm({ enabled: false });
-            showToast(
-              "Notifications are off for WXPN, so the alarm can’t ring. You can allow them in your phone’s Settings.",
-            );
-          }
-        })
-        .catch(() => {});
-    };
-    sync();
-    const onVisible = () => document.visibilityState === "visible" && sync();
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+    const station = STREAMS[latest.current.streamId].label;
+    const plan = alarmPlan(latest.current).map((a) => ({
+      ...a,
+      title: "Radio alarm",
+      body: `Good morning. Tap to wake up to ${station}.`,
+    }));
+    syncNotifications("radio-alarm", plan)
+      .then((permission) => {
+        if (latest.current.enabled && permission === "denied") {
+          updateAlarm({ enabled: false });
+          showToast(
+            "Notifications are off for WXPN, so the alarm can’t ring. You can allow them in your phone’s Settings.",
+          );
+        }
+      })
+      .catch(() => {});
+    // The plan is read through `latest`, so these are what trigger a new one.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, time, streamId, days, snoozeUntil, lastTriggeredDate, updateAlarm]);
 
   // Native: the alarm notification, tapped or arriving while the app is open.

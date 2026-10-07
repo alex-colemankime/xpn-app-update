@@ -120,3 +120,54 @@ export const deviceIsEastern = (now = new Date()) =>
     minute: "2-digit",
     hourCycle: "h23",
   }).format(now);
+
+// ---- Lengths and dates, as the app shows them --------------------------------
+
+// "2247", "37:27" or "1:02:03" as seconds; null when missing or odd.
+export function parseDuration(text) {
+  const parts = String(text ?? "")
+    .trim()
+    .split(":");
+  if (!parts[0] || parts.length > 3 || parts.some((p) => !/^\d+$/.test(p))) return null;
+  const seconds = parts.reduce((total, p) => total * 60 + Number(p), 0);
+  return seconds > 0 ? seconds : null;
+}
+
+// "37 min", "1 hr 4 min", for a length in seconds.
+export function lengthLabel(seconds) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "";
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m ? `${h} hr ${m} min` : `${h} hr`;
+}
+
+// "4:05", "1:02:03", for a playback position in seconds.
+export function clockTime(seconds) {
+  const s = Math.max(0, Math.floor(Number(seconds) || 0));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const pad = (n) => String(n).padStart(2, "0");
+  return h ? `${h}:${pad(m)}:${pad(s % 60)}` : `${m}:${pad(s % 60)}`;
+}
+
+// "Oct 1", or "Oct 1, 2025" for another year: when an episode or video aired.
+const SHORT_DAY = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
+const MEDIUM_DAY = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+export function shortDay(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.getFullYear() === new Date().getFullYear() ? SHORT_DAY.format(d) : MEDIUM_DAY.format(d);
+}
+// "Oct 1, 2026", always with the year.
+export function mediumDay(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : MEDIUM_DAY.format(d);
+}

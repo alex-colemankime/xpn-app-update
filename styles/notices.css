@@ -1,0 +1,117 @@
+/* ---------------------------------------------------------------------------
+   Notices (toasts).
+   ------------------------------------------------------------------------ */
+
+/* Notices rise from the bottom as a dark (in dark mode, light) bar, so they
+   stand apart from the page: optional artwork or icon, a title and a line,
+   one text action, and a close button when there is an action. */
+.toast {
+  position: fixed;
+  z-index: var(--z-toast);
+  bottom: calc(var(--player-h) + 16px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+  /* Centered over the content, not the whole window. */
+  left: calc(50% + var(--sidebar-w) / 2);
+  transform: translateX(-50%);
+  width: min(440px, calc(100% - 32px));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 6px 10px 16px;
+  min-height: 52px;
+  border-radius: 14px;
+  color: var(--inverse-text);
+  background: var(--inverse-bg);
+  box-shadow:
+    0 2px 6px rgb(0 0 0 / 0.12),
+    0 12px 32px rgb(0 0 0 / 0.22);
+  font-size: 0.875rem;
+  line-height: 1.35;
+  /* Rises into place. */
+  transition:
+    opacity 0.2s ease-out,
+    translate 0.2s ease-out;
+}
+.toast:not(.has-action) {
+  padding-right: 16px;
+}
+.toast-media {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-left: -6px;
+}
+.toast-icon {
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--inverse-text) 14%, transparent);
+}
+.toast-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+.toast-text strong {
+  font-weight: 650;
+}
+.toast-text strong,
+.toast-text strong + span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.toast-text strong + span {
+  font-size: 0.875rem;
+  opacity: 0.78;
+}
+.toast-action {
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: var(--inverse-accent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.toast-close {
+  width: 40px;
+  height: 40px;
+  color: inherit;
+  opacity: 0.7;
+}
+/* A notice with a title, a line and an action (a show reminder, a saved
+   concert, Undo) sets the action under the words, so neither is cut short:
+   like a phone's own notification. */
+.toast.stacked {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "media text close"
+    "media action close";
+  align-items: start;
+  gap: 0;
+  padding: 12px 6px 6px 16px;
+}
+.toast.stacked .toast-media {
+  grid-area: media;
+  margin-right: 12px;
+}
+.toast.stacked .toast-text {
+  grid-area: text;
+  padding-top: 1px;
+}
+.toast.stacked .toast-action {
+  grid-area: action;
+  justify-self: start;
+  min-height: 36px;
+  margin: 2px 0 0 -8px;
+  padding: 0 8px;
+}
+.toast.stacked .toast-close {
+  grid-area: close;
+  margin-top: -6px;
+}

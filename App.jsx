@@ -3,115 +3,53 @@ import {
   lazy,
   memo,
   Suspense,
-  useCallback,
   useEffect,
   useRef,
   useState,
   useSyncExternalStore,
 } from "react";
-import {
-  getPlayerSnapshot,
-  isConnecting,
-  pauseStream,
-  playStream,
-  setMetadata,
-  subscribePlayer,
-  togglePlayback,
-} from "./player.js";
-import { Capacitor } from "@capacitor/core";
-import { useLiveSong, useNowPlaying } from "./nowplaying.js";
+import { getPlayerSnapshot, subscribePlayer } from "./player.js";
+import { useNowPlaying } from "./nowplaying.js";
 import { SHOWS } from "./catalog.js";
 import { useFavoriteItems } from "./favorites.js";
-import { Icon, Wordmark, heightVar } from "./ui.jsx";
-import { usePlayer } from "./hooks/usePlayer.js";
-import { keepClockRunning } from "./hooks/useNow.js";
 import { parseRoute, useRoute } from "./hooks/useRoute.js";
 import { useAppearance } from "./hooks/useAppearance.js";
 import { useConcerts } from "./hooks/useConcerts.js";
 import { useRadioAlarm } from "./hooks/useRadioAlarm.js";
 import { useShowReminders } from "./hooks/useShowReminders.js";
-import { PlayerBar } from "./components/PlayerBar.jsx";
-import {
-  getEpisodeState,
-  pauseEpisode,
-  resumeEpisode,
-  useAudioFocus,
-  useEpisodePlayer,
-} from "./episode-player.js";
-import { Toast } from "./components/Toast.jsx";
-import { StationBanner } from "./components/StationUpdates.jsx";
-import { useStationUpdates } from "./hooks/useStationUpdates.js";
+import { useSpaceToPlay } from "./hooks/useSpaceToPlay.js";
 import { useStationAlerts } from "./hooks/useStationAlerts.js";
-import { youTubeEmbed } from "./updates.js";
+import { useStationUpdates } from "./hooks/useStationUpdates.js";
+import { useWatching } from "./hooks/useWatching.js";
+import { AlarmBanner } from "./components/AlarmBanner.jsx";
+import { Sidebar, TabBar, TITLES, TopBar } from "./components/Navigation.jsx";
+import { NowPlayingSync } from "./components/NowPlayingSync.jsx";
+import { PlayerBar } from "./components/PlayerBar.jsx";
+import { ShowDetail } from "./components/ShowDetail.jsx";
+import { StationBanner } from "./components/StationUpdates.jsx";
+import { Toast } from "./components/Toast.jsx";
 import { startPlaylistSync } from "./playlist-sync.js";
-import { showToast } from "./toast.js";
 import { readJson, writeJson } from "./storage.js";
-import { DONATE_URL } from "./links.js";
 import { CONCERTS_ENABLED, VIDEOS_ENABLED } from "./config.js";
-import { STREAMS } from "./streams.js";
-import { clockLabel } from "./time.js";
 import { ListenScreen } from "./screens/ListenScreen.jsx";
-import { ShowsScreen, ShowDetail } from "./screens/ShowsScreen.jsx";
+import { ShowsScreen } from "./screens/ShowsScreen.jsx";
 import { LibraryScreen } from "./screens/LibraryScreen.jsx";
 
-// Concerts only has a tab when there are listings to show (see config.js).
-const NAV = [
-  { id: "listen", label: "Listen live", short: "Listen", icon: "navLive" },
-  { id: "favorites", label: "Favorites", short: "Favorites", icon: "heart" },
-  { id: "shows", label: "Shows", short: "Shows", icon: "headphones" },
-  ...(VIDEOS_ENABLED ? [{ id: "videos", label: "Videos", short: "Videos", icon: "video" }] : []),
-  ...(CONCERTS_ENABLED
-    ? [{ id: "concerts", label: "Concerts", short: "Concerts", icon: "navConcerts" }]
-    : []),
-];
-const TITLES = { ...Object.fromEntries(NAV.map((n) => [n.id, n.label])), settings: "Settings" };
 const ONBOARDED_KEY = "xpn.onboarded";
-const trackAlarmHeight = heightVar("--alarm-h");
 
 // Only the station choice, so the app shell does not re-render on every
 // change between connecting, playing and paused.
 const useStreamId = () => useSyncExternalStore(subscribePlayer, () => getPlayerSnapshot().streamId);
 
-// Keeps the lock screen, media notification and browser tab in step with the
-// song on air (or the station, when no song is current). Renders nothing.
-function NowPlayingSync({ playlist }) {
-  const { playing: livePlaying, station } = usePlayer();
-  const current = useLiveSong(playlist);
-  const focus = useAudioFocus();
-  const archive = useEpisodePlayer();
-  const episode = focus === "episode" && archive.status === "playing" ? archive.episode : null;
-  const playing = livePlaying || Boolean(episode);
-  // While audio plays in the background, time keeps moving for the song info.
-  useEffect(() => keepClockRunning(playing), [playing]);
-  useEffect(() => {
-    setMetadata(current);
-  }, [current]);
-  useEffect(() => {
-    document.title = episode
-      ? `${episode.title} — ${episode.showName}`
-      : playing && current
-        ? `${current.title} · ${current.artist} — ${station.label}`
-        : playing
-          ? `${station.label} — Listening live`
-          : "WXPN — Listen live";
-  }, [playing, current, station, episode]);
-  return null;
-}
-
 // Screens re-render only when their own inputs change. Listen, Shows and
-// Favorites are in the first download; Concerts and Settings load just after.
+// Favorites are in the first download; the rest load just after.
 const Listen = memo(ListenScreen);
 const Shows = memo(ShowsScreen);
 const Library = memo(LibraryScreen);
-const Concerts = lazy(() =>
-  import("./screens/ConcertsScreen.jsx").then((m) => ({ default: memo(m.ConcertsScreen) })),
-);
-const Videos = lazy(() =>
-  import("./screens/VideosScreen.jsx").then((m) => ({ default: memo(m.VideosScreen) })),
-);
-const Settings = lazy(() =>
-  import("./screens/SettingsScreen.jsx").then((m) => ({ default: memo(m.SettingsScreen) })),
-);
+const lazyScreen = (load, name) => lazy(() => load().then((m) => ({ default: memo(m[name]) })));
+const Concerts = lazyScreen(() => import("./screens/ConcertsScreen.jsx"), "ConcertsScreen");
+const Videos = lazyScreen(() => import("./screens/VideosScreen.jsx"), "VideosScreen");
+const Settings = lazyScreen(() => import("./screens/SettingsScreen.jsx"), "SettingsScreen");
 const Welcome = lazy(() =>
   import("./components/Welcome.jsx").then((m) => ({ default: m.Welcome })),
 );
@@ -119,7 +57,9 @@ const WatchPage = lazy(() =>
   import("./components/WatchPage.jsx").then((m) => ({ default: m.WatchPage })),
 );
 
-// One screen of the app, shown or kept in the background.
+// One screen of the app, shown or kept in the background. A hidden screen
+// keeps its state, but its effects and subscriptions are paused (React
+// Activity), so only the screen in front does any work.
 function Screen({ id, label, current, children }) {
   const shown = current === id;
   return (
@@ -131,105 +71,33 @@ function Screen({ id, label, current, children }) {
   );
 }
 
-// The radio or an archive episode, paused for a video and offered back.
-let radioWasOn = false;
-let episodeWasOn = false;
-function pauseForVideo() {
-  const { playing, status } = getPlayerSnapshot();
-  radioWasOn = playing || isConnecting(status);
-  if (radioWasOn) pauseStream();
-  const episode = getEpisodeState();
-  episodeWasOn =
-    Boolean(episode.episode) && (episode.status === "playing" || episode.status === "loading");
-  if (episodeWasOn) pauseEpisode();
-}
-function offerAudioBack() {
-  if (radioWasOn)
-    showToast("The radio paused for the video.", { label: "Resume", onClick: playStream });
-  else if (episodeWasOn)
-    showToast("The episode paused for the video.", { label: "Resume", onClick: resumeEpisode });
-  radioWasOn = episodeWasOn = false;
-}
-
 export default function App() {
   const route = useRoute();
-  const streamId = useStreamId();
-  const playlist = useNowPlaying(streamId);
+  const playlist = useNowPlaying(useStreamId());
   const concerts = useConcerts();
   const updates = useStationUpdates();
-  useEffect(startPlaylistSync, []);
-
-  // Watching a video: the watch page, full screen. A station video is part
-  // of the route (#/videos/video/id), so Back closes it; a live YouTube video
-  // (Free at Noon) is held here. iOS opens YouTube in the in-app browser,
-  // since YouTube refuses embeds without a web referrer, which the iOS app
-  // (capacitor://localhost) can't send; any other link opens in the browser.
-  const [watching, setWatching] = useState(null);
-  const watch = useCallback((live) => {
-    if (Capacitor.getPlatform() === "ios") {
-      import("@capacitor/browser")
-        .then(({ Browser }) => Browser.open({ url: live.watch }))
-        .catch(() => window.open(live.watch, "_blank", "noopener"));
-      return;
-    }
-    if (!youTubeEmbed(live.watch)) {
-      window.open(live.watch, "_blank", "noopener");
-      return;
-    }
-    setWatching(live);
-  }, []);
-  const watchVideo = useCallback((video) => route.openVideo(video.id), [route]);
-  // While anything is being watched, the radio (or an archive episode) is
-  // paused, and offered back once the video is closed.
-  const watchingAny = Boolean(route.videoId || watching);
-  useEffect(() => {
-    if (!watchingAny) return;
-    pauseForVideo();
-    return offerAudioBack;
-  }, [watchingAny]);
   const alarm = useRadioAlarm();
   const [appearance, setAppearance] = useAppearance();
-  const main = useRef(null);
+  const watching = useWatching(route);
+  useEffect(startPlaylistSync, []);
+  useSpaceToPlay();
 
   // The first-run welcome, once. Not over a shared show link: that listener
   // came for the show.
   const [welcome, setWelcome] = useState(
     () => !readJson(ONBOARDED_KEY, false) && !parseRoute(window.location.hash).showId,
   );
-  // Show heads-ups wait while the welcome is open, so they never cover it.
-  useShowReminders(() => route.navigate("listen"), { paused: welcome });
-  useStationAlerts(updates.all, { onWatch: watch });
   const finishWelcome = () => {
     writeJson(ONBOARDED_KEY, true);
     setWelcome(false);
   };
-
-  // Space plays and pauses, unless focus is somewhere Space already means
-  // something (a button, a field, a link) or the show sheet is open.
-  useEffect(() => {
-    const onKey = (e) => {
-      if (
-        e.code !== "Space" ||
-        e.defaultPrevented ||
-        e.repeat ||
-        e.isComposing ||
-        e.metaKey ||
-        e.ctrlKey ||
-        e.altKey
-      )
-        return;
-      if (e.target.closest?.("button, a, input, select, textarea, summary, [contenteditable]"))
-        return;
-      if (document.querySelector("dialog[open]")) return;
-      e.preventDefault();
-      togglePlayback();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  // Show heads-ups wait while the welcome is open, so they never cover it.
+  useShowReminders(() => route.navigate("listen"), { paused: welcome });
+  useStationAlerts(updates.all, { onWatch: watching.watchLive });
 
   // Each screen change reads as a new page: top of the page, focus on main
   // so screen readers announce the new content.
+  const main = useRef(null);
   const firstRender = useRef(true);
   useEffect(() => {
     if (firstRender.current) {
@@ -244,11 +112,6 @@ export default function App() {
   const show = route.showId
     ? SHOWS[route.showId] || savedShows.find((s) => s.id === route.showId) || null
     : null;
-  const isCurrent = (id) => route.screen === id;
-  const currentProps = (id) => ({
-    "aria-current": isCurrent(id) ? "page" : undefined,
-    onClick: () => route.navigate(id),
-  });
 
   return (
     <div className="app-layout">
@@ -263,41 +126,7 @@ export default function App() {
       >
         Skip to content
       </a>
-      <aside className="app-sidebar">
-        <button className="brand" onClick={() => route.navigate("listen")}>
-          <span className="sr-only">WXPN home</span>
-          <Wordmark dot />
-        </button>
-        <nav aria-label="Main navigation">
-          {NAV.map((n) => (
-            <button
-              key={n.id}
-              className={`nav-button ${isCurrent(n.id) ? "active" : ""}`}
-              {...currentProps(n.id)}
-            >
-              <Icon name={n.icon} />
-              <span>{n.label}</span>
-              {isCurrent(n.id) && <i />}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-bottom">
-          <button className="settings-button" {...currentProps("settings")}>
-            <Icon name="settings" size={18} />
-            Settings
-          </button>
-          <a
-            className="sidebar-donate"
-            href={DONATE_URL}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Donate to WXPN (opens in a new tab)"
-          >
-            Donate
-            <Icon name="arrowUp" size={16} />
-          </a>
-        </div>
-      </aside>
+      <Sidebar screen={route.screen} navigate={route.navigate} />
       <main
         className="main-shell"
         id="main-content"
@@ -306,67 +135,21 @@ export default function App() {
         data-screen={route.screen}
         aria-label={TITLES[route.screen]}
       >
-        <header className="topbar">
-          <button
-            className="mobile-brand"
-            onClick={() => route.navigate("listen")}
-            aria-label="WXPN home"
-          >
-            <Wordmark dot />
-          </button>
-          <div className="topbar-actions">
-            {/* Giving happens on xpn.org, in the browser (App Review 3.2.2). */}
-            <a
-              className="topbar-donate"
-              href={DONATE_URL}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Donate to WXPN (opens in a new tab)"
-            >
-              <span>Donate</span>
-            </a>
-            <button
-              className="mobile-settings icon-button"
-              aria-label="Settings"
-              {...currentProps("settings")}
-            >
-              <Icon name="settings" />
-            </button>
-          </div>
-        </header>
+        <TopBar screen={route.screen} navigate={route.navigate} />
         {alarm.ringing && (
-          <div className="alarm-banner" role="alert" ref={trackAlarmHeight}>
-            <span className="alarm-banner-title">
-              <span className="alarm-bell" aria-hidden="true">
-                <Icon name="bell" size={20} />
-              </span>
-              <span>
-                <strong>Radio alarm</strong>
-                <small>
-                  {clockLabel(alarm.alarm.time)} · {STREAMS[alarm.alarm.streamId]?.label}
-                </small>
-              </span>
-            </span>
-            <span className="alarm-banner-actions">
-              <button className="alarm-snooze" onClick={alarm.snooze}>
-                Snooze {alarm.alarm.snoozeMinutes} min
-              </button>
-              <button className="alarm-dismiss" onClick={alarm.dismiss}>
-                Dismiss
-              </button>
-            </span>
-          </div>
+          <AlarmBanner alarm={alarm.alarm} onSnooze={alarm.snooze} onDismiss={alarm.dismiss} />
         )}
-        <StationBanner {...updates} onWatch={watch} onListenScreen={route.screen === "listen"} />
-        {/* Each screen keeps its state while another is shown, but a hidden
-            screen's effects and subscriptions are paused (React Activity), so
-            only the screen in front does any work. */}
+        <StationBanner
+          {...updates}
+          onWatch={watching.watchLive}
+          onListenScreen={route.screen === "listen"}
+        />
         <div className="page-content">
           <Screen id="listen" label="Listen live" current={route.screen}>
             <Listen
               playlist={playlist}
               live={updates.live}
-              onWatch={watch}
+              onWatch={watching.watchLive}
               onNavigate={route.navigate}
               onOpenShow={route.openShow}
             />
@@ -376,7 +159,7 @@ export default function App() {
           </Screen>
           {VIDEOS_ENABLED && (
             <Screen id="videos" label="Videos" current={route.screen}>
-              <Videos onWatch={watchVideo} />
+              <Videos onWatch={watching.watchVideo} />
             </Screen>
           )}
           {CONCERTS_ENABLED && (
@@ -387,7 +170,7 @@ export default function App() {
           <Screen id="favorites" label="Favorites" current={route.screen}>
             <Library
               onOpenShow={route.openShow}
-              onOpenVideo={watchVideo}
+              onOpenVideo={watching.watchVideo}
               onNavigate={route.navigate}
             />
           </Screen>
@@ -410,14 +193,7 @@ export default function App() {
         onOpen={() => route.navigate("listen")}
         onOpenEpisode={(episode) => route.openShow(episode.show, episode.id)}
       />
-      <nav className="mobile-nav" aria-label="Mobile navigation">
-        {NAV.map((n) => (
-          <button key={n.id} className={isCurrent(n.id) ? "active" : ""} {...currentProps(n.id)}>
-            <Icon name={n.icon} size={21} />
-            <span>{n.short}</span>
-          </button>
-        ))}
-      </nav>
+      <TabBar screen={route.screen} navigate={route.navigate} />
       {show && (
         <ShowDetail
           key={show.id}
@@ -428,20 +204,17 @@ export default function App() {
           onClose={route.closeShow}
           onListen={() => route.navigate("listen")}
           onNavigate={route.navigate}
-          onWatch={watchVideo}
+          onWatch={watching.watchVideo}
         />
       )}
       <Suspense fallback={null}>
         {welcome && !show && <Welcome onDone={finishWelcome} />}
-        {(route.videoId || watching) && (
+        {watching.watching && (
           <WatchPage
             videoId={route.videoId}
-            live={route.videoId ? null : watching}
-            onPick={(video) => {
-              route.openVideo(video.id);
-              setWatching(null);
-            }}
-            onClose={route.videoId ? route.closeVideo : () => setWatching(null)}
+            live={watching.live}
+            onPick={watching.pick}
+            onClose={watching.close}
           />
         )}
       </Suspense>

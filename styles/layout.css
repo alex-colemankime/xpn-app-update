@@ -1,0 +1,711 @@
+/* ---------------------------------------------------------------------------
+   The app shell: sidebar, top bar and tab bar, page headings and buttons,
+   show cards, song rows and the player bar, with the shell's breakpoints.
+   ------------------------------------------------------------------------ */
+
+.app-sidebar {
+  position: fixed;
+  z-index: var(--z-sidebar);
+  /* Full height: the player bar sits beside it, under the content. */
+  inset: 0 auto 0 0;
+  width: var(--sidebar-w);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  padding: calc(36px + var(--safe-area-inset-top, env(safe-area-inset-top))) 20px 24px
+    max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+  background: var(--bg);
+  overflow-y: auto;
+}
+.brand {
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  margin: 0 12px 44px;
+  text-align: left;
+}
+.brand > span {
+  font-size: 3.3125rem;
+  font-weight: 800;
+  letter-spacing: -0.085em;
+  line-height: 1;
+}
+.wordmark-w {
+  color: var(--brand-w);
+}
+.wordmark-dot {
+  color: var(--accent);
+}
+/* On the station's orange tiles the light "w" is a paler tint of the tile. */
+.station-art .wordmark-w {
+  color: #fcd9c6;
+}
+.eyebrow {
+  font-size: 0.875rem;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  color: var(--muted);
+}
+.nav-button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 49px;
+  padding-block: 10px;
+  padding: 0 14px;
+  font-size: 0.9375rem;
+  gap: 13px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.nav-button.active {
+  background: var(--row-alt);
+  color: var(--text);
+  font-weight: 650;
+}
+.nav-button i {
+  width: 5px;
+  height: 5px;
+  margin-left: auto;
+  border-radius: 100%;
+  background: var(--action);
+}
+.sidebar-bottom {
+  margin-top: auto;
+  padding-top: 30px;
+}
+.settings-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.875rem;
+  min-height: 44px;
+  padding: 7px 14px;
+  color: var(--muted);
+}
+.settings-button[aria-current="page"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+.main-shell {
+  margin-left: var(--sidebar-w);
+  min-width: 0;
+  padding-bottom: calc(
+    var(--player-h) + 30px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
+  );
+  outline: none;
+}
+.topbar {
+  display: none;
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+/* Donate: the station's color, filled, so it reads as the one call to action
+   in the header. The link is a full 44px target; the pill sits inside it. */
+.topbar-donate {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  border-radius: 999px;
+}
+.topbar-donate span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--action);
+  color: var(--action-ink);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.08);
+  transition: background-color 0.15s ease;
+}
+.topbar-donate:hover span {
+  background: color-mix(in srgb, var(--action) 88%, black);
+}
+.topbar-donate:active span {
+  transform: scale(0.97);
+}
+.mobile-brand,
+.mobile-settings {
+  display: none !important;
+}
+.page-content {
+  max-width: 1376px;
+  padding: 36px var(--page-gutter) 40px;
+  margin: auto;
+}
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+h1 {
+  font-weight: 650;
+  font-size: clamp(1.875rem, 3.3vw, 3.0625rem);
+  letter-spacing: -0.045em;
+  line-height: 1.2;
+  margin: 8px 0 0;
+}
+.primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--action);
+  color: var(--action-ink);
+  border: 1px solid transparent;
+  min-height: 48px;
+  padding: 13px 22px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  border-radius: 12px;
+}
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.section-heading h2 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.375rem;
+  letter-spacing: -0.025em;
+}
+.subtle {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 44px;
+  font-size: 0.9375rem;
+  color: var(--muted);
+  padding: 0;
+  font-weight: 500;
+}
+.show-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 21px;
+  margin-top: 20px;
+}
+.show-card {
+  text-align: left;
+  min-width: 0;
+}
+.show-cover {
+  aspect-ratio: 1.5;
+  overflow: hidden;
+  position: relative;
+  border-radius: 6px;
+  background: var(--surface);
+}
+.show-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.25s;
+}
+.show-card h2 {
+  font-size: 1rem;
+  font-weight: 550;
+  margin: 13px 0 4px;
+}
+.show-card p {
+  overflow-wrap: anywhere;
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin: 0;
+}
+/* A song in a list. Any row can carry a soft highlight (a saved song, in
+   its heart's color), so the row reaches a little past the column and its
+   divider is drawn inset, lined up with the column. */
+.track-row {
+  display: flex;
+  gap: 17px;
+  align-items: center;
+  margin-inline: -10px;
+  padding: 12px 10px;
+  border-radius: 10px;
+  background-image: linear-gradient(var(--border), var(--border));
+  background-size: calc(100% - 20px) 1px;
+  background-position: 50% 100%;
+  background-repeat: no-repeat;
+  transition: background-color 0.35s ease-out;
+}
+.track-row > img {
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+.track-row > span {
+  flex: 1;
+  min-width: 0;
+}
+.track-row strong {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: 1rem;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+.track-row small {
+  display: block;
+  color: var(--muted);
+  margin-top: 5px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.track-row .track-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  white-space: normal;
+}
+.track-meta > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.track-meta .track-time {
+  font-size: 0.875rem;
+}
+.icon-button {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: var(--muted);
+}
+.saved {
+  color: var(--accent);
+}
+/* A saved heart in its artwork's color (art-tint.js picks one per theme). */
+.saved[data-tinted] svg {
+  color: var(--tint-light);
+}
+:root[data-theme="dark"] .saved[data-tinted] svg {
+  color: var(--tint-dark);
+}
+@media (forced-colors: active) {
+  .saved[data-tinted] svg {
+    color: inherit;
+  }
+}
+/* The player on tablets and laptops: a bar under the content (the sidebar
+   runs the full height beside it), its edges lined up with the page's.
+   Play leads the song it plays, the heart follows the song, and volume and
+   output sit at the far edge. */
+.player-bar {
+  position: fixed;
+  z-index: var(--z-bars);
+  bottom: 0;
+  left: var(--sidebar-w);
+  right: 0;
+  height: calc(var(--player-h) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  /* The page's own gutter, and on a very wide window the same centering as
+     the page, so the bar's ends sit under the content's ends. */
+  --bar-inset: max(
+    var(--page-gutter),
+    calc((100% - var(--sidebar-w) - 1376px) / 2 + var(--page-gutter))
+  );
+  padding: 0 max(var(--bar-inset), var(--safe-area-inset-right, env(safe-area-inset-right)))
+    var(--safe-area-inset-bottom, env(safe-area-inset-bottom)) var(--bar-inset);
+  background: var(--raised);
+  border-top: 1px solid var(--border);
+}
+/* The song, and its heart right beside it. */
+.player-now {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.player-track {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  text-align: left;
+}
+.station-mark {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  background: var(--action);
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: var(--action-ink);
+  font-size: 1.375rem;
+  letter-spacing: -0.09em;
+  font-weight: 800;
+}
+.player-track strong {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+.player-track small {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-top: 3px;
+}
+/* What the stream is doing, as a small tag before the artist: a pulsing
+   dot and "live", "connecting" or "offline". */
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 8px;
+  padding: 1px 7px 1px 6px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  color: var(--accent-strong);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+.live-badge i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.live-badge[data-state="live"] i {
+  animation: live-pulse 2s ease-in-out infinite;
+}
+.live-badge[data-state="error"] {
+  background: color-mix(in srgb, var(--muted) 16%, transparent);
+  color: var(--muted);
+}
+/* Play: the same orange key as Listen live, sized to the artwork beside it. */
+.player-play {
+  position: relative;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--action);
+  color: var(--action-ink);
+}
+.player-utilities {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding-left: 16px;
+  color: var(--muted);
+}
+.player-volume {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+/* A slim slider: the level filled in the text color on a hairline track
+   (volume, and an episode's position). */
+.player-volume input,
+.slim-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 104px;
+  height: 20px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.player-volume input::-webkit-slider-runnable-track,
+.slim-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    var(--text) var(--fill, 70%),
+    var(--border) var(--fill, 70%)
+  );
+}
+.player-volume input::-moz-range-track,
+.slim-range::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+.player-volume input::-moz-range-progress,
+.slim-range::-moz-range-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--text);
+}
+.player-volume input::-webkit-slider-thumb,
+.slim-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 2px solid var(--raised);
+  box-shadow: 0 0 0 1px var(--border);
+}
+.player-volume input::-moz-range-thumb,
+.slim-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 2px solid var(--raised);
+}
+@media (max-width: 1000px) {
+  .player-volume input {
+    width: 84px;
+  }
+}
+/* Lists read as a column, not a full-width table: on a wide window the
+   heart and actions stay near the names they belong to. */
+@media (min-width: 768px) {
+  .main-shell:is([data-screen="concerts"], [data-screen="favorites"]) .page-content > section {
+    max-width: 900px;
+  }
+}
+.mobile-nav {
+  display: none;
+}
+@media (max-width: 1200px) {
+  :root {
+    --page-gutter: 28px;
+  }
+  .page-content {
+    padding: 28px;
+  }
+  .topbar {
+    padding: var(--safe-area-inset-top, env(safe-area-inset-top)) 28px 0;
+  }
+  .show-grid {
+    gap: 15px;
+  }
+  .show-cover {
+    aspect-ratio: 1.1;
+  }
+}
+@media (max-width: 767px) {
+  :root {
+    --sidebar-w: 0px;
+  }
+  .app-sidebar {
+    display: none;
+  }
+  .main-shell {
+    margin: 0;
+    padding-bottom: calc(
+      var(--tabbar-h) + var(--mini-h) + 23px +
+        var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
+    );
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    min-height: calc(64px + var(--safe-area-inset-top, env(safe-area-inset-top)));
+    height: auto;
+    padding: calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top)))
+      max(21px, var(--safe-area-inset-right, env(safe-area-inset-right))) 8px
+      max(21px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+  }
+  .mobile-brand {
+    display: block !important;
+    font-size: clamp(28px, 9vw, 36px);
+    letter-spacing: -0.08em;
+    font-weight: 800;
+  }
+  .mobile-settings {
+    display: inline-flex !important;
+  }
+  .topbar-actions .mobile-settings {
+    width: 44px;
+    height: 44px;
+  }
+  .topbar-actions .mobile-settings[aria-current="page"] {
+    background: var(--surface);
+    color: var(--accent);
+  }
+  .page-content {
+    padding: 23px max(20px, var(--safe-area-inset-right, env(safe-area-inset-right))) 23px
+      max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+  }
+  .page-heading {
+    margin-bottom: 24px;
+  }
+  h1 {
+    font-size: 1.9375rem;
+    margin-top: 7px;
+  }
+  .primary-button {
+    padding: 12px 16px;
+    font-size: 0.875rem;
+    gap: 7px;
+  }
+  .show-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 16px;
+  }
+  .show-cover {
+    aspect-ratio: 1.35;
+  }
+  .section-heading h2 {
+    font-size: 1.3125rem;
+  }
+  .section-heading > .text-button {
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+  .show-card h2 {
+    font-size: 1rem;
+  }
+  .show-card p {
+    overflow-wrap: anywhere;
+    font-size: 0.875rem;
+  }
+  /* The mini player: full width above the tab bar, the song first and
+     play at its end, under the thumb. */
+  .player-bar {
+    left: 0;
+    bottom: calc(var(--tabbar-h) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+    height: var(--mini-h);
+    padding: 0 max(18px, var(--safe-area-inset-right, env(safe-area-inset-right))) 0
+      max(18px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+    gap: 12px;
+  }
+  .player-now {
+    flex: 1;
+  }
+  .player-track {
+    gap: 11px;
+  }
+  .station-mark {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+  .player-track strong {
+    font-size: 0.875rem;
+  }
+  .player-track small {
+    font-size: 0.875rem;
+  }
+  .player-now > .icon-button,
+  .player-utilities {
+    display: none;
+  }
+  .live-badge {
+    margin-right: 6px;
+  }
+  .player-play {
+    order: 1;
+    border-radius: 14px;
+  }
+  .mobile-nav {
+    position: fixed;
+    z-index: var(--z-bars);
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    padding: 0 10px var(--safe-area-inset-bottom, env(safe-area-inset-bottom));
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+  }
+  .mobile-nav button {
+    display: flex;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    flex: 1;
+    height: var(--tabbar-h);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+  .mobile-nav button.active {
+    color: var(--accent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+[hidden] {
+  display: none !important;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.sidebar-donate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 14px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--action);
+  color: var(--action-ink);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  transition: background-color 0.15s ease;
+}
+.sidebar-donate:hover {
+  background: color-mix(in srgb, var(--action) 88%, black);
+}
+/* The heading and the station tabs share one rule, so the stations read as
+   part of the header rather than floating above the stage. */

@@ -1,76 +1,22 @@
-import { useEffect, useRef, useState } from "react";
-import {
-  cancelSleepTimer,
-  selectStream,
-  sleepUntil,
-  startSleepTimer,
-  togglePlayback,
-} from "../player.js";
-import { STREAMS } from "../streams.js";
+import { useRef, useState } from "react";
+import { selectStream, togglePlayback } from "../player.js";
+import { STATION_OPTIONS } from "../streams.js";
 import { playedLabel, useLiveSong } from "../nowplaying.js";
-import { onAirAt, untilLabel } from "../catalog.js";
-import { localClock } from "../time.js";
+import { onAirAt } from "../catalog.js";
 import { playbackText, statusLine } from "../playback-text.js";
 import { useFavoriteItems } from "../favorites.js";
-import { showToast } from "../toast.js";
-import { Icon, Art, Wordmark, Segmented, focusFirstItem } from "../ui.jsx";
+import { Icon, Art, Wordmark, Segmented } from "../ui.jsx";
 import { SaveSong, SongMenu, TrackRow } from "../components/MusicRows.jsx";
-import { usePlayer, useSleepTimer, chooseAudioOutput } from "../hooks/usePlayer.js";
+import { OnAir, videoOfShow } from "../components/OnAir.jsx";
+import { SleepTimer } from "../components/SleepTimer.jsx";
+import { LiveCard } from "../components/StationUpdates.jsx";
+import { usePlayer, chooseAudioOutput } from "../hooks/usePlayer.js";
+import { useHeroVisibility } from "../hooks/useHeroVisibility.js";
 import { useNow } from "../hooks/useNow.js";
 import { PLAYLIST_URL } from "../links.js";
-import { LiveCard } from "../components/StationUpdates.jsx";
 
-const STATION_OPTIONS = Object.values(STREAMS).map((s) => ({ value: s.id, label: s.label }));
 const RECENT_PREVIEW = 6;
 const RECENT_MAX = 50;
-
-// The live video, when it belongs to the show on the air now (Free at Noon
-// during Free at Noon): then the on-air band carries it, rather than a second
-// card saying the same thing.
-const videoOfShow = (live, onAirNow) =>
-  live?.state === "live" && onAirNow && live.show === onAirNow.show.id ? live : null;
-
-// Who is on the air right now, from the FM schedule. Radio is its hosts, so
-// this leads the screen: a band in the show's own color, like a station's
-// studio sign. Tapping opens the show; during the show's live video, the band
-// names the session and offers Watch.
-function OnAir({ onAirNow, playing, onOpenShow, live, onWatch }) {
-  if (!onAirNow) return null;
-  const { show } = onAirNow;
-  const until = untilLabel(onAirNow);
-  const video = videoOfShow(live, onAirNow);
-  const line = video ? video.text : show.host;
-  return (
-    <div
-      className="on-air"
-      data-video={video ? "" : undefined}
-      style={
-        show.tint ? { "--tint-light": show.tint.light, "--tint-dark": show.tint.dark } : undefined
-      }
-    >
-      <button className="on-air-open" onClick={() => onOpenShow(show.id)}>
-        <Art className="on-air-art" src={show.img} alt="" />
-        <span className="on-air-text">
-          <span className="on-air-label">
-            <i className="on-air-dot" data-live={playing || video ? "" : undefined} />
-            On air{until ? ` · ${until}` : ""}
-          </span>
-          <span className="on-air-show">{video ? video.title : show.name}</span>
-          {line && <span className="on-air-host">{line}</span>}
-        </span>
-        {!video && <Icon name="chev" size={18} />}
-        <span className="sr-only">Show details</span>
-      </button>
-      {video && (
-        <button className="on-air-watch watch-button" onClick={() => onWatch(video)}>
-          <Icon name="play" size={14} />
-          Watch
-          <span className="sr-only"> the live video</span>
-        </button>
-      )}
-    </div>
-  );
-}
 
 // Three bars that dance while audio plays: the universal "this is live" cue.
 const EqBars = () => (
@@ -80,143 +26,6 @@ const EqBars = () => (
     <i />
   </span>
 );
-
-// Each choice as the menu shows it (a large number over its unit) and as it
-// is said aloud and in the confirmation.
-const SLEEP_CHOICES = [
-  { minutes: 15, number: "15", unit: "min", said: "15 minutes" },
-  { minutes: 30, number: "30", unit: "min", said: "30 minutes" },
-  { minutes: 45, number: "45", unit: "min", said: "45 minutes" },
-  { minutes: 60, number: "1", unit: "hour", said: "an hour" },
-];
-
-// Stop playback after a while, fading out; lives in a popover so it needs no
-// screen of its own. Only offered while there is audio to stop.
-function SleepTimer({ onAirNow }) {
-  const endsAt = useSleepTimer();
-  const now = useNow();
-  const { playing, connecting } = usePlayer();
-  if (!endsAt && !playing && !connecting) return null;
-  const left = endsAt ? Math.max(1, Math.ceil((endsAt - now) / 60000)) : 0;
-  const close = () => document.getElementById("sleep-menu")?.hidePopover?.();
-  const choose = (minutes, label) => {
-    startSleepTimer(minutes);
-    close();
-    showToast(`The radio will turn off ${label}.`);
-  };
-  // Worked out at the tap, from the clock and the show's real end time, so
-  // a menu opened a moment ago can't stop a minute into the next show.
-  const untilShowEnds = () => {
-    const live = onAirAt();
-    close();
-    if (!live) return;
-    sleepUntil(live.endsAt);
-    showToast(`The radio will turn off when ${live.show.name} ends.`);
-  };
-  return (
-    <>
-      <button
-        className={`text-button sleep-button ${endsAt ? "active" : ""}`}
-        popoverTarget="sleep-menu"
-        aria-label={
-          endsAt ? `Sleep timer: the radio turns off in ${left} minutes. Change` : "Sleep timer"
-        }
-      >
-        <Icon name="moon" size={16} />
-        {endsAt ? `Off in ${left} min` : "Sleep timer"}
-      </button>
-      <div
-        id="sleep-menu"
-        onToggle={focusFirstItem}
-        className="popover-menu sleep-menu"
-        popover="auto"
-        role="dialog"
-        aria-labelledby="sleep-title"
-      >
-        <div className="sleep-head">
-          <p id="sleep-title" className="sleep-title">
-            <Icon name="moon" size={18} />
-            Sleep timer
-          </p>
-          <p className="sleep-sub">
-            {endsAt
-              ? `The radio turns off in ${left} min. Pick a new time, or cancel.`
-              : "Turn the radio off in"}
-          </p>
-        </div>
-        <div className="sleep-grid">
-          {SLEEP_CHOICES.map((c) => (
-            <button
-              key={c.minutes}
-              aria-label={c.said === "an hour" ? "1 hour" : c.said}
-              onClick={() => choose(c.minutes, `in ${c.said}`)}
-            >
-              <strong>{c.number}</strong>
-              <small>{c.unit}</small>
-            </button>
-          ))}
-        </div>
-        {onAirNow && (
-          <button className="sleep-show" onClick={untilShowEnds}>
-            <Art src={onAirNow.show.img} alt="" />
-            <span>
-              <strong>When {onAirNow.show.name} ends</strong>
-              <small>at {localClock(onAirNow.endsAt)}</small>
-            </span>
-          </button>
-        )}
-        {endsAt && (
-          <button
-            className="sleep-off"
-            onClick={() => {
-              cancelSleepTimer();
-              close();
-            }}
-          >
-            Cancel timer
-          </button>
-        )}
-      </div>
-    </>
-  );
-}
-
-// While the big controls are on screen, the phone layout hides the mini
-// player, which would only repeat them; it slides back once they scroll away.
-function useHeroVisibility(ref) {
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const root = document.documentElement;
-    let observer;
-    const nav = document.querySelector(".mobile-nav");
-    const observe = () => {
-      observer?.disconnect();
-      // The tab bar covers part of the viewport. The mini player steps aside
-      // as soon as the full main transport fits above the navigation.
-      const bottom = nav?.offsetHeight || 0;
-      observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.99)
-            root.dataset.heroVisible = "";
-          else delete root.dataset.heroVisible;
-        },
-        { rootMargin: `0px 0px -${bottom}px 0px`, threshold: [0, 0.99, 1] },
-      );
-      observer.observe(el);
-    };
-    observe();
-    const resize = typeof ResizeObserver !== "undefined" ? new ResizeObserver(observe) : null;
-    if (nav) resize?.observe(nav);
-    window.addEventListener("resize", observe);
-    return () => {
-      observer?.disconnect();
-      resize?.disconnect();
-      window.removeEventListener("resize", observe);
-      delete root.dataset.heroVisible;
-    };
-  }, [ref]);
-}
 
 function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
   const player = usePlayer();

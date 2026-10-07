@@ -2,11 +2,6 @@ import suppliedShows from "./shows.json" with { type: "json" };
 import { publicAsset } from "./assets.js";
 import { onAir, nextAiring, scheduleLines } from "./schedule.js";
 import { easternParts, easternToEpoch, localClock, localWhen, shiftDate } from "./time.js";
-import { SHOW_SAMPLES } from "./config.js";
-import { SHOW_PAGES } from "./links.js";
-
-// Sample episodes, in dev and preview builds only.
-const SAMPLE_EPISODES = SHOW_SAMPLES ? (await import("./samples.js")).SAMPLE_EPISODES : {};
 
 // Local show art lives in public/shows; everything else is a full URL.
 export const SHOWS = Object.fromEntries(
@@ -18,7 +13,6 @@ export const SHOWS = Object.fromEntries(
       // When it airs, generated from the schedule so every show reads the
       // same way ("Weekdays, 2–4pm"). Shows without one keep their own text.
       times: show.schedule?.length ? scheduleLines(show) : [show.time],
-      episodes: SAMPLE_EPISODES[id] || [],
     },
   ]),
 );
@@ -42,9 +36,6 @@ export function scheduleForDay(day) {
     )
     .sort((a, b) => a.start.localeCompare(b.start));
 }
-
-// The show's own page on xpn.org (from shows.json), or null when it has none.
-export const showUrl = (show) => show.page || SHOW_PAGES[show.id] || null;
 
 // Which live stream a show airs on: every show in the guide is on 88.5 FM.
 export const showStream = () => "xpn";

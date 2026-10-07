@@ -14,27 +14,17 @@
 // display ("Julia Jacklin" / "World Cafe · Studio Session & Interview"),
 // `duration` seconds and `published` an ISO time.
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
+import { useEveryShow } from "./hooks/useEveryShow.js";
 import { VIDEO_ACCOUNT, VIDEO_PLAYER, VIDEO_SECTIONS } from "./config.js";
 import { withTimeout } from "./net.js";
 import { createStore, readJson, writeJson } from "./storage.js";
+import { oneLine, webUrl } from "./text.js";
 
 const API = "https://edge.api.brightcove.com/playback/v1/accounts";
 const PLAYERS = "https://players.brightcove.net";
-export const PAGE_SIZE = 48;
+const PAGE_SIZE = 48;
 
-const clean = (value) =>
-  String(value ?? "")
-    .replace(/\s+/g, " ")
-    .trim();
-const safeHttps = (value) => {
-  try {
-    const url = new URL(String(value ?? ""));
-    return url.protocol === "https:" ? url.href : "";
-  } catch {
-    return "";
-  }
-};
 const startsWithWord = (text, word) =>
   word &&
   text.toLowerCase().startsWith(word.toLowerCase()) &&
@@ -47,8 +37,8 @@ const SEPARATOR = /^\s*(?:[-–—:|]|on\b)\s*/i;
 // artist twice ("Old 97's - Old 97's - World Cafe"). The station's own name
 // is not an artist.
 export function splitTitle(name, performer = "") {
-  const full = clean(name);
-  let artist = clean(performer);
+  const full = oneLine(name);
+  let artist = oneLine(performer);
   let rest = full;
   if (artist && startsWithWord(full, artist)) {
     rest = full.slice(artist.length).replace(SEPARATOR, "");
@@ -73,7 +63,7 @@ export function splitTitle(name, performer = "") {
 export function normalizeVideo(raw) {
   if (!raw || typeof raw !== "object") return null;
   const id = String(raw.id ?? "");
-  const name = clean(raw.name);
+  const name = oneLine(raw.name);
   if (!/^\d+$/.test(id) || !name) return null;
   const { artist, detail } = splitTitle(name, raw.custom_fields?.artist_performer);
   const published = Date.parse(raw.published_at || raw.created_at || "");
@@ -82,12 +72,12 @@ export function normalizeVideo(raw) {
     name,
     artist,
     detail,
-    description: clean(raw.long_description || raw.description).slice(0, 600),
+    description: oneLine(raw.long_description || raw.description).slice(0, 600),
     duration: Number(raw.duration) > 0 ? Math.round(Number(raw.duration) / 1000) : null,
-    poster: safeHttps(raw.poster) || safeHttps(raw.thumbnail),
+    poster: webUrl(raw.poster) || webUrl(raw.thumbnail),
     published: Number.isFinite(published) ? new Date(published).toISOString() : null,
     tags: Array.isArray(raw.tags)
-      ? raw.tags.map((t) => clean(t).toLowerCase()).filter(Boolean)
+      ? raw.tags.map((t) => oneLine(t).toLowerCase()).filter(Boolean)
       : [],
   };
 }
@@ -109,7 +99,7 @@ export const playerUrl = (id, { account = VIDEO_ACCOUNT, player = VIDEO_PLAYER }
 
 // Searching what has loaded: artist, title, description and tags.
 export function matchVideos(videos, query) {
-  const q = clean(query).toLowerCase();
+  const q = oneLine(query).toLowerCase();
   if (!q) return videos;
   return videos.filter((v) =>
     `${v.artist} ${v.detail} ${v.description} ${v.tags.join(" ")}`.toLowerCase().includes(q),
@@ -246,12 +236,7 @@ export function loadMoreVideos(playlist) {
 export const chooseVideoSection = (label) => videoStore.set((s) => ({ ...s, section: label }));
 
 export function useVideos() {
-  useEffect(() => {
-    loadVideos();
-    const onVisible = () => document.visibilityState === "visible" && loadVideos();
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, []);
+  useEveryShow(loadVideos, []);
   return useSyncExternalStore(videoStore.subscribe, videoStore.getSnapshot);
 }
 
