@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getPlayerSnapshot } from "./player.js";
 import { useNow } from "./hooks/useNow.js";
 import { decodeEntities } from "./text.js";
+import { showSegment } from "./catalog.js";
 import {
   clockLabel,
   easternParts,
@@ -72,8 +73,21 @@ export function durationMinutes(text) {
   return total > 0 && total < 24 * 60 ? Math.ceil(total) : null;
 }
 
+// An artist as the app shows it: a show's segment by the show's name, without
+// the bars the playlist puts around it.
+const shownArtist = (artist) => {
+  const plain = decodeEntities(artist).trim();
+  const segment = showSegment(plain);
+  return segment ? segment.show?.name || segment.name : plain;
+};
+
+const segmentOf = (artist) => {
+  const show = showSegment(decodeEntities(artist).trim())?.show;
+  return show ? { show: show.id } : {};
+};
+
 const sameSong = (a, b) =>
-  a.artist.trim().toLowerCase() === decodeEntities(b.artist).trim().toLowerCase() &&
+  a.artist.trim().toLowerCase() === shownArtist(b.artist).toLowerCase() &&
   a.title.trim().toLowerCase() === decodeEntities(b.song).trim().toLowerCase();
 
 // Adds what the now-playing file knows to the latest playlist entry when they
@@ -123,7 +137,10 @@ export function normalizePlaylist(data) {
     )
     .map((t) => ({
       title: decodeEntities(t.song).trim(),
-      artist: decodeEntities(t.artist).trim(),
+      artist: shownArtist(t.artist),
+      // A show's own segment carries the show, so its heart takes the show's
+      // color (the segment's photo is often black and white).
+      ...segmentOf(t.artist),
       album: decodeEntities(t.album).trim(),
       img: /^https?:\/\//.test(t.image || "") ? t.image : "",
       time: String(t.timeslice || "").slice(11, 16),

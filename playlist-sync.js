@@ -146,7 +146,9 @@ async function run(retried = false) {
     const playlist = await service.ensurePlaylist(syncStore.getSnapshot());
     if (!current()) return;
     update(playlist);
-    const plan = syncPlan(getSavedSongs(), syncStore.getSnapshot(), Boolean(service.remove));
+    // A show's segment (a World Cafe session hour) isn't a track to find.
+    const songs = getSavedSongs().filter((s) => !s.show);
+    const plan = syncPlan(songs, syncStore.getSnapshot(), Boolean(service.remove));
     // Front-inserting services need older batches first; otherwise the
     // second batch of an initial import would cover the newest favorites.
     const batch = service.prepends

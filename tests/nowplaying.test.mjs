@@ -34,6 +34,21 @@ test("playlist normalization filters invalid records and sorts by reported time"
   assert.deepEqual(normalizePlaylist({}), []);
 });
 
+test("a show's own segments are named by the show, without the bars", () => {
+  const [segment, other] = normalizePlaylist([
+    {
+      artist: "|World Cafe|",
+      song: "The Womack Sisters 10-7-2026 Hour 2, Part 7",
+      timeslice: "2026-10-07 15:46:50",
+    },
+    { artist: "|Something Else|", song: "Part 1", timeslice: "2026-10-07 15:40:00" },
+  ]);
+  assert.equal(segment.artist, "World Cafe");
+  assert.equal(segment.show, "worldcafe");
+  assert.equal(other.artist, "Something Else");
+  assert.equal(other.show, undefined, "only the station's own shows are linked");
+});
+
 test("playlist days merge, deduplicate, and stay newest first", () => {
   assert.equal(shiftDate("2026-09-08", -1), "2026-09-07");
   assert.equal(shiftDate("2026-01-01", -1), "2025-12-31");

@@ -37,7 +37,15 @@ const memory = new Map([
         v1: { id: "not-digits", name: "x" },
         123: { id: "123", name: "Session", tags: [1, "worldcafe"] },
       },
-      songs: { s: { title: "Coast", artist: "Kim Deal", img: { src: 1 }, time: "noon" } },
+      songs: {
+        s: { title: "Coast", artist: "Kim Deal", img: { src: 1 }, time: "noon" },
+        // A World Cafe session hour, saved before the app knew the bars.
+        "world-cafe-the-womack-sisters-10-7-2026-hour-2-part-7": {
+          title: "The Womack Sisters 10-7-2026 Hour 2, Part 7",
+          artist: "|World Cafe|",
+          img: "https://i.scdn.co/image/bw",
+        },
+      },
     }),
   ],
 ]);
@@ -88,4 +96,13 @@ test("other types are checked the same way", () => {
 test("new saves pass through the same rules", () => {
   toggleFavorite("concerts", { id: "new", artist: "Waxahatchee", date: "nope" });
   assert.equal(getFavorite("concerts", { id: "new" }), null);
+});
+
+test("a show's segment saved with bars is kept under the show, with the show", () => {
+  const segment = getFavorite("songs", {
+    title: "The Womack Sisters 10-7-2026 Hour 2, Part 7",
+    artist: "World Cafe",
+  });
+  assert.equal(segment?.artist, "World Cafe");
+  assert.equal(segment?.show, "worldcafe", "so its heart takes World Cafe's color");
 });

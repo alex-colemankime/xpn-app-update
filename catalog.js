@@ -20,6 +20,20 @@ export const SHOWS = Object.fromEntries(
 // A show's name without the station prefix, for tight spaces such as cards.
 export const shortName = (show) => show.name.replace(/^WXPN /, "");
 
+// The station playlist names a show between bars in place of an artist
+// ("|World Cafe|") for its own segments, such as a World Cafe session hour.
+// The name inside, and the show it is, when it is one of the station's.
+const BY_NAME = new Map(
+  Object.values(SHOWS).flatMap((show) => [
+    [show.name.toLowerCase(), show],
+    [shortName(show).toLowerCase(), show],
+  ]),
+);
+export function showSegment(artist) {
+  const inside = /^\|\s*(.+?)\s*\|$/.exec(String(artist || "").trim())?.[1];
+  return inside ? { name: inside, show: BY_NAME.get(inside.toLowerCase()) || null } : null;
+}
+
 // Featured shows lead the directory; the rest follow in data order.
 const FEATURED = ["worldcafe", "morning", "funky", "freeatnoon", "middays", "afternoons"];
 export const SHOW_DIRECTORY = [

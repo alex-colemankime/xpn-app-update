@@ -173,6 +173,9 @@ export function findVideo(sections, id) {
 //               | "error" (nothing to show)
 //   more        whether Brightcove has further pages
 //   moreFailed  the last further page couldn't be loaded
+//   offset      where the next page starts in Brightcove's list (counted
+//               as asked for, apart from the videos shown, which drop
+//               repeats)
 // A load that failed anywhere is tried again soon rather than after the
 // usual wait.
 const CACHE_KEY = "xpn.videos.cache";
@@ -191,6 +194,7 @@ const videoStore = createStore({
       videos,
       more: true,
       moreFailed: false,
+      offset: videos.length,
       status: videos.length ? "cache" : "loading",
     };
   }),
@@ -232,12 +236,24 @@ export function loadVideos({ force = false } = {}) {
         ...s,
         sections: s.sections.map((old) => {
           const { videos } = results.find((r) => r.playlist === old.playlist) || {};
+          if (videos && old.status === "live" && old.offset > videos.length) {
+            // The listener has opened further pages: the fresh first page
+            // leads, and what they had loaded follows, so the list neither
+            // shrinks under them nor loses its place for the next page.
+            const fresh = new Set(videos.map((v) => v.id));
+            return {
+              ...old,
+              videos: [...videos, ...old.videos.filter((v) => !fresh.has(v.id))],
+              status: "live",
+            };
+          }
           if (videos) {
             return {
               ...old,
               videos,
               more: videos.length === PAGE_SIZE,
               moreFailed: false,
+              offset: videos.length,
               status: "live",
             };
           }
@@ -258,21 +274,26 @@ export function loadVideos({ force = false } = {}) {
 }
 
 // The next page of one section. A page that fails is marked, so the screen
-// can say so and offer it again.
+// can say so and offer it again. A page that arrives after the list was
+// replaced from somewhere else (it no longer starts where the list ends) is
+// let go rather than appended with a gap before it.
 const loadingMore = new Set();
 export function loadMoreVideos(playlist) {
   const section = videoStore.getSnapshot().sections.find((s) => s.playlist === playlist);
   if (!section?.more || loadingMore.has(playlist)) return null;
   loadingMore.add(playlist);
   updateSection(playlist, () => ({ moreFailed: false }));
-  return fetchPlaylist(playlist, section.videos.length)
+  const from = section.offset;
+  return fetchPlaylist(playlist, from)
     .then(
       (page) =>
         updateSection(playlist, (old) => {
+          if (old.offset !== from) return {};
           const ids = new Set(old.videos.map((v) => v.id));
           return {
             videos: [...old.videos, ...page.filter((v) => !ids.has(v.id))],
             more: page.length === PAGE_SIZE,
+            offset: from + page.length,
           };
         }),
       () => updateSection(playlist, () => ({ moreFailed: true })),

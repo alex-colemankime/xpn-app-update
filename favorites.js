@@ -1,6 +1,7 @@
 import { useMemo, useSyncExternalStore } from "react";
 import { createLocalStore, readJson, useLocalStore, writeJson } from "./storage.js";
 import { webUrl } from "./text.js";
+import { SHOWS, showSegment } from "./catalog.js";
 
 // Songs have no feed id, so artist + title is the identity. Letters and digits
 // from any script count, so "봄날" and "작은 것들을 위한 시" by the same artist
@@ -43,14 +44,23 @@ const image = (value) =>
   webUrl(value, { http: true }) ||
   (typeof value === "string" && /^\/?[\w-]+(\/[\w.-]+)+$/.test(value) ? value : "");
 const link = (value) => webUrl(value, { http: true });
+const segmentArtist = (artist) => {
+  const segment = showSegment(artist);
+  return segment ? segment.show?.name || segment.name : artist;
+};
 const clock = (value) => (typeof value === "string" && /^\d{2}:\d{2}$/.test(value) ? value : "");
 
 const SCHEMA = {
+  // A show's segment saved before the app recognized them ("|World Cafe|")
+  // is saved under the show's name, with the show.
   songs: (i) =>
     isText(i.title) &&
     isText(i.artist) && {
       title: text(i.title, 300),
-      artist: text(i.artist, 300),
+      artist: text(segmentArtist(i.artist), 300),
+      ...((SHOWS[i.show] || showSegment(i.artist)?.show) && {
+        show: SHOWS[i.show]?.id || showSegment(i.artist).show.id,
+      }),
       album: text(i.album, 300),
       img: image(i.img),
       date: calendarDay(i.date),

@@ -27,12 +27,23 @@ function offerAudioBack() {
   radioWasOn = episodeWasOn = false;
 }
 
+// Which live video the live route shows. The one the listener chose, as the
+// station reports it now (so "soon" turns to "live"), until the station no
+// longer lists it (it has ended); before the station's updates have been
+// checked, as it was when chosen. With no choice made (a reload, a link, Back
+// and Forward), the station's live video now. Only videos that play in the
+// page count.
+export function liveToShow({ chosen, current, updatesLoaded }) {
+  const now = youTubeEmbed(current?.watch) ? current : null;
+  if (!chosen) return now;
+  if (now?.id === chosen.id) return now;
+  return !updatesLoaded && youTubeEmbed(chosen.watch) ? chosen : null;
+}
+
 // What is being watched on the watch page. Both kinds are part of the route,
 // so Back (the browser's, or Android's) closes them: a station video by its
-// id (#/videos/video/id), the live video as #/listen/live. The live video's
-// details are held here; `currentLive` (the station's live video now)
-// stands in when the page was reached some other way, such as a reload,
-// once the station's updates have been checked (`updatesLoaded`).
+// id (#/videos/video/id), the live video as #/listen/live (see liveToShow;
+// the choice is let go when the route closes).
 // iOS opens YouTube in the browser view, since YouTube refuses embeds
 // without a web referrer, which the iOS app (capacitor://localhost) can't
 // send; any other link opens as a web page. Either way, and on the watch
@@ -42,7 +53,15 @@ export function useWatching(
   currentLive = null,
   updatesLoaded = true,
 ) {
-  const [held, setHeld] = useState(null);
+  const [chosen, setChosen] = useState(null);
+  // Leaving the live route lets the choice go, so a later visit shows what
+  // is live then. (Adjusted during render: React's pattern for state that
+  // follows a prop.)
+  const [onLiveRoute, setOnLiveRoute] = useState(liveRoute);
+  if (onLiveRoute !== liveRoute) {
+    setOnLiveRoute(liveRoute);
+    if (!liveRoute) setChosen(null);
+  }
   const watchLive = useCallback(
     (update) => {
       if (Capacitor.getPlatform() === "ios" || !youTubeEmbed(update.watch)) {
@@ -50,16 +69,15 @@ export function useWatching(
         openPage(update.watch, { onClose: offerAudioBack });
         return;
       }
-      // Held first, in its own render, so the route's render finds it.
-      flushSync(() => setHeld(update));
+      // Chosen first, in its own render, so the route's render finds it.
+      flushSync(() => setChosen(update));
       openLive();
     },
     [openLive],
   );
   const watchVideo = useCallback((video) => openVideo(video.id), [openVideo]);
 
-  const embeddable = (update) => (youTubeEmbed(update?.watch) ? update : null);
-  const live = liveRoute ? embeddable(held) || embeddable(currentLive) : null;
+  const live = liveRoute ? liveToShow({ chosen, current: currentLive, updatesLoaded }) : null;
   // The live route with nothing to show (the video has ended): close it.
   const stranded = liveRoute && !live && updatesLoaded;
   useEffect(() => {

@@ -295,7 +295,9 @@ export function createEpisodePlayer({
     bindControls();
     refresh(episode).then(
       (fresh) => {
-        if (token === request) begin({ ...episode, ...fresh }, at, token);
+        // From wherever the listener has moved it meanwhile (the scrubber
+        // and skip keys work while the link loads).
+        if (token === request) begin({ ...episode, ...fresh }, state.position, token);
       },
       (error) => {
         if (token === request) fail(error?.reason || "audio");
@@ -350,7 +352,14 @@ export function createEpisodePlayer({
     saveProgress(true);
   }
 
-  const skip = (delta) => seek((audio?.currentTime ?? state.position) + delta);
+  // Where the episode is: the element's own clock once its file is open and
+  // placed; until then (a link still loading, a seek waiting for the file),
+  // the place shown.
+  const here = () =>
+    audio && audio.getAttribute("src") && audio.readyState >= 1 && pendingSeek === null
+      ? audio.currentTime
+      : state.position;
+  const skip = (delta) => seek(here() + delta);
 
   // Put the episode away: playback stops and the bar goes back to the
   // station, which takes the lock screen back (player.js).

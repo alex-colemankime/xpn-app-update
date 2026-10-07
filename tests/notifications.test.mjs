@@ -2,7 +2,7 @@
 // only the soonest 64 pending and drops the rest without a word.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { allocateNotifications, NOTIFICATION_BUDGET } from "../notifications.js";
+import { allocateNotifications, createScheduler, NOTIFICATION_BUDGET } from "../notifications.js";
 
 const DAY = 86400000;
 const many = (n, start, step, prefix) =>
@@ -39,4 +39,63 @@ test("notifications already on the phone from another kind leave less room", () 
   assert.equal(allocateNotifications(plans, 10).length, 10);
   assert.equal(allocateNotifications(plans, 10).filter((n) => n.kind === "radio-alarm").length, 2);
   assert.deepEqual(allocateNotifications(plans, 0), []);
+});
+
+// A stand-in for the phone: what is pending, and what was ever scheduled.
+function phone() {
+  const pending = new Map();
+  const scheduled = [];
+  return {
+    pending,
+    scheduled,
+    api: {
+      getPending: async () => ({ notifications: [...pending.values()] }),
+      cancel: async ({ notifications }) => notifications.forEach((n) => pending.delete(n.id)),
+      schedule: async ({ notifications }) =>
+        notifications.forEach((n) => {
+          scheduled.push(n);
+          pending.set(n.id, n);
+        }),
+    },
+    // The phone shows what has come due and drops it from the pending list.
+    deliverUntil: (t) => {
+      for (const [id, n] of pending) if (n.schedule.at.getTime() <= t) pending.delete(id);
+    },
+  };
+}
+
+test("a notification already delivered is never scheduled again", async () => {
+  let clock = Date.UTC(2026, 9, 7, 13, 55);
+  const device = phone();
+  const trouble = [];
+  const scheduler = createScheduler({
+    api: device.api,
+    now: () => clock,
+    onTrouble: (t) => trouble.push(t),
+  });
+  const reminder = { id: 1, at: Date.UTC(2026, 9, 7, 14, 0), title: "World Cafe starts soon" };
+  await scheduler.sync("show-reminder", [reminder]);
+  assert.equal(device.scheduled.length, 1);
+
+  // The reminder arrives while the app stays open; later an alarm setting
+  // changes, which plans every kind again.
+  clock = Date.UTC(2026, 9, 7, 14, 30);
+  device.deliverUntil(clock);
+  await scheduler.sync("radio-alarm", []);
+  assert.equal(device.scheduled.length, 1, "the delivered reminder isn't scheduled a second time");
+  assert.equal(trouble.at(-1), false, "and nothing is reported missing");
+});
+
+test("a notification due within seconds is left out rather than delivered early", async () => {
+  const clock = Date.UTC(2026, 9, 7, 13, 59, 58);
+  const device = phone();
+  const scheduler = createScheduler({ api: device.api, now: () => clock });
+  await scheduler.sync("show-reminder", [
+    { id: 1, at: clock + 2000, title: "now" },
+    { id: 2, at: clock + 3600000, title: "later" },
+  ]);
+  assert.deepEqual(
+    device.scheduled.map((n) => n.id),
+    [2],
+  );
 });

@@ -18,10 +18,21 @@ import { playedAt } from "../nowplaying.js";
 import { useArtTint } from "../art-tint.js";
 
 // The artwork a saved heart takes its color from, and a precomputed tint
-// when the item is one of the station's shows.
+// when the item is one of the station's shows. A show's segment in the
+// playlist (a World Cafe session hour) takes the show's color: its photo is
+// often black and white, which would leave the heart uncolored.
 function tintSource(type, item) {
-  const show = type === "shows" ? SHOWS[item.id] : type === "episodes" ? SHOWS[item.showId] : null;
-  return { art: type === "concerts" ? null : item.img || item.poster, preset: show?.tint || null };
+  const show =
+    type === "shows"
+      ? SHOWS[item.id]
+      : type === "episodes"
+        ? SHOWS[item.showId]
+        : type === "songs"
+          ? SHOWS[item.show] // a show's own segment in the playlist
+          : null;
+  const art =
+    type === "concerts" ? null : type === "songs" && show ? show.img : item.img || item.poster;
+  return { art, preset: show?.tint || null };
 }
 
 // "Wed, Oct 7 · Union Transfer", for the notice after saving a concert.
@@ -206,7 +217,8 @@ export function ShowCard({ show, onOpen }) {
 // version of its heart's color.
 export function TrackRow({ track, showTime = false }) {
   const saved = useIsFavorite("songs", { ...track, id: songId(track) });
-  const tint = useArtTint(saved ? track.img : null);
+  const { art, preset } = tintSource("songs", track);
+  const tint = useArtTint(saved ? art : null, saved ? preset : null);
   return (
     <div
       className="track-row"

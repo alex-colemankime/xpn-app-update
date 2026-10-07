@@ -7,6 +7,8 @@ import assert from "node:assert/strict";
 const WORLD_CAFE = "1876180529963365406";
 const WXPN = "1874727417810648125";
 const replies = {};
+// A page held back until the test lets it through.
+const waits = {};
 globalThis.fetch = async (url) => {
   const u = new URL(String(url));
   if (u.pathname.endsWith("config.json")) {
@@ -15,6 +17,8 @@ globalThis.fetch = async (url) => {
   const playlist = u.pathname.split("/").pop();
   const offset = Number(u.searchParams.get("offset") || 0);
   const reply = offset ? replies[`${playlist}@${offset}`] : replies[playlist];
+  const wait = waits[`${playlist}@${offset}`];
+  if (wait) await wait;
   if (reply === undefined) return new Response("", { status: 500 });
   return new Response(JSON.stringify({ videos: reply }), { status: 200 });
 };
@@ -63,4 +67,29 @@ test("a further page that fails is marked, and can be tried again", async () => 
   assert.equal(section(WORLD_CAFE).moreFailed, false);
   assert.equal(section(WORLD_CAFE).videos.length, 52);
   assert.equal(section(WORLD_CAFE).more, false);
+});
+
+test("a refresh while a further page loads leaves no gap and keeps the list", async () => {
+  // The WXPN collection, empty until now, gains a full history.
+  replies[WXPN] = page(1, 48);
+  await loadVideos({ force: true });
+  replies[`${WXPN}@48`] = page(49, 48);
+  await loadMoreVideos(WXPN);
+  assert.equal(section(WXPN).videos.length, 96);
+  // The last page is slow; meanwhile the app refreshes the first page.
+  let release;
+  waits[`${WXPN}@96`] = new Promise((resolve) => (release = resolve));
+  replies[`${WXPN}@96`] = page(97, 4);
+  const last = loadMoreVideos(WXPN);
+  await loadVideos({ force: true });
+  assert.equal(section(WXPN).videos.length, 96, "the refresh doesn't shrink the list");
+  release();
+  await last;
+  const ids = section(WXPN).videos.map((v) => Number(v.id));
+  assert.deepEqual(
+    ids,
+    Array.from({ length: 100 }, (_, i) => i + 1),
+    "every video, in order, none missing",
+  );
+  assert.equal(section(WXPN).more, false);
 });

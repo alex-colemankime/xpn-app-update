@@ -370,3 +370,31 @@ test("after a failure, trying again loads the file afresh", () => {
   assert.ok(loads > before, "the file is loaded again rather than replayed as it was");
   assert.equal(player.getState().status, "loading");
 });
+
+test("seeks and skips while a fresh link loads are where playback starts", async () => {
+  const { audio, player, answerAll } = refreshSetup({
+    answer: (ep, resolve) => resolve({ ...ep, audio: `${EPISODE.audio}?key=new`, fresh: true }),
+  });
+  player.play({ ...EPISODE, audio: "", fresh: false }, 200);
+  player.skip(SKIP_AHEAD_S);
+  assert.equal(player.getState().position, 230, "skips from the place shown, not from zero");
+  player.skip(SKIP_AHEAD_S);
+  assert.equal(player.getState().position, 260);
+  player.seek(500);
+  await answerAll();
+  audio.metadata(684);
+  assert.equal(audio.currentTime, 500, "playback starts where the listener last put it");
+  assert.equal(player.getState().position, 500);
+});
+
+test("a pause while the link loads keeps the place the listener chose", async () => {
+  const { audio, player, answerAll } = refreshSetup({
+    answer: (ep, resolve) => resolve({ ...ep, audio: `${EPISODE.audio}?key=new`, fresh: true }),
+  });
+  player.play({ ...EPISODE, audio: "", fresh: false }, 200);
+  player.seek(320);
+  player.pause();
+  await answerAll();
+  assert.equal(audio.plays, 0, "the late link doesn't start playback");
+  assert.equal(player.getState().position, 320);
+});
