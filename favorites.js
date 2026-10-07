@@ -23,6 +23,7 @@ const VALID = {
   shows: (item) => isText(item.id) && isText(item.name),
   episodes: (item) => isText(item.id) && isText(item.title),
   concerts: (item) => isText(item.id) && isText(item.artist) && isText(item.date),
+  videos: (item) => isText(item.id) && isText(item.name),
 };
 export const FAVORITE_TYPES = Object.keys(VALID);
 

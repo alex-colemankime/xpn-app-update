@@ -5,6 +5,7 @@ import {
   calendarPageUrl,
   easternToday,
   fetchConcertResult,
+  filterConcerts,
   isoDate,
   normalizeEvent,
   plainText,
@@ -204,4 +205,42 @@ test("every page of the calendar is loaded; failures are errors or marked partia
   } finally {
     globalThis.fetch = real;
   }
+});
+
+test("filters combine: WXPN Welcomes in the Philadelphia Area, not one or the other", () => {
+  const concert = (id, date, regions, extra = {}) => ({
+    id,
+    date,
+    artist: `Artist ${id}`,
+    venue: "Venue",
+    city: "Philadelphia",
+    regions,
+    xpnWelcomes: false,
+    freeAtNoon: false,
+    ...extra,
+  });
+  const list = [
+    concert("welcomes-philly", "2026-10-09", ["Philadelphia Area"], { xpnWelcomes: true }),
+    concert("welcomes-delaware", "2026-10-10", ["Delaware"], { xpnWelcomes: true }),
+    concert("philly", "2026-10-10", ["Philadelphia Area"]),
+    concert("lehigh", "2026-10-20", ["Lehigh Valley"], { city: "Bethlehem" }),
+  ];
+  const ids = (options) =>
+    filterConcerts(list, { today: "2026-10-06", ...options }).map((c) => c.id);
+  assert.deepEqual(ids({ regions: ["Philadelphia Area"], tags: ["welcomes"] }), [
+    "welcomes-philly",
+  ]);
+  assert.deepEqual(ids({ tags: ["welcomes"] }), ["welcomes-philly", "welcomes-delaware"]);
+  assert.deepEqual(
+    ids({ regions: ["Philadelphia Area", "Lehigh Valley"] }),
+    ["welcomes-philly", "philly", "lehigh"],
+    "regions chosen together mean any of them",
+  );
+  assert.deepEqual(ids({ when: "weekend" }), ["welcomes-philly", "welcomes-delaware", "philly"]);
+  assert.deepEqual(
+    ids({ words: ["bethlehem"] }),
+    ["lehigh"],
+    "search reads artist, venue and city",
+  );
+  assert.deepEqual(ids({}), ["welcomes-philly", "welcomes-delaware", "philly", "lehigh"]);
 });

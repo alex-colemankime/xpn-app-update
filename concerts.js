@@ -1,6 +1,7 @@
 import { CONCERTS_ENDPOINT } from "./config.js";
 import { withTimeout } from "./net.js";
 import { decodeFeedText } from "./feed-text.js";
+import { shiftDate } from "./time.js";
 
 // Feeds report local Eastern datetimes ("2026-06-12 20:00:00"). Parsing
 // those into a Date and taking toISOString() pushes evening events onto the
@@ -229,4 +230,46 @@ export const concertAge = (concert) => concert.age || ages.get(concert.id) || ""
 export function subscribeAges(listener) {
   ageListeners.add(listener);
   return () => ageListeners.delete(listener);
+}
+
+// Concert lists as the Concerts filters narrow them. Every filter must match,
+// so "WXPN Welcomes" with "Philadelphia Area" is the Welcomes shows in the
+// Philadelphia Area (xpn.org's calendar can show one or the other); regions
+// chosen together mean any of them.
+//   words    search words, each found in artist, venue or city
+//   when     "all", "today", "weekend" (Friday to Sunday) or "week"
+//   regions  region names; tags  "welcomes", "fan" (Free at Noon), "saved"
+export function inRange(date, when, today) {
+  if (when === "today") return date === today;
+  if (when === "week") return date >= today && date <= shiftDate(today, 6);
+  if (when === "weekend") {
+    // Friday to Sunday; on the weekend itself, the rest of it.
+    const dow = new Date(`${today}T12:00:00Z`).getUTCDay();
+    const from = dow === 0 || dow === 6 || dow === 5 ? today : shiftDate(today, 5 - dow);
+    const to = shiftDate(today, dow === 0 ? 0 : 7 - dow);
+    return date >= from && date <= to;
+  }
+  return true;
+}
+
+export function filterConcerts(
+  concerts,
+  {
+    words = [],
+    when = "all",
+    today = easternToday(),
+    regions = [],
+    tags = [],
+    savedIds = new Set(),
+  } = {},
+) {
+  return concerts.filter(
+    (c) =>
+      words.every((w) => `${c.artist} ${c.venue} ${c.city}`.toLowerCase().includes(w)) &&
+      inRange(c.date, when, today) &&
+      (!regions.length || c.regions.some((r) => regions.includes(r))) &&
+      (!tags.includes("welcomes") || c.xpnWelcomes) &&
+      (!tags.includes("fan") || c.freeAtNoon) &&
+      (!tags.includes("saved") || savedIds.has(c.id)),
+  );
 }

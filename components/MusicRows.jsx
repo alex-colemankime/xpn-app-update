@@ -21,7 +21,7 @@ import { useArtTint } from "../art-tint.js";
 // when the item is one of the station's shows.
 function tintSource(type, item) {
   const show = type === "shows" ? SHOWS[item.id] : type === "episodes" ? SHOWS[item.showId] : null;
-  return { art: type === "concerts" ? null : item.img, preset: show?.tint || null };
+  return { art: type === "concerts" ? null : item.img || item.poster, preset: show?.tint || null };
 }
 
 // "Wed, Oct 7 · Union Transfer", for the notice after saving a concert.
@@ -40,7 +40,13 @@ const HINT_KEY = "xpn.hint.saved";
 function firstSaveHint(type) {
   if (readJson(HINT_KEY, false)) return;
   writeJson(HINT_KEY, true);
-  const what = { songs: "song", shows: "show", episodes: "episode", concerts: "concert" }[type];
+  const what = {
+    songs: "song",
+    shows: "show",
+    episodes: "episode",
+    concerts: "concert",
+    videos: "video",
+  }[type];
   showToast(
     { title: "Saved to Favorites", text: `Your ${what}s are kept there.` },
     {

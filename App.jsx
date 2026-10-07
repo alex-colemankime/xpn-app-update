@@ -115,8 +115,8 @@ const Settings = lazy(() =>
 const Welcome = lazy(() =>
   import("./components/Welcome.jsx").then((m) => ({ default: m.Welcome })),
 );
-const VideoSheet = lazy(() =>
-  import("./components/VideoSheet.jsx").then((m) => ({ default: m.VideoSheet })),
+const WatchPage = lazy(() =>
+  import("./components/WatchPage.jsx").then((m) => ({ default: m.WatchPage })),
 );
 
 // One screen of the app, shown or kept in the background.
@@ -131,6 +131,26 @@ function Screen({ id, label, current, children }) {
   );
 }
 
+// The radio or an archive episode, paused for a video and offered back.
+let radioWasOn = false;
+let episodeWasOn = false;
+function pauseForVideo() {
+  const { playing, status } = getPlayerSnapshot();
+  radioWasOn = playing || isConnecting(status);
+  if (radioWasOn) pauseStream();
+  const episode = getEpisodeState();
+  episodeWasOn =
+    Boolean(episode.episode) && (episode.status === "playing" || episode.status === "loading");
+  if (episodeWasOn) pauseEpisode();
+}
+function offerAudioBack() {
+  if (radioWasOn)
+    showToast("The radio paused for the video.", { label: "Resume", onClick: playStream });
+  else if (episodeWasOn)
+    showToast("The episode paused for the video.", { label: "Resume", onClick: resumeEpisode });
+  radioWasOn = episodeWasOn = false;
+}
+
 export default function App() {
   const route = useRoute();
   const streamId = useStreamId();
@@ -139,31 +159,13 @@ export default function App() {
   const updates = useStationUpdates();
   useEffect(startPlaylistSync, []);
 
-  // Watching a video: Brightcove videos and YouTube play in a sheet, with
-  // the radio (or an archive episode) paused and offered back afterwards; any
-  // other link opens in the browser.
+  // Watching a video: the watch page, full screen. A station video is part
+  // of the route (#/videos/video/id), so Back closes it; a live YouTube video
+  // (Free at Noon) is held here. iOS opens YouTube in the in-app browser,
+  // since YouTube refuses embeds without a web referrer, which the iOS app
+  // (capacitor://localhost) can't send; any other link opens in the browser.
   const [watching, setWatching] = useState(null);
-  const radioWasOn = useRef(false);
-  const episodeWasOn = useRef(false);
-  const pauseAudio = () => {
-    const { playing, status } = getPlayerSnapshot();
-    radioWasOn.current = playing || isConnecting(status);
-    if (radioWasOn.current) pauseStream();
-    const episode = getEpisodeState();
-    episodeWasOn.current =
-      Boolean(episode.episode) && (episode.status === "playing" || episode.status === "loading");
-    if (episodeWasOn.current) pauseEpisode();
-  };
   const watch = useCallback((live) => {
-    // The station's own videos play in its Brightcove Player, everywhere.
-    if (live.embed) {
-      pauseAudio();
-      setWatching(live);
-      return;
-    }
-    // YouTube now refuses embeds without a web referrer, which the iOS app
-    // (capacitor://localhost) can't send, so iOS opens the video in the
-    // in-app browser instead; so does any link that isn't YouTube.
     if (Capacitor.getPlatform() === "ios") {
       import("@capacitor/browser")
         .then(({ Browser }) => Browser.open({ url: live.watch }))
@@ -174,16 +176,17 @@ export default function App() {
       window.open(live.watch, "_blank", "noopener");
       return;
     }
-    pauseAudio();
     setWatching(live);
   }, []);
-  const stopWatching = () => {
-    setWatching(null);
-    if (radioWasOn.current)
-      showToast("The radio paused for the video.", { label: "Resume", onClick: playStream });
-    else if (episodeWasOn.current)
-      showToast("The episode paused for the video.", { label: "Resume", onClick: resumeEpisode });
-  };
+  const watchVideo = useCallback((video) => route.openVideo(video.id), [route]);
+  // While anything is being watched, the radio (or an archive episode) is
+  // paused, and offered back once the video is closed.
+  const watchingAny = Boolean(route.videoId || watching);
+  useEffect(() => {
+    if (!watchingAny) return;
+    pauseForVideo();
+    return offerAudioBack;
+  }, [watchingAny]);
   const alarm = useRadioAlarm();
   const [appearance, setAppearance] = useAppearance();
   const main = useRef(null);
@@ -373,7 +376,7 @@ export default function App() {
           </Screen>
           {VIDEOS_ENABLED && (
             <Screen id="videos" label="Videos" current={route.screen}>
-              <Videos onWatch={watch} />
+              <Videos onWatch={watchVideo} />
             </Screen>
           )}
           {CONCERTS_ENABLED && (
@@ -382,7 +385,11 @@ export default function App() {
             </Screen>
           )}
           <Screen id="favorites" label="Favorites" current={route.screen}>
-            <Library onOpenShow={route.openShow} onNavigate={route.navigate} />
+            <Library
+              onOpenShow={route.openShow}
+              onOpenVideo={watchVideo}
+              onNavigate={route.navigate}
+            />
           </Screen>
           <Screen id="settings" label="Settings" current={route.screen}>
             <Settings
@@ -421,12 +428,22 @@ export default function App() {
           onClose={route.closeShow}
           onListen={() => route.navigate("listen")}
           onNavigate={route.navigate}
-          onWatch={watch}
+          onWatch={watchVideo}
         />
       )}
       <Suspense fallback={null}>
         {welcome && !show && <Welcome onDone={finishWelcome} />}
-        {watching && <VideoSheet live={watching} onClose={stopWatching} />}
+        {(route.videoId || watching) && (
+          <WatchPage
+            videoId={route.videoId}
+            live={route.videoId ? null : watching}
+            onPick={(video) => {
+              route.openVideo(video.id);
+              setWatching(null);
+            }}
+            onClose={route.videoId ? route.closeVideo : () => setWatching(null)}
+          />
+        )}
       </Suspense>
       <Toast />
     </div>

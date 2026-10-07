@@ -3,7 +3,8 @@ import { Icon, Art, Segmented, Empty, SearchField, shareText } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { useFavoriteItems } from "../favorites.js";
 import { easternToday } from "../concerts.js";
-import { ARCHIVE_ENABLED, CONCERTS_ENABLED, SHOW_SAMPLES } from "../config.js";
+import { ARCHIVE_ENABLED, CONCERTS_ENABLED, SHOW_SAMPLES, VIDEOS_ENABLED } from "../config.js";
+import { VideoCard } from "../components/VideoCard.jsx";
 import { EpisodeRow } from "../components/Archive.jsx";
 import { showToast } from "../toast.js";
 import { TrackRow, ShowCard, SaveButton } from "../components/MusicRows.jsx";
@@ -37,18 +38,25 @@ const EMPTY = {
     target: "concerts",
     text: "Save a concert and make a night of it.",
   },
+  videos: {
+    icon: "video",
+    action: "Explore videos",
+    target: "videos",
+    text: "Save a session to watch it later.",
+  },
 };
 
 const searchText = (item) =>
   `${item.title || ""} ${item.artist || ""} ${item.name || ""} ${item.showName || ""}`.toLowerCase();
 
-export function LibraryScreen({ onOpenShow, onNavigate }) {
+export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
   const [type, setType] = useState("songs");
   const [query, setQuery] = useState("");
   const songs = useFavoriteItems("songs");
   const shows = useFavoriteItems("shows");
   const episodes = useFavoriteItems("episodes");
   const concertsSaved = useFavoriteItems("concerts");
+  const videos = useFavoriteItems("videos");
   const today = easternToday();
 
   // Episodes come from the archive; in preview builds also the samples.
@@ -58,6 +66,7 @@ export function LibraryScreen({ onOpenShow, onNavigate }) {
     ...(ARCHIVE_ENABLED || SHOW_SAMPLES
       ? { episodes: SHOW_SAMPLES ? episodes : episodes.filter((ep) => ep.audio) }
       : {}),
+    ...(VIDEOS_ENABLED ? { videos } : {}),
     // Saved with their details, so they show even while the feed is down;
     // past dates drop off.
     ...(CONCERTS_ENABLED ? { concerts: concertsSaved.filter((c) => c.date >= today) } : {}),
@@ -66,7 +75,7 @@ export function LibraryScreen({ onOpenShow, onNavigate }) {
   const q = query.trim().toLowerCase();
   const filtered = items[category].filter((item) => !q || searchText(item).includes(q));
   const empty = EMPTY[category];
-  // Until something is saved, the counts and search have nothing to work on.
+  // Until something is saved, search has nothing to work on.
   const anything = Object.values(items).some((list) => list.length);
 
   const shareSongs = async () =>
@@ -101,7 +110,6 @@ export function LibraryScreen({ onOpenShow, onNavigate }) {
           options={Object.keys(items).map((key) => ({
             value: key,
             label: key[0].toUpperCase() + key.slice(1),
-            count: items[key].length || undefined,
           }))}
         />
         {anything && (
@@ -145,6 +153,15 @@ export function LibraryScreen({ onOpenShow, onNavigate }) {
         </div>
       ) : category === "concerts" ? (
         filtered.map((c) => <ConcertRow key={c.id} concert={c} />)
+      ) : category === "videos" ? (
+        <div className="video-grid saved-videos">
+          {filtered.map((v) => (
+            <div className="saved-video" key={v.id}>
+              <VideoCard video={v} onWatch={onOpenVideo} />
+              <SaveButton type="videos" item={v} name={v.artist || v.name} />
+            </div>
+          ))}
+        </div>
       ) : (
         filtered.map((ep) =>
           ep.audio ? (

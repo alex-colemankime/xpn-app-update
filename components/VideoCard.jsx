@@ -1,6 +1,5 @@
 import { Art, Icon } from "../ui.jsx";
 import { clockTime, lengthLabel } from "../archive.js";
-import { videoToWatch } from "../videos.js";
 
 // "Oct 1", or "Oct 1, 2025" before this year.
 const DAY = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
@@ -24,7 +23,7 @@ export function VideoCard({ video, onWatch, hero = false }) {
   return (
     <button
       className={`video-card ${hero ? "video-hero" : ""}`}
-      onClick={() => onWatch(videoToWatch(video))}
+      onClick={() => onWatch(video)}
       aria-label={`Play ${label}`}
     >
       <span className="video-thumb">

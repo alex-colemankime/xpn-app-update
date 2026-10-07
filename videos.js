@@ -143,6 +143,28 @@ async function fetchPlaylist(playlist, offset = 0, signal) {
   return parsePlaylist(await response.json());
 }
 
+// One video, for a watch page opened from a link to a video no list holds.
+export async function fetchVideo(id, signal) {
+  const key = await getPolicyKey(signal);
+  const response = await fetch(`${API}/${VIDEO_ACCOUNT}/videos/${encodeURIComponent(id)}`, {
+    headers: { Accept: `application/json;pk=${key}` },
+    signal: withTimeout(signal),
+  });
+  if (!response.ok) throw new Error(`Videos: video HTTP ${response.status}`);
+  const video = normalizeVideo(await response.json());
+  if (!video) throw new Error("Videos: unusable video");
+  return video;
+}
+
+// Where a video is in the lists: the video and its section, or nulls.
+export function findVideo(sections, id) {
+  for (const section of sections) {
+    const video = section.videos.find((v) => v.id === id);
+    if (video) return { video, section };
+  }
+  return { video: null, section: null };
+}
+
 // Every section's first page, shared by the Videos tab and show pages; the
 // last good lists are kept for a moment offline.
 const CACHE_KEY = "xpn.videos.cache";
@@ -233,11 +255,14 @@ export function useVideos() {
   return useSyncExternalStore(videoStore.subscribe, videoStore.getSnapshot);
 }
 
-// What the video sheet needs to play one (see App's watch()).
-export const videoToWatch = (video) => ({
-  id: `video-${video.id}`,
-  title: video.artist || video.detail,
-  text: video.artist ? video.detail : "",
-  description: video.description,
-  embed: playerUrl(video.id),
+// What Favorites keeps of a video: enough to list it and open it again.
+export const savedVideoItem = (video) => ({
+  id: video.id,
+  name: video.name,
+  artist: video.artist,
+  detail: video.detail,
+  poster: video.poster,
+  duration: video.duration,
+  published: video.published,
+  tags: video.tags,
 });

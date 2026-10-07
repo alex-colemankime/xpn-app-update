@@ -6,6 +6,7 @@ import { flushSync } from "react-dom";
 //   #/shows                                a screen
 //   #/favorites/show/worldcafe             a show, open over that screen
 //   #/favorites/show/worldcafe/episode/x   one of its episodes
+//   #/videos/video/6406083303112           a video, full screen over that screen
 // Hash routing needs no server rewrites, so it works on GitHub Pages and in
 // the Capacitor webview alike.
 
@@ -35,11 +36,13 @@ export function parseRoute(hash) {
   const screen = SCREENS.includes(parts[0]) ? parts[0] : "listen";
   const showId = parts[1] === "show" && parts[2] ? parts[2] : null;
   const episodeId = showId && parts[3] === "episode" && parts[4] ? parts[4] : null;
-  return { screen, showId, episodeId };
+  const videoId = parts[1] === "video" && /^\d+$/.test(parts[2] || "") ? parts[2] : null;
+  return { screen, showId, episodeId, videoId };
 }
 
-export function routeHash({ screen, showId, episodeId }) {
+export function routeHash({ screen, showId, episodeId, videoId }) {
   let hash = `#/${screen}`;
+  if (videoId) return `${hash}/video/${encodeURIComponent(videoId)}`;
   if (showId) hash += `/show/${encodeURIComponent(showId)}`;
   if (showId && episodeId) hash += `/episode/${encodeURIComponent(episodeId)}`;
   return hash;
@@ -108,6 +111,17 @@ const actions = {
   closeShow() {
     const d = depth();
     if (d > 0) window.history.go(-d);
+    else replace({ screen: current().screen }, { depth: 0 });
+  },
+  // A video opens over the screen (from a show's sheet too, which Back then
+  // returns to); picking the next one replaces it, so Back always closes.
+  openVideo(videoId) {
+    const route = current();
+    if (route.videoId) replace({ screen: route.screen, videoId });
+    else push({ screen: route.screen, videoId }, { depth: depth() + 1, fromScreen: true });
+  },
+  closeVideo() {
+    if (window.history.state?.fromScreen) window.history.back();
     else replace({ screen: current().screen }, { depth: 0 });
   },
 };

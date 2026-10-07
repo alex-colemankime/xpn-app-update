@@ -2,9 +2,8 @@ import { useMemo, useState } from "react";
 import { Icon, Empty, SearchField } from "../ui.jsx";
 import { useFavoriteItems } from "../favorites.js";
 import { ConcertRow } from "../components/ConcertRow.jsx";
-import { easternToday } from "../concerts.js";
-import { shiftDate } from "../time.js";
-import { CALENDAR_URL } from "../links.js";
+import { easternToday, filterConcerts } from "../concerts.js";
+import { CALENDAR_URL, SUBMIT_CONCERT_URL } from "../links.js";
 import { NewsletterPrompt } from "../components/Newsletter.jsx";
 
 const PAGE = 40;
@@ -16,18 +15,6 @@ const WHEN = [
   { id: "weekend", label: "This weekend" },
   { id: "week", label: "Next 7 days" },
 ];
-function inRange(date, when, today) {
-  if (when === "today") return date === today;
-  if (when === "week") return date >= today && date <= shiftDate(today, 6);
-  if (when === "weekend") {
-    // Friday to Sunday; on the weekend itself, the rest of it.
-    const dow = new Date(`${today}T12:00:00Z`).getUTCDay();
-    const from = dow === 0 || dow === 6 || dow === 5 ? today : shiftDate(today, 5 - dow);
-    const to = shiftDate(today, dow === 0 ? 0 : 7 - dow);
-    return date >= from && date <= to;
-  }
-  return true;
-}
 
 function CalendarLink({ children = "See the concert calendar on xpn.org" }) {
   return (
@@ -55,6 +42,26 @@ function ChipGroup({ options, value, onChange, multi = false }) {
   ));
 }
 
+// At the end of the listings: the way onto the calendar, xpn.org's own
+// submission form (no account needed).
+function SubmitConcert() {
+  return (
+    <a
+      className="playlist-prompt newsletter-prompt submit-concert"
+      href={SUBMIT_CONCERT_URL}
+      target="_blank"
+      rel="noreferrer"
+    >
+      <Icon name="calendarAdd" size={18} />
+      <span>
+        <strong>Playing a show?</strong>
+        <small>Submit a concert or event to WXPN’s calendar</small>
+      </span>
+      <Icon name="arrowUp" size={16} />
+    </a>
+  );
+}
+
 export function ConcertsScreen({ result }) {
   const [query, setQuery] = useState("");
   const [when, setWhen] = useState("all");
@@ -78,15 +85,7 @@ export function ConcertsScreen({ result }) {
   ];
 
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const filtered = concerts.filter(
-    (c) =>
-      words.every((w) => `${c.artist} ${c.venue} ${c.city}`.toLowerCase().includes(w)) &&
-      inRange(c.date, when, today) &&
-      (!regions.length || c.regions.some((r) => regions.includes(r))) &&
-      (!tags.includes("welcomes") || c.xpnWelcomes) &&
-      (!tags.includes("fan") || c.freeAtNoon) &&
-      (!tags.includes("saved") || savedIds.has(c.id)),
-  );
+  const filtered = filterConcerts(concerts, { words, when, today, regions, tags, savedIds });
   const reset = () => {
     setQuery("");
     setWhen("all");
@@ -162,6 +161,7 @@ export function ConcertsScreen({ result }) {
             Show more concerts
           </button>
         )}
+        <SubmitConcert />
         <NewsletterPrompt />
       </>
     );

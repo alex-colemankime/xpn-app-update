@@ -61,7 +61,8 @@ The station can put a message in the app without a release: a banner across ever
 The Videos tab shows the station's video collections, newest first, the newest one large, with search; World Cafe's show page shows its newest four.
 
 - **Source:** Brightcove playlists, read with Brightcove's Playback API (`videos.js`). By default these are the NPR Music Video Network's "World Cafe" and "WXPN all videos" collections, the same ones livesessions.npr.org shows, so whatever reaches those pages reaches the app. The app reads the player's public policy key from the player's own config, so no key is built in.
-- **Playback:** in the account's Brightcove Player, in a sheet, with the radio (or an archive episode) paused and offered back afterwards. Streams are HLS/DASH only, which the player handles on every platform. Plays are counted in that account's Brightcove Analytics, marked `wxpn-app`.
+- **Watching:** a full-screen watch page, as video apps have it: the video at the top (pinned there on phones), the title, the show it is tagged with (Follow), Save (to Favorites › Videos), the description, and Up next from the same collection; wider, Up next runs beside the video. It has its own address (`#/videos/video/<id>`), so Back closes it and a video can be linked. Free at Noon's live video opens the same page. The radio (or an archive episode) pauses and is offered back afterwards.
+- **Playback:** in the account's Brightcove Player. Streams are HLS/DASH only, which the player handles on every platform. Plays are counted in that account's Brightcove Analytics, marked `wxpn-app`.
 - **WXPN's own account instead:** make matching playlists in WXPN's Video Cloud (for example a smart playlist on the `worldcafe` tag) and set `VITE_BRIGHTCOVE_ACCOUNT=6416377368001` and `VITE_BRIGHTCOVE_VIDEOS`. Plays then count in WXPN's account. The Default Player has no domain restrictions; if one is added, the app's origins must be allowed.
 
 ## Audio archive

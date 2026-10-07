@@ -3,6 +3,7 @@ export const DONATE_URL = "https://xpn.org/donate/";
 export const PLAYLIST_URL = "https://xpn.org/wxpn-playlists/";
 export const PROGRAM_GUIDE_URL = "https://xpn.org/program_guide/";
 export const CALENDAR_URL = "https://xpn.org/concert-and-events/";
+export const SUBMIT_CONCERT_URL = "https://xpn.org/concert-event-submit/";
 export const LISTEN_URL = "https://xpn.org/listen/";
 export const PRIVACY_URL = "https://xpn.org/privacy-policy/";
 export const STATION_EMAIL = "wxpndesk@xpn.org";
