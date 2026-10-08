@@ -17,6 +17,23 @@ const HEART =
   "M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z";
 
 const ICONS = {
+  // Social platforms, for the station's accounts (links.js SOCIAL).
+  instagram: [
+    outline(1.8, rounded),
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.3" cy="6.7" r="0.6" fill="currentColor" stroke="none" />
+    </>,
+  ],
+  facebook: [
+    solid,
+    <path d="M13.5 21v-7.2h2.4l.4-2.8h-2.8V9.2c0-.8.2-1.4 1.4-1.4h1.5V5.3c-.3 0-1.1-.1-2.1-.1-2.1 0-3.6 1.3-3.6 3.7V11H8.3v2.8h2.4V21h2.8z" />,
+  ],
+  youtube: [
+    solid,
+    <path d="M21.6 7.2a2.5 2.5 0 00-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 002.4 7.2C2 8.8 2 12 2 12s0 3.2.4 4.8a2.5 2.5 0 001.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 001.8-1.8c.4-1.6.4-4.8.4-4.8s0-3.2-.4-4.8zM10 15V9l5.2 3L10 15z" />,
+  ],
   back: [outline(2.5, roundCaps), <path d="M15 18l-6-6 6-6" />],
   // Skip keys for archive episodes: a circling arrow with the seconds inside.
   back15: [

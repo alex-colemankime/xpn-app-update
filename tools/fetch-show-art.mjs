@@ -24,10 +24,11 @@ for (const [id, show] of Object.entries(shows)) {
       fit: "inside",
       withoutEnlargement: true,
     });
-    // Logos drawn on a transparent ground stay PNG; everything else is JPEG.
-    const { hasAlpha } = await image.metadata();
-    const ext = hasAlpha ? "png" : "jpg";
-    const data = hasAlpha
+    // Logos drawn on a transparent ground stay PNG; everything else, PNGs
+    // that are opaque throughout included, is JPEG.
+    const { isOpaque } = await image.stats();
+    const ext = isOpaque ? "jpg" : "png";
+    const data = !isOpaque
       ? await image.png({ compressionLevel: 9 }).toBuffer()
       : await image.jpeg({ quality: 82, mozjpeg: true }).toBuffer();
     await writeFile(new URL(`${id}.${ext}`, OUT), data);

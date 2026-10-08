@@ -351,3 +351,42 @@
 .newsletter-prompt > .icon:last-child {
   color: var(--muted);
 }
+
+/* Social accounts: a name, then its platforms as icons on the same line. */
+.social-links {
+  display: grid;
+}
+.social-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 60px;
+  border-bottom: 1px solid var(--border);
+}
+.social-owner {
+  font-weight: 600;
+}
+.social-icons {
+  display: flex;
+  gap: 4px;
+  margin-right: -10px;
+}
+.social-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  color: var(--text);
+}
+@media (hover: hover) {
+  .social-icon:hover {
+    background: var(--soft-fill);
+    color: var(--accent);
+  }
+}
+.welcome .social-links {
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+}

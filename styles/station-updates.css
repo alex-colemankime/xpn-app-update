@@ -20,17 +20,35 @@
   color: var(--bg);
   border-bottom-color: var(--text);
 }
-.station-banner[data-kind="live"] .watch-button {
-  min-height: 36px;
-  background: var(--bg);
-  color: var(--text);
+/* A live video: the band itself is the button, its words lined up with the
+   page and "Watch" at the end like a row's chevron. */
+.station-banner[data-kind="live"] {
+  padding-block: 0;
+}
+.station-banner-watch {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  color: inherit;
+  text-align: left;
+}
+.station-banner-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
 }
 @media (hover: hover) {
-  .station-banner[data-kind="live"] .watch-button:hover {
-    background: color-mix(in srgb, var(--bg) 85%, var(--text));
+  .station-banner[data-kind="live"]:has(.station-banner-watch:hover) {
+    background: color-mix(in srgb, var(--text) 88%, var(--bg));
   }
 }
-.station-banner p {
+.station-banner-text {
   flex: 1;
   min-width: 0;
   margin: 0;

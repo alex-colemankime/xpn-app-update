@@ -205,29 +205,3 @@
 .welcome-bars i[data-on] {
   background: var(--accent);
 }
-
-/* The social accounts: a short list under each name, rows between
-   hairlines rather than boxes. */
-.welcome-social {
-  margin-top: 20px;
-}
-.welcome-social h4 {
-  margin: 0 0 2px;
-  font-size: 0.9375rem;
-  font-weight: 650;
-}
-.welcome-social a {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 46px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-}
-.welcome-social a .icon {
-  color: var(--muted);
-}
-.welcome-social small {
-  margin-left: 8px;
-  color: var(--muted);
-}

@@ -8,16 +8,14 @@ import { PlaylistSyncPanel } from "../components/PlaylistSync.jsx";
 import { RadioAlarmPanel } from "../components/RadioAlarm.jsx";
 import { useNotificationTrouble } from "../notifications.js";
 import { CONCERTS_ENABLED } from "../config.js";
-import { CALENDAR_URL, DONATE_URL, PRIVACY_URL, SOCIAL, STATION_EMAIL } from "../links.js";
+import { SocialLinks } from "../components/SocialLinks.jsx";
+import { CALENDAR_URL, DONATE_URL, PRIVACY_URL, STATION_EMAIL } from "../links.js";
 
 // The app's version, from package.json (see vite.config.js).
 const VERSION = __APP_VERSION__;
 
 const LINKS = [
   { label: "Donate to WXPN", url: DONATE_URL },
-  ...SOCIAL.flatMap(({ owner, accounts }) =>
-    accounts.map((a) => ({ label: `${owner} on ${a.name}`, note: a.handle, url: a.url })),
-  ),
   ...(CONCERTS_ENABLED ? [] : [{ label: "Concert calendar", url: CALENDAR_URL }]),
   { label: "Contact the station", url: `mailto:${STATION_EMAIL}` },
   {
@@ -117,6 +115,7 @@ export function SettingsScreen({
               <Icon name="heart" />
               Stay connected
             </h2>
+            <SocialLinks />
             {LINKS.map((link) => {
               const web = link.url.startsWith("http");
               return (

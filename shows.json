@@ -358,7 +358,7 @@
     "id": "sleepyhollow",
     "name": "Sleepy Hollow",
     "host": "Keith Kelleher & Joey Sweeney",
-    "img": "shows/sleepyhollow.png",
+    "img": "shows/sleepyhollow.jpg",
     "desc": "A mix of jazz, folk, instrumental, contemporary acoustic, and indie music perfectly blended for a distinct quiet sound.",
     "schedule": [
       {
@@ -401,7 +401,7 @@
     "id": "saturdaymix",
     "name": "Saturday Afternoon Mix",
     "host": "Wendy Rollins",
-    "img": "shows/saturdaymix.png",
+    "img": "shows/saturdaymix.jpg",
     "desc": "Signature mix of music featuring new and legendary indie, classic and alternative rock, vintage R&B, soul, blues, and more.",
     "schedule": [
       {
@@ -645,7 +645,7 @@
     "id": "outsounds",
     "name": "OUTsounds",
     "host": "Robert Drake",
-    "img": "shows/outsounds.png",
+    "img": "shows/outsounds.jpg",
     "desc": "OUTsounds celebrates out musicians worldwide.",
     "schedule": [
       {

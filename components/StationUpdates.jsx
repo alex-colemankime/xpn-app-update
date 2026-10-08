@@ -36,31 +36,33 @@ export function StationBanner({ banner, live, liveDismissed, onWatch, onListenSc
       role="region"
       aria-label="From WXPN"
     >
-      {showLive && (
-        <span className="station-banner-live" aria-hidden="true">
-          <i />
-          Live
-        </span>
-      )}
-      <p>{showLive ? live.title : banner.text}</p>
       {showLive ? (
-        <button className="station-banner-action watch-button" onClick={() => onWatch(live)}>
-          <Icon name="play" size={13} />
-          Watch
+        // The whole band is the way in: one tap anywhere on it watches.
+        <button className="station-banner-watch" onClick={() => onWatch(live)}>
+          <span className="station-banner-live" aria-hidden="true">
+            <i />
+            Live
+          </span>
+          <span className="station-banner-text">{live.title}</span>
+          <span className="station-banner-go">
+            Watch
+            <Icon name="chev" size={16} />
+          </span>
         </button>
       ) : (
-        banner.action && (
-          <a
-            className="station-banner-action"
-            href={banner.action.url}
-            target="_blank"
-            rel="noreferrer"
-            // On phones the header's Donate sits just above; one is enough.
-            data-donate={isDonate(banner.action.url) || undefined}
-          >
-            {banner.action.label}
-          </a>
-        )
+        <p className="station-banner-text">{banner.text}</p>
+      )}
+      {!showLive && banner.action && (
+        <a
+          className="station-banner-action"
+          href={banner.action.url}
+          target="_blank"
+          rel="noreferrer"
+          // On phones the header's Donate sits just above; one is enough.
+          data-donate={isDonate(banner.action.url) || undefined}
+        >
+          {banner.action.label}
+        </a>
       )}
       {item.dismissible && (
         <button

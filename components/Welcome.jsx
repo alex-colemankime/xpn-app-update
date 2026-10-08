@@ -10,7 +10,7 @@ import { tap } from "../haptics.js";
 import { PLAYLIST_NAME } from "../music-services.js";
 import { connect } from "../playlist-sync.js";
 import { offeredServices } from "./PlaylistSync.jsx";
-import { SOCIAL } from "../links.js";
+import { SocialLinks } from "./SocialLinks.jsx";
 
 // The featured shows with a place on the FM schedule, so each one can also
 // be reminded about.
@@ -193,20 +193,7 @@ export function Welcome({ onDone }) {
               Follow WXPN and World Cafe
             </h3>
             <p className="welcome-lede">These links are also in Settings › Stay connected.</p>
-            {SOCIAL.map(({ owner, accounts }) => (
-              <div className="welcome-social" key={owner} role="group" aria-label={owner}>
-                <h4>{owner}</h4>
-                {accounts.map((a) => (
-                  <a key={a.name} href={a.url} target="_blank" rel="noreferrer">
-                    <span>
-                      {a.name} <small>{a.handle}</small>
-                      <span className="sr-only"> ({owner})</span>
-                    </span>
-                    <Icon name="chev" size={16} />
-                  </a>
-                ))}
-              </div>
-            ))}
+            <SocialLinks />
             <div className="welcome-actions">
               {counter}
               <button className="primary-button" onClick={onDone}>
