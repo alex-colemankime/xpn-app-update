@@ -167,6 +167,10 @@ export function createEpisodePlayer({
       if (wantPlaying) set({ status: "loading" });
     });
     audio.addEventListener("timeupdate", () => {
+      // Not this episode's place yet: the element reporting its reset to 0
+      // while a new file (or a fresh link) loads, before the saved place is
+      // applied. Taken as progress, it would overwrite where to resume.
+      if (pendingSeek !== null || audio.getAttribute("src") !== state.episode?.audio) return;
       const position = audio.currentTime || 0;
       // Only whole-second changes reach the screen, so a list of episodes
       // isn't redrawn four times a second.

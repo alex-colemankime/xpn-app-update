@@ -110,16 +110,22 @@ export function createScheduler({
     // plans for good: delivered already (the phone shows it once), or missed
     // while the app was closed. Scheduled again, a past date would make the
     // phone deliver it now, a second time.
+    // One about to fire that is still planned stays on the phone as it is:
+    // cancelled now, it could not be scheduled again in time (an alarm
+    // would never ring because some other plan changed a moment before).
     const soonest = now() + TOO_SOON_MS;
+    const imminent = new Set();
     for (const kind of Object.keys(plans)) {
+      for (const n of plans[kind]) if (n.at <= soonest) imminent.add(n.id);
       plans[kind] = plans[kind].filter((n) => n.at > soonest);
     }
     const { notifications: pending = [] } = await api.getPending();
     const ours = (n) => Object.hasOwn(plans, n.extra?.kind ?? "");
+    const kept = (n) => ours(n) && imminent.has(n.id);
     // Notifications of a kind whose plan hasn't arrived yet this session stay
-    // as they are, and count against the budget.
-    const room = NOTIFICATION_BUDGET - pending.filter((n) => !ours(n)).length;
-    const stale = pending.filter(ours);
+    // as they are, and count against the budget, as do the imminent ones.
+    const room = NOTIFICATION_BUDGET - pending.filter((n) => !ours(n) || kept(n)).length;
+    const stale = pending.filter((n) => ours(n) && !kept(n));
     if (stale.length) {
       await api.cancel({ notifications: stale.map((n) => ({ id: n.id })) });
     }

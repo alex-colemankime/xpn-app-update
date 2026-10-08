@@ -190,11 +190,12 @@ export function useNowPlaying(streamId) {
         if (old && old.status === next.status && sameTracks(old.tracks, next.tracks)) return prev;
         return { ...prev, [streamId]: next };
       });
-    // Keep the last good list on screen; the status line explains. A
-    // superseded or unmounted request (AbortError) is not a station failure;
-    // a timeout (TimeoutError) is.
-    const failed = (error) => {
-      if (!active || error?.name === "AbortError") return;
+    // Keep the last good list on screen; the status line explains. A request
+    // the app called off (superseded, or the screen gone) is not a station
+    // failure; a timeout is. Judged by the app's own controller, not the
+    // error's name: some Safari versions report a timeout as AbortError.
+    const failed = (cancelled) => {
+      if (!active || cancelled) return;
       setByStream((prev) =>
         prev[streamId]?.status === "unavailable"
           ? prev
@@ -209,12 +210,12 @@ export function useNowPlaying(streamId) {
       // and media notification still show the song.
       if (document.visibilityState === "hidden" && !getPlayerSnapshot().playing) return;
       controller?.abort();
-      controller = new AbortController();
+      const mine = (controller = new AbortController());
       let result;
       try {
-        result = await readPlaylist(endpoint, withTimeout(controller.signal));
-      } catch (error) {
-        failed(error);
+        result = await readPlaylist(endpoint, withTimeout(mine.signal));
+      } catch {
+        failed(mine.signal.aborted);
         return;
       }
       if (result.nowFile) lastNow = result.nowFile;

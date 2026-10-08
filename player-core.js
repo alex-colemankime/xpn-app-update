@@ -57,7 +57,10 @@ export function createPlayer({
     lastPlaying = playing;
     onPlaying(playing);
     onStatus(status);
-    mediaSession.setPlaybackState({ playbackState: playing ? "playing" : "paused" });
+    // While an episode has the lock screen, it shows the episode's state;
+    // takeControls() puts the station's back when it returns.
+    if (isActive())
+      mediaSession.setPlaybackState({ playbackState: playing ? "playing" : "paused" });
   };
 
   const clearTimers = () => {

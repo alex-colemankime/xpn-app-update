@@ -358,3 +358,31 @@ test("after an episode, the lock screen goes back to the station's own controls"
   assert.equal(episodeResumed, false);
   assert.equal(h.audio.src, STREAMS.xpn.url, "the lock screen's play starts the station");
 });
+
+test("while an episode has the lock screen, the station doesn't mark it paused", () => {
+  let active = false; // an archive episode is playing and has the lock screen
+  const states = [];
+  const player = createPlayer({
+    createAudio: () => new FakeAudio(),
+    mediaSession: {
+      setActionHandler() {},
+      setPlaybackState: ({ playbackState }) => states.push(playbackState),
+      setMetadata() {},
+    },
+    streams: STREAMS,
+    initialStreamId: "xpn",
+    isActive: () => active,
+  });
+  player.init(
+    () => {},
+    () => {},
+  );
+  player.setStream("xpn2");
+  player.pause();
+  assert.deepEqual(states, [], "the episode's playing state is left alone");
+
+  // Back to the station: its own (paused) state returns.
+  active = true;
+  player.takeControls();
+  assert.deepEqual(states, ["paused"]);
+});

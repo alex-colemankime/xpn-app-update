@@ -99,3 +99,25 @@ test("a notification due within seconds is left out rather than delivered early"
     [2],
   );
 });
+
+test("an alarm about to ring stays on the phone when another plan changes", async () => {
+  let clock = Date.UTC(2026, 9, 8, 6, 50);
+  const device = phone();
+  const scheduler = createScheduler({ api: device.api, now: () => clock });
+  const ring = Date.UTC(2026, 9, 8, 7, 0);
+  await scheduler.sync("radio-alarm", [{ id: 7, at: ring, title: "Good morning" }]);
+
+  // Three seconds before it rings, a show reminder is planned.
+  clock = ring - 3000;
+  await scheduler.sync("show-reminder", [{ id: 1, at: ring + 3600000, title: "Later" }]);
+  assert.ok(device.pending.has(7), "the alarm is still pending");
+  assert.equal(
+    device.scheduled.filter((n) => n.id === 7).length,
+    1,
+    "and was never cancelled and scheduled again",
+  );
+
+  // Turning the alarm off still takes it off the phone, however close.
+  await scheduler.sync("radio-alarm", []);
+  assert.ok(!device.pending.has(7));
+});

@@ -398,3 +398,42 @@ test("a pause while the link loads keeps the place the listener chose", async ()
   assert.equal(audio.plays, 0, "the late link doesn't start playback");
   assert.equal(player.getState().position, 320);
 });
+
+test("switching episodes keeps the new one's saved place while it loads", async () => {
+  const audio = new FakeAudio();
+  const saved = [];
+  let pending = [];
+  let clock = 0;
+  const player = createEpisodePlayer({
+    createAudio: () => audio,
+    mediaSession: {
+      setActionHandler() {},
+      setMetadata() {},
+      setPlaybackState() {},
+      setPositionState() {},
+    },
+    onProgress: (id, place) => saved.push({ id, ...place }),
+    now: () => (clock += 10000),
+    needsRefresh: (ep) => !ep.fresh,
+    refresh: (ep) => new Promise((resolve) => pending.push(() => resolve({ ...ep, fresh: true }))),
+  });
+  player.play({ ...EPISODE, fresh: true });
+  audio.metadata(684);
+  audio.advanceTo(120);
+
+  // B needs a fresh link. Taking A's file off resets the element, which
+  // reports its playhead at 0 before B's link arrives.
+  player.play({ ...B, fresh: false }, 40);
+  audio.advanceTo(0);
+  assert.equal(player.getState().position, 40, "still B's saved place");
+  pending.splice(0).forEach((fn) => fn());
+  await tick();
+  audio.advanceTo(0); // the new file's own reset, before it can seek
+  assert.equal(player.getState().position, 40);
+  audio.metadata(1800);
+  assert.equal(audio.currentTime, 40, "and playback starts there");
+  assert.ok(
+    saved.filter((s) => s.id === B.id).every((s) => s.at === 40),
+    "B's place is never saved as 0",
+  );
+});
