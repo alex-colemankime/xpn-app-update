@@ -14,14 +14,28 @@ export const STATION_EMAIL = "wxpndesk@xpn.org";
 // Stories form that adds a free playlist.
 export const ENEWS_URL = "https://xpn.org/enews/";
 export const TOP_STORIES_URL = "https://xpn.org/signup-xpn-top-stories/";
-// The station's social accounts, as xpn.org's own footer links them.
+// The station's social accounts and World Cafe's, as xpn.org links them
+// (its footer, and the World Cafe program page).
 export const SOCIAL = [
-  { name: "Instagram", handle: "@wxpnfm", url: "https://www.instagram.com/wxpnfm/" },
-  { name: "Facebook", handle: "885wxpn", url: "https://www.facebook.com/885wxpn/" },
   {
-    name: "YouTube",
-    handle: "xponentialmusic",
-    url: "https://www.youtube.com/user/xponentialmusic",
+    owner: "WXPN",
+    accounts: [
+      { name: "Instagram", handle: "@wxpnfm", url: "https://www.instagram.com/wxpnfm/" },
+      { name: "Facebook", handle: "885wxpn", url: "https://www.facebook.com/885wxpn/" },
+      {
+        name: "YouTube",
+        handle: "xponentialmusic",
+        url: "https://www.youtube.com/user/xponentialmusic",
+      },
+    ],
+  },
+  {
+    owner: "World Cafe",
+    accounts: [
+      { name: "Instagram", handle: "@worldcafe", url: "https://www.instagram.com/worldcafe/" },
+      { name: "Facebook", handle: "WorldCafe", url: "https://www.facebook.com/WorldCafe" },
+      { name: "YouTube", handle: "worldcafe", url: "https://www.youtube.com/c/worldcafe" },
+    ],
   },
 ];
 

@@ -15,7 +15,9 @@ const VERSION = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "";
 
 const LINKS = [
   { label: "Donate to WXPN", url: DONATE_URL },
-  ...SOCIAL.map((s) => ({ label: `WXPN on ${s.name}`, note: s.handle, url: s.url })),
+  ...SOCIAL.flatMap(({ owner, accounts }) =>
+    accounts.map((a) => ({ label: `${owner} on ${a.name}`, note: a.handle, url: a.url })),
+  ),
   ...(CONCERTS_ENABLED ? [] : [{ label: "Concert calendar", url: CALENDAR_URL }]),
   { label: "Contact the station", url: `mailto:${STATION_EMAIL}` },
   {
