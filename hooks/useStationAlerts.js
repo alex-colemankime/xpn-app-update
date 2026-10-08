@@ -34,8 +34,8 @@ const alertsStore = createLocalStore("xpn.alerts", { live: false, drives: false 
 export const useAlertSettings = () => useLocalStore(alertsStore);
 
 const TURNED_ON = {
-  live: "We’ll let you know before live video starts.",
-  drives: "We’ll let you know during member drives.",
+  live: "Live video notifications are on.",
+  drives: "Member drive notifications are on.",
 };
 
 // A tap on a switch: turning one on asks for notification permission first.

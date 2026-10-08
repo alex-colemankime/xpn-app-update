@@ -212,8 +212,8 @@
   display: none;
 }
 .next-more {
-  justify-self: stretch;
-  justify-content: center;
+  justify-self: start;
+  margin-top: -8px;
 }
 .next-text {
   display: grid;

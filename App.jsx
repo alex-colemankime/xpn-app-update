@@ -150,7 +150,6 @@ export default function App() {
               playlist={playlist}
               live={updates.live}
               onWatch={watching.watchLive}
-              onNavigate={route.navigate}
               onOpenShow={route.openShow}
             />
           </Screen>

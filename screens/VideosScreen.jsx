@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Empty, SearchField, Segmented } from "../ui.jsx";
+import { Empty, Icon, SearchField, Segmented } from "../ui.jsx";
 import {
   chooseVideoSection,
   loadMoreVideos,
@@ -9,6 +9,8 @@ import {
 } from "../videos.js";
 import { VideoCard } from "../components/VideoCard.jsx";
 
+// Under the newest video, the next four; each "Show more" adds a page.
+const FIRST = 4;
 const SHOW_STEP = 24;
 
 function SkeletonVideos() {
@@ -30,16 +32,15 @@ function SkeletonVideos() {
 
 // Videos: the station's collections (World Cafe, WXPN), newest first, the
 // newest one large. Search looks through everything loaded in the
-// collection; "More videos" reveals the rest, loading further pages as
-// needed.
+// collection; "Show more" reveals the rest, loading further pages as needed.
 export function VideosScreen({ onWatch }) {
   const state = useVideos();
   const [query, setQuery] = useState("");
-  const [count, setCount] = useState(SHOW_STEP);
+  const [count, setCount] = useState(FIRST);
   const section = state.sections.find((s) => s.label === state.section) || state.sections[0];
   const choose = (label) => {
     chooseVideoSection(label);
-    setCount(SHOW_STEP);
+    setCount(FIRST);
   };
   const videos = section?.videos || [];
   const found = matchVideos(videos, query);
@@ -106,8 +107,11 @@ export function VideosScreen({ onWatch }) {
           </p>
         )}
         {more && (
-          <button className="secondary-button video-more" onClick={showMore}>
-            {section.moreFailed ? "Try again" : "More videos"}
+          <button className="text-button playlist-expand video-more" onClick={showMore}>
+            {section.moreFailed ? "Try again" : "Show more videos"}
+            <span className="expand-chevron">
+              <Icon name="chevD" size={17} />
+            </span>
           </button>
         )}
         {searching && section?.more && (
@@ -119,11 +123,8 @@ export function VideosScreen({ onWatch }) {
 
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <h1>Videos</h1>
-        </div>
-      </div>
+      {/* The tab bar (or sidebar) already says where this is. */}
+      <h1 className="sr-only">Videos</h1>
       <div className="toolbar">
         {state.sections.length > 1 && (
           <Segmented

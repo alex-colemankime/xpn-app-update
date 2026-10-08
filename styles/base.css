@@ -52,6 +52,26 @@
   --inverse-accent: #b83d1c;
   --brand-w: #bf917c;
 }
+/* Listen, while a song with colorful artwork plays: the page takes a very
+   light wash of the artwork's color (art-tint.js picks it, already adjusted
+   per theme), so each song tints the screen a little differently. Set by
+   the Listen screen while it is in front. */
+:root[data-art-wash] {
+  --bg: color-mix(in srgb, var(--wash-light) 9%, #faf8f3);
+}
+:root[data-art-wash][data-theme="dark"] {
+  --bg: color-mix(in srgb, var(--wash-dark) 12%, #202224);
+}
+html,
+body {
+  transition: background-color 0.8s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body {
+    transition: none;
+  }
+}
 
 :root {
   font-family:

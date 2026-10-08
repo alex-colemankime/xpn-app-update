@@ -135,10 +135,10 @@ export function Welcome({ onDone }) {
         {stepName === "follow" ? (
           <>
             <h3 ref={heading} tabIndex={-1}>
-              Follow the shows you love
+              Follow shows
             </h3>
             <p className="welcome-lede">
-              They’ll be waiting in Favorites, and the app can remind you when they start.
+              Shows you follow go in Favorites, and the app can remind you when they start.
             </p>
             <div className="welcome-grid">
               {PICKS.map((show) => (
@@ -161,7 +161,7 @@ export function Welcome({ onDone }) {
         ) : stepName === "music" ? (
           <>
             <h3 ref={heading} tabIndex={-1}>
-              Keep every song you love
+              Save songs to a playlist
             </h3>
             <p className="welcome-lede">
               Connect {services.map((s) => s.name).join(" or ")}, and every song you heart here goes
@@ -195,10 +195,7 @@ export function Welcome({ onDone }) {
             <h3 ref={heading} tabIndex={-1}>
               Follow WXPN and World Cafe
             </h3>
-            <p className="welcome-lede">
-              Sessions, concert news and behind-the-scenes moments. You can find these any time in
-              Settings › Stay connected.
-            </p>
+            <p className="welcome-lede">These links are also in Settings › Stay connected.</p>
             {SOCIAL.map(({ owner, accounts }) => (
               <div className="welcome-social" key={owner} role="group" aria-label={owner}>
                 <h4>{owner}</h4>
@@ -223,7 +220,7 @@ export function Welcome({ onDone }) {
         ) : (
           <>
             <h3 ref={heading} tabIndex={-1}>
-              Never miss a show
+              Turn on show reminders
             </h3>
             <p className="welcome-lede">
               Get a reminder 5 minutes before {nameList(followed.map((s) => s.name))}{" "}

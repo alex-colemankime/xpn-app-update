@@ -153,9 +153,6 @@
   .track-row .icon-button {
     width: 44px;
   }
-  .saved-preview {
-    margin-top: 24px;
-  }
   .player-track > img {
     width: 42px;
     height: 42px;
@@ -364,4 +361,13 @@
     flex-wrap: wrap;
     gap: 4px 12px;
   }
+}
+
+/* Screens named by the tab bar start straight with their controls. */
+h1.sr-only + .toolbar,
+h1.sr-only + .concert-filters {
+  margin-top: 0;
+}
+.share-songs {
+  margin-top: 12px;
 }

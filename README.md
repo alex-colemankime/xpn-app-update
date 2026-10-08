@@ -192,6 +192,6 @@ brand/               logo source files (not shipped with the app)
 
 ## Design basis
 
-The main journey is **listen → identify a song → save it → find it again**. Album art always belongs to the reported song; stream controls and song controls have distinct labels. Recently played and saved tracks share the listening screen; shows and concerts have their own screens, with a persistent mini player.
+The main journey is **listen → identify a song → save it → find it again**. Album art always belongs to the reported song; stream controls and song controls have distinct labels. Recently played shares the listening screen; saved songs live in Favorites, and shows, videos and concerts have their own screens, with a persistent mini player.
 
 References reviewed: [KEXP mobile app](https://www.kexp.org/mobile/), [KEXP roadmap](https://kexp.org/mobile/mobile-roadmap/), [KCRW app](https://www.kcrw.com/stories/welcome-to-the-new-kcrw-com-and-kcrw-app), [WXPN program guide](https://xpn.org/program_guide/), [WXPN playlist](https://xpn.org/wxpn-playlists/).

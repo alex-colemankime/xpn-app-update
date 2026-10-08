@@ -1,10 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useArtTint } from "../art-tint.js";
 import { selectStream, togglePlayback } from "../player.js";
 import { STATION_OPTIONS } from "../streams.js";
 import { playedLabel, useLiveSong } from "../nowplaying.js";
 import { onAirAt } from "../catalog.js";
 import { playbackText, statusLine } from "../playback-text.js";
-import { useFavoriteItems } from "../favorites.js";
 import { Icon, Art, Wordmark, Segmented } from "../ui.jsx";
 import { SaveSong, SongMenu, TrackRow } from "../components/MusicRows.jsx";
 import { OnAir, videoOfShow } from "../components/OnAir.jsx";
@@ -27,6 +27,23 @@ const EqBars = () => (
   </span>
 );
 
+// While Listen is in front, the page takes a light wash of the playing
+// song's artwork color (styles/base.css, data-art-wash). Artwork with no
+// color leaves the page as it is.
+function useArtWash(art) {
+  const wash = useArtTint(art || null);
+  useEffect(() => {
+    if (!wash) return;
+    const root = document.documentElement;
+    root.style.setProperty("--wash-light", wash.light);
+    root.style.setProperty("--wash-dark", wash.dark);
+    root.dataset.artWash = "";
+    return () => {
+      delete root.dataset.artWash;
+    };
+  }, [wash]);
+}
+
 function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
   const player = usePlayer();
   const { station, streamId, playing, connecting, castAvailable } = player;
@@ -34,6 +51,7 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
   // Only a fresh report is presented as playing; an old one waits in
   // Recently played.
   const current = useLiveSong(playlist);
+  useArtWash(current?.img);
   const text = playbackText(player);
   const controls = useRef(null);
   useHeroVisibility(controls);
@@ -218,28 +236,7 @@ function RecentlyPlayed({ playlist, station }) {
   );
 }
 
-function SavedPreview({ onNavigate }) {
-  const saved = useFavoriteItems("songs");
-  return (
-    <section className="saved-preview" aria-labelledby="saved-heading">
-      <div className="section-heading">
-        <h2 id="saved-heading">Your saved songs</h2>
-        {saved.length > 0 && (
-          <button className="text-button" onClick={() => onNavigate("favorites")}>
-            View all
-          </button>
-        )}
-      </div>
-      {saved.length ? (
-        saved.slice(0, 3).map((t) => <TrackRow key={t.id} track={t} />)
-      ) : (
-        <p className="saved-empty">Tap the heart beside a song to save it here.</p>
-      )}
-    </section>
-  );
-}
-
-export function ListenScreen({ playlist, live, onWatch, onNavigate, onOpenShow }) {
+export function ListenScreen({ playlist, live, onWatch, onOpenShow }) {
   const { streamId, station } = usePlayer();
   const now = useNow();
   // During the show's own live video the on-air band carries it instead.
@@ -264,7 +261,6 @@ export function ListenScreen({ playlist, live, onWatch, onNavigate, onOpenShow }
           {station.songFeed && (
             <RecentlyPlayed key={streamId} playlist={playlist} station={station} />
           )}
-          <SavedPreview onNavigate={onNavigate} />
         </div>
       </div>
     </>

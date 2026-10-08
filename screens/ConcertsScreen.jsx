@@ -133,7 +133,7 @@ export function ConcertsScreen({ result }) {
       <div className="empty-state">
         <Icon name="navConcerts" size={32} />
         <h2>No upcoming concerts listed</h2>
-        <p>New shows are announced all the time.</p>
+        <p>The calendar on xpn.org may list more.</p>
         <CalendarLink />
       </div>
     );
@@ -166,11 +166,30 @@ export function ConcertsScreen({ result }) {
           <ConcertRow key={c.id} concert={c} />
         ))}
         {filtered.length > shown && (
-          <button className="secondary-button show-more" onClick={() => setShown(shown + PAGE)}>
+          <button
+            className="text-button playlist-expand show-more"
+            onClick={() => setShown(shown + PAGE)}
+          >
             Show more concerts
+            <span className="expand-chevron">
+              <Icon name="chevD" size={17} />
+            </span>
           </button>
         )}
         <SubmitConcert />
+        <a
+          className="playlist-prompt newsletter-prompt"
+          href={CALENDAR_URL}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <Icon name="navConcerts" size={18} />
+          <span>
+            <strong>The full calendar</strong>
+            <small>Every listing on xpn.org</small>
+          </span>
+          <Icon name="arrowUp" size={16} />
+        </a>
         <NewsletterPrompt />
       </>
     );
@@ -178,15 +197,8 @@ export function ConcertsScreen({ result }) {
 
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <h1>Concerts</h1>
-        </div>
-        <a href={CALENDAR_URL} className="text-button" target="_blank" rel="noreferrer">
-          On xpn.org
-          <Icon name="arrowUp" size={17} />
-        </a>
-      </div>
+      {/* The tab bar (or sidebar) already says where this is. */}
+      <h1 className="sr-only">Concerts</h1>
       {concerts.length > 0 && (
         <div className="concert-filters">
           <SearchField value={query} onChange={change(setQuery)} placeholder="Artist or venue" />

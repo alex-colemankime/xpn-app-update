@@ -41,11 +41,8 @@ export function ShowsScreen({ onOpen }) {
   }, [mode]);
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <h1>Shows</h1>
-        </div>
-      </div>
+      {/* The tab bar (or sidebar) already says where this is. */}
+      <h1 className="sr-only">Shows</h1>
       <div className="toolbar">
         <Segmented label="Browse shows" value={mode} onChange={setMode} options={MODES} />
         <SearchField

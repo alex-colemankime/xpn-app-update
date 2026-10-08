@@ -95,8 +95,7 @@
   color: var(--accent);
 }
 .show-more {
-  display: flex;
-  margin: 24px auto 0;
+  margin-top: 10px;
 }
 .concert-partial {
   display: flex;

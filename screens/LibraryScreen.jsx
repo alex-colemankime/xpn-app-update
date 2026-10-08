@@ -19,13 +19,13 @@ const EMPTY = {
     icon: "music",
     action: "Find a song",
     target: "listen",
-    text: "Hear something you love? Tap the heart beside a song to keep it here.",
+    text: "Tap the heart beside a song to save it here.",
   },
   shows: {
     icon: "headphones",
     action: "Explore shows",
     target: "shows",
-    text: "Follow your favorite voices and keep their schedules close.",
+    text: "Follow a show to keep its schedule here and get reminders.",
   },
   episodes: {
     icon: "headphones",
@@ -37,13 +37,13 @@ const EMPTY = {
     icon: "navConcerts",
     action: "Explore concerts",
     target: "concerts",
-    text: "Save a concert and make a night of it.",
+    text: "Save a concert to keep it here and add it to your calendar.",
   },
   videos: {
     icon: "video",
     action: "Explore videos",
     target: "videos",
-    text: "Save a session to watch it later.",
+    text: "Save a video to watch it later.",
   },
 };
 
@@ -87,17 +87,8 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
 
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <h1>Favorites</h1>
-        </div>
-        {category === "songs" && songs.length > 0 && (
-          <button className="text-button" onClick={shareSongs}>
-            <Icon name="shareAlt" size={18} />
-            Share songs
-          </button>
-        )}
-      </div>
+      {/* The tab bar (or sidebar) already says where this is. */}
+      <h1 className="sr-only">Favorites</h1>
       <div className="toolbar">
         <Segmented
           label="Favorites category"
@@ -140,7 +131,15 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
           {q ? "Try a different name." : empty.text}
         </Empty>
       ) : category === "songs" ? (
-        filtered.map((t) => <TrackRow key={t.id} track={t} />)
+        <>
+          {filtered.map((t) => (
+            <TrackRow key={t.id} track={t} />
+          ))}
+          <button className="text-button share-songs" onClick={shareSongs}>
+            <Icon name="shareAlt" size={17} />
+            Share your saved songs
+          </button>
+        </>
       ) : category === "shows" ? (
         <div className="show-grid all-shows">
           {filtered.map((s) => (

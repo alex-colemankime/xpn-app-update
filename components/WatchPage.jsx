@@ -60,7 +60,7 @@ function Channel({ show }) {
         <Art src={STATION_ART} alt="" />
         <span>
           <strong>WXPN</strong>
-          <small>Sessions and stories from the station</small>
+          <small>88.5 FM Philadelphia</small>
         </span>
       </div>
     );
@@ -133,9 +133,11 @@ function UpNext({ heading, videos, onPick }) {
         <NextCard key={v.id} video={v} onPick={onPick} />
       ))}
       {videos.length > UP_NEXT_FIRST && !all && (
-        <button className="secondary-button next-more" onClick={seeMore}>
-          See more
-          <Icon name="chevD" size={17} />
+        <button className="text-button playlist-expand next-more" onClick={seeMore}>
+          Show more videos
+          <span className="expand-chevron">
+            <Icon name="chevD" size={17} />
+          </span>
         </button>
       )}
     </section>

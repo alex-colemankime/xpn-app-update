@@ -208,8 +208,7 @@
 .now-footer .text-button {
   font-size: 0.875rem;
 }
-.recent-panel > .section-heading,
-.saved-preview > .section-heading {
+.recent-panel > .section-heading {
   min-height: 40px;
   margin-bottom: 10px;
 }
@@ -236,23 +235,10 @@
 .playlist-more {
   margin-top: 10px;
 }
-.saved-preview {
-  margin-top: 30px;
-  border-top: 1px solid var(--border);
-  padding-top: 20px;
-}
-.saved-empty {
-  font-size: 0.875rem;
-  line-height: 1.6;
-  color: var(--muted);
-  margin: 3px 0;
-}
 .playlist-empty {
   padding: 48px 20px;
   color: var(--muted);
   text-align: center;
-  border: 1px solid var(--border);
-  border-radius: 8px;
 }
 .playlist-empty p {
   font-size: 0.875rem;
