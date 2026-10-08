@@ -86,7 +86,7 @@ function AlarmTime({ time, onChange }) {
   return (
     <div className="alarm-time">
       <label className="eyebrow" htmlFor="alarm-time">
-        Alarm time · your local time
+        Alarm time, in your time zone
       </label>
       <div className="alarm-time-row">
         <span className="alarm-time-field">

@@ -30,7 +30,7 @@ export function OnAir({ onAirNow, playing, onOpenShow, live, onWatch }) {
         <span className="on-air-text">
           <span className="on-air-label">
             <i className="on-air-dot" data-live={playing || video ? "" : undefined} />
-            On air{until ? ` · ${until}` : ""}
+            On air{until ? ` ${until}` : ""}
           </span>
           <span className="on-air-show">{video ? video.title : show.name}</span>
           {line && <span className="on-air-host">{line}</span>}

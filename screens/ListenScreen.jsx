@@ -40,10 +40,10 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
   // The FM schedule only describes WXPN; XPN2 and Homegrown have none.
   const onAirNow = streamId === "xpn" ? onAirAt(new Date(now)) : null;
   const eyebrow = current
-    ? "NOW PLAYING"
+    ? "Now playing"
     : playlist.status === "loading" && station.songFeed
-      ? "LOADING SONG INFO"
-      : "LIVE RADIO";
+      ? "Loading song info"
+      : "Live radio";
   // Keyed on the song, so a new song fades in rather than snapping.
   const songKey = current ? `${current.date}-${current.time}-${current.title}` : streamId;
 
@@ -227,7 +227,6 @@ function SavedPreview({ onNavigate }) {
         {saved.length > 0 && (
           <button className="text-button" onClick={() => onNavigate("favorites")}>
             View all
-            <Icon name="arrowRight" size={16} />
           </button>
         )}
       </div>

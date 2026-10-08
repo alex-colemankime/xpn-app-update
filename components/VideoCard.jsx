@@ -25,7 +25,7 @@ export function VideoCard({ video, onWatch, hero = false }) {
         )}
       </span>
       <span className="video-text" aria-hidden="true">
-        {hero && <span className="eyebrow">Newest · {shortDay(video.published)}</span>}
+        {hero && <span className="eyebrow">Newest</span>}
         <strong>{video.artist || video.detail}</strong>
         {video.artist && <small>{video.detail}</small>}
         {!hero && video.published && (

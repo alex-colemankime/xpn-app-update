@@ -40,10 +40,10 @@
 .station-art .wordmark-w {
   color: #fcd9c6;
 }
+/* A short label above content: quiet, in sentence case. */
 .eyebrow {
   font-size: 0.875rem;
-  letter-spacing: 0.14em;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--muted);
 }
 .nav-button {
@@ -395,8 +395,6 @@ h1 {
   color: var(--accent-strong);
   font-size: 0.8125rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   vertical-align: 1px;
 }
 .live-badge i {

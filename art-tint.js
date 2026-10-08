@@ -6,8 +6,7 @@
 import { useEffect, useState } from "react";
 
 // Backgrounds a heart can sit on, per theme (styles/base.css): page, surface,
-// alternate row, the player bar, and a saved row's pale wash of the heart's
-// own color (close to the page, so the page stands in for it).
+// alternate row and the player bar.
 const GROUNDS = {
   light: ["#faf8f3", "#f2efe7", "#eeeae1", "#fffdf8"],
   dark: ["#202224", "#292c2f", "#2b2e30", "#32363a"],

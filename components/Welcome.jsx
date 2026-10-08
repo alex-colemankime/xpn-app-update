@@ -203,13 +203,7 @@ export function Welcome({ onDone }) {
               <div className="welcome-social" key={owner} role="group" aria-label={owner}>
                 <h4>{owner}</h4>
                 {accounts.map((a) => (
-                  <a
-                    key={a.name}
-                    className="secondary-button"
-                    href={a.url}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
+                  <a key={a.name} href={a.url} target="_blank" rel="noreferrer">
                     <span>
                       {a.name} <small>{a.handle}</small>
                       <span className="sr-only"> ({owner})</span>

@@ -132,8 +132,6 @@
 .concert-date > span {
   font-size: 0.875rem;
   display: block;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--muted);
 }
 .concert-date strong {
@@ -159,8 +157,6 @@
   color: var(--accent);
   font-size: 0.875rem;
   font-weight: 650;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 .concert-info h2 {
   font-size: 1.125rem;

@@ -170,7 +170,6 @@ export function Empty({ icon = "heart", title, children, action, onAction }) {
       {action && (
         <button className="secondary-button" onClick={onAction}>
           {action}
-          <Icon name="arrowRight" size={17} />
         </button>
       )}
     </div>

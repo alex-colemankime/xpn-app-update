@@ -91,8 +91,6 @@
   white-space: nowrap;
   font-size: 0.875rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
@@ -152,7 +150,6 @@
   }
   .on-air-label {
     font-size: 0.8125rem;
-    letter-spacing: 0.06em;
   }
 }
 @media (forced-colors: active) {
@@ -413,7 +410,6 @@
 .popover-menu .sleep-grid small {
   font-size: 0.8125rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
   color: var(--muted);
 }
 .popover-menu .sleep-show {
@@ -504,8 +500,6 @@
   margin-bottom: 4px;
   font-size: 0.875rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--accent);
 }
 

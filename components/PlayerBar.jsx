@@ -138,7 +138,7 @@ function LiveBar({ playlist, onOpen }) {
               {badge && (
                 <span className="live-badge" data-state={playing ? "live" : status}>
                   <i />
-                  {badge.toLowerCase()}
+                  {badge[0] + badge.slice(1).toLowerCase()}
                 </span>
               )}
               {current ? `${current.artist} · ${station.label}` : station.tagline}

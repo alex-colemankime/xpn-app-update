@@ -224,28 +224,6 @@
   width: 46px;
   height: 46px;
 }
-/* A saved song's row, washed very lightly in its heart's color. */
-.track-row[data-saved] {
-  --row-tint: var(--tint-light, var(--accent));
-  background-color: color-mix(in srgb, var(--row-tint) 7%, var(--bg));
-  background-image: none;
-}
-:root[data-theme="dark"] .track-row[data-saved] {
-  --row-tint: var(--tint-dark, var(--accent));
-  background-color: color-mix(in srgb, var(--row-tint) 9%, var(--bg));
-}
-.track-row[data-saved] + .track-row[data-saved] {
-  margin-top: 2px;
-}
-/* The divider above a highlighted row steps aside too. */
-.track-row:has(+ .track-row[data-saved]) {
-  background-image: none;
-}
-@media (forced-colors: active) {
-  .track-row[data-saved] {
-    border: 1px solid CanvasText;
-  }
-}
 .track-time {
   font-variant-numeric: tabular-nums;
   font-size: 0.875rem;

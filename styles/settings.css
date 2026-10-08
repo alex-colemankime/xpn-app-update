@@ -53,7 +53,6 @@
 }
 .alarm-time .eyebrow {
   font-size: 0.875rem;
-  text-transform: uppercase;
 }
 .alarm-time-row {
   display: flex;

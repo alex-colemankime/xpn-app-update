@@ -67,7 +67,7 @@ function OnAirBand({ show, onListen }) {
       <span className="show-on-air-text">
         <span className="on-air-label">
           <i className="on-air-dot" data-live="" />
-          On air now · {untilLabel(onAirNow)}
+          On air now, {untilLabel(onAirNow)}
         </span>
         <strong>Listen live on WXPN</strong>
       </span>
@@ -98,7 +98,6 @@ function ShowVideos({ show, onNavigate, onWatch }) {
           }}
         >
           All {show.name} videos
-          <Icon name="arrowRight" size={16} />
         </button>
       </div>
       <div className="video-grid show-videos">
@@ -152,7 +151,7 @@ export function ShowDetail({
               <div>
                 {show.host && (
                   <>
-                    <span className="eyebrow">HOSTED BY</span>
+                    <span className="eyebrow">Hosted by</span>
                     <h3>{show.host}</h3>
                   </>
                 )}

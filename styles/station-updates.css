@@ -90,7 +90,6 @@
   font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 /* LIVE as a small red tag on the dark band. */
 .station-banner-live {
@@ -100,7 +99,6 @@
   background: #d93d1e;
   color: #fff;
   font-size: 0.8125rem;
-  letter-spacing: 0.08em;
 }
 
 .station-banner-live i,

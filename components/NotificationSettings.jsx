@@ -42,7 +42,6 @@ export function ShowReminders({ onNavigate }) {
           <p className="data-note">Follow a show to get a reminder before it starts.</p>
           <button className="secondary-button" onClick={() => onNavigate("shows")}>
             Find shows to follow
-            <Icon name="arrowRight" size={17} />
           </button>
         </>
       )}

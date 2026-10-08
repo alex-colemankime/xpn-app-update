@@ -213,7 +213,6 @@ export function ArchiveList({ query, onOpen, onOpenShow, onClearQuery }) {
               {episodes.length > shown.length && (
                 <button className="text-button archive-more" onClick={() => onOpenShow(id)}>
                   All {episodes.length} episodes
-                  <Icon name="arrowRight" size={16} />
                 </button>
               )}
             </section>

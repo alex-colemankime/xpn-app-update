@@ -161,9 +161,7 @@
   font-weight: 650;
 }
 .watch-about {
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--surface);
+  padding-top: 2px;
 }
 .watch-meta {
   margin: 0 0 4px;

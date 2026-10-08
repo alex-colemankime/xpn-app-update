@@ -223,11 +223,10 @@
   align-items: center;
   gap: 12px;
   width: 100%;
-  min-height: 52px;
-  margin: 4px 0 8px;
-  padding: 0 16px;
-  border-radius: 12px;
-  background: var(--surface);
+  min-height: 48px;
+  margin: 0 0 4px;
+  padding: 0;
+  border-bottom: 1px solid var(--border);
   font-size: 0.875rem;
   text-align: left;
 }
