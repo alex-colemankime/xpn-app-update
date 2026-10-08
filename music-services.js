@@ -33,6 +33,9 @@ export class AuthError extends Error {}
 // apps in Development Mode work only for up to 5 listeners the station has
 // allowlisted. Signing in again cannot fix that, so it is not an AuthError.
 export class NotAllowedError extends Error {}
+// A playlist (or anything else) the service no longer has. Marked with the
+// status, so the sync can tell a deleted playlist from other failures.
+const notFound = () => Object.assign(new Error("Not found"), { status: 404 });
 
 // --- Search terms -----------------------------------------------------------
 
@@ -173,11 +176,7 @@ async function spotifyFetch(path, options = {}, retried = false) {
     assertAuthorization(attempt);
     return spotifyFetch(path, options, true);
   }
-  if (response.status === 404) {
-    const error = new Error("Not found");
-    error.status = 404;
-    throw error;
-  }
+  if (response.status === 404) throw notFound();
   if (!response.ok) throw new Error(`Spotify: HTTP ${response.status}`);
   return response.status === 204 ? null : response.json();
 }
@@ -343,11 +342,7 @@ async function appleFetch(path, options = {}) {
   });
   if (response.status === 401) throw new AuthError("Apple Music refused");
   if (response.status === 403) throw new NotAllowedError("Apple Music does not allow this");
-  if (response.status === 404) {
-    const error = new Error("Not found");
-    error.status = 404;
-    throw error;
-  }
+  if (response.status === 404) throw notFound();
   if (!response.ok) throw new Error(`Apple Music: HTTP ${response.status}`);
   return response.status === 204 ? null : response.json().catch(() => null);
 }

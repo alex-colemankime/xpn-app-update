@@ -2,8 +2,6 @@
    Now playing: the stage
    ------------------------------------------------------------------------ */
 
-/* Who is on the air, above the song: set like the "Now playing" label
-   below the art, so the stage reads top to bottom with no boxes. */
 /* On air: a band washed in the show's color, with its artwork. */
 .on-air {
   --band: var(--tint-light, var(--accent));
@@ -119,8 +117,8 @@
   /* Edge to edge on phones, like the station tabs above it. */
   .on-air {
     width: auto;
-    margin: -18px calc(-1 * max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)))) 16px;
-    padding: 10px max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+    margin: -18px calc(-1 * var(--edge-right)) 16px calc(-1 * var(--edge-left));
+    padding: 10px var(--edge-right) 10px var(--edge-left);
     border-radius: 0;
   }
   .on-air-art {
@@ -244,15 +242,16 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* The sleep timer's menu anchors to its button; each song menu sets its own
-   anchor inline (components/MusicRows.jsx). */
+/* The sleep timer's menu anchors to its button; each song and calendar menu
+   sets its own anchor inline (MusicRows.jsx, ConcertRow.jsx). */
 .sleep-menu {
   position-anchor: --sleep;
 }
 
-/* Popover menus (sleep timer, song actions): anchored under their button where CSS anchor
-   positioning exists, a bottom sheet on phones, and a floating panel above
-   the player elsewhere. The platform supplies Escape and tap-outside. */
+/* Popover menus (sleep timer, song actions, add to calendar): anchored
+   under their button where CSS anchor positioning exists, a bottom sheet on
+   phones, and a floating panel above the player elsewhere. The platform
+   supplies Escape and tap-outside. */
 .popover-menu {
   margin: 0;
   inset: auto;
@@ -444,14 +443,12 @@
     border-color: var(--accent);
     background: var(--bg);
   }
-}
-.popover-menu :is(.sleep-grid button, .sleep-show):active {
-  transform: scale(0.97);
-}
-@media (hover: hover) {
   .popover-menu :is(button, a):hover {
     background: var(--row-alt);
   }
+}
+.popover-menu :is(.sleep-grid button, .sleep-show):active {
+  transform: scale(0.97);
 }
 @media (max-width: 767px) {
   .popover-menu {
@@ -468,10 +465,10 @@
     content: "";
     position: absolute;
     top: 8px;
-    left: 50%;
+    inset-inline: 0;
     width: 36px;
     height: 4px;
-    margin-left: -18px;
+    margin-inline: auto;
     border-radius: 2px;
     background: var(--border);
   }
@@ -503,14 +500,10 @@
   color: var(--accent);
 }
 
-/* Show sheet: on now, or next on. */
+/* Show sheet: when the show is next on. */
 .show-detail-hero p.airing {
   margin: -6px 0 14px;
   font-size: 0.875rem;
-}
-.show-detail-hero p.airing.on {
-  color: var(--accent);
-  font-weight: 650;
 }
 
 /* Glow and fades step aside when the system asks for plainer visuals. */

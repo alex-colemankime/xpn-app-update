@@ -17,7 +17,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; script-src 'sha256-+AwcodXHbZDwaSjYqubuSK4c//KedHjt3k2Nzxmtcgs=' https://players.brightcove.net; style-src 'unsafe-inline' https://players.brightcove.net; font-src https://players.brightcove.net data:; img-src https: data: blob:; media-src https: blob:; connect-src https:; worker-src blob:; frame-src https:"
+      content="default-src 'none'; script-src 'sha256-ryiG1oIbjU2DxIFM/HBdJxQNxXqfSFlkqp0JHkdz+JI=' https://players.brightcove.net; style-src 'unsafe-inline' https://players.brightcove.net; font-src https://players.brightcove.net data:; img-src https: data: blob:; media-src https: blob:; connect-src https:; worker-src blob:; frame-src https:"
     />
     <title>Video</title>
     <style>
@@ -44,25 +44,25 @@
   </head>
   <body>
     <script>
-      (function () {
+      (() => {
         "use strict";
         // Only ever run in the app's sandboxed frame, which has no origin of
         // its own. Opened any other way (directly, or framed without the
         // sandbox) it would run as the app, so it does nothing.
         if (self.origin !== "null" || window.parent === window) return;
-        var params = new URLSearchParams(location.search);
-        var account = params.get("account") || "";
-        var player = params.get("player") || "default";
-        var video = params.get("video") || "";
-        var settled = false;
-        var started = false;
+        const params = new URLSearchParams(location.search);
+        const account = params.get("account") || "";
+        const player = params.get("player") || "default";
+        const video = params.get("video") || "";
+        let settled = false;
+        let started = false;
 
         // Hand the video to Brightcove's own player page instead.
-        function fallBack(why) {
+        const fallBack = (why) => {
           if (settled) return;
           settled = true;
-          parent.postMessage({ type: "wxpn:video-fallback", why: why }, "*");
-        }
+          parent.postMessage({ type: "wxpn:video-fallback", why }, "*");
+        };
         if (!/^\d+$/.test(account) || !/^[\w-]+$/.test(player) || !/^\d+$/.test(video)) {
           fallBack("link");
           return;
@@ -70,57 +70,45 @@
 
         // Sandboxed, the frame has no storage or cookies; the player gets
         // stand-ins kept in memory rather than errors.
-        function memoryStorage() {
-          var data = {};
+        const memoryStorage = () => {
+          const data = new Map();
           return {
-            getItem: function (k) {
-              return Object.prototype.hasOwnProperty.call(data, k) ? data[k] : null;
-            },
-            setItem: function (k, v) {
-              data[k] = String(v);
-            },
-            removeItem: function (k) {
-              delete data[k];
-            },
-            clear: function () {
-              data = {};
-            },
-            key: function (i) {
-              return Object.keys(data)[i] || null;
-            },
+            getItem: (k) => data.get(String(k)) ?? null,
+            setItem: (k, v) => data.set(String(k), String(v)),
+            removeItem: (k) => data.delete(String(k)),
+            clear: () => data.clear(),
+            key: (i) => [...data.keys()][i] ?? null,
             get length() {
-              return Object.keys(data).length;
+              return data.size;
             },
           };
-        }
-        ["localStorage", "sessionStorage"].forEach(function (name) {
+        };
+        for (const name of ["localStorage", "sessionStorage"]) {
           try {
             window[name].getItem("wxpn");
-          } catch (e) {
+          } catch {
             try {
               Object.defineProperty(window, name, { value: memoryStorage(), configurable: true });
-            } catch (e2) {
+            } catch {
               /* the player copes as it can */
             }
           }
-        });
+        }
         try {
           void document.cookie;
-        } catch (e) {
+        } catch {
           try {
             Object.defineProperty(document, "cookie", {
-              get: function () {
-                return "";
-              },
-              set: function () {},
+              get: () => "",
+              set: () => {},
               configurable: true,
             });
-          } catch (e2) {
+          } catch {
             /* the player copes as it can */
           }
         }
 
-        var el = document.createElement("video-js");
+        const el = document.createElement("video-js");
         el.setAttribute("data-account", account);
         el.setAttribute("data-player", player);
         el.setAttribute("data-embed", "default");
@@ -128,49 +116,40 @@
         el.setAttribute("data-application-id", "wxpn-app");
         el.setAttribute("controls", "");
         el.setAttribute("playsinline", "");
-        document.body.appendChild(el);
+        document.body.append(el);
 
-        var timer = setTimeout(function () {
-          fallBack("timeout");
-        }, 10000);
-        var script = document.createElement("script");
-        script.src =
-          "https://players.brightcove.net/" + account + "/" + player + "_default/index.min.js";
-        script.onerror = function () {
-          fallBack("script");
-        };
-        script.onload = function () {
-          var vjs = window.videojs;
-          var p = null;
+        const timer = setTimeout(() => fallBack("timeout"), 10000);
+        const script = document.createElement("script");
+        script.src = `https://players.brightcove.net/${account}/${player}_default/index.min.js`;
+        script.onerror = () => fallBack("script");
+        script.onload = () => {
+          let p = null;
           try {
-            p = (vjs && vjs.getPlayer && vjs.getPlayer(el)) || (window.bc && window.bc(el));
-          } catch (e) {
+            p = window.videojs?.getPlayer?.(el) || window.bc?.(el);
+          } catch {
             p = null;
           }
-          if (!p || typeof p.ready !== "function") {
+          if (typeof p?.ready !== "function") {
             fallBack("player");
             return;
           }
-          p.ready(function () {
+          p.ready(() => {
             clearTimeout(timer);
-            p.on("error", function () {
+            p.on("error", () => {
               if (!started) fallBack("error");
             });
-            p.one("playing", function () {
+            p.one("playing", () => {
               started = true;
               settled = true;
             });
             // Start at once: with sound where the browser allows it, else
             // waiting for a tap.
-            var start = function () {
-              var result = p.play();
-              if (result && result.catch) result.catch(function () {});
-            };
+            const start = () => p.play()?.catch?.(() => {});
             if (p.readyState() >= 1) start();
             else p.one("loadedmetadata", start);
           });
         };
-        document.head.appendChild(script);
+        document.head.append(script);
       })();
     </script>
   </body>

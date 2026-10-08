@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { onAir, easternUntilLabel as untilLabel, nextAiring } from "../schedule.js";
+import { onAir, nextAiring, toHHMM } from "../schedule.js";
 
 const SHOWS = JSON.parse(fs.readFileSync(new URL("../shows.json", import.meta.url), "utf8"));
 const at = (day, time) => ({ day, time });
@@ -9,7 +9,7 @@ const at = (day, time) => ({ day, time });
 test("finds the show on air from the real schedule", () => {
   const now = onAir(SHOWS, at("Tuesday", "14:30"));
   assert.equal(now.show.id, "worldcafe");
-  assert.equal(untilLabel(now), "until 4pm");
+  assert.equal(toHHMM(now.end), "16:00");
   assert.equal(now.minutesLeft, 90);
   assert.equal(
     onAir(SHOWS, at("Tuesday", "16:00")).show.id,
@@ -22,12 +22,12 @@ test("a show running past midnight still counts the next morning", () => {
   // American Routes: Saturday 23:00–01:00.
   const late = onAir(SHOWS, at("Saturday", "23:30"));
   assert.equal(late.show.id, "americanroutes");
-  assert.equal(untilLabel(late), "until 1am");
+  assert.equal(toHHMM(late.end), "01:00", "ends in the next day's first hour");
   const spill = onAir(SHOWS, at("Sunday", "00:30"));
   assert.equal(spill?.show.id, "americanroutes");
   assert.equal(spill.minutesLeft, 30);
-  // A show ending exactly at midnight reads as such.
-  assert.equal(untilLabel(onAir(SHOWS, at("Monday", "23:00"))), "until midnight");
+  // A show ending exactly at midnight.
+  assert.equal(toHHMM(onAir(SHOWS, at("Monday", "23:00")).end), "00:00");
 });
 
 test("gaps report nothing and overlaps go to the latest start", () => {
@@ -51,8 +51,8 @@ test("the real schedule covers the whole week with no gaps", () => {
     "Saturday",
     "Sunday",
   ]) {
-    for (let m = 0; m < 1440; m += 15) {
-      const time = `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+    for (let m = 0; m < 1440; m++) {
+      const time = toHHMM(m);
       assert.ok(onAir(SHOWS, at(day, time)), `${day} ${time}`);
     }
   }
@@ -74,4 +74,12 @@ test("next airing reads as today, tomorrow or a weekday", () => {
     "Wednesday at 8pm",
     "a week out",
   );
+});
+
+test("next airing ends when that day's slot ends", () => {
+  // Middays starts at 10am every weekday but runs until noon on Fridays.
+  const friday = nextAiring(SHOWS.middays, at("Thursday", "15:00"));
+  assert.equal(friday.start, "10:00");
+  assert.equal(friday.end, "12:00");
+  assert.equal(nextAiring(SHOWS.middays, at("Monday", "09:00")).end, "14:00");
 });

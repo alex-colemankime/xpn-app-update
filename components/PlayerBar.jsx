@@ -14,12 +14,31 @@ import {
 } from "../episode-player.js";
 import { EpisodeScrubber } from "./Archive.jsx";
 
+// The volume slider, where the device lets the app set it (not on iPhone,
+// where only the hardware buttons can).
+function PlayerVolume() {
+  const volume = useVolume();
+  return (
+    <label className="player-volume">
+      <Icon name="volume" size={19} />
+      <input
+        aria-label="Volume"
+        type="range"
+        min="0"
+        max="100"
+        value={volume}
+        onChange={(e) => setVolume(+e.target.value)}
+        style={{ "--fill": `${volume}%` }}
+      />
+    </label>
+  );
+}
+
 // The bar while an archive episode has it: play, the episode (tap to open
 // it), the scrubber on larger screens and a thin progress line on phones,
 // and a close key that gives the bar back to the station.
 function EpisodeBar({ onOpenEpisode }) {
   const { episode, status, position, duration } = useEpisodePlayer();
-  const volume = useVolume();
   const busy = status === "loading";
   const playing = status === "playing" || busy;
   const left = duration ? Math.max(0, duration - position) : 0;
@@ -61,24 +80,13 @@ function EpisodeBar({ onOpenEpisode }) {
         </button>
       </div>
       <div className="player-seek">
-        <EpisodeScrubber episode={episode} compact />
+        <EpisodeScrubber episode={episode} />
       </div>
-      <div className="player-utilities">
-        {VOLUME_SETTABLE && (
-          <label className="player-volume">
-            <Icon name="volume" size={19} />
-            <input
-              aria-label="Volume"
-              type="range"
-              min="0"
-              max="100"
-              value={volume}
-              onChange={(e) => setVolume(+e.target.value)}
-              style={{ "--fill": `${volume}%` }}
-            />
-          </label>
-        )}
-      </div>
+      {VOLUME_SETTABLE && (
+        <div className="player-utilities">
+          <PlayerVolume />
+        </div>
+      )}
       <button
         className="icon-button player-close"
         aria-label="Close the episode and return to the station"
@@ -107,7 +115,6 @@ function LiveBar({ playlist, onOpen }) {
   const player = usePlayer();
   const current = useLiveSong(playlist);
   const { station, playing, connecting, status, castAvailable } = player;
-  const volume = useVolume();
   const text = playbackText(player);
   // A small badge beside the artist says what the stream is doing; paused
   // needs none, the play button already says it.
@@ -138,7 +145,7 @@ function LiveBar({ playlist, onOpen }) {
               {badge && (
                 <span className="live-badge" data-state={playing ? "live" : status}>
                   <i />
-                  {badge[0] + badge.slice(1).toLowerCase()}
+                  {badge}
                 </span>
               )}
               {current ? `${current.artist} · ${station.label}` : station.tagline}
@@ -149,20 +156,7 @@ function LiveBar({ playlist, onOpen }) {
       </div>
       {(VOLUME_SETTABLE || castAvailable) && (
         <div className="player-utilities">
-          {VOLUME_SETTABLE && (
-            <label className="player-volume">
-              <Icon name="volume" size={19} />
-              <input
-                aria-label="Volume"
-                type="range"
-                min="0"
-                max="100"
-                value={volume}
-                onChange={(e) => setVolume(+e.target.value)}
-                style={{ "--fill": `${volume}%` }}
-              />
-            </label>
-          )}
+          {VOLUME_SETTABLE && <PlayerVolume />}
           {castAvailable && (
             <button
               className="icon-button"

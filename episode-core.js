@@ -12,6 +12,8 @@
 //   "ended"     played to the end
 //   "error"     the audio could not be played (`error` says why)
 
+import { volumeLevel } from "./player-core.js";
+
 export const SKIP_BACK_S = 15;
 export const SKIP_AHEAD_S = 30;
 // A saved place this close to either end counts as the start, or as done.
@@ -117,7 +119,7 @@ export function createEpisodePlayer({
   const detach = () => {
     audio.pause();
     audio.removeAttribute("src");
-    audio.load?.();
+    audio.load();
     pendingSeek = null;
   };
 
@@ -214,8 +216,7 @@ export function createEpisodePlayer({
     wantPlaying = true;
     onStart();
     bindControls();
-    const playing = audio.play();
-    playing?.then?.(noop, (error) => {
+    audio.play().catch((error) => {
       if (token !== request || !wantPlaying) return;
       // Refused without a tap, or interrupted: it stays where it was, ready
       // to play. Anything else means the file can't be played.
@@ -253,7 +254,7 @@ export function createEpisodePlayer({
         duration: (same && state.duration) || episode.duration || 0,
       });
       audio.src = episode.audio;
-      audio.load?.();
+      audio.load();
     } else {
       if (state.status === "ended") {
         pendingSeek = null;
@@ -382,9 +383,7 @@ export function createEpisodePlayer({
     stop,
     getState: () => state,
     setVolume(percent) {
-      if (!init()) return;
-      const value = Number(percent);
-      audio.volume = Math.min(1, Math.max(0, Number.isFinite(value) ? value / 100 : 0.7));
+      if (init()) audio.volume = volumeLevel(percent);
     },
   };
 }

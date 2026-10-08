@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { LIVESTREAM_PAGE_URL, SHOW_SAMPLES, UPDATES_URL } from "../config.js";
 import {
   LIVE_ANNOUNCE_MINUTES,
@@ -22,6 +22,18 @@ const dismissedStore = createLocalStore("xpn.updates.dismissed", [], (value) =>
 );
 export const dismissUpdate = (id) =>
   dismissedStore.set((ids) => (ids.includes(id) ? ids : [...ids, id]));
+
+// A value with the same content as the last one is kept as the same object,
+// so screens that receive it don't re-render and effects keyed on it don't
+// re-run.
+const sameContent = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
+const keepIfSame = (next) => (prev) => (sameContent(prev, next) ? prev : next);
+function useSameContent(value) {
+  const [kept, setKept] = useState(value);
+  if (sameContent(kept, value)) return kept;
+  setKept(value);
+  return value;
+}
 
 async function loadUpdates(signal) {
   if (!UPDATES_URL) {
@@ -59,57 +71,46 @@ export function useStationUpdates() {
 
   useEffect(() => {
     let controller = null;
+    const listening = new AbortController();
     const refresh = () => {
       if (document.visibilityState === "hidden") return;
       controller?.abort();
       const { signal } = (controller = new AbortController());
+      const keep = () => {}; // a failed check keeps what we have
       const checks = [
-        loadUpdates(signal).then(setPosted, () => {
-          /* keep what we have */
-        }),
-        loadLivestream(signal).then(setLivestream, () => {
-          /* keep what we have */
-        }),
+        loadUpdates(signal).then((next) => setPosted(keepIfSame(next)), keep),
+        loadLivestream(signal).then((next) => setLivestream(keepIfSame(next)), keep),
       ];
       // A check cut short by a newer one hasn't looked yet.
       Promise.all(checks).then(() => signal.aborted || setLoaded(true));
     };
     refresh();
     const timer = setInterval(refresh, REFRESH_MS);
-    document.addEventListener("visibilitychange", refresh);
+    document.addEventListener("visibilitychange", refresh, { signal: listening.signal });
     return () => {
       controller?.abort();
       clearInterval(timer);
-      document.removeEventListener("visibilitychange", refresh);
+      listening.abort();
     };
   }, []);
 
-  // Posted updates come first, so a live video the station posts itself wins.
-  const updates = useMemo(
-    () => (livestream ? [...posted, livestream] : posted),
-    [posted, livestream],
+  // Posted updates come first, so a live video the station posts itself
+  // wins. Every update goes to the notifications planned ahead
+  // (useStationAlerts).
+  const all = livestream ? [...posted, livestream] : posted;
+  // Recomputed with the clock; kept as the same objects while their content
+  // is unchanged. Compared on content as well as id, so a corrected banner
+  // (same id, fixed text or link) replaces the old one without a restart.
+  const active = activeUpdates(all, now);
+  const banner = useSameContent(
+    active.banner && !dismissed.includes(active.banner.id) ? active.banner : null,
   );
-  // Recomputed with the clock, but the same objects come back while nothing
-  // changes, so screens that receive them do not re-render.
-  const { banner, live } = activeUpdates(updates, now);
-  // Keyed on content as well as id, so a corrected banner (same id, fixed
-  // text or link) replaces the old one without a restart.
-  const bannerKey = banner && !dismissed.includes(banner.id) ? JSON.stringify(banner) : "";
-  const liveKey = live ? JSON.stringify(live) : "";
-  // Every update, for the notifications planned ahead (useStationAlerts);
-  // the same array while the file's content is unchanged.
-  const allKey = JSON.stringify(updates);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const all = useMemo(() => updates, [allKey]);
-  return useMemo(
-    () => ({
-      banner: bannerKey ? banner : null,
-      live: liveKey ? live : null,
-      liveDismissed: Boolean(live && dismissed.includes(live.id)),
-      all,
-      loaded,
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [bannerKey, liveKey, dismissed, all, loaded],
-  );
+  const live = useSameContent(active.live || null);
+  return {
+    banner,
+    live,
+    liveDismissed: Boolean(live && dismissed.includes(live.id)),
+    all,
+    loaded,
+  };
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Icon, Art, Segmented, Empty, SearchField } from "../ui.jsx";
 import { SHOW_DIRECTORY, scheduleForDay, onAirAt } from "../catalog.js";
 import { DAYS, easternParts, clockLabel } from "../time.js";
@@ -16,29 +16,24 @@ const matchesQuery = (query) => {
   return (show) => !q || `${show.name} ${show.host}`.toLowerCase().includes(q);
 };
 
+// Opening the schedule, or coming back to today, brings the show on air into
+// view (a ref callback on a list keyed by day, so it runs when a day's list
+// appears, not on every clock tick). Only today's list has an on-air row.
+const scrollToOnAir = (list) =>
+  list?.querySelector(".on-air-row")?.scrollIntoView({ block: "center", behavior: "instant" });
+
 export function ShowsScreen({ onOpen }) {
   const [mode, setMode] = useState("All shows");
   const now = new Date(useNow());
   const today = easternParts(now).day;
   const onAirNow = onAirAt(now);
-  const isOnAir = (slot) =>
-    day === today && onAirNow?.show.id === slot.show.id && onAirNow.slot.start === slot.start;
   const [day, setDay] = useState(today);
   const [query, setQuery] = useState("");
+  const isOnAir = (slot) =>
+    day === today && onAirNow?.show.id === slot.show.id && onAirNow.slot.start === slot.start;
   const matches = matchesQuery(query);
   const shows = SHOW_DIRECTORY.filter(matches);
   const slots = scheduleForDay(day).filter((slot) => matches(slot.show));
-
-  // Opening the schedule on today brings the show on air into view.
-  const list = useRef(null);
-  useEffect(() => {
-    if (mode !== "Schedule" || day !== today) return;
-    list.current
-      ?.querySelector(".on-air-row")
-      ?.scrollIntoView({ block: "center", behavior: "instant" });
-    // Only when the schedule is opened, not on every clock tick.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
   return (
     <>
       {/* The tab bar (or sidebar) already says where this is. */}
@@ -101,7 +96,7 @@ export function ShowsScreen({ onOpen }) {
             <span className="subtle">All times Eastern</span>
           </div>
           {slots.length ? (
-            <div ref={list}>
+            <div key={day} ref={scrollToOnAir}>
               {slots.map((slot) => (
                 <button
                   className={`schedule-row ${isOnAir(slot) ? "on-air-row" : ""}`}
@@ -117,7 +112,7 @@ export function ShowsScreen({ onOpen }) {
                     {isOnAir(slot) && <span className="on-air-chip">On air now</span>}
                     <strong>{slot.show.name}</strong>
                     {slot.show.host && <span>{slot.show.host}</span>}
-                    <p>{slot.show.desc}</p>
+                    <small className="schedule-desc">{slot.show.desc}</small>
                   </span>
                   <Icon name="chev" size={20} />
                 </button>
@@ -136,7 +131,7 @@ export function ShowsScreen({ onOpen }) {
           <p className="data-note">
             Regular schedule; special broadcasts may vary.{" "}
             <a href={PROGRAM_GUIDE_URL} target="_blank" rel="noreferrer">
-              Check the station’s program guide ↗
+              Check the station’s program guide
             </a>
           </p>
         </>

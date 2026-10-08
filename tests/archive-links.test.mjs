@@ -29,7 +29,7 @@ const page = (items, key) =>
     )
     .join("");
 
-test("a saved episode is played from a fresh link read from its show's page", async () => {
+test("a saved episode is played from a fresh link read from its show's page", async (t) => {
   pages[SLEEPY_URL] = page([["Sleepy Hollow - 10.04.2026", "a1"]], "first");
   reads = [];
   // An earlier read gives the episode its id; favorites keep no link.
@@ -46,17 +46,13 @@ test("a saved episode is played from a fresh link read from its show's page", as
   assert.ok(linkIsFresh(freshCopy(saved)));
 
   // Twenty-one minutes on, the link is old: the page is read again.
-  const realNow = Date.now;
-  Date.now = () => realNow() + 21 * 60000;
-  try {
-    assert.equal(freshCopy(saved), null);
-    const fresh = await findEpisode(saved);
-    assert.equal(reads.length, 1);
-    assert.match(fresh.audio, /key=second/);
-    assert.ok(linkIsFresh(fresh));
-  } finally {
-    Date.now = realNow;
-  }
+  const later = Date.now() + 21 * 60000;
+  t.mock.method(Date, "now", () => later);
+  assert.equal(freshCopy(saved), null);
+  const fresh = await findEpisode(saved);
+  assert.equal(reads.length, 1);
+  assert.match(fresh.audio, /key=second/);
+  assert.ok(linkIsFresh(fresh));
 });
 
 test("an episode the page no longer lists is gone; an unreadable page is offline", async () => {

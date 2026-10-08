@@ -1,4 +1,4 @@
-import { memo, useEffect, useId, useSyncExternalStore } from "react";
+import { useEffect, useId, useSyncExternalStore } from "react";
 import { Icon, focusFirstItem } from "../ui.jsx";
 import { concertAge, requestAge, subscribeAges } from "../concerts.js";
 import { addToCalendar, calendarIsNative, downloadIcs, googleCalendarUrl } from "../calendar.js";
@@ -25,33 +25,36 @@ const FULL_DATE = new Intl.DateTimeFormat("en-US", {
 // phone apps; in a browser, a choice of calendar file or Google Calendar.
 function AddToCalendar({ concert }) {
   const menuId = `cal-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
-  const label = `Add ${concert.artist} to your calendar`;
+  // The visible words, then the artist for screen readers, so voice control
+  // users can say what they see.
+  const words = (
+    <>
+      <Icon name="calendarAdd" size={15} />
+      Add to calendar<span className="sr-only">: {concert.artist}</span>
+    </>
+  );
   if (calendarIsNative()) {
     return (
       <button
         className="concert-action"
-        aria-label={label}
         onClick={async () => {
           if (!(await addToCalendar(concert)))
             showToast("Couldn’t open your calendar. Allow calendar access for WXPN in Settings.");
         }}
       >
-        <Icon name="calendarAdd" size={15} />
-        Add to calendar
+        {words}
       </button>
     );
   }
-  const close = () => document.getElementById(menuId)?.hidePopover?.();
+  const close = () => document.getElementById(menuId)?.hidePopover();
   return (
     <>
       <button
         className="concert-action"
         popoverTarget={menuId}
-        aria-label={label}
         style={{ anchorName: `--${menuId}` }}
       >
-        <Icon name="calendarAdd" size={15} />
-        Add to calendar
+        {words}
       </button>
       <div
         id={menuId}
@@ -59,7 +62,7 @@ function AddToCalendar({ concert }) {
         className="popover-menu"
         popover="auto"
         role="dialog"
-        aria-label={label}
+        aria-label={`Add ${concert.artist} to your calendar`}
         style={{ positionAnchor: `--${menuId}` }}
       >
         <div className="popover-menu-head">
@@ -85,7 +88,7 @@ function AddToCalendar({ concert }) {
   );
 }
 
-export const ConcertRow = memo(function ConcertRow({ concert: c }) {
+export function ConcertRow({ concert: c }) {
   const age = useAge(c);
   // Midday avoids the date shifting across a timezone boundary when shown.
   const date = new Date(`${c.date}T12:00:00`);
@@ -130,4 +133,4 @@ export const ConcertRow = memo(function ConcertRow({ concert: c }) {
       <SaveButton type="concerts" item={c} name={`${c.artist} concert`} />
     </div>
   );
-});
+}

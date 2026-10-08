@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import { ErrorBoundary } from "./error-boundary.jsx";
+import { startPlaylistSync } from "./playlist-sync.js";
 // Bundled with the app rather than loaded from Google Fonts: no third-party
 // request on launch, and text renders the same offline.
 import "@fontsource-variable/figtree";
@@ -9,7 +10,7 @@ import "./global.css";
 
 // Menus (song, sleep timer, calendar) use the Popover API, which Safari has
 // from 17. Older iPhones (iOS 15–16) get a small polyfill, loaded only there.
-if (typeof HTMLElement !== "undefined" && !("popover" in HTMLElement.prototype)) {
+if (!("popover" in HTMLElement.prototype)) {
   await import("@oddbird/popover-polyfill").catch(() => {});
 }
 
@@ -18,7 +19,6 @@ if (typeof HTMLElement !== "undefined" && !("popover" in HTMLElement.prototype))
 // and the app itself runs in that frame (?frame=1). Phones and tablets, and
 // every other build, get the app directly.
 const devicePreview =
-  typeof __DEVICE_PREVIEW__ === "boolean" &&
   __DEVICE_PREVIEW__ &&
   window.self === window.top &&
   !new URLSearchParams(window.location.search).has("frame") &&
@@ -32,7 +32,11 @@ if (devicePreview) {
     build: new URL(import.meta.url).pathname.split("/").pop(),
   });
 } else {
-  createRoot(document.getElementById("root")).render(
+  // Hearted songs follow to Spotify or Apple Music once connected.
+  startPlaylistSync();
+  createRoot(document.getElementById("root"), {
+    onCaughtError: (error, info) => console.error("WXPN app error:", error, info.componentStack),
+  }).render(
     <StrictMode>
       <ErrorBoundary>
         <App />

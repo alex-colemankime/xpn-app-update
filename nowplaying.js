@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { getPlayerSnapshot } from "./player.js";
+import { STREAMS } from "./streams.js";
 import { useNow } from "./hooks/useNow.js";
 import { decodeEntities } from "./text.js";
+import { withTimeout } from "./net.js";
 import { showSegment } from "./catalog.js";
 import {
   clockLabel,
@@ -12,24 +14,12 @@ import {
   shiftDate,
 } from "./time.js";
 
-// Each station's day playlist (one file per Eastern date, with times) and
-// its now-playing file (the song on air, with its length), the same sources
-// xpn.org's own player reads.
-const ENDPOINTS = {
-  xpn: {
-    day: "https://origin.xpn.org/utils/playlist/json/",
-    now: "https://origin.xpn.org/utils/nowplaying/json/xpnNowPlaying.json",
-  },
-  xpn2: {
-    day: "https://origin.xpn.org/xpn2/json/",
-    now: "https://origin.xpn.org/xpn2/json/nowplaying/xpn2NowPlaying.json",
-  },
-};
 // The station publishes one file per Eastern calendar day. Just after
 // midnight ET that file is nearly empty, so the previous day is merged in
 // until the new day has built up its own history.
 const EARLY_HOUR = 5;
 const reportedKey = (track) => `${track.date} ${track.time} ${track.title} ${track.artist}`;
+const newestFirst = (a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`);
 export function mergeTracks(lists) {
   const seen = new Set();
   return lists
@@ -40,7 +30,7 @@ export function mergeTracks(lists) {
       seen.add(key);
       return true;
     })
-    .sort((a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`));
+    .sort(newestFirst);
 }
 // A song is presented as playing until it should have ended, plus a little
 // slack, when the station says how long it runs (so a 20-minute jam stays
@@ -74,20 +64,20 @@ export function durationMinutes(text) {
 }
 
 // An artist as the app shows it: a show's segment by the show's name, without
-// the bars the playlist puts around it.
-const shownArtist = (artist) => {
-  const plain = decodeEntities(artist).trim();
+// the bars the playlist puts around it. A segment of one of the station's
+// shows also carries the show's id.
+const artistOf = (raw) => {
+  const plain = decodeEntities(raw).trim();
   const segment = showSegment(plain);
-  return segment ? segment.show?.name || segment.name : plain;
-};
-
-const segmentOf = (artist) => {
-  const show = showSegment(decodeEntities(artist).trim())?.show;
-  return show ? { show: show.id } : {};
+  if (!segment) return { artist: plain };
+  return {
+    artist: segment.show?.name || segment.name,
+    ...(segment.show ? { show: segment.show.id } : {}),
+  };
 };
 
 const sameSong = (a, b) =>
-  a.artist.trim().toLowerCase() === shownArtist(b.artist).toLowerCase() &&
+  a.artist.trim().toLowerCase() === artistOf(b.artist).artist.toLowerCase() &&
   a.title.trim().toLowerCase() === decodeEntities(b.song).trim().toLowerCase();
 
 // Adds what the now-playing file knows to the latest playlist entry when they
@@ -137,16 +127,15 @@ export function normalizePlaylist(data) {
     )
     .map((t) => ({
       title: decodeEntities(t.song).trim(),
-      artist: shownArtist(t.artist),
       // A show's own segment carries the show, so its heart takes the show's
       // color (the segment's photo is often black and white).
-      ...segmentOf(t.artist),
+      ...artistOf(t.artist),
       album: decodeEntities(t.album).trim(),
       img: /^https?:\/\//.test(t.image || "") ? t.image : "",
       time: String(t.timeslice || "").slice(11, 16),
       date: String(t.timeslice || "").slice(0, 10),
     }))
-    .sort((a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`));
+    .sort(newestFirst);
 }
 const LOADING = { tracks: [], status: "loading" };
 const UNAVAILABLE = { tracks: [], status: "unavailable" };
@@ -154,18 +143,41 @@ const trackKey = (t) => `${reportedKey(t)} ${t.minutes || ""} ${t.img}`;
 const sameTracks = (a, b) =>
   a.length === b.length && a.every((track, i) => trackKey(track) === trackKey(b[i]));
 
+// One read of a station's playlist: today's file (and yesterday's in the
+// small hours, when the overnight songs are in it), plus the now-playing file
+// for the current song's length. Only today's file is required.
+async function readPlaylist(endpoint, signal) {
+  const loadDay = async (date) => {
+    const response = await fetch(`${endpoint.day}${date}.json`, { signal, cache: "no-store" });
+    if (!response.ok) throw new Error("Playlist unavailable");
+    return normalizePlaylist(await response.json());
+  };
+  const loadNow = async () => {
+    try {
+      const response = await fetch(endpoint.now, { signal, cache: "no-store" });
+      return response.ok ? await response.json() : null;
+    } catch {
+      return null;
+    }
+  };
+  const now = easternParts();
+  const early = Number(now.time.slice(0, 2)) < EARLY_HOUR;
+  const [nowFile, ...lists] = await Promise.all([
+    loadNow(),
+    loadDay(now.date),
+    ...(early ? [loadDay(shiftDate(now.date, -1)).catch(() => [])] : []),
+  ]);
+  return { nowFile, tracks: mergeTracks(lists).slice(0, 80) };
+}
+
 // The playlist for one station, polled every 30 seconds while the app is
 // visible. Results are kept per station, so switching back to a station
 // shows its list at once while it refreshes.
 export function useNowPlaying(streamId) {
   const [byStream, setByStream] = useState({});
   useEffect(() => {
-    const endpoint = ENDPOINTS[streamId];
+    const endpoint = STREAMS[streamId]?.songFeed;
     if (!endpoint) return;
-    const loadNow = (signal) =>
-      fetch(endpoint.now, { signal, cache: "no-store" })
-        .then((r) => (r.ok ? r.json() : null))
-        .catch(() => null);
     let active = true;
     // The last now-playing file that loaded, so one failed fetch does not
     // drop the current song's length (it only applies to the same song).
@@ -178,64 +190,49 @@ export function useNowPlaying(streamId) {
         if (old && old.status === next.status && sameTracks(old.tracks, next.tracks)) return prev;
         return { ...prev, [streamId]: next };
       });
-    async function loadDay(date, signal) {
-      const response = await fetch(`${endpoint.day}${date}.json`, { signal, cache: "no-store" });
-      if (!response.ok) throw Error("Playlist unavailable");
-      return normalizePlaylist(await response.json());
-    }
+    // Keep the last good list on screen; the status line explains. A
+    // superseded or unmounted request (AbortError) is not a station failure;
+    // a timeout (TimeoutError) is.
+    const failed = (error) => {
+      if (!active || error?.name === "AbortError") return;
+      setByStream((prev) =>
+        prev[streamId]?.status === "unavailable"
+          ? prev
+          : {
+              ...prev,
+              [streamId]: { tracks: prev[streamId]?.tracks || [], status: "unavailable" },
+            },
+      );
+    };
     async function update() {
       // While hidden, keep polling only if audio is playing: the lock screen
       // and media notification still show the song.
       if (document.visibilityState === "hidden" && !getPlayerSnapshot().playing) return;
       controller?.abort();
       controller = new AbortController();
-      const { signal } = controller;
-      // A timeout is a real failure; a superseding request is not. Both
-      // surface as AbortError, so they are told apart here.
-      let timedOut = false;
-      const timeout = setTimeout(() => {
-        timedOut = true;
-        controller.abort();
-      }, 10000);
+      let result;
       try {
-        const now = easternParts();
-        const days = [now.date];
-        if (Number(now.time.slice(0, 2)) < EARLY_HOUR) days.push(shiftDate(now.date, -1));
-        const [nowFile, ...lists] = await Promise.all([
-          loadNow(signal), // optional: only adds the song's length
-          ...days.map((date, index) =>
-            // Only today's file is required; yesterday's is a courtesy.
-            index === 0 ? loadDay(date, signal) : loadDay(date, signal).catch(() => []),
-          ),
-        ]);
-        if (nowFile) lastNow = nowFile;
-        const tracks = withNowPlaying(mergeTracks(lists).slice(0, 80), nowFile || lastNow);
-        if (active) store({ tracks, status: tracks.length ? "ready" : "empty" });
+        result = await readPlaylist(endpoint, withTimeout(controller.signal));
       } catch (error) {
-        // A superseded or unmounted request is not a station failure.
-        if (error?.name === "AbortError" && !timedOut) return;
-        // Keep the last good list on screen; the status line explains.
-        if (active)
-          setByStream((prev) => ({
-            ...prev,
-            [streamId]: { tracks: prev[streamId]?.tracks || [], status: "unavailable" },
-          }));
-      } finally {
-        clearTimeout(timeout);
+        failed(error);
+        return;
       }
+      if (result.nowFile) lastNow = result.nowFile;
+      const tracks = withNowPlaying(result.tracks, result.nowFile || lastNow);
+      if (active) store({ tracks, status: tracks.length ? "ready" : "empty" });
     }
     update();
     const timer = setInterval(update, 30000);
-    document.addEventListener("visibilitychange", update);
-    window.addEventListener("wxpn:refresh-playlist", update);
+    const listening = new AbortController();
+    document.addEventListener("visibilitychange", update, { signal: listening.signal });
+    window.addEventListener("wxpn:refresh-playlist", update, { signal: listening.signal });
     return () => {
       active = false;
       controller?.abort();
       clearInterval(timer);
-      document.removeEventListener("visibilitychange", update);
-      window.removeEventListener("wxpn:refresh-playlist", update);
+      listening.abort();
     };
   }, [streamId]);
-  if (!ENDPOINTS[streamId]) return UNAVAILABLE; // Homegrown has no song feed
+  if (!STREAMS[streamId]?.songFeed) return UNAVAILABLE; // Homegrown has no song feed
   return byStream[streamId] || LOADING;
 }

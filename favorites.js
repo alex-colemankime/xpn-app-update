@@ -1,7 +1,8 @@
-import { useMemo, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { createLocalStore, readJson, useLocalStore, writeJson } from "./storage.js";
 import { webUrl } from "./text.js";
 import { SHOWS, showSegment } from "./catalog.js";
+import { calendarDay } from "./time.js";
 
 // Songs have no feed id, so artist + title is the identity. Letters and digits
 // from any script count, so "봄날" and "작은 것들을 위한 시" by the same artist
@@ -32,13 +33,6 @@ const number = (value) => (Number.isFinite(value) ? value : null);
 const savedAt = (value) => (Number.isFinite(value) ? value : 0);
 const when = (value) =>
   typeof value === "string" && Number.isFinite(Date.parse(value)) ? value : "";
-// A calendar day, "2026-10-07", that exists.
-export function calendarDay(value) {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return "";
-  const [y, m, d] = value.split("-").map(Number);
-  const t = new Date(Date.UTC(y, m - 1, d));
-  return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d ? value : "";
-}
 // A web address, or a path to one of the app's own images ("/shows/x.jpg").
 const image = (value) =>
   webUrl(value, { http: true }) ||
@@ -187,20 +181,16 @@ if (JSON.stringify(readJson(FAVORITES_KEY, {})) !== JSON.stringify(favoritesStor
   writeJson(FAVORITES_KEY, favoritesStore.getSnapshot());
 }
 
+const newestSaved = (bucket) => Object.values(bucket).sort((a, b) => b.savedAt - a.savedAt);
+
 // For modules outside React (playlist sync): saved songs, newest first.
 export const subscribeFavorites = favoritesStore.subscribe;
-export const getSavedSongs = () =>
-  Object.values(favoritesStore.getSnapshot().songs).sort(
-    (a, b) => (b.savedAt || 0) - (a.savedAt || 0),
-  );
+export const getSavedSongs = () => newestSaved(favoritesStore.getSnapshot().songs);
 
-// Saved items of one type, newest first.
+// Saved items of one type, newest first. (The React Compiler keeps the list
+// the same object until the bucket changes.)
 export function useFavoriteItems(type) {
-  const bucket = useLocalStore(favoritesStore)[type];
-  return useMemo(
-    () => Object.values(bucket).sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0)),
-    [bucket],
-  );
+  return newestSaved(useLocalStore(favoritesStore)[type]);
 }
 
 // Whether one item is saved. Subscribes to a boolean, so a heart button only

@@ -115,7 +115,7 @@ function NextCard({ video, onPick }) {
 }
 
 // What to watch next. Beside the video (wide screens) the list is there in
-// full; under it, the first few lead and "See more" opens the rest, so the
+// full; under it, the first few lead and "Show more videos" opens the rest, so the
 // description and the next video stay near the top.
 function UpNext({ heading, videos, onPick }) {
   const id = useId();
@@ -133,7 +133,7 @@ function UpNext({ heading, videos, onPick }) {
         <NextCard key={v.id} video={v} onPick={onPick} />
       ))}
       {videos.length > UP_NEXT_FIRST && !all && (
-        <button className="text-button playlist-expand next-more" onClick={seeMore}>
+        <button className="text-button next-more" onClick={seeMore}>
           Show more videos
           <span className="expand-chevron">
             <Icon name="chevD" size={17} />

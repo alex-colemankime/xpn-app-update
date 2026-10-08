@@ -129,7 +129,6 @@
 .reminder-preview-top {
   display: flex;
   justify-content: space-between;
-  font-size: 0.875rem;
   color: var(--muted);
 }
 .reminder-preview-top strong {
@@ -224,7 +223,6 @@
   min-height: 46px;
   border-bottom: 1px solid var(--border);
   color: var(--text);
-  text-decoration: none;
 }
 .welcome-social a .icon {
   color: var(--muted);

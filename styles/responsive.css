@@ -24,12 +24,6 @@
   .toolbar .segmented {
     width: fit-content;
   }
-  .concert-filters {
-    flex-wrap: wrap;
-  }
-  .concert-filters .search-field {
-    flex-basis: 100%;
-  }
 }
 @media (max-width: 1000px) and (min-width: 768px) {
   :root {
@@ -57,8 +51,8 @@
      width, left aligned. */
   .listen-heading {
     display: block;
-    margin: -23px calc(-1 * max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)))) 18px;
-    padding: 0 max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+    margin: -23px calc(-1 * var(--edge-right)) 18px calc(-1 * var(--edge-left));
+    padding-inline: var(--edge-left) var(--edge-right);
   }
   .main-shell[data-screen="listen"] .topbar {
     border-bottom-color: transparent;
@@ -69,8 +63,9 @@
     position: absolute;
     width: 1px;
     height: 1px;
+    margin: -1px;
     overflow: hidden;
-    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
     white-space: nowrap;
   }
   .live-workspace {
@@ -123,16 +118,11 @@
   .station-switcher.segmented button {
     min-height: 44px;
   }
-  .now-status {
-    font-size: 0.875rem;
-    min-height: 20px;
-  }
   .now-footer {
+    flex-wrap: wrap;
+    gap: 4px 12px;
     margin-top: 4px;
     min-height: 48px;
-  }
-  .now-footer .text-button {
-    font-size: 0.875rem;
   }
   .recent-panel > .section-heading {
     margin-bottom: 6px;
@@ -144,23 +134,9 @@
     padding-block: 13px;
     gap: 8px;
   }
-  .track-time {
-    font-size: 0.875rem;
-  }
-  .live-lists .track-row strong {
-    font-size: 1rem;
-  }
-  .track-row .icon-button {
-    width: 44px;
-  }
   .player-track > img {
     width: 42px;
     height: 42px;
-  }
-  .page-heading {
-    flex-wrap: wrap;
-    gap: 17px;
-    margin-bottom: 24px;
   }
   .page-heading h1 {
     font-size: 1.8125rem;
@@ -170,25 +146,19 @@
     gap: 14px;
   }
   .toolbar .segmented {
-    max-width: 100%;
     width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
   .segmented:not(.segmented-pill) button {
     flex: 1;
-    font-size: 1rem;
     padding: 0 9px;
-    font-weight: 600;
-  }
-  .toolbar .segmented {
-    overflow-x: auto;
-    scrollbar-width: none;
   }
   .toolbar .segmented button {
     flex: 1 0 auto;
     white-space: nowrap;
     gap: 5px;
     padding: 10px 6px;
-    font-weight: 600;
   }
 
   .schedule-row {
@@ -206,16 +176,13 @@
   .schedule-info > strong {
     font-size: 0.9375rem;
   }
-  .schedule-info > span {
-    font-size: 0.875rem;
-  }
-  .schedule-info p {
+  .schedule-info > .schedule-desc {
     display: none;
   }
   .all-shows {
     row-gap: 24px;
   }
-  .show-card h2 {
+  .show-card-name {
     overflow-wrap: anywhere;
   }
   .all-shows .show-cover {
@@ -236,8 +203,8 @@
   .chips {
     flex-wrap: nowrap;
     overflow-x: auto;
-    margin: 0 calc(-1 * max(20px, var(--safe-area-inset-left, env(safe-area-inset-left))));
-    padding: 0 max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+    margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
+    padding-inline: var(--edge-left) var(--edge-right);
     scrollbar-width: none;
     /* Chips fade at the screen's edge, so the row reads as one to swipe. */
     mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
@@ -300,15 +267,8 @@
   .show-detail-hero h3 {
     font-size: 1.125rem;
   }
-  .show-detail-hero p {
-    font-size: 0.875rem;
-  }
   .show-detail-hero .secondary-button {
     padding: 10px 13px;
-    font-size: 1rem;
-  }
-  .detail-body .section-heading > h3 {
-    font-size: 1.25rem;
   }
   .empty-state {
     padding: 48px 18px;
@@ -333,6 +293,7 @@
   /* On Listen, the big controls are the player; the mini player steps aside
      until they scroll out of view. */
   .player-bar {
+    background: var(--surface);
     transition:
       translate 0.25s ease-out,
       opacity 0.2s ease-out,
@@ -343,31 +304,12 @@
     opacity: 0;
     visibility: hidden;
   }
-}
-
-/* Keep focused controls above the fixed transport, including at large zoom. */
-@media (max-width: 767px) {
+  /* Keep focused controls above the fixed transport, including at large
+     zoom. */
   html {
     scroll-padding-bottom: calc(
       var(--tabbar-h) + var(--mini-h) + 24px +
         var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
     );
   }
-  .player-bar {
-    border-radius: 0;
-    background: var(--surface);
-  }
-  .now-footer {
-    flex-wrap: wrap;
-    gap: 4px 12px;
-  }
-}
-
-/* Screens named by the tab bar start straight with their controls. */
-h1.sr-only + .toolbar,
-h1.sr-only + .concert-filters {
-  margin-top: 0;
-}
-.share-songs {
-  margin-top: 12px;
 }

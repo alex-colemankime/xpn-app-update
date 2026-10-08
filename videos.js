@@ -95,16 +95,19 @@ export function parsePlaylist(json) {
 // when the browser allows it, else waiting for a tap), inline on phones, and
 // counted as the app in Brightcove Analytics.
 export const playerUrl = (id, { account = VIDEO_ACCOUNT, player = VIDEO_PLAYER } = {}) =>
-  `${PLAYERS}/${account}/${player}_default/index.html?videoId=${encodeURIComponent(id)}` +
-  "&autoplay=play&playsinline=true&applicationId=wxpn-app";
+  `${PLAYERS}/${account}/${player}_default/index.html?${new URLSearchParams({
+    videoId: id,
+    autoplay: "play",
+    playsinline: "true",
+    applicationId: "wxpn-app",
+  })}`;
 
 // The same player in the app's own frame (public/video-player.html), which
 // hides the title and description the player draws over the video. It
 // falls back to playerUrl if the player can't start there.
-export const framedPlayerUrl = (id, { account = VIDEO_ACCOUNT, player = VIDEO_PLAYER } = {}) =>
+export const framedPlayerUrl = (id) =>
   publicAsset(
-    `video-player.html?account=${account}&player=${encodeURIComponent(player)}` +
-      `&video=${encodeURIComponent(id)}`,
+    `video-player.html?${new URLSearchParams({ account: VIDEO_ACCOUNT, player: VIDEO_PLAYER, video: id })}`,
   );
 
 // Searching what has loaded: artist, title, description and tags.
@@ -118,34 +121,42 @@ export function matchVideos(videos, query) {
 
 // ---- Loading -------------------------------------------------------------
 
-let policyKey = "";
-async function getPolicyKey(signal) {
-  if (policyKey) return policyKey;
-  const response = await fetch(`${PLAYERS}/${VIDEO_ACCOUNT}/${VIDEO_PLAYER}_default/config.json`, {
-    signal: withTimeout(signal),
+// The player's policy key, read once and shared: every collection loading
+// at the same moment waits on the same request. A failed read is forgotten,
+// so the next load tries again.
+let policyKey = null;
+function getPolicyKey() {
+  policyKey ??= (async () => {
+    const response = await fetch(
+      `${PLAYERS}/${VIDEO_ACCOUNT}/${VIDEO_PLAYER}_default/config.json`,
+      { signal: withTimeout() },
+    );
+    if (!response.ok) throw new Error(`Videos: player config HTTP ${response.status}`);
+    const key = (await response.json())?.video_cloud?.policy_key;
+    if (!key) throw new Error("Videos: the player has no policy key");
+    return key;
+  })().catch((error) => {
+    policyKey = null;
+    throw error;
   });
-  if (!response.ok) throw new Error(`Videos: player config HTTP ${response.status}`);
-  const key = (await response.json())?.video_cloud?.policy_key;
-  if (!key) throw new Error("Videos: the player has no policy key");
-  policyKey = key;
-  return key;
+  return policyKey;
 }
 
-async function fetchPlaylist(playlist, offset = 0, signal) {
-  const key = await getPolicyKey(signal);
+async function fetchPlaylist(playlist, offset = 0) {
+  const key = await getPolicyKey();
   const response = await fetch(
     `${API}/${VIDEO_ACCOUNT}/playlists/${playlist}?limit=${PAGE_SIZE}&offset=${offset}`,
-    { headers: { Accept: `application/json;pk=${key}` }, signal: withTimeout(signal) },
+    { headers: { Accept: `application/json;pk=${key}` }, signal: withTimeout() },
   );
   // A key the player has since replaced: read it again next time.
-  if (response.status === 401 || response.status === 403) policyKey = "";
+  if (response.status === 401 || response.status === 403) policyKey = null;
   if (!response.ok) throw new Error(`Videos: playlist HTTP ${response.status}`);
   return parsePlaylist(await response.json());
 }
 
 // One video, for a watch page opened from a link to a video no list holds.
 export async function fetchVideo(id, signal) {
-  const key = await getPolicyKey(signal);
+  const key = await getPolicyKey();
   const response = await fetch(`${API}/${VIDEO_ACCOUNT}/videos/${encodeURIComponent(id)}`, {
     headers: { Accept: `application/json;pk=${key}` },
     signal: withTimeout(signal),
@@ -223,27 +234,22 @@ export function loadVideos({ force = false } = {}) {
       sections: state.sections.map((s) => (s.videos.length ? s : { ...s, status: "loading" })),
     });
   }
-  inflight = Promise.all(
-    VIDEO_SECTIONS.map((s) =>
-      fetchPlaylist(s.playlist).then(
-        (videos) => ({ playlist: s.playlist, videos }),
-        () => ({ playlist: s.playlist, videos: null }),
-      ),
-    ),
-  )
+  inflight = Promise.allSettled(VIDEO_SECTIONS.map((s) => fetchPlaylist(s.playlist)))
     .then((results) => {
+      // Each section's fresh first page, or null where it couldn't be read.
+      const fresh = new Map(VIDEO_SECTIONS.map((s, i) => [s.playlist, results[i].value ?? null]));
       videoStore.set((s) => ({
         ...s,
         sections: s.sections.map((old) => {
-          const { videos } = results.find((r) => r.playlist === old.playlist) || {};
+          const videos = fresh.get(old.playlist);
           if (videos && old.status === "live" && old.offset > videos.length) {
             // The listener has opened further pages: the fresh first page
             // leads, and what they had loaded follows, so the list neither
             // shrinks under them nor loses its place for the next page.
-            const fresh = new Set(videos.map((v) => v.id));
+            const ids = new Set(videos.map((v) => v.id));
             return {
               ...old,
-              videos: [...videos, ...old.videos.filter((v) => !fresh.has(v.id))],
+              videos: [...videos, ...old.videos.filter((v) => !ids.has(v.id))],
               status: "live",
             };
           }
@@ -260,10 +266,10 @@ export function loadVideos({ force = false } = {}) {
           return { ...old, status: old.videos.length ? "cache" : "error" };
         }),
         loadedAt: Date.now(),
-        complete: results.every((r) => r.videos),
+        complete: results.every((r) => r.status === "fulfilled"),
       }));
-      const { sections } = videoStore.getSnapshot();
-      if (results.some((r) => r.videos)) {
+      if (results.some((r) => r.status === "fulfilled")) {
+        const { sections } = videoStore.getSnapshot();
         writeJson(CACHE_KEY, Object.fromEntries(sections.map((s) => [s.playlist, s.videos])));
       }
     })
@@ -301,7 +307,7 @@ export function loadMoreVideos(playlist) {
     .finally(() => loadingMore.delete(playlist));
 }
 
-// The videos as they stand, for code outside React.
+// The videos as they stand (the tests read it; screens use useVideos).
 export const getVideos = () => videoStore.getSnapshot();
 
 export const chooseVideoSection = (label) => videoStore.set((s) => ({ ...s, section: label }));

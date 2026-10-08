@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fetchConcertResult } from "../concerts.js";
 import { adoptLegacyConcerts } from "../favorites.js";
 
@@ -8,6 +8,7 @@ const STALE_MS = 3 * 3600000;
 
 // Concert listings: loaded once, again on retry (showing "loading"), and
 // refreshed in place when stale (keeping the list on screen meanwhile).
+// Only one load runs at a time, however often the app comes to the front.
 export function useConcerts() {
   const [attempt, setAttempt] = useState(0);
   const [result, setResult] = useState(null);
@@ -15,38 +16,38 @@ export function useConcerts() {
   const last = useRef(null);
   useEffect(() => {
     const controller = new AbortController();
-    const load = (quiet) =>
-      fetchConcertResult(controller.signal).then((data) => {
-        if (controller.signal.aborted) return;
-        // A quiet refresh never replaces a good list with a failure, or a
-        // complete one with a partial one.
-        if (quiet && (data.source !== "live" || (data.partial && !last.current?.partial))) return;
-        last.current = data;
-        loadedAt.current = Date.now();
-        adoptLegacyConcerts(data.concerts);
-        setResult({ ...data, attempt });
-      });
+    let pending = null;
+    const load = (quiet) => {
+      if (pending) return;
+      pending = fetchConcertResult(controller.signal)
+        .then((data) => {
+          if (controller.signal.aborted) return;
+          // A quiet refresh never replaces a good list with a failure, or a
+          // complete one with a partial one.
+          if (quiet && (data.source !== "live" || (data.partial && !last.current?.partial))) return;
+          last.current = data;
+          loadedAt.current = Date.now();
+          adoptLegacyConcerts(data.concerts);
+          setResult({ ...data, attempt });
+        })
+        .finally(() => {
+          pending = null;
+        });
+    };
     load(false);
     const onVisible = () => {
       if (document.visibilityState === "visible" && Date.now() - loadedAt.current > STALE_MS)
         load(true);
     };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      controller.abort();
-      document.removeEventListener("visibilitychange", onVisible);
-    };
+    document.addEventListener("visibilitychange", onVisible, { signal: controller.signal });
+    return () => controller.abort();
   }, [attempt]);
   const loaded = result?.attempt === attempt;
-  const retry = useCallback(() => setAttempt((n) => n + 1), []);
-  return useMemo(
-    () => ({
-      concerts: result?.concerts || [],
-      source: loaded ? result.source : "loading",
-      partial: loaded && Boolean(result.partial),
-      through: (loaded && result.through) || "",
-      retry,
-    }),
-    [result, loaded, retry],
-  );
+  return {
+    concerts: result?.concerts || [],
+    source: loaded ? result.source : "loading",
+    partial: loaded && Boolean(result.partial),
+    through: (loaded && result.through) || "",
+    retry: () => setAttempt((n) => n + 1),
+  };
 }

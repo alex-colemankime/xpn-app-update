@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Art, Empty, Icon } from "../ui.jsx";
 import { SaveButton } from "./MusicRows.jsx";
 import { SHOWS } from "../catalog.js";
@@ -80,10 +80,7 @@ function EpisodePlayKey({ episode }) {
       data-on={s.playing || s.busy || undefined}
       data-busy={s.busy || undefined}
       aria-label={label}
-      onClick={(e) => {
-        e.stopPropagation();
-        toggleEpisode(episode);
-      }}
+      onClick={() => toggleEpisode(episode)}
     >
       <Icon name={s.playing || s.busy ? "pause" : "play"} size={16} />
     </button>
@@ -227,14 +224,23 @@ export function ArchiveList({ query, onOpen, onOpenShow, onClearQuery }) {
 }
 
 // The scrubber for the loaded episode: elapsed, a slider, time left, and
-// skip keys.
-export function EpisodeScrubber({ episode, compact = false }) {
+// skip keys. While a finger or the mouse holds the slider, the times follow
+// it and the episode seeks on release; any other change (keys, VoiceOver,
+// TalkBack) seeks straight away.
+export function EpisodeScrubber({ episode }) {
   const s = useEpisodeState(episode);
   const [dragging, setDragging] = useState(null);
+  const held = useRef(false);
+  const release = (e) => {
+    if (!held.current) return;
+    held.current = false;
+    seekEpisode(+e.currentTarget.value);
+    setDragging(null);
+  };
   const shown = dragging ?? s.position;
   const max = Math.max(1, Math.round(s.duration || 1));
   return (
-    <div className={`episode-scrubber ${compact ? "compact" : ""}`}>
+    <div className="episode-scrubber">
       <button
         className="icon-button skip-key"
         aria-label={`Back ${SKIP_BACK_S} seconds`}
@@ -255,13 +261,19 @@ export function EpisodeScrubber({ episode, compact = false }) {
         value={Math.min(max, Math.round(shown))}
         style={{ "--fill": `${(Math.min(max, shown) / max) * 100}%` }}
         disabled={!s.active}
-        onChange={(e) => setDragging(+e.target.value)}
-        onPointerUp={(e) => {
-          seekEpisode(+e.currentTarget.value);
-          setDragging(null);
+        onPointerDown={(e) => {
+          held.current = true;
+          // Released outside the slider still counts as released here.
+          e.currentTarget.setPointerCapture(e.pointerId);
         }}
-        onKeyUp={(e) => {
-          seekEpisode(+e.currentTarget.value);
+        onChange={(e) => {
+          if (held.current) setDragging(+e.target.value);
+          else seekEpisode(+e.target.value);
+        }}
+        onPointerUp={release}
+        onPointerCancel={() => {
+          // The page took the gesture (a scroll): no seek.
+          held.current = false;
           setDragging(null);
         }}
       />

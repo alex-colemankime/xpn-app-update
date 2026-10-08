@@ -18,36 +18,35 @@
 // until the file reports it), `aired` the slot it filled ("6am–10am") and
 // `feature` who it was about, when the archive names someone.
 
-// How long an audio link is trusted after it was read. Well inside the
-// signature's life, so a link is never used near the end of it.
-export const LINK_FRESH_MS = 20 * 60000;
-export const linkIsFresh = (episode, now = Date.now()) =>
-  Boolean(episode?.audio) && now - (Number(episode.fetchedAt) || 0) < LINK_FRESH_MS;
-
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
 import { useSyncExternalStore } from "react";
 import { useEveryShow } from "./hooks/useEveryShow.js";
 import { ARCHIVE_FEEDS } from "./config.js";
 import { SHOWS } from "./catalog.js";
 import { decodeEntities, plainText, webUrl } from "./text.js";
-import { withTimeout } from "./net.js";
 import { createStore, readJson, writeJson } from "./storage.js";
-import { clockLabel, easternParts, easternToEpoch, parseDuration } from "./time.js";
+import { calendarDay, clockLabel, easternParts, easternToEpoch, parseDuration } from "./time.js";
+
+// How long an audio link is trusted after it was read. Well inside the
+// signature's life, so a link is never used near the end of it.
+const LINK_FRESH_MS = 20 * 60000;
+export const linkIsFresh = (episode, now = Date.now()) =>
+  Boolean(episode?.audio) && now - (Number(episode.fetchedAt) || 0) < LINK_FRESH_MS;
 
 const PER_FEED = 40;
+const newestFirst = (a, b) => b.date.localeCompare(a.date);
 
 // Feed text: CDATA unwrapped, then as plain text.
 const plain = (value) =>
   plainText(String(value ?? "").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1"));
 
-const escapeTag = (name) => name.replace(/[:]/g, "\\:");
+// Tag names are plain ("title", "itunes:image"), so they go into the
+// pattern as they are.
 const tagText = (xml, name) =>
-  new RegExp(`<${escapeTag(name)}(?:\\s[^>]*)?>([\\s\\S]*?)</${escapeTag(name)}>`, "i").exec(
-    xml,
-  )?.[1] ?? "";
+  new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}>`, "i").exec(xml)?.[1] ?? "";
 const tagAttr = (xml, name, attr) =>
   decodeEntities(
-    new RegExp(`<${escapeTag(name)}\\b[^>]*\\s${attr}\\s*=\\s*"([^"]*)"`, "i").exec(xml)?.[1] ?? "",
+    new RegExp(`<${name}\\b[^>]*\\s${attr}\\s*=\\s*"([^"]*)"`, "i").exec(xml)?.[1] ?? "",
   );
 
 // A short, stable id from a feed's guid, for saving and resuming.
@@ -99,7 +98,7 @@ export function parsePodcastFeed(xml, show) {
       };
     })
     .filter(Boolean)
-    .sort((a, b) => b.date.localeCompare(a.date))
+    .sort(newestFirst)
     .slice(0, PER_FEED);
 }
 
@@ -122,12 +121,7 @@ const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const pageAttr = (tag, name) =>
   decodeEntities(new RegExp(`\\s${name}\\s*=\\s*"([^"]*)"`, "i").exec(tag)?.[1] ?? "");
 
-function validDay(y, m, d) {
-  const t = new Date(Date.UTC(y, m - 1, d, 12));
-  return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
-}
-
-export function parseArchivePage(html, { show, name = "", schedule = [], page = "" }) {
+export function parseArchivePage(html, { show, name = "", schedule = [] }) {
   const tags =
     String(html ?? "").match(/<[a-z]+\b[^>]*\sdata-track-url\s*=\s*"[^"]*"[^>]*>/gi) || [];
   const seen = new Set();
@@ -149,8 +143,8 @@ export function parseArchivePage(html, { show, name = "", schedule = [], page = 
       : stamp
         ? [Number(stamp[1]), Number(stamp[2]), Number(stamp[3])]
         : [];
-    if (!y || !validDay(y, m, d)) continue;
-    const day = `${y}-${pad2(m)}-${pad2(d)}`;
+    const day = y ? calendarDay(`${y}-${pad2(m)}-${pad2(d)}`) : "";
+    if (!day) continue;
     const weekday = easternParts(new Date(`${day}T16:00:00Z`)).day;
     const slot = schedule.find((s) => s.days?.includes(weekday));
     const at = (slot && easternToEpoch(day, slot.start)) ?? Date.parse(`${day}T16:00:00Z`);
@@ -172,11 +166,11 @@ export function parseArchivePage(html, { show, name = "", schedule = [], page = 
       audio,
       image: "",
       summary: "",
-      page,
+      page: "",
       aired: dated && slot ? `${clockLabel(slot.start)}–${clockLabel(slot.end)}` : "",
     });
   }
-  return episodes.sort((a, b) => b.date.localeCompare(a.date)).slice(0, PER_FEED);
+  return episodes.sort(newestFirst).slice(0, PER_FEED);
 }
 
 // Episodes from the cache or a snapshot, checked the same way as a feed's.
@@ -203,10 +197,10 @@ export function normalizeEpisodes(list) {
       feature: typeof e.feature === "string" ? e.feature : "",
       fetchedAt: Number.isFinite(e.fetchedAt) ? e.fetchedAt : 0,
     }))
-    .sort((a, b) => b.date.localeCompare(a.date));
+    .sort(newestFirst);
 }
 
-async function readSource(url, signal) {
+async function readSource(url) {
   if (Capacitor.isNativePlatform()) {
     const response = await CapacitorHttp.get({
       url,
@@ -219,7 +213,8 @@ async function readSource(url, signal) {
     }
     return String(response.data ?? "");
   }
-  const response = await fetch(url, { signal: withTimeout(signal, 12000) });
+  // Only the browser build reaches here, so AbortSignal.timeout is there.
+  const response = await fetch(url, { signal: AbortSignal.timeout(12000) });
   if (!response.ok) throw new Error(`Archive: HTTP ${response.status}`);
   return response.text();
 }
@@ -230,37 +225,31 @@ export function parseSource(text, show) {
   const info = SHOWS[show] || {};
   const episodes = /<rss[\s>]/i.test(text)
     ? parsePodcastFeed(text, show)
-    : parseArchivePage(text, { show, name: info.name, schedule: info.schedule, page: "" });
+    : parseArchivePage(text, { show, name: info.name, schedule: info.schedule });
   return episodes.map((e) => ({ ...e, image: e.image || info.img || "" }));
 }
 
 // One source's episodes, read now.
-async function readFeed(feed, signal) {
-  const text = await readSource(feed.url, signal);
+async function readFeed(feed) {
+  const text = await readSource(feed.url);
   const fetchedAt = Date.now();
   return parseSource(text, feed.show).map((e) => ({ ...e, fetchedAt }));
 }
-
-const newestFirst = (a, b) => b.date.localeCompare(a.date);
 
 // Every source, read at once. A source that can't be read keeps the episodes
 // it had (`previous`), so one failing page never empties its show. Resolves
 // to { episodes, source, failed } where source is "live", or "error" when no
 // source could be read at all, and `failed` lists the shows not read.
-async function fetchArchive(previous = [], feeds = ARCHIVE_FEEDS) {
-  const results = await Promise.all(
-    feeds.map((feed) =>
-      readFeed(feed).then(
-        (episodes) => ({ show: feed.show, episodes }),
-        () => ({ show: feed.show, episodes: null }),
-      ),
-    ),
+async function fetchArchive(previous = []) {
+  const results = await Promise.allSettled(ARCHIVE_FEEDS.map(readFeed));
+  const failed = ARCHIVE_FEEDS.filter((_, i) => results[i].status === "rejected").map(
+    (feed) => feed.show,
   );
-  const failed = results.filter((r) => !r.episodes).map((r) => r.show);
-  if (failed.length === feeds.length) return { episodes: previous, source: "error", failed };
+  if (failed.length === ARCHIVE_FEEDS.length)
+    return { episodes: previous, source: "error", failed };
   const kept = previous.filter((e) => failed.includes(e.show));
   return {
-    episodes: [...results.flatMap((r) => r.episodes || []), ...kept].sort(newestFirst),
+    episodes: [...results.flatMap((r) => r.value ?? []), ...kept].sort(newestFirst),
     source: "live",
     failed,
   };
@@ -274,10 +263,10 @@ async function fetchArchive(previous = [], feeds = ARCHIVE_FEEDS) {
 const CACHE_KEY = "xpn.archive.cache";
 const STALE_MS = 30 * 60000;
 const RETRY_MS = 2 * 60000;
-const cached = readJson(CACHE_KEY, null);
+const cachedEpisodes = normalizeEpisodes(readJson(CACHE_KEY, null)?.episodes);
 const archiveStore = createStore({
-  episodes: normalizeEpisodes(cached?.episodes),
-  source: cached?.episodes?.length ? "cache" : "loading",
+  episodes: cachedEpisodes,
+  source: cachedEpisodes.length ? "cache" : "loading",
   loadedAt: 0,
   complete: false,
   listed: [],
@@ -312,7 +301,7 @@ export function loadArchive({ force = false } = {}) {
   return inflight;
 }
 
-// The archive as it stands, for code outside React.
+// The archive as it stands (the tests read it; screens use the hooks below).
 export const getArchive = () => archiveStore.getSnapshot();
 
 // The archive as loaded so far, without asking for a load (Favorites, which

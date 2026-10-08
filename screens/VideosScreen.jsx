@@ -107,7 +107,7 @@ export function VideosScreen({ onWatch }) {
           </p>
         )}
         {more && (
-          <button className="text-button playlist-expand video-more" onClick={showMore}>
+          <button className="text-button video-more" onClick={showMore}>
             {section.moreFailed ? "Try again" : "Show more videos"}
             <span className="expand-chevron">
               <Icon name="chevD" size={17} />

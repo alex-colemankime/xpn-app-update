@@ -65,15 +65,25 @@ export function openPage(url, { onClose } = {}) {
     newTab();
     return;
   }
-  import("@capacitor/browser")
-    .then(async ({ Browser }) => {
-      if (onClose) {
-        const listener = await Browser.addListener("browserFinished", () => {
-          listener.remove();
-          back();
-        });
-      }
-      await Browser.open({ url });
-    })
-    .catch(newTab);
+  openInBrowserView(url, onClose && back).catch(newTab);
+}
+
+// The phone apps' in-app browser view. Rejects when it couldn't open.
+async function openInBrowserView(url, onClose) {
+  const { Browser } = await import("@capacitor/browser");
+  let listener = null;
+  try {
+    if (onClose) {
+      listener = await Browser.addListener("browserFinished", () => {
+        listener.remove();
+        onClose();
+      });
+    }
+    await Browser.open({ url });
+  } catch (error) {
+    // The browser view never opened: its close listener would otherwise
+    // fire for some later page.
+    await listener?.remove();
+    throw error;
+  }
 }

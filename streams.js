@@ -2,7 +2,10 @@
 // element plays them everywhere with no HLS library. Each station has a
 // backup: the mount xpn.org's own web player uses. A failed connection tries
 // the other URL (player-core.js). All six answered with live audio/mpeg on
-// 2026-10-05. `songFeed` marks a station that publishes what it plays.
+// 2026-10-05. `songFeed` is where a station publishes what it plays: its day
+// playlist (one file per Eastern date, with times) and its now-playing file
+// (the song on air, with its length), the same sources xpn.org's player
+// reads. Homegrown has none.
 export const STREAMS = {
   xpn: {
     id: "xpn",
@@ -14,7 +17,10 @@ export const STREAMS = {
     // The no-preroll mount suits app playback: reconnecting never replays an ad.
     url: "https://wxpnhi.xpn.org/xpnhi-nopreroll",
     backupUrl: "https://wxpn.xpn.org/xpnmp3hi",
-    songFeed: true,
+    songFeed: {
+      day: "https://origin.xpn.org/utils/playlist/json/",
+      now: "https://origin.xpn.org/utils/nowplaying/json/xpnNowPlaying.json",
+    },
   },
   xpn2: {
     id: "xpn2",
@@ -24,7 +30,10 @@ export const STREAMS = {
     shortMark: "xpn2",
     url: "https://wxpnhi.xpn.org/xpn2mp3hi",
     backupUrl: "https://wxpn.xpn.org/xpn2mp3hi",
-    songFeed: true,
+    songFeed: {
+      day: "https://origin.xpn.org/xpn2/json/",
+      now: "https://origin.xpn.org/xpn2/json/nowplaying/xpn2NowPlaying.json",
+    },
   },
   homegrown: {
     id: "homegrown",
@@ -35,7 +44,7 @@ export const STREAMS = {
     // The former Kids Corner stream, renamed ahead of its new programming.
     url: "https://wxpnhi.xpn.org/kidscornermp3hi",
     backupUrl: "https://wxpn.xpn.org/kidscornermp3hi",
-    songFeed: false,
+    songFeed: null,
   },
 };
 

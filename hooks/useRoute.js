@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
+import { CONCERTS_ENABLED, VIDEOS_ENABLED } from "../config.js";
 
 // Hash routes, so the browser and Android back buttons step back through
 // screens and close the show sheet, and any screen can be linked to:
@@ -10,8 +11,6 @@ import { flushSync } from "react-dom";
 //   #/listen/live                          the station's live video, the same way
 // Hash routing needs no server rewrites, so it works on GitHub Pages and in
 // the Capacitor webview alike.
-
-import { CONCERTS_ENABLED, VIDEOS_ENABLED } from "../config.js";
 
 const SCREENS = [
   "listen",
@@ -141,6 +140,6 @@ const actions = {
 };
 
 export function useRoute() {
-  const route = parseRoute(useSyncExternalStore(subscribe, getHash, () => ""));
+  const route = parseRoute(useSyncExternalStore(subscribe, getHash));
   return { ...route, ...actions };
 }

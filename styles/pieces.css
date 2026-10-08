@@ -16,10 +16,6 @@
 }
 .expand-chevron {
   display: inline-flex;
-  transition: rotate 0.2s ease-out;
-}
-.expand-chevron.up {
-  rotate: 180deg;
 }
 .appearance-settings .segmented {
   display: grid;

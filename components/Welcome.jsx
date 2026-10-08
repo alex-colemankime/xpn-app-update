@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { Art, Icon, Modal, nameList } from "../ui.jsx";
 import { SHOWS, SHOW_DIRECTORY, shortName } from "../catalog.js";
 import { STATION_ART } from "../assets.js";
@@ -59,7 +60,7 @@ function ReminderPreview({ show }) {
 // The playlist a listener's hearts build, shown rather than described.
 function PlaylistPreview() {
   return (
-    <figure className="reminder-preview playlist-preview" aria-label="Example playlist">
+    <figure className="reminder-preview" aria-label="Example playlist">
       <span className="playlist-preview-art" aria-hidden="true">
         <Icon name="heartF" size={22} />
       </span>
@@ -76,10 +77,9 @@ function PlaylistPreview() {
 
 // First launch only: follow a few shows, turn on reminders for them,
 // connect Spotify or Apple Music so hearted songs build a playlist, and
-// finally the station's social accounts. A step
-// with nothing to offer is left out (no reminders without a followed show, no
-// playlist step when no service is set up). Closing it any way counts as
-// done; it never comes back.
+// finally the station's social accounts. A step with nothing to offer is
+// left out (no reminders without a followed show, no playlist step when no
+// service is set up). Closing it any way counts as done; it never comes back.
 export function Welcome({ onDone }) {
   const followed = useFavoriteItems("shows");
   const services = offeredServices();
@@ -91,7 +91,18 @@ export function Welcome({ onDone }) {
   ];
   const [stepName, setStepName] = useState("follow");
   const step = Math.max(0, steps.indexOf(stepName));
-  const next = () => (step + 1 < steps.length ? setStepName(steps[step + 1]) : onDone());
+  const heading = useRef(null);
+  // Each step replaces the button that was just pressed, so focus moves to
+  // the new step's heading rather than fall back to the page. (The first
+  // step needs none: the dialog starts at its own title.)
+  const next = () => {
+    if (step + 1 >= steps.length) {
+      onDone();
+      return;
+    }
+    flushSync(() => setStepName(steps[step + 1]));
+    heading.current?.focus();
+  };
   // Progress as a row of short bars, one per step, filled up to this one.
   const counter = (
     <span className="welcome-step">
@@ -103,29 +114,15 @@ export function Welcome({ onDone }) {
       <span className="sr-only">{`Step ${step + 1} of ${steps.length}`}</span>
     </span>
   );
-  const heading = useRef(null);
-
-  // Each step replaces the button that was just pressed, so move focus to
-  // the new step's heading rather than let it fall back to the page.
-  const firstStep = useRef(true);
-  useEffect(() => {
-    if (firstStep.current) {
-      firstStep.current = false;
-      return;
-    }
-    heading.current?.focus();
-  }, [stepName]);
 
   // Turning reminders on waits for the phone's permission prompt; the button
   // holds still meanwhile so a second tap can't ask twice.
   const [asking, setAsking] = useState(false);
   const turnOn = async () => {
     setAsking(true);
-    try {
-      await enableReminders({ quiet: true });
-    } finally {
-      setAsking(false);
-    }
+    // Whatever the answer (or a failure to ask), the welcome moves on.
+    await enableReminders({ quiet: true }).catch(() => {});
+    setAsking(false);
     next();
   };
 

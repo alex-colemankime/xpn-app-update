@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Icon, Empty, SearchField } from "../ui.jsx";
+import { useState } from "react";
+import { Icon, Empty, PromptLink, SearchField } from "../ui.jsx";
 import { useFavoriteItems } from "../favorites.js";
 import { ConcertRow } from "../components/ConcertRow.jsx";
 import { easternToday, filterConcerts } from "../concerts.js";
@@ -17,13 +17,17 @@ const WHEN = [
   { id: "week", label: "Next 7 days" },
 ];
 
-function CalendarLink({ children = "See the concert calendar on xpn.org" }) {
-  return (
+// With no listings to show, the way to the full calendar on xpn.org.
+const CalendarEmpty = ({ title, children }) => (
+  <div className="empty-state">
+    <Icon name="navConcerts" size={32} />
+    <h2>{title}</h2>
+    <p>{children}</p>
     <a className="secondary-button" href={CALENDAR_URL} target="_blank" rel="noreferrer">
-      {children}
+      See the concert calendar on xpn.org
     </a>
-  );
-}
+  </div>
+);
 
 // Toggle chips. `value` is the selected id (or ids, for `multi`).
 function ChipGroup({ options, value, onChange, multi = false }) {
@@ -42,26 +46,6 @@ function ChipGroup({ options, value, onChange, multi = false }) {
   ));
 }
 
-// At the end of the listings: the way onto the calendar, xpn.org's own
-// submission form (no account needed).
-function SubmitConcert() {
-  return (
-    <a
-      className="playlist-prompt newsletter-prompt submit-concert"
-      href={SUBMIT_CONCERT_URL}
-      target="_blank"
-      rel="noreferrer"
-    >
-      <Icon name="calendarAdd" size={18} />
-      <span>
-        <strong>Playing a show?</strong>
-        <small>Submit a concert or event to WXPN’s calendar</small>
-      </span>
-      <Icon name="chev" size={16} />
-    </a>
-  );
-}
-
 export function ConcertsScreen({ result }) {
   const [query, setQuery] = useState("");
   const [when, setWhen] = useState("all");
@@ -69,15 +53,14 @@ export function ConcertsScreen({ result }) {
   const [tags, setTags] = useState([]);
   const [shown, setShown] = useState(PAGE);
   const saved = useFavoriteItems("concerts");
-  const savedIds = useMemo(() => new Set(saved.map((c) => c.id)), [saved]);
+  const savedIds = new Set(saved.map((c) => c.id));
   const { concerts, source, partial, through } = result;
   const today = easternToday();
 
-  const regionOptions = useMemo(() => {
-    const counts = new Map();
-    concerts.forEach((c) => c.regions.forEach((r) => counts.set(r, (counts.get(r) || 0) + 1)));
-    return [...counts].sort((a, b) => b[1] - a[1]).map(([r]) => ({ id: r, label: r }));
-  }, [concerts]);
+  // Regions with the most concerts first.
+  const counts = new Map();
+  for (const c of concerts) for (const r of c.regions) counts.set(r, (counts.get(r) || 0) + 1);
+  const regionOptions = [...counts].sort((a, b) => b[1] - a[1]).map(([r]) => ({ id: r, label: r }));
   const tagOptions = [
     { id: "welcomes", label: "WXPN Welcomes" },
     { id: "fan", label: "Free at Noon" },
@@ -109,12 +92,9 @@ export function ConcertsScreen({ result }) {
     );
   } else if (source === "unconfigured") {
     body = (
-      <div className="empty-state">
-        <Icon name="navConcerts" size={32} />
-        <h2>Find your next show</h2>
-        <p>WXPN’s full concert calendar, including WXPN Welcomes shows, is on xpn.org.</p>
-        <CalendarLink />
-      </div>
+      <CalendarEmpty title="Find your next show">
+        WXPN’s full concert calendar, including WXPN Welcomes shows, is on xpn.org.
+      </CalendarEmpty>
     );
   } else if (source === "error") {
     body = (
@@ -129,12 +109,9 @@ export function ConcertsScreen({ result }) {
     );
   } else if (!concerts.length) {
     body = (
-      <div className="empty-state">
-        <Icon name="navConcerts" size={32} />
-        <h2>No upcoming concerts listed</h2>
-        <p>The calendar on xpn.org may list more.</p>
-        <CalendarLink />
-      </div>
+      <CalendarEmpty title="No upcoming concerts listed">
+        The calendar on xpn.org may list more.
+      </CalendarEmpty>
     );
   } else if (!filtered.length) {
     body = (
@@ -146,8 +123,10 @@ export function ConcertsScreen({ result }) {
     body = (
       <>
         {partial && (
-          <p className="info-note concert-partial" role="status">
-            <span>Some concerts couldn’t load, so this list may be missing a few.</span>
+          <p className="info-note concert-partial">
+            <span role="status">
+              Some concerts couldn’t load, so this list may be missing a few.
+            </span>
             <button className="text-button" onClick={result.retry}>
               Try again
             </button>
@@ -165,30 +144,26 @@ export function ConcertsScreen({ result }) {
           <ConcertRow key={c.id} concert={c} />
         ))}
         {filtered.length > shown && (
-          <button
-            className="text-button playlist-expand show-more"
-            onClick={() => setShown(shown + PAGE)}
-          >
+          <button className="text-button show-more" onClick={() => setShown(shown + PAGE)}>
             Show more concerts
             <span className="expand-chevron">
               <Icon name="chevD" size={17} />
             </span>
           </button>
         )}
-        <SubmitConcert />
-        <a
-          className="playlist-prompt newsletter-prompt"
+        {/* xpn.org's own submission form (no account needed). */}
+        <PromptLink
+          href={SUBMIT_CONCERT_URL}
+          icon="calendarAdd"
+          title="Playing a show?"
+          note="Submit a concert or event to WXPN’s calendar"
+        />
+        <PromptLink
           href={CALENDAR_URL}
-          target="_blank"
-          rel="noreferrer"
-        >
-          <Icon name="navConcerts" size={18} />
-          <span>
-            <strong>The full calendar</strong>
-            <small>Every listing on xpn.org</small>
-          </span>
-          <Icon name="chev" size={16} />
-        </a>
+          icon="navConcerts"
+          title="The full calendar"
+          note="Every listing on xpn.org"
+        />
         <NewsletterPrompt />
       </>
     );
@@ -236,8 +211,10 @@ export function ConcertsScreen({ result }) {
               </div>
             </div>
           </details>
-          <p className="concert-count" role="status">
-            {filtered.length} {filtered.length === 1 ? "concert" : "concerts"}
+          <p className="concert-count">
+            <span role="status">
+              {filtered.length} {filtered.length === 1 ? "concert" : "concerts"}
+            </span>
             {narrowed && (
               <button className="text-button" onClick={reset}>
                 Clear filters

@@ -39,7 +39,7 @@ export function OnAir({ onAirNow, playing, onOpenShow, live, onWatch }) {
         <span className="sr-only">Show details</span>
       </button>
       {video && (
-        <button className="on-air-watch watch-button" onClick={() => onWatch(video)}>
+        <button className="watch-button" onClick={() => onWatch(video)}>
           <Icon name="play" size={14} />
           Watch
           <span className="sr-only"> the live video</span>

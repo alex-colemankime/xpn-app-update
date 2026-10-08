@@ -57,7 +57,8 @@ globalThis.window = {
   },
   addEventListener() {},
 };
-const { calendarDay, getFavorite, toggleFavorite } = await import("../favorites.js");
+const { getFavorite, toggleFavorite } = await import("../favorites.js");
+const { calendarDay } = await import("../time.js");
 
 test("a concert with an impossible date is dropped; the rest are repaired", () => {
   assert.equal(getFavorite("concerts", { id: "bad" }), null);

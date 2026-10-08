@@ -6,8 +6,8 @@
     <title>WXPN App Updates</title>
     <style>
       :root {
-        --bg: #faf6ee;
-        --surface: #f3eee3;
+        --bg: #faf8f3;
+        --surface: #f2efe7;
         --text: #211f1c;
         --muted: #64605a;
         --border: #d9d2c4;
@@ -143,13 +143,16 @@
         margin: 4px 0 12px;
         padding: 10px 16px;
         border-radius: 10px;
-        background: var(--action);
-        color: var(--ink);
+        /* As the app draws it: the station's orange washed into the page. */
+        background: color-mix(in srgb, var(--action) 15%, var(--bg));
+        border: 1px solid color-mix(in srgb, var(--action) 32%, var(--bg));
+        color: var(--text);
         font-size: 14px;
         font-weight: 550;
       }
       .preview.live {
         background: var(--text);
+        border-color: var(--text);
         color: var(--bg);
       }
       .preview p {
@@ -157,11 +160,11 @@
         margin: 0;
       }
       .preview span {
-        padding: 6px 14px;
-        border-radius: 999px;
-        background: var(--ink);
-        color: var(--action);
-        font-weight: 650;
+        padding: 8px 14px;
+        border-radius: 10px;
+        background: var(--action);
+        color: var(--ink);
+        font-weight: 700;
         white-space: nowrap;
       }
       .preview.live span {
@@ -291,7 +294,7 @@
           watch: values.watch || "",
           image: values.image || "",
           show: values.show || "",
-          label: values.action?.label || (kind === "banner" ? "" : ""),
+          label: values.action?.label || "",
           url: values.action?.url || "",
           starts: easternLocal(values.starts),
           ends: easternLocal(values.ends),
@@ -460,6 +463,7 @@
           );
           a.download = "updates.json";
           a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href));
         }
         if (e.target.id === "load") {
           const text = prompt("Paste the current updates.json:");

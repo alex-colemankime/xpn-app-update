@@ -207,7 +207,7 @@
   border-radius: 12px;
 }
 /* Under the video, the first three lead (UP_NEXT_FIRST in WatchPage.jsx)
-   until "See more"; beside it (wide screens) the whole list shows. */
+   until "Show more videos"; beside it (wide screens) the whole list shows. */
 .watch-next:not([data-all]) .next-card:nth-of-type(n + 4) {
   display: none;
 }

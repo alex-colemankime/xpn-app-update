@@ -6,11 +6,10 @@ import { connect, disconnect, syncNow, usePlaylistSync } from "../playlist-sync.
 
 // Which services to offer: the configured ones. A preview build without any
 // shows them anyway, so the design can be reviewed.
-function offered() {
+export function offeredServices() {
   const services = availableServices();
   return services.length ? services : SHOW_SAMPLES ? Object.values(SERVICES) : [];
 }
-export const offeredServices = offered;
 
 function status(sync, service, count) {
   if (sync.status === "syncing") return "Adding your songs…";
@@ -31,7 +30,7 @@ function status(sync, service, count) {
 export function PlaylistSyncPanel() {
   const sync = usePlaylistSync();
   const saved = useFavoriteItems("songs");
-  const services = offered();
+  const services = offeredServices();
   if (!services.length) return null;
   const service = SERVICES[sync.service];
   return (
@@ -110,9 +109,8 @@ export function PlaylistSyncPanel() {
 // Favorites: a one-line invitation, until a service is connected.
 export function PlaylistSyncPrompt({ onSetUp }) {
   const sync = usePlaylistSync();
-  const services = offered();
-  if (!services.length || sync.service) {
-    if (!sync.service) return null;
+  const services = offeredServices();
+  if (sync.service) {
     return (
       <p className="playlist-prompt connected">
         <Icon name="check" size={16} />
@@ -120,6 +118,7 @@ export function PlaylistSyncPrompt({ onSetUp }) {
       </p>
     );
   }
+  if (!services.length) return null;
   return (
     <button className="playlist-prompt" onClick={onSetUp}>
       <Icon name="music" size={18} />
@@ -135,7 +134,7 @@ export function PlaylistMenuItems({ track, close }) {
   const sync = usePlaylistSync();
   const item = { ...track, id: songId(track) };
   const saved = useIsFavorite("songs", item);
-  const services = offered();
+  const services = offeredServices();
   if (!services.length) return null;
   const service = SERVICES[sync.service];
   if (!service) {

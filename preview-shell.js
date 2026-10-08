@@ -10,9 +10,9 @@ import "./preview-shell.css";
 const BASE = import.meta.env?.BASE_URL ?? "/";
 
 const DEVICES = {
-  phone: { label: "Phone", width: 390, height: 844, note: "390 × 844" },
-  tablet: { label: "Tablet", width: 820, height: 1180, note: "820 × 1180" },
-  laptop: { label: "Laptop", width: 1440, height: 900, note: "1440 × 900" },
+  phone: { label: "Phone", width: 390, height: 844 },
+  tablet: { label: "Tablet", width: 820, height: 1180 },
+  laptop: { label: "Laptop", width: 1440, height: 900 },
 };
 // What each frame adds around the screen: bezel, or a browser window's bar.
 const CHROME = {
@@ -50,6 +50,7 @@ function readChoice() {
 
 // The shell follows the app's theme: the listener's choice in the app's
 // Settings, else the system's.
+const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
 function applyTheme() {
   let saved = null;
   try {
@@ -57,9 +58,7 @@ function applyTheme() {
   } catch {
     /* ignore */
   }
-  const dark =
-    saved === "dark" ||
-    (saved !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const dark = saved === "dark" || (saved !== "light" && systemDark.matches);
   document.documentElement.dataset.theme = dark ? "dark" : "light";
 }
 
@@ -68,7 +67,7 @@ export function mountDevicePreview(root, { build = "" } = {}) {
   document.title = "WXPN app preview";
   applyTheme();
   window.addEventListener("storage", (e) => e.key === "xpn.appearance" && applyTheme());
-  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => applyTheme());
+  systemDark.addEventListener("change", applyTheme);
 
   let device = readChoice();
   let landscape = new URLSearchParams(window.location.search).get("orientation") === "landscape";
@@ -221,16 +220,21 @@ export function mountDevicePreview(root, { build = "" } = {}) {
 
   new ResizeObserver(fit).observe(stage);
   // The app routes with the address hash; keep the preview's address in step
-  // so it can be copied and shared as it stands.
-  setInterval(syncAddress, 800);
+  // so it can be copied and shared as it stands. (The router announces every
+  // change with popstate.)
   iframe.addEventListener("load", () => {
     syncAddress();
+    iframe.contentWindow.addEventListener("popstate", syncAddress);
+    iframe.contentWindow.addEventListener("hashchange", syncAddress);
     touchScrollbars();
     try {
-      windowTitle.textContent = iframe.contentDocument.title || "WXPN";
-      new MutationObserver(() => {
+      const showTitle = () => {
         windowTitle.textContent = iframe.contentDocument.title || "WXPN";
-      }).observe(iframe.contentDocument.querySelector("title"), { childList: true });
+      };
+      showTitle();
+      new MutationObserver(showTitle).observe(iframe.contentDocument.querySelector("title"), {
+        childList: true,
+      });
     } catch {
       /* ignore */
     }

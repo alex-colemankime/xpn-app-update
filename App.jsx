@@ -1,18 +1,9 @@
-import {
-  Activity,
-  lazy,
-  memo,
-  Suspense,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { Activity, lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { getPlayerSnapshot, subscribePlayer } from "./player.js";
 import { useNowPlaying } from "./nowplaying.js";
 import { SHOWS } from "./catalog.js";
 import { useFavoriteItems } from "./favorites.js";
-import { parseRoute, useRoute } from "./hooks/useRoute.js";
+import { useRoute } from "./hooks/useRoute.js";
 import { useAppearance } from "./hooks/useAppearance.js";
 import { useConcerts } from "./hooks/useConcerts.js";
 import { useRadioAlarm } from "./hooks/useRadioAlarm.js";
@@ -28,7 +19,6 @@ import { PlayerBar } from "./components/PlayerBar.jsx";
 import { ShowDetail } from "./components/ShowDetail.jsx";
 import { StationBanner } from "./components/StationUpdates.jsx";
 import { Toast } from "./components/Toast.jsx";
-import { startPlaylistSync } from "./playlist-sync.js";
 import { readJson, writeJson } from "./storage.js";
 import { CONCERTS_ENABLED, VIDEOS_ENABLED } from "./config.js";
 import { ListenScreen } from "./screens/ListenScreen.jsx";
@@ -41,21 +31,15 @@ const ONBOARDED_KEY = "xpn.onboarded";
 // change between connecting, playing and paused.
 const useStreamId = () => useSyncExternalStore(subscribePlayer, () => getPlayerSnapshot().streamId);
 
-// Screens re-render only when their own inputs change. Listen, Shows and
-// Favorites are in the first download; the rest load just after.
-const Listen = memo(ListenScreen);
-const Shows = memo(ShowsScreen);
-const Library = memo(LibraryScreen);
-const lazyScreen = (load, name) => lazy(() => load().then((m) => ({ default: memo(m[name]) })));
-const Concerts = lazyScreen(() => import("./screens/ConcertsScreen.jsx"), "ConcertsScreen");
-const Videos = lazyScreen(() => import("./screens/VideosScreen.jsx"), "VideosScreen");
-const Settings = lazyScreen(() => import("./screens/SettingsScreen.jsx"), "SettingsScreen");
-const Welcome = lazy(() =>
-  import("./components/Welcome.jsx").then((m) => ({ default: m.Welcome })),
-);
-const WatchPage = lazy(() =>
-  import("./components/WatchPage.jsx").then((m) => ({ default: m.WatchPage })),
-);
+// Listen, Shows and Favorites are in the first download; the rest load just
+// after. (The React Compiler keeps each screen's element while its inputs are
+// unchanged, so screens re-render only when their own inputs change.)
+const lazyNamed = (load, name) => lazy(() => load().then((m) => ({ default: m[name] })));
+const Concerts = lazyNamed(() => import("./screens/ConcertsScreen.jsx"), "ConcertsScreen");
+const Videos = lazyNamed(() => import("./screens/VideosScreen.jsx"), "VideosScreen");
+const Settings = lazyNamed(() => import("./screens/SettingsScreen.jsx"), "SettingsScreen");
+const Welcome = lazyNamed(() => import("./components/Welcome.jsx"), "Welcome");
+const WatchPage = lazyNamed(() => import("./components/WatchPage.jsx"), "WatchPage");
 
 // One screen of the app, shown or kept in the background. A hidden screen
 // keeps its state, but its effects and subscriptions are paused (React
@@ -79,14 +63,11 @@ export default function App() {
   const alarm = useRadioAlarm();
   const [appearance, setAppearance] = useAppearance();
   const watching = useWatching(route, updates.live, updates.loaded);
-  useEffect(startPlaylistSync, []);
   useSpaceToPlay();
 
   // The first-run welcome, once. Not over a shared show link: that listener
   // came for the show.
-  const [welcome, setWelcome] = useState(
-    () => !readJson(ONBOARDED_KEY, false) && !parseRoute(window.location.hash).showId,
-  );
+  const [welcome, setWelcome] = useState(() => !readJson(ONBOARDED_KEY, false) && !route.showId);
   const finishWelcome = () => {
     writeJson(ONBOARDED_KEY, true);
     setWelcome(false);
@@ -97,13 +78,12 @@ export default function App() {
 
   // Each screen change reads as a new page: top of the page, focus on main
   // so screen readers announce the new content.
+  // (Not on first load, which is already at the top.)
   const main = useRef(null);
-  const firstRender = useRef(true);
+  const shownScreen = useRef(route.screen);
   useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
-    }
+    if (shownScreen.current === route.screen) return;
+    shownScreen.current = route.screen;
     window.scrollTo({ top: 0 });
     main.current?.focus({ preventScroll: true });
   }, [route.screen]);
@@ -140,13 +120,15 @@ export default function App() {
           <AlarmBanner alarm={alarm.alarm} onSnooze={alarm.snooze} onDismiss={alarm.dismiss} />
         )}
         <StationBanner
-          {...updates}
+          banner={updates.banner}
+          live={updates.live}
+          liveDismissed={updates.liveDismissed}
           onWatch={watching.watchLive}
           onListenScreen={route.screen === "listen"}
         />
         <div className="page-content">
           <Screen id="listen" label="Listen live" current={route.screen}>
-            <Listen
+            <ListenScreen
               playlist={playlist}
               live={updates.live}
               onWatch={watching.watchLive}
@@ -154,7 +136,7 @@ export default function App() {
             />
           </Screen>
           <Screen id="shows" label="Shows" current={route.screen}>
-            <Shows onOpen={route.openShow} />
+            <ShowsScreen onOpen={route.openShow} />
           </Screen>
           {VIDEOS_ENABLED && (
             <Screen id="videos" label="Videos" current={route.screen}>
@@ -167,7 +149,7 @@ export default function App() {
             </Screen>
           )}
           <Screen id="favorites" label="Favorites" current={route.screen}>
-            <Library
+            <LibraryScreen
               onOpenShow={route.openShow}
               onOpenVideo={watching.watchVideo}
               onNavigate={route.navigate}
@@ -212,8 +194,8 @@ export default function App() {
           <WatchPage
             videoId={route.videoId}
             live={watching.live}
-            onPick={watching.pick}
-            onClose={watching.close}
+            onPick={watching.watchVideo}
+            onClose={route.closeVideo}
           />
         )}
       </Suspense>

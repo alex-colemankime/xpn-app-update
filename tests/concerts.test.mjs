@@ -123,67 +123,71 @@ test("the calendar is asked for a year of events, page by page", () => {
   assert.equal(url.searchParams.get("page"), "2");
 });
 
-test("every page of the calendar is loaded; failures are errors or marked partial, never made-up events", async () => {
-  const real = globalThis.fetch;
-  try {
-    const pages = {
-      1: [tecEvent({ id: 1, start_date_details: { year: "2099", month: "1", day: "2" } })],
-      2: [tecEvent({ id: 2, start_date_details: { year: "2099", month: "1", day: "1" } })],
-    };
-    globalThis.fetch = async (url) => {
-      const page = new URL(url).searchParams.get("page");
-      return { ok: true, status: 200, json: async () => ({ events: pages[page], total_pages: 2 }) };
-    };
-    const result = await fetchConcertResult(
-      undefined,
-      "https://xpn.org/wp-json/tribe/events/v1/events",
-    );
-    assert.equal(result.source, "live");
-    assert.equal(result.partial, false);
-    assert.deepEqual(
-      result.concerts.map((c) => c.id),
-      ["2", "1"],
-      "merged and sorted by date",
-    );
+test("every page of the calendar is loaded; failures are errors or marked partial, never made-up events", async (t) => {
+  t.mock.method(globalThis, "fetch");
+  const pages = {
+    1: [tecEvent({ id: 1, start_date_details: { year: "2099", month: "1", day: "2" } })],
+    2: [tecEvent({ id: 2, start_date_details: { year: "2099", month: "1", day: "1" } })],
+  };
+  globalThis.fetch.mock.mockImplementation(async (url) => {
+    const page = new URL(url).searchParams.get("page");
+    return { ok: true, status: 200, json: async () => ({ events: pages[page], total_pages: 2 }) };
+  });
+  const result = await fetchConcertResult(
+    undefined,
+    "https://xpn.org/wp-json/tribe/events/v1/events",
+  );
+  assert.equal(result.source, "live");
+  assert.equal(result.partial, false);
+  assert.deepEqual(
+    result.concerts.map((c) => c.id),
+    ["2", "1"],
+    "merged and sorted by date",
+  );
 
-    // A later page failing is reported, not passed off as the whole calendar.
-    globalThis.fetch = async (url) => {
-      const page = new URL(url).searchParams.get("page");
-      if (page === "2") return { ok: false, status: 500, json: async () => ({}) };
-      return { ok: true, status: 200, json: async () => ({ events: pages[page], total_pages: 2 }) };
-    };
-    const partial = await fetchConcertResult(undefined, "https://x.test/events");
-    assert.equal(partial.source, "live");
-    assert.equal(partial.partial, true, "marked incomplete, so the screen offers to try again");
-    assert.deepEqual(
-      partial.concerts.map((c) => c.id),
-      ["1"],
-    );
+  // A later page failing is reported, not passed off as the whole calendar.
+  globalThis.fetch.mock.mockImplementation(async (url) => {
+    const page = new URL(url).searchParams.get("page");
+    if (page === "2") return { ok: false, status: 500, json: async () => ({}) };
+    return { ok: true, status: 200, json: async () => ({ events: pages[page], total_pages: 2 }) };
+  });
+  const partial = await fetchConcertResult(undefined, "https://x.test/events");
+  assert.equal(partial.source, "live");
+  assert.equal(partial.partial, true, "marked incomplete, so the screen offers to try again");
+  assert.deepEqual(
+    partial.concerts.map((c) => c.id),
+    ["1"],
+  );
 
-    globalThis.fetch = async () => ({ ok: true, status: 404, json: async () => ({}) });
-    assert.deepEqual(await fetchConcertResult(undefined, "https://x.test/events"), {
-      concerts: [],
-      source: "live",
-      partial: false,
-      through: "",
-    });
+  globalThis.fetch.mock.mockImplementation(async () => ({
+    ok: true,
+    status: 404,
+    json: async () => ({}),
+  }));
+  assert.deepEqual(await fetchConcertResult(undefined, "https://x.test/events"), {
+    concerts: [],
+    source: "live",
+    partial: false,
+    through: "",
+  });
 
-    globalThis.fetch = async () => ({ ok: false, status: 500, json: async () => ({}) });
-    assert.deepEqual(await fetchConcertResult(undefined, "https://x.test/events"), {
-      concerts: [],
-      source: "error",
-      partial: false,
-      through: "",
-    });
-    assert.deepEqual(await fetchConcertResult(undefined, ""), {
-      concerts: [],
-      source: "unconfigured",
-      partial: false,
-      through: "",
-    });
-  } finally {
-    globalThis.fetch = real;
-  }
+  globalThis.fetch.mock.mockImplementation(async () => ({
+    ok: false,
+    status: 500,
+    json: async () => ({}),
+  }));
+  assert.deepEqual(await fetchConcertResult(undefined, "https://x.test/events"), {
+    concerts: [],
+    source: "error",
+    partial: false,
+    through: "",
+  });
+  assert.deepEqual(await fetchConcertResult(undefined, ""), {
+    concerts: [],
+    source: "unconfigured",
+    partial: false,
+    through: "",
+  });
 });
 
 test("filters combine: WXPN Welcomes in the Philadelphia Area, not one or the other", () => {
@@ -224,8 +228,7 @@ test("filters combine: WXPN Welcomes in the Philadelphia Area, not one or the ot
   assert.deepEqual(ids({}), ["welcomes-philly", "welcomes-delaware", "philly", "lehigh"]);
 });
 
-test("a long calendar is read to its last page; past the limit it says how far it reaches", async () => {
-  const real = globalThis.fetch;
+test("a long calendar is read to its last page; past the limit it says how far it reaches", async (t) => {
   const day = (n) => {
     const d = new Date(Date.UTC(2099, 0, 1 + n));
     return {
@@ -236,34 +239,31 @@ test("a long calendar is read to its last page; past the limit it says how far i
   };
   const requested = [];
   let total = 9;
-  try {
-    globalThis.fetch = async (url) => {
-      const page = Number(new URL(url).searchParams.get("page"));
-      requested.push(page);
-      return {
-        ok: true,
-        status: 200,
-        json: async () => ({
-          events: [tecEvent({ id: page, start_date_details: day(page) })],
-          total_pages: total,
-        }),
-      };
+  t.mock.method(globalThis, "fetch");
+  globalThis.fetch.mock.mockImplementation(async (url) => {
+    const page = Number(new URL(url).searchParams.get("page"));
+    requested.push(page);
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        events: [tecEvent({ id: page, start_date_details: day(page) })],
+        total_pages: total,
+      }),
     };
-    const nine = await fetchConcertResult(undefined, "https://x.test/events");
-    assert.deepEqual(
-      [...new Set(requested)].sort((a, b) => a - b),
-      [1, 2, 3, 4, 5, 6, 7, 8, 9],
-    );
-    assert.equal(nine.concerts.length, 9, "the ninth page is not dropped");
-    assert.equal(nine.partial, false);
-    assert.equal(nine.through, "", "the whole calendar");
+  });
+  const nine = await fetchConcertResult(undefined, "https://x.test/events");
+  assert.deepEqual(
+    [...new Set(requested)].sort((a, b) => a - b),
+    [1, 2, 3, 4, 5, 6, 7, 8, 9],
+  );
+  assert.equal(nine.concerts.length, 9, "the ninth page is not dropped");
+  assert.equal(nine.partial, false);
+  assert.equal(nine.through, "", "the whole calendar");
 
-    total = 45;
-    requested.length = 0;
-    const capped = await fetchConcertResult(undefined, "https://x.test/events");
-    assert.equal(capped.concerts.length, 30);
-    assert.equal(capped.through, capped.concerts.at(-1).date, "says how far the list reaches");
-  } finally {
-    globalThis.fetch = real;
-  }
+  total = 45;
+  requested.length = 0;
+  const capped = await fetchConcertResult(undefined, "https://x.test/events");
+  assert.equal(capped.concerts.length, 30);
+  assert.equal(capped.through, capped.concerts.at(-1).date, "says how far the list reaches");
 });

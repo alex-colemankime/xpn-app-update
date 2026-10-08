@@ -58,7 +58,7 @@
   padding: 0 14px;
   border: 1px solid transparent;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--text) 6%, transparent);
+  background: var(--soft-fill);
   font-size: 0.9375rem;
   font-weight: 550;
   color: var(--text);
@@ -70,16 +70,13 @@
   inset: -4px 0;
 }
 .chip[aria-pressed="true"] {
-  background: color-mix(in srgb, var(--accent) 14%, var(--bg));
+  background: var(--key-lit);
   color: var(--accent-strong);
   font-weight: 700;
 }
-:root[data-theme="dark"] .chip[aria-pressed="true"] {
-  background: color-mix(in srgb, var(--accent) 20%, var(--bg));
-}
 @media (hover: hover) {
   .chip:not([aria-pressed="true"]):hover {
-    background: color-mix(in srgb, var(--text) 10%, transparent);
+    background: var(--soft-fill-hover);
   }
 }
 .concert-count {
@@ -91,7 +88,6 @@
   color: var(--muted);
 }
 .concert-count .text-button {
-  min-height: 44px;
   color: var(--accent);
 }
 .show-more {

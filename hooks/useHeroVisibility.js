@@ -5,7 +5,7 @@ import { useEffect } from "react";
 export function useHeroVisibility(ref) {
   useEffect(() => {
     const el = ref.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
+    if (!el) return;
     const root = document.documentElement;
     let observer;
     const nav = document.querySelector(".mobile-nav");
@@ -25,12 +25,12 @@ export function useHeroVisibility(ref) {
       observer.observe(el);
     };
     observe();
-    const resize = typeof ResizeObserver !== "undefined" ? new ResizeObserver(observe) : null;
-    if (nav) resize?.observe(nav);
+    const resize = new ResizeObserver(observe);
+    if (nav) resize.observe(nav);
     window.addEventListener("resize", observe);
     return () => {
       observer?.disconnect();
-      resize?.disconnect();
+      resize.disconnect();
       window.removeEventListener("resize", observe);
       delete root.dataset.heroVisible;
     };

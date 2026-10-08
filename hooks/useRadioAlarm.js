@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { alarmDue, alarmPlan, dateKey, useAlarmSettings } from "../alarm.js";
+import { useEffect, useEffectEvent, useState } from "react";
+import { alarmDue, alarmPlan, dateKey, dueAlarmDate, useAlarmSettings } from "../alarm.js";
 import {
   exactAlarmsAllowed,
   notificationsAreNative,
@@ -39,50 +39,35 @@ export function useRadioAlarm() {
   const [alarm, updateAlarm] = useAlarmSettings();
   const [ringing, setRinging] = useState(false);
 
-  // The scheduler reads the latest settings through a ref, so writing
-  // lastTriggeredDate does not tear down and rebuild the interval.
-  const latest = useRef(alarm);
-  const ringingRef = useRef(false);
-  useEffect(() => {
-    latest.current = alarm;
-    ringingRef.current = ringing;
-  });
-
-  const start = (now = new Date()) => {
-    if (ringingRef.current) return;
-    ring(latest.current);
+  // Effect Events: the timers and listeners below always see the latest
+  // settings, without being torn down each time lastTriggeredDate is written.
+  const start = useEffectEvent((at) => {
+    if (ringing) return;
+    const now = at || new Date();
+    ring(alarm);
     setRinging(true);
-    updateAlarm({ lastTriggeredDate: dateKey(now), snoozeUntil: 0 });
-  };
-  const startRef = useRef(start);
-  useEffect(() => {
-    startRef.current = start;
+    updateAlarm({ lastTriggeredDate: dueAlarmDate(alarm, now) ?? dateKey(now), snoozeUntil: 0 });
   });
-
   // Stopped some other way (the play button, the lock screen, headphones):
   // the alarm is over, so the banner goes and the next alarm can ring.
   // ring() reports its station switch before ringing is set, so this never
   // cancels an alarm as it starts.
-  useEffect(
-    () =>
-      subscribePlayer(() => {
-        const { playing, status } = getPlayerSnapshot();
-        if (ringingRef.current && !playing && !isConnecting(status)) {
-          ringingRef.current = false;
-          setRinging(false);
-        }
-      }),
-    [],
-  );
+  const onPlayerChange = useEffectEvent(() => {
+    const { playing, status } = getPlayerSnapshot();
+    if (ringing && !playing && !isConnecting(status)) setRinging(false);
+  });
+  const checkDue = useEffectEvent(() => {
+    const now = new Date();
+    if (alarmDue(alarm, now)) start(now);
+  });
+
+  useEffect(() => subscribePlayer(() => onPlayerChange()), []);
 
   // Browser: check every 15 seconds while the alarm is on. No immediate
   // check: switching the alarm on should not ring it.
   useEffect(() => {
     if (notificationsAreNative() || !alarm.enabled) return;
-    const timer = setInterval(() => {
-      const now = new Date();
-      if (alarmDue(latest.current, now)) startRef.current(now);
-    }, 15000);
+    const timer = setInterval(() => checkDue(), 15000);
     return () => clearInterval(timer);
   }, [alarm.enabled]);
 
@@ -92,15 +77,17 @@ export function useRadioAlarm() {
   const days = alarm.repeatDays.join();
   useEveryShow(() => {
     if (!notificationsAreNative()) return;
-    const station = STREAMS[latest.current.streamId].label;
-    const plan = alarmPlan(latest.current).map((a) => ({
-      ...a,
-      title: "Radio alarm",
-      body: `Good morning. Tap to wake up to ${station}.`,
-    }));
+    const repeatDays = days ? days.split(",").map(Number) : [];
+    const plan = alarmPlan({ enabled, time, snoozeUntil, lastTriggeredDate, repeatDays }).map(
+      (a) => ({
+        ...a,
+        title: "Radio alarm",
+        body: `Good morning. Tap to wake up to ${STREAMS[streamId].label}.`,
+      }),
+    );
     syncNotifications("radio-alarm", plan)
       .then((permission) => {
-        if (latest.current.enabled && permission === "denied") {
+        if (enabled && permission === "denied") {
           updateAlarm({ enabled: false });
           showToast(
             "Notifications are off for WXPN, so the alarm can’t ring. You can allow them in your phone’s Settings.",
@@ -108,12 +95,10 @@ export function useRadioAlarm() {
         }
       })
       .catch(() => {});
-    // The plan is read through `latest`, so these are what trigger a new one.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, time, streamId, days, snoozeUntil, lastTriggeredDate, updateAlarm]);
 
   // Native: the alarm notification, tapped or arriving while the app is open.
-  useEffect(() => onNotification("radio-alarm", () => startRef.current(), { whileOpen: true }), []);
+  useEffect(() => onNotification("radio-alarm", () => start(), { whileOpen: true }), []);
 
   const stop = (snoozeMinutes) => {
     pauseStream();
@@ -122,23 +107,19 @@ export function useRadioAlarm() {
   };
 
   // Turning the alarm on in the phone apps asks for notification permission.
-  const setEnabled = useCallback(
-    async (on) => {
-      if (on && !(await requestNotifications())) {
-        showToast("Allow notifications for WXPN in your phone’s Settings so the alarm can ring.");
-        return;
-      }
-      updateAlarm({ enabled: on, snoozeUntil: 0 });
-      if (on && !(await exactAlarmsAllowed())) {
-        showToast("To ring on time, WXPN needs Alarms & reminders turned on.", {
-          label: "Turn on",
-          onClick: openExactAlarmSetting,
-        });
-      }
-    },
-    [updateAlarm],
-  );
-  const test = useCallback(() => ring(latest.current), []);
+  const setEnabled = async (on) => {
+    if (on && !(await requestNotifications())) {
+      showToast("Allow notifications for WXPN in your phone’s Settings so the alarm can ring.");
+      return;
+    }
+    updateAlarm({ enabled: on, snoozeUntil: 0 });
+    if (on && !(await exactAlarmsAllowed())) {
+      showToast("To ring on time, WXPN needs Alarms & reminders turned on.", {
+        label: "Turn on",
+        onClick: openExactAlarmSetting,
+      });
+    }
+  };
 
   return {
     alarm,
@@ -147,6 +128,6 @@ export function useRadioAlarm() {
     ringing,
     snooze: () => stop(alarm.snoozeMinutes),
     dismiss: () => stop(0),
-    test,
+    test: () => ring(alarm),
   };
 }

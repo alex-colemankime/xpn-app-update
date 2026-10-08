@@ -16,6 +16,13 @@
 
 const noop = () => {};
 
+// A volume percentage as an <audio> element's 0–1 level. Anything unreadable
+// plays at the default 70%. Shared with the episode player.
+export function volumeLevel(percent) {
+  const value = Number(percent);
+  return Math.min(1, Math.max(0, Number.isFinite(value) ? value / 100 : 0.7));
+}
+
 export const RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 15000];
 const STALL_TIMEOUT_MS = 15000;
 
@@ -259,9 +266,7 @@ export function createPlayer({
 
   function setVolume(percent) {
     if (!audio) init(onPlaying, onStatus);
-    if (!audio) return;
-    const value = Number(percent);
-    audio.volume = Math.min(1, Math.max(0, Number.isFinite(value) ? value / 100 : 0.7));
+    if (audio) audio.volume = volumeLevel(percent);
   }
 
   function setMetadata(next) {

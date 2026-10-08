@@ -115,7 +115,7 @@ export function createScheduler({
       plans[kind] = plans[kind].filter((n) => n.at > soonest);
     }
     const { notifications: pending = [] } = await api.getPending();
-    const ours = (n) => Object.prototype.hasOwnProperty.call(plans, n.extra?.kind ?? "");
+    const ours = (n) => Object.hasOwn(plans, n.extra?.kind ?? "");
     // Notifications of a kind whose plan hasn't arrived yet this session stay
     // as they are, and count against the budget.
     const room = NOTIFICATION_BUDGET - pending.filter((n) => !ours(n)).length;

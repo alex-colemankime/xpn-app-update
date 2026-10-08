@@ -11,10 +11,6 @@ export class ErrorBoundary extends Component {
     return { failed: true };
   }
 
-  componentDidCatch(error, info) {
-    console.error("WXPN app error:", error, info?.componentStack);
-  }
-
   render() {
     if (!this.state.failed) return this.props.children;
     return (

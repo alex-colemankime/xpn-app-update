@@ -49,7 +49,7 @@
     background: color-mix(in srgb, var(--action) 88%, var(--text));
   }
   .secondary-button:hover {
-    background: color-mix(in srgb, var(--text) 11%, transparent);
+    background: var(--soft-fill-hover);
   }
 }
 
@@ -83,7 +83,6 @@
     transition: background 0.2s;
   }
   .mobile-nav button.active .icon {
-    background: var(--row-alt);
     background: color-mix(in srgb, var(--accent) 15%, transparent);
   }
   .mobile-nav button.active span {
@@ -125,7 +124,6 @@
 .skeleton-block {
   display: block;
   border-radius: 4px;
-  background: var(--row-alt);
   background:
     linear-gradient(
         90deg,
@@ -237,10 +235,7 @@
   .alarm-banner button {
     border: 1px solid ButtonText;
   }
-}
-
-/* With forced colors the soft fills disappear; outlines keep the shapes. */
-@media (forced-colors: active) {
+  /* The soft fills disappear; outlines keep the shapes. */
   .secondary-button,
   .chip {
     border-color: ButtonText;

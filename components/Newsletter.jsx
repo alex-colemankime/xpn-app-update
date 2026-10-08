@@ -1,4 +1,4 @@
-import { Icon } from "../ui.jsx";
+import { Icon, PromptLink } from "../ui.jsx";
 import { ENEWS_URL, TOP_STORIES_URL } from "../links.js";
 
 // WXPN's weekly e-news. Signing up happens on xpn.org's own form (it is
@@ -38,20 +38,11 @@ export function NewsletterPanel() {
 }
 
 // At the end of the concert listings: concert news by email, from the e-news.
-export function NewsletterPrompt() {
-  return (
-    <a
-      className="playlist-prompt newsletter-prompt"
-      href={ENEWS_URL}
-      target="_blank"
-      rel="noreferrer"
-    >
-      <Icon name="mail" size={18} />
-      <span>
-        <strong>Get concert news by email</strong>
-        <small>Sign up for WXPN’s free weekly e-news</small>
-      </span>
-      <Icon name="chev" size={16} />
-    </a>
-  );
-}
+export const NewsletterPrompt = () => (
+  <PromptLink
+    href={ENEWS_URL}
+    icon="mail"
+    title="Get concert news by email"
+    note="Sign up for WXPN’s free weekly e-news"
+  />
+);

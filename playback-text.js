@@ -8,21 +8,21 @@ export function playbackText({ status, playing, station }) {
   if (status === "loading") {
     return {
       button: "Connecting…",
-      badge: "CONNECTING",
+      badge: "Connecting",
       label: `Cancel connecting to ${station.label}`,
     };
   }
   if (status === "reconnecting") {
     return {
       button: "Reconnecting…",
-      badge: "RECONNECTING",
+      badge: "Reconnecting",
       label: `Stop reconnecting to ${station.label}`,
     };
   }
-  if (playing) return { button: "Pause", badge: "LIVE", label: `Pause ${station.label}` };
+  if (playing) return { button: "Pause", badge: "Live", label: `Pause ${station.label}` };
   if (status === "error")
-    return { button: "Try again", badge: "OFFLINE", label: `Retry ${station.label}` };
-  return { button: "Listen live", badge: "PAUSED", label: `Play ${station.label}` };
+    return { button: "Try again", badge: "Offline", label: `Retry ${station.label}` };
+  return { button: "Listen live", badge: "Paused", label: `Play ${station.label}` };
 }
 
 // The one line under the controls, or "" when the controls say it all.

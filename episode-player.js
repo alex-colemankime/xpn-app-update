@@ -20,16 +20,13 @@ import { findEpisode, freshCopy, linkIsFresh } from "./archive.js";
 import { tap } from "./haptics.js";
 import { showToast } from "./toast.js";
 
-const IDLE = { episode: null, status: "idle", position: 0, duration: 0, error: null };
-const episodeStore = createStore(IDLE);
-
 // Where each episode was left: { [id]: { at, of, done, t } } in seconds, the
 // 300 most recent.
 const KEEP = 300;
 const progressStore = createLocalStore("xpn.episodes.progress", {}, (value) => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   const entries = Object.entries(value).filter(
-    ([id, p]) => typeof id === "string" && p && Number.isFinite(p.at) && Number.isFinite(p.t),
+    ([, p]) => p && Number.isFinite(p.at) && Number.isFinite(p.t),
   );
   if (entries.length <= KEEP) return Object.fromEntries(entries);
   return Object.fromEntries(entries.sort((a, b) => b[1].t - a[1].t).slice(0, KEEP));
@@ -61,6 +58,9 @@ const core = createEpisodePlayer({
   onError: (reason) => showToast(CANT_PLAY[reason] || CANT_PLAY.audio),
   resolveUrl: (src) => new URL(src, window.location.href).href,
 });
+// What the player bar and the archive draw from. The core only reports
+// changes once something plays, so this starts from its idle state.
+const episodeStore = createStore(core.getState());
 
 if (typeof window !== "undefined") {
   // The station starting again pauses the episode (it keeps its place).

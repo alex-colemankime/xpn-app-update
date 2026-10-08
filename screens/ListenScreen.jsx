@@ -164,11 +164,11 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
 
 // Row-shaped placeholders while the playlist loads, so the list appears in
 // place rather than replacing a line of text.
-function SkeletonRows({ count = 5 }) {
+function SkeletonRows() {
   return (
     <div role="status">
       <span className="sr-only">Loading the station playlist…</span>
-      {Array.from({ length: count }, (_, i) => (
+      {Array.from({ length: 5 }, (_, i) => (
         <div className="track-row skeleton-row" aria-hidden="true" key={i}>
           <span className="skeleton-block skeleton-art" />
           <span className="skeleton-lines">
@@ -198,12 +198,17 @@ function RecentlyPlayed({ playlist, station }) {
       ) : earlier.length ? (
         <>
           {earlier.slice(0, expanded ? RECENT_MAX : RECENT_PREVIEW).map((t) => (
-            <TrackRow key={`${t.date}-${t.time}-${t.title}`} track={t} showTime />
+            <TrackRow
+              key={`${t.date}-${t.time}-${t.title}`}
+              track={t}
+              showTime
+              stationLabel={station.label}
+            />
           ))}
           <div className="playlist-more">
             {earlier.length > RECENT_PREVIEW && (
               <button
-                className="text-button playlist-expand"
+                className="text-button"
                 aria-expanded={expanded}
                 onClick={() => setExpanded(!expanded)}
               >

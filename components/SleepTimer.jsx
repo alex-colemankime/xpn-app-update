@@ -6,13 +6,13 @@ import { Art, Icon, focusFirstItem } from "../ui.jsx";
 import { usePlayer, useSleepTimer } from "../hooks/usePlayer.js";
 import { useNow } from "../hooks/useNow.js";
 
-// Each choice as the menu shows it (a large number over its unit) and as it
-// is said aloud and in the confirmation.
+// Each choice as the menu shows it (a large number over its unit), as a
+// screen reader names its key, and as the confirmation says it.
 const SLEEP_CHOICES = [
-  { minutes: 15, number: "15", unit: "min", said: "15 minutes" },
-  { minutes: 30, number: "30", unit: "min", said: "30 minutes" },
-  { minutes: 45, number: "45", unit: "min", said: "45 minutes" },
-  { minutes: 60, number: "1", unit: "hour", said: "an hour" },
+  { minutes: 15, number: "15", unit: "min", label: "15 minutes", said: "15 minutes" },
+  { minutes: 30, number: "30", unit: "min", label: "30 minutes", said: "30 minutes" },
+  { minutes: 45, number: "45", unit: "min", label: "45 minutes", said: "45 minutes" },
+  { minutes: 60, number: "1", unit: "hour", label: "1 hour", said: "an hour" },
 ];
 
 // Stop playback after a while, fading out; lives in a popover so it needs no
@@ -43,12 +43,15 @@ export function SleepTimer({ onAirNow }) {
       <button
         className={`text-button sleep-button ${endsAt ? "active" : ""}`}
         popoverTarget="sleep-menu"
-        aria-label={
-          endsAt ? `Sleep timer: the radio turns off in ${left} minutes. Change` : "Sleep timer"
-        }
       >
         <Icon name="moon" size={16} />
-        {endsAt ? `Off in ${left} min` : "Sleep timer"}
+        {endsAt ? (
+          <>
+            Off in {left} min<span className="sr-only">, sleep timer. Change</span>
+          </>
+        ) : (
+          "Sleep timer"
+        )}
       </button>
       <div
         id="sleep-menu"
@@ -73,7 +76,7 @@ export function SleepTimer({ onAirNow }) {
           {SLEEP_CHOICES.map((c) => (
             <button
               key={c.minutes}
-              aria-label={c.said === "an hour" ? "1 hour" : c.said}
+              aria-label={c.label}
               onClick={() => choose(c.minutes, `in ${c.said}`)}
             >
               <strong>{c.number}</strong>

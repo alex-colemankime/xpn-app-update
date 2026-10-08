@@ -9,7 +9,7 @@ export { Icon };
 // so keyboard and screen-reader users land inside it (the platform returns
 // focus to the button when it closes).
 export function focusFirstItem(e) {
-  if ((e.nativeEvent?.newState ?? e.newState) === "open") {
+  if (e.newState === "open") {
     e.currentTarget.querySelector("button, a")?.focus({ preventScroll: true });
   }
 }
@@ -21,10 +21,10 @@ export const heightVar = (name) => (el) => {
   const root = document.documentElement;
   const set = () => root.style.setProperty(name, `${el.offsetHeight}px`);
   set();
-  const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(set);
-  observer?.observe(el);
+  const observer = new ResizeObserver(set);
+  observer.observe(el);
   return () => {
-    observer?.disconnect();
+    observer.disconnect();
     root.style.removeProperty(name);
   };
 };
@@ -64,8 +64,12 @@ export function Art({ src, alt = "", className = "", ...props }) {
       className={className}
       decoding="async"
       onError={(e) => {
-        e.currentTarget.onerror = null;
-        e.currentTarget.src = STATION_ART;
+        // Once only: if the station mark itself fails, it stays failed
+        // rather than retrying forever.
+        const img = e.currentTarget;
+        if ("fallback" in img.dataset) return;
+        img.dataset.fallback = "";
+        img.src = STATION_ART;
       }}
       {...props}
     />
@@ -73,15 +77,7 @@ export function Art({ src, alt = "", className = "", ...props }) {
 }
 
 // Native dialog provides focus containment, Escape dismissal, and a modal backdrop.
-export function Modal({
-  title,
-  description,
-  children,
-  onClose,
-  eyebrow = null,
-  className = "",
-  style,
-}) {
+export function Modal({ title, children, onClose, className = "", style }) {
   const ref = useRef(null);
   const id = useId();
   useEffect(() => {
@@ -107,7 +103,6 @@ export function Modal({
       className={`detail-dialog ${className}`}
       style={style}
       aria-labelledby={id}
-      aria-describedby={description ? `${id}-description` : undefined}
       onCancel={(e) => {
         e.preventDefault();
         onClose();
@@ -120,13 +115,9 @@ export function Modal({
       }}
     >
       <div className="dialog-header">
-        <div>
-          {eyebrow && <span className="eyebrow">{eyebrow}</span>}
-          <h2 id={id} className="dialog-title" tabIndex={-1}>
-            {title}
-          </h2>
-          {description && <p id={`${id}-description`}>{description}</p>}
-        </div>
+        <h2 id={id} className="dialog-title" tabIndex={-1}>
+          {title}
+        </h2>
         <button className="icon-button" onClick={onClose} aria-label="Close">
           <Icon name="close" />
         </button>
@@ -137,7 +128,7 @@ export function Modal({
   );
 }
 // One choice among a few. "tabs" (underlined) switches between views of a
-// screen; "pill" (a contained control) picks a setting, such as the station.
+// screen, or the station; "pill" (a joined row of keys) picks a setting.
 export function Segmented({
   value,
   onChange,
@@ -170,7 +161,7 @@ export function Segmented({
     </div>
   );
 }
-export function Empty({ icon = "heart", title, children, action, onAction }) {
+export function Empty({ icon, title, children, action, onAction }) {
   return (
     <div className="empty-state">
       <Icon name={icon} size={32} />
@@ -184,13 +175,13 @@ export function Empty({ icon = "heart", title, children, action, onAction }) {
     </div>
   );
 }
-export function SearchField({ value, onChange, placeholder, label }) {
+export function SearchField({ value, onChange, placeholder }) {
   const input = useRef(null);
   const id = useId();
   return (
     <div className="search-field">
       <label className="sr-only" htmlFor={id}>
-        {label || placeholder}
+        {placeholder}
       </label>
       <Icon name="search" size={18} />
       <input
@@ -209,7 +200,7 @@ export function SearchField({ value, onChange, placeholder, label }) {
       {value && (
         <button
           className="icon-button search-clear"
-          aria-label={`Clear ${label || placeholder}`}
+          aria-label={`Clear ${placeholder}`}
           onClick={() => {
             onChange("");
             input.current?.focus();
@@ -221,6 +212,21 @@ export function SearchField({ value, onChange, placeholder, label }) {
     </div>
   );
 }
+// A row that leads to a page on the web: an icon, a line and a note, and
+// the chevron every row that goes somewhere carries.
+export function PromptLink({ href, icon, title, note }) {
+  return (
+    <a className="playlist-prompt newsletter-prompt" href={href} target="_blank" rel="noreferrer">
+      <Icon name={icon} size={18} />
+      <span>
+        <strong>{title}</strong>
+        <small>{note}</small>
+      </span>
+      <Icon name="chev" size={16} />
+    </a>
+  );
+}
+
 // Native share sheet where there is one, the clipboard otherwise.
 export async function shareText(title, text, url) {
   try {

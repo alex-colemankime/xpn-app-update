@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { DAYS } from "../time.js";
 import { scheduleLines } from "../schedule.js";
-import { SHOWS, onAirAt, nextAiringOf, untilLabel } from "../catalog.js";
+import { SHOWS, airingSoon, onAirAt, nextAiringOf, untilLabel } from "../catalog.js";
 
 const raw = JSON.parse(fs.readFileSync(new URL("../shows.json", import.meta.url), "utf8"));
 const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -52,4 +52,10 @@ test("on air and next airing carry real moments", () => {
   assert.match(untilLabel(live), /^until /);
   const next = nextAiringOf(SHOWS.funky, at);
   assert.equal(new Date(next.startsAt).toISOString(), "2026-10-09T20:00:00.000Z", "Friday 4pm EDT");
+});
+
+test("an airing about to start runs as long as that day's slot", () => {
+  // Middays runs 10am-2pm Monday to Thursday but only until noon on Friday.
+  const friday = airingSoon("middays", 60, new Date("2026-10-09T09:30:00-04:00"));
+  assert.equal(new Date(friday.ends).toISOString(), "2026-10-09T16:00:00.000Z", "noon EDT");
 });

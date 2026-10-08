@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { Capacitor } from "@capacitor/core";
 import { getPlayerSnapshot, isConnecting, pauseStream, playStream } from "../player.js";
@@ -62,20 +62,19 @@ export function useWatching(
     setOnLiveRoute(liveRoute);
     if (!liveRoute) setChosen(null);
   }
-  const watchLive = useCallback(
-    (update) => {
-      if (Capacitor.getPlatform() === "ios" || !youTubeEmbed(update.watch)) {
-        pauseForVideo();
-        openPage(update.watch, { onClose: offerAudioBack });
-        return;
-      }
-      // Chosen first, in its own render, so the route's render finds it.
-      flushSync(() => setChosen(update));
-      openLive();
-    },
-    [openLive],
-  );
-  const watchVideo = useCallback((video) => openVideo(video.id), [openVideo]);
+  const watchLive = (update) => {
+    if (Capacitor.getPlatform() === "ios" || !youTubeEmbed(update.watch)) {
+      pauseForVideo();
+      openPage(update.watch, { onClose: offerAudioBack });
+      return;
+    }
+    // Chosen first, in its own render, so the route's render finds it.
+    flushSync(() => setChosen(update));
+    openLive();
+  };
+  // A station video, from a list or from the watch page's Up next (in place
+  // of whatever was showing).
+  const watchVideo = (video) => openVideo(video.id);
 
   const live = liveRoute ? liveToShow({ chosen, current: currentLive, updatesLoaded }) : null;
   // The live route with nothing to show (the video has ended): close it.
@@ -96,8 +95,5 @@ export function useWatching(
     live: videoId ? null : live,
     watchLive,
     watchVideo,
-    // From the page's Up next: that video, in place of whatever was showing.
-    pick: (video) => openVideo(video.id),
-    close: closeVideo,
   };
 }

@@ -15,8 +15,12 @@ const easternFormat = new Intl.DateTimeFormat("en-US", {
 
 export const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
+// A formatted date as { year, month, hour, ... }.
+const partsOf = (format, date) =>
+  Object.fromEntries(format.formatToParts(date).map((p) => [p.type, p.value]));
+
 export function easternParts(date = new Date()) {
-  const parts = Object.fromEntries(easternFormat.formatToParts(date).map((p) => [p.type, p.value]));
+  const parts = partsOf(easternFormat, date);
   return {
     day: parts.weekday,
     date: `${parts.year}-${parts.month}-${parts.day}`,
@@ -43,6 +47,15 @@ export function clockLabel(time) {
   const [h, m] = time.split(":").map(Number);
   if (m === 0 && h % 12 === 0) return h === 12 ? "noon" : "midnight";
   return `${h % 12 || 12}${m ? ":" + String(m).padStart(2, "0") : ""}${h < 12 ? "am" : "pm"}`;
+}
+
+// A calendar day, "2026-10-07", that exists ("2027-02-29" does not): the
+// day itself, or "" when it isn't one.
+export function calendarDay(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return "";
+  const [y, m, d] = value.split("-").map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d));
+  return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d ? value : "";
 }
 
 // The Eastern calendar date `days` after `date` (both YYYY-MM-DD). Noon UTC
@@ -72,11 +85,24 @@ export function easternToEpoch(date, time) {
 // Times shown to the listener are in their own zone, so a reminder, an
 // "until 4pm" and a sleep timer all agree with the clock on their phone.
 // For listeners in Eastern time this is the same as the station's clock.
-const localTimeFormat = new Intl.DateTimeFormat("en-US", {
-  hour: "numeric",
-  minute: "2-digit",
-  hourCycle: "h23",
-});
+// A 24-hour clock in `timeZone`, or in the listener's own zone when none is
+// given. Each zone's formatter is made once.
+const clockFormats = new Map();
+const clockFormat = (zone) => {
+  const timeZone = zone || undefined;
+  if (!clockFormats.has(timeZone)) {
+    clockFormats.set(
+      timeZone,
+      new Intl.DateTimeFormat("en-US", {
+        timeZone,
+        hour: "numeric",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }),
+    );
+  }
+  return clockFormats.get(timeZone);
+};
 const localDateFormat = new Intl.DateTimeFormat("en-CA", {
   year: "numeric",
   month: "2-digit",
@@ -87,18 +113,8 @@ const localWeekday = new Intl.DateTimeFormat("en-US", { weekday: "long" });
 // An instant as a clock label in the listener's zone: "4pm", "7:30am",
 // "midnight", "noon".
 export function localClock(epoch, timeZone) {
-  const format = timeZone
-    ? new Intl.DateTimeFormat("en-US", {
-        timeZone,
-        hour: "numeric",
-        minute: "2-digit",
-        hourCycle: "h23",
-      })
-    : localTimeFormat;
-  const parts = Object.fromEntries(
-    format.formatToParts(new Date(epoch)).map((p) => [p.type, p.value]),
-  );
-  return clockLabel(`${Number(parts.hour) % 24}:${parts.minute}`);
+  const { hour, minute } = partsOf(clockFormat(timeZone), new Date(epoch));
+  return clockLabel(`${hour}:${minute}`);
 }
 
 // "Today at 2pm", "Tomorrow at 6am", "Friday at 10am", in the listener's zone.
@@ -118,13 +134,7 @@ export function localWhen(epoch, now = Date.now()) {
 
 // Whether the listener's clock reads Eastern time (then no zone needs naming).
 export const deviceIsEastern = (now = new Date()) =>
-  localTimeFormat.format(now) ===
-  new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    hour: "numeric",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).format(now);
+  clockFormat().format(now) === clockFormat("America/New_York").format(now);
 
 // ---- Lengths and dates, as the app shows them --------------------------------
 

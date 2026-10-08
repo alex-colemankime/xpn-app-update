@@ -3,16 +3,20 @@
    and the defaults for plain elements.
    ------------------------------------------------------------------------ */
 
-/* Safe areas: Capacitor 8 sets --safe-area-inset-* on Android, where apps
-   now draw edge to edge (required from Android 15/16) and the web view's own
-   env() values can be 0; iOS and browsers fall back to env(). */
-
 /* Shared semantic colors keep every screen and native control theme-aware. */
 :root,
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #faf8f3;
-  --surface: #f2efe7;
+  /* The theme's own page and surface, kept apart from --bg and --surface so
+     a wash (below, and show sheets) can tint them and still start from
+     the theme. */
+  --paper: #faf8f3;
+  --paper-raised: #f2efe7;
+  /* Their lightness in OKLCH, which a wash keeps. */
+  --paper-l: 0.9793;
+  --paper-raised-l: 0.9522;
+  --bg: var(--paper);
+  --surface: var(--paper-raised);
   --text: #211f1c;
   --muted: #64605a;
   --border: #ded9cf;
@@ -32,11 +36,20 @@
   --inverse-accent: #ff9875;
   /* The lighter "w" in the wordmark. */
   --brand-w: #f2b28f;
+  /* A chosen key or filter: lit in the accent. */
+  --key-lit: color-mix(in srgb, var(--accent) 14%, var(--bg));
+  /* A second action's soft fill, and under the pointer. */
+  --soft-fill: color-mix(in srgb, var(--text) 7%, transparent);
+  --soft-fill-hover: color-mix(in srgb, var(--text) 11%, transparent);
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #202224;
-  --surface: #292c2f;
+  --paper: #202224;
+  --paper-raised: #292c2f;
+  --paper-l: 0.2507;
+  --paper-raised-l: 0.2913;
+  --bg: var(--paper);
+  --surface: var(--paper-raised);
   --text: #eeede8;
   --muted: #b6b7b3;
   --border: #44484a;
@@ -51,26 +64,27 @@
   --inverse-text: #211f1c;
   --inverse-accent: #b83d1c;
   --brand-w: #bf917c;
+  --key-lit: color-mix(in srgb, var(--accent) 20%, var(--bg));
 }
 /* Listen, while a song with colorful artwork plays: the page takes a very
    light wash of the artwork's color (art-tint.js picks it, already adjusted
    per theme), so each song tints the screen a little differently. Set by
-   the Listen screen while it is in front. */
-:root[data-art-wash] {
-  --bg: color-mix(in srgb, var(--wash-light) 9%, #faf8f3);
-}
-:root[data-art-wash][data-theme="dark"] {
-  --bg: color-mix(in srgb, var(--wash-dark) 12%, #202224);
+   the Listen screen while it is in front.
+   The wash takes the artwork's hue but keeps the page's own lightness, so
+   it never darkens (or, in dark mode, lightens) the page: text and every
+   heart keep their contrast whatever the artwork (tests/art-tint.test.mjs).
+   Browsers without relative colors keep the plain page. */
+@supports (color: oklch(from red l c h)) {
+  :root[data-art-wash] {
+    --bg: oklch(from color-mix(in srgb, var(--wash-light) 9%, var(--paper)) var(--paper-l) c h);
+  }
+  :root[data-art-wash][data-theme="dark"] {
+    --bg: oklch(from color-mix(in srgb, var(--wash-dark) 12%, var(--paper)) var(--paper-l) c h);
+  }
 }
 html,
 body {
   transition: background-color 0.8s ease;
-}
-@media (prefers-reduced-motion: reduce) {
-  html,
-  body {
-    transition: none;
-  }
 }
 
 :root {
@@ -90,6 +104,14 @@ body {
   --tabbar-h: 4.1875rem;
   --mini-h: 4.75rem;
   --page-gutter: clamp(28px, 3.5vw, 56px);
+  --page-max: 1376px;
+  /* Safe areas: Capacitor 8 sets --safe-area-inset-* on Android, where apps
+     now draw edge to edge (required from Android 15/16) and the web view's
+     own env() values can be 0; iOS and browsers fall back to env().
+     A band that runs edge to edge keeps its words at the page's gutter, or
+     clear of a notch or rounded corner where that reaches further in. */
+  --edge-left: max(var(--page-gutter), var(--safe-area-inset-left, env(safe-area-inset-left)));
+  --edge-right: max(var(--page-gutter), var(--safe-area-inset-right, env(safe-area-inset-right)));
   /* Stacking, lowest to highest. */
   --z-sidebar: 20;
   --z-banner: 25;
@@ -125,6 +147,7 @@ button {
   background: none;
   border: 0;
   padding: 0;
+  /* A long press on a control should not start a text selection. */
   -webkit-user-select: none;
   user-select: none;
 }
@@ -139,20 +162,11 @@ a {
     transform 0.12s;
   touch-action: manipulation;
 }
-/* A long press on a control should not start a text selection. */
 button:disabled {
   cursor: default;
   opacity: 0.6;
 }
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 4px;
-}
-summary:focus-visible,
-[tabindex="0"]:focus-visible {
+:is(button, a, input, select, summary, [tabindex="0"]):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 4px;
 }

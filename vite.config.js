@@ -11,14 +11,18 @@ import {
 const { version } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 
 // Production builds without samples get an empty stand-in for samples.js, so
-// the placeholder content is not even shipped as an unused file.
+// the placeholder content is not even shipped as an unused file. The hook
+// filters let the bundler skip calling these hooks for every other module.
 function noSamples() {
   const id = "\0no-samples";
   return {
     name: "wxpn-no-samples",
     enforce: "pre",
-    resolveId: (source) => (/(^|\/)samples\.js$/.test(source) ? id : null),
-    load: (key) => (key === id ? "export const SAMPLE_UPDATES = {};" : null),
+    resolveId: { filter: { id: /(^|\/)samples\.js$/ }, handler: () => id },
+    load: {
+      filter: { id: new RegExp(`^${id}$`) },
+      handler: () => "export const SAMPLE_UPDATES = {};",
+    },
   };
 }
 
@@ -27,6 +31,11 @@ function noSamples() {
 // will live (VITE_SITE_URL, set by the Pages workflow).
 function shareTags(env) {
   const site = (env.VITE_SITE_URL || "").replace(/\/?$/, "/");
+  const meta = (attr, key, content) => ({
+    tag: "meta",
+    attrs: { [attr]: key, content },
+    injectTo: "head",
+  });
   return {
     name: "wxpn-share-tags",
     apply: "build",
@@ -34,20 +43,18 @@ function shareTags(env) {
       site === "/"
         ? []
         : [
-            ["og:url", site],
-            ["og:image", `${site}share-card.jpg`],
-            ["og:image:width", "1200"],
-            ["og:image:height", "630"],
-            ["og:image:alt", "The WXPN app on two phones: Listen live, and Recently played."],
-          ]
-            .map(([property, content]) => ({ tag: "meta", attrs: { property, content } }))
-            .concat(
-              [
-                ["twitter:card", "summary_large_image"],
-                ["twitter:image", `${site}share-card.jpg`],
-              ].map(([name, content]) => ({ tag: "meta", attrs: { name, content } })),
-            )
-            .map((tag) => ({ ...tag, injectTo: "head" })),
+            meta("property", "og:url", site),
+            meta("property", "og:image", `${site}share-card.jpg`),
+            meta("property", "og:image:width", "1200"),
+            meta("property", "og:image:height", "630"),
+            meta(
+              "property",
+              "og:image:alt",
+              "The WXPN app on two phones: Listen live, and Recently played.",
+            ),
+            meta("name", "twitter:card", "summary_large_image"),
+            meta("name", "twitter:image", `${site}share-card.jpg`),
+          ],
   };
 }
 

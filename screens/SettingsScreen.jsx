@@ -11,7 +11,7 @@ import { CONCERTS_ENABLED } from "../config.js";
 import { CALENDAR_URL, DONATE_URL, PRIVACY_URL, SOCIAL, STATION_EMAIL } from "../links.js";
 
 // The app's version, from package.json (see vite.config.js).
-const VERSION = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "";
+const VERSION = __APP_VERSION__;
 
 const LINKS = [
   { label: "Donate to WXPN", url: DONATE_URL },
@@ -50,9 +50,7 @@ export function SettingsScreen({
   return (
     <>
       <div className="page-heading">
-        <div>
-          <h1>Settings</h1>
-        </div>
+        <h1>Settings</h1>
       </div>
       {trouble && (
         <p className="data-note" role="status">

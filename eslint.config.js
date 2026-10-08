@@ -9,8 +9,6 @@ export default [
   {
     files: ["**/*.{js,jsx}"],
     languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
       globals: {
         ...globals.browser,
         __SHOW_SAMPLES__: "readonly",

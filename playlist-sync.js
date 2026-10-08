@@ -62,7 +62,7 @@ const patch = (p) => syncStore.set((s) => ({ ...s, ...p }));
 // stays in the playlist, so it stays in `matched` too, and saving it again
 // does not add a second copy.
 export function syncPlan(saved, state, canRemove) {
-  const ids = new Set(saved.map((s) => songId(s)));
+  const ids = new Set(saved.map(songId));
   const unsaved = Object.keys(state.matched).filter((id) => !ids.has(id));
   return {
     toFind: saved.filter((s) => {
@@ -197,7 +197,7 @@ async function run(retried = false) {
     if (!current()) return;
     if (error?.status === 404 && !retried) {
       // The listener deleted the playlist: start a fresh one.
-      update({ playlistId: "", playlistUrl: "", matched: {}, missing: [] });
+      update(FRESH_PLAYLIST);
       return run(true);
     }
     update({

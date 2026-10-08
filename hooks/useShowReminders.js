@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import { SHOWS } from "../catalog.js";
 import { useFavoriteItems } from "../favorites.js";
 import {
@@ -46,6 +46,11 @@ export async function enableReminders({ quiet = false } = {}) {
   return true;
 }
 
+// The in-app heads-ups already shown this session, by reminder id: kept
+// across re-plans, so following another show (or changing the lead time)
+// within a minute of a heads-up doesn't show it again.
+const shownReminders = new Set();
+
 // `paused`: hold in-app heads-ups while something must not be covered (the
 // first-run welcome); one that comes due meanwhile shows once it closes.
 export function useShowReminders(onListen, { paused = false } = {}) {
@@ -54,13 +59,10 @@ export function useShowReminders(onListen, { paused = false } = {}) {
   const followed = useFavoriteItems("shows");
   const ids = followed.map((s) => s.id).join(",");
 
-  const listen = useRef(onListen);
-  useEffect(() => {
-    listen.current = () => {
-      selectStream("xpn");
-      playStream();
-      onListen();
-    };
+  const listen = useEffectEvent(() => {
+    selectStream("xpn");
+    playStream();
+    onListen();
   });
 
   // Native: keep the phone's schedule in step with follows and settings, and
@@ -93,16 +95,15 @@ export function useShowReminders(onListen, { paused = false } = {}) {
   }, [settings.enabled, settings.lead, ids]);
 
   // Native: tapping a reminder opens Listen and starts the station.
-  useEffect(() => onNotification("show-reminder", () => listen.current()), []);
+  useEffect(() => onNotification("show-reminder", () => listen()), []);
 
   // Browser: a heads-up in the app when a reminder comes due while it is open.
   useEffect(() => {
     if (notificationsAreNative() || !settings.enabled || !ids) return;
     if (paused) {
-      heldSince.current ||= Date.now();
+      if (!heldSince.current) heldSince.current = Date.now();
       return;
     }
-    const shown = new Set();
     const check = () => {
       const now = Date.now();
       // Planned from a minute ago, so a reminder that just came due is found;
@@ -116,13 +117,13 @@ export function useShowReminders(onListen, { paused = false } = {}) {
         now: new Date(from),
         leadMinutes: settings.lead,
         days: 1,
-      }).find((r) => r.at <= now && !shown.has(r.id));
+      }).find((r) => r.at <= now && !shownReminders.has(r.id));
       if (!due) return;
-      shown.add(due.id);
+      shownReminders.add(due.id);
       const show = SHOWS[due.showId];
       showToast(
         { title: due.title, text: show?.host || "On WXPN 88.5", image: show?.img },
-        { label: "Listen", onClick: () => listen.current() },
+        { label: "Listen", onClick: () => listen() },
       );
     };
     check();

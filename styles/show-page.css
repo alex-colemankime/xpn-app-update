@@ -32,6 +32,7 @@
 }
 .detail-dialog::backdrop {
   background: #0009;
+  -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
   transition: opacity 0.25s ease-out;
 }
@@ -59,9 +60,6 @@
   line-height: 1.2;
   margin: 10px 0 0;
 }
-.dialog-header .eyebrow {
-  font-size: 0.875rem;
-}
 .detail-body {
   padding: 28px;
 }
@@ -86,9 +84,6 @@
   font-size: 0.875rem;
   line-height: 1.5;
 }
-.show-detail-hero .eyebrow {
-  font-size: 0.875rem;
-}
 .show-description {
   font-size: 1rem;
   line-height: 1.75;
@@ -103,11 +98,6 @@
 .back-button {
   margin-bottom: 20px;
 }
-.episode-title {
-  font-size: 1.75rem;
-  font-weight: 600;
-  margin: 10px 0;
-}
 .info-note {
   display: flex;
   align-items: flex-start;
@@ -117,24 +107,26 @@
   border-radius: 12px;
   background: var(--row-alt);
 }
-.info-note p {
-  color: var(--muted);
-  font-size: 0.875rem;
-  line-height: 1.6;
-  margin: 8px 0;
-}
 .playlist-more {
   display: flex;
+  margin-top: 10px;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 8px 16px;
 }
 
-/* A show's sheet, washed lightly in the show's color (ShowDetail.jsx). */
-.show-dialog {
-  --surface: color-mix(in srgb, var(--show-light) 12%, #f2efe7);
-}
-:root[data-theme="dark"] .show-dialog {
-  --surface: color-mix(in srgb, var(--show-dark) 14%, #292c2f);
+/* A show's sheet, washed lightly in the show's color (ShowDetail.jsx), at
+   the sheet's own lightness, like the page on Listen (styles/base.css). */
+@supports (color: oklch(from red l c h)) {
+  .show-dialog {
+    --surface: oklch(
+      from color-mix(in srgb, var(--show-light) 12%, var(--paper-raised)) var(--paper-raised-l) c h
+    );
+  }
+  :root[data-theme="dark"] .show-dialog {
+    --surface: oklch(
+      from color-mix(in srgb, var(--show-dark) 14%, var(--paper-raised)) var(--paper-raised-l) c h
+    );
+  }
 }

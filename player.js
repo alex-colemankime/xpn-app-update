@@ -35,31 +35,40 @@ const callMediaSession = (method, args) => {
 // art). Those go as data: URLs, read once each.
 const NATIVE = Capacitor.isNativePlatform();
 const artCache = new Map();
-function loadableArt(src) {
-  // Remote art loads as it is; the app's own (capacitor://localhost on iOS,
-  // https://localhost on Android) can't be reached from outside the web view.
-  let own = true;
+
+// Remote art loads as it is; the app's own (capacitor://localhost on iOS,
+// https://localhost on Android) can't be reached from outside the web view.
+// An address that can't be read is treated as the app's own.
+function isOwnFile(src) {
   try {
-    own = new URL(src, window.location.href).origin === window.location.origin;
+    return new URL(src, window.location.href).origin === window.location.origin;
   } catch {
-    /* unreadable: treated as the app's own */
+    return true;
   }
-  if (!NATIVE || (/^https:/i.test(src) && !own)) return Promise.resolve(src);
+}
+
+async function readAsDataUrl(src) {
+  const response = await fetch(src);
+  if (!response.ok) throw new Error(`Artwork: HTTP ${response.status}`);
+  const blob = await response.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+function loadableArt(src) {
+  if (!NATIVE || (/^https:/i.test(src) && !isOwnFile(src))) return Promise.resolve(src);
   if (!artCache.has(src)) {
     artCache.set(
       src,
-      fetch(src)
-        .then((response) => response.blob())
-        .then(
-          (blob) =>
-            new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result);
-              reader.onerror = reject;
-              reader.readAsDataURL(blob);
-            }),
-        )
-        .catch(() => null),
+      readAsDataUrl(src).catch(() => {
+        // Not kept, so the next song with this artwork tries again.
+        artCache.delete(src);
+        return null;
+      }),
     );
   }
   return artCache.get(src);
@@ -72,16 +81,16 @@ const mediaSession = new Proxy(
     get: (_, method) => {
       if (method === "setMetadata" && NATIVE) {
         // The newest call wins, even if an older one's artwork loads later.
-        return (metadata) => {
+        return async (metadata) => {
           const call = ++metadataCalls;
-          return Promise.all(
-            (metadata.artwork || []).map((art) =>
-              loadableArt(art.src).then((src) => (src ? { ...art, src } : null)),
-            ),
-          ).then((artwork) => {
-            if (call !== metadataCalls) return;
-            callMediaSession("setMetadata", [{ ...metadata, artwork: artwork.filter(Boolean) }]);
-          });
+          const artwork = await Promise.all(
+            (metadata.artwork || []).map(async (art) => {
+              const src = await loadableArt(art.src);
+              return src ? { ...art, src } : null;
+            }),
+          );
+          if (call !== metadataCalls) return;
+          callMediaSession("setMetadata", [{ ...metadata, artwork: artwork.filter(Boolean) }]);
         };
       }
       if (method === "setPositionState" && NATIVE) {

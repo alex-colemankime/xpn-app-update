@@ -99,23 +99,15 @@ const MAX_PAGES = 30;
 const PAGE_CONCURRENCY = 4;
 const MONTHS_AHEAD = 12;
 
-// fetch with a timeout and an outside abort signal. Manual wiring rather
-// than AbortSignal.any, which older iOS webviews lack.
+// One page of the calendar, bounded by a timeout. A cancelled load (retry,
+// or the screen closing) stops every later page too, even one that has not
+// started yet.
 async function getJson(url, signal) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FEED_TIMEOUT_MS);
-  const cancel = () => controller.abort();
-  signal?.addEventListener("abort", cancel);
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    // The Events Calendar answers 404 when nothing matches.
-    if (response.status === 404) return { events: [], total_pages: 0 };
-    if (!response.ok) throw new Error(`Concert feed: HTTP ${response.status}`);
-    return await response.json();
-  } finally {
-    clearTimeout(timeout);
-    signal?.removeEventListener("abort", cancel);
-  }
+  const response = await fetch(url, { signal: withTimeout(signal, FEED_TIMEOUT_MS) });
+  // The Events Calendar answers 404 when nothing matches.
+  if (response.status === 404) return { events: [], total_pages: 0 };
+  if (!response.ok) throw new Error(`Concert feed: HTTP ${response.status}`);
+  return response.json();
 }
 
 const eventsOf = (data) => (Array.isArray(data) ? data : data?.events || data?.items || []);
@@ -192,21 +184,28 @@ function ageUrl(id) {
   }
 }
 
+// One concert's age limit, or "" when it can't be read.
+async function readAge(url) {
+  try {
+    const response = await fetch(url, { signal: withTimeout() });
+    return response.ok ? ageLabel((await response.json())?._xpn_age_restriction) : "";
+  } catch {
+    return "";
+  }
+}
+
 function pumpAges() {
   while (ageBusy < AGE_CONCURRENCY && ageQueue.length) {
     const id = ageQueue.shift();
     const url = ageUrl(id);
     if (!url) continue;
     ageBusy++;
-    fetch(url, { signal: withTimeout(undefined) })
-      .then((r) => (r.ok ? r.json() : {}))
-      .catch(() => ({}))
-      .then((json) => {
-        ages.set(id, ageLabel(json?._xpn_age_restriction));
-        ageBusy--;
-        ageListeners.forEach((listener) => listener());
-        pumpAges();
-      });
+    readAge(url).then((age) => {
+      ages.set(id, age);
+      ageBusy--;
+      ageListeners.forEach((listener) => listener());
+      pumpAges();
+    });
   }
 }
 

@@ -13,9 +13,15 @@
 
 import { DAYS, clockLabel, shiftDate } from "./time.js";
 
+// "14:30" as minutes into the day (870), and back: minutes past midnight,
+// or past the end of the day, wrap round ("25:00" reads "01:00").
 const toMinutes = (hhmm) => {
   const [h, m] = String(hhmm).split(":").map(Number);
   return h * 60 + m;
+};
+export const toHHMM = (minutes) => {
+  const m = ((minutes % 1440) + 1440) % 1440;
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 };
 
 // A slot's span in minutes from the start of the day it is listed on.
@@ -24,6 +30,12 @@ const span = (slot) => {
   let end = toMinutes(slot.end);
   if (end <= start) end += 24 * 60;
   return { start, end };
+};
+
+// How long a slot ({ start, end }) runs, in minutes.
+export const slotMinutes = (slot) => {
+  const { start, end } = span(slot);
+  return end - start;
 };
 
 const dayIndex = (day) => DAYS.indexOf(day);
@@ -53,15 +65,6 @@ export function onAir(shows, { day, time }) {
     }
   }
   return best;
-}
-
-// "until 4pm", "until midnight", "until 1am".
-export function easternUntilLabel(onAirNow) {
-  const end = ((onAirNow.end % 1440) + 1440) % 1440;
-  if (end === 0) return "until midnight";
-  const hh = String(Math.floor(end / 60)).padStart(2, "0");
-  const mm = String(end % 60).padStart(2, "0");
-  return `until ${clockLabel(`${hh}:${mm}`)}`;
 }
 
 const SHORT_DAYS = DAYS.map((d) => d.slice(0, 3));
@@ -112,7 +115,8 @@ export function scheduleLines(show) {
 }
 
 // When a show next starts after an Eastern { day, time }:
-// { daysAhead, start, label } such as "Today at 4pm" or "Friday at 10am".
+// { daysAhead, start, end, label } with a label such as "Today at 4pm" or
+// "Friday at 10am".
 // Null for shows with no schedule (they air on their own stream).
 export function nextAiring(show, { day, time }) {
   const now = toMinutes(time);
@@ -124,15 +128,16 @@ export function nextAiring(show, { day, time }) {
       let ahead = (dayIndex(d) - today + 7) % 7;
       if (ahead === 0 && start <= now) ahead = 7; // today's slot already started
       const key = ahead * 1440 + start;
-      if (!best || key < best.key) best = { key, daysAhead: ahead, start: slot.start, day: d };
+      if (!best || key < best.key) best = { key, daysAhead: ahead, slot, day: d };
     }
   }
   if (!best) return null;
   const when = best.daysAhead === 0 ? "Today" : best.daysAhead === 1 ? "Tomorrow" : best.day;
   return {
     daysAhead: best.daysAhead,
-    start: best.start,
-    label: `${when} at ${clockLabel(best.start)}`,
+    start: best.slot.start,
+    end: best.slot.end,
+    label: `${when} at ${clockLabel(best.slot.start)}`,
   };
 }
 

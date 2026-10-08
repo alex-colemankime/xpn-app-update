@@ -16,7 +16,7 @@ export function Toast({ inModal = false }) {
   if (!inModal && modals > 0) return null;
   const shown = message.text || message.title;
   return (
-    <div className="toast-region" role="status" aria-live="polite">
+    <div role="status" aria-live="polite">
       {shown && (
         <div
           className={`toast ${message.action ? "has-action" : ""} ${

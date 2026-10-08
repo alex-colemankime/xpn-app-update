@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import { createLocalStore, useLocalStore } from "./storage.js";
 import { STREAM_IDS } from "./streams.js";
 
@@ -36,7 +35,13 @@ export const normalizeAlarm = (value) => ({
   time: isValidTime(value?.time) ? value.time : DEFAULT_ALARM.time,
   streamId: STREAM_IDS.includes(value?.streamId) ? value.streamId : DEFAULT_ALARM.streamId,
   repeatDays: Array.isArray(value?.repeatDays)
-    ? [...new Set(value.repeatDays.map(Number).filter((day) => day >= 0 && day <= 6))].sort()
+    ? [
+        ...new Set(
+          value.repeatDays
+            .map(Number)
+            .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6),
+        ),
+      ].sort()
     : DEFAULT_ALARM.repeatDays,
   volume: clampVolume(value?.volume ?? DEFAULT_ALARM.volume),
   snoozeMinutes: clampSnooze(value?.snoozeMinutes),
@@ -46,18 +51,16 @@ export const normalizeAlarm = (value) => ({
 
 const alarmStore = createLocalStore("xpn.alarm.v1", DEFAULT_ALARM, normalizeAlarm);
 
-export function useAlarmSettings() {
-  const alarm = useLocalStore(alarmStore);
-  const updateAlarm = useCallback((patch) => {
-    alarmStore.set((current) =>
-      normalizeAlarm({
-        ...current,
-        ...(typeof patch === "function" ? patch(current) : patch),
-      }),
-    );
-  }, []);
+// A change to the alarm: fields to set, or a function of the current alarm
+// returning them. Module-level, so its identity never changes.
+function updateAlarm(patch) {
+  alarmStore.set((current) =>
+    normalizeAlarm({ ...current, ...(typeof patch === "function" ? patch(current) : patch) }),
+  );
+}
 
-  return [alarm, updateAlarm];
+export function useAlarmSettings() {
+  return [useLocalStore(alarmStore), updateAlarm];
 }
 
 export function dateKey(date = new Date()) {
@@ -67,14 +70,28 @@ export function dateKey(date = new Date()) {
   return `${y}-${m}-${d}`;
 }
 
-// Minutes since today's alarm time (negative before it). A window rather
-// than an exact-minute match, so a throttled background tab that only gets
-// one timer callback a minute cannot skip past the alarm entirely.
+// The day ("2026-10-08") of an alarm that should ring now, or null. A
+// window rather than an exact-minute match, so a throttled background tab
+// that only gets one timer callback a minute cannot skip past the alarm.
+// Yesterday counts too: an 11:59pm alarm caught at 12:00am still rings.
 export const CATCHUP_MINUTES = 2;
-export function minutesSinceAlarm(value, now = new Date()) {
-  if (!isValidTime(value)) return null;
-  const [hour, minute] = value.split(":").map(Number);
-  return now.getHours() * 60 + now.getMinutes() - (hour * 60 + minute);
+export function dueAlarmDate(alarm, now = new Date()) {
+  if (!isValidTime(alarm.time)) return null;
+  const [hour, minute] = alarm.time.split(":").map(Number);
+  for (const back of [0, 1]) {
+    const at = new Date(now.getFullYear(), now.getMonth(), now.getDate() - back, hour, minute);
+    const since = Math.floor((now - at) / 60000);
+    const day = dateKey(at);
+    if (
+      since >= 0 &&
+      since < CATCHUP_MINUTES &&
+      alarm.repeatDays.includes(at.getDay()) &&
+      alarm.lastTriggeredDate !== day
+    ) {
+      return day;
+    }
+  }
+  return null;
 }
 
 // A snooze whose end passed while the device slept still rings, up to an
@@ -87,14 +104,7 @@ export function alarmDue(alarm, now = new Date()) {
   const t = now.getTime();
   if (alarm.snoozeUntil > t) return null;
   if (alarm.snoozeUntil && t - alarm.snoozeUntil < SNOOZE_GRACE_MINUTES * 60000) return "snooze";
-  const since = minutesSinceAlarm(alarm.time, now);
-  const due =
-    alarm.repeatDays.includes(now.getDay()) &&
-    alarm.lastTriggeredDate !== dateKey(now) &&
-    since !== null &&
-    since >= 0 &&
-    since < CATCHUP_MINUTES;
-  return due ? "alarm" : null;
+  return dueAlarmDate(alarm, now) ? "alarm" : null;
 }
 
 // For the phone apps, where the alarm is a notification scheduled ahead:

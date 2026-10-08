@@ -8,7 +8,7 @@ const station = STREAMS.xpn;
 test("the play control always says what a tap will do", () => {
   assert.equal(playbackText({ status: "paused", playing: false, station }).button, "Listen live");
   assert.equal(playbackText({ status: "playing", playing: true, station }).label, "Pause WXPN");
-  assert.equal(playbackText({ status: "loading", playing: false, station }).badge, "CONNECTING");
+  assert.equal(playbackText({ status: "loading", playing: false, station }).badge, "Connecting");
   assert.equal(playbackText({ status: "error", playing: false, station }).button, "Try again");
 });
 

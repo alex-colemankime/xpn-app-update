@@ -15,8 +15,7 @@
      word on it is dark, so nothing on the band is orange-on-orange. */
   background: var(--action);
   color: var(--action-ink);
-  padding: 16px max(var(--page-gutter), var(--safe-area-inset-right, env(safe-area-inset-right)))
-    16px max(var(--page-gutter), var(--safe-area-inset-left, env(safe-area-inset-left)));
+  padding: 16px var(--edge-right) 16px var(--edge-left);
 }
 .alarm-banner-title {
   flex: 1;
@@ -99,8 +98,7 @@
 @media (max-width: 767px) {
   /* Label on its own line, then two equal thumb-sized actions. */
   .alarm-banner {
-    padding-block: 14px 16px;
-    padding-inline: max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+    padding-top: 14px;
   }
   .alarm-banner-title,
   .alarm-banner-actions {

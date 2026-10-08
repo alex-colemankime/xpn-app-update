@@ -7,6 +7,7 @@
 // and the note says to check the venue for times.
 
 import { Capacitor } from "@capacitor/core";
+import { shiftDate } from "./time.js";
 
 const plain = (value) => String(value || "").trim();
 
@@ -28,11 +29,7 @@ export function concertEvent(c) {
 }
 
 const compact = (date) => date.replaceAll("-", "");
-function nextDay(date) {
-  const d = new Date(`${date}T12:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + 1);
-  return d.toISOString().slice(0, 10);
-}
+const nextDay = (date) => shiftDate(date, 1);
 
 // iCalendar text escaping, and lines folded at 75 octets (RFC 5545).
 const escapeText = (text) =>
@@ -41,16 +38,22 @@ const escapeText = (text) =>
     .replace(/;/g, "\\;")
     .replace(/,/g, "\\,")
     .replace(/\r?\n/g, "\\n");
+const encoder = new TextEncoder();
 function fold(line) {
-  const bytes = new TextEncoder();
   const out = [];
   let current = "";
+  let size = 0;
   for (const ch of line) {
     const limit = out.length ? 74 : 75; // continuation lines start with a space
-    if (bytes.encode(current + ch).length > limit) {
+    const n = encoder.encode(ch).length;
+    if (size + n > limit) {
       out.push(current);
       current = ch;
-    } else current += ch;
+      size = n;
+    } else {
+      current += ch;
+      size += n;
+    }
   }
   out.push(current);
   return out.join("\r\n ");

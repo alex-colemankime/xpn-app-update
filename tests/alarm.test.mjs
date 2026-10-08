@@ -1,15 +1,23 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { alarmDue, minutesSinceAlarm, CATCHUP_MINUTES } from "../alarm.js";
+import { alarmDue, dueAlarmDate, CATCHUP_MINUTES } from "../alarm.js";
 
 test("the alarm window catches a minute a throttled tab would skip", () => {
-  const at = (h, m, s = 0) => new Date(2026, 8, 8, h, m, s);
-  assert.equal(minutesSinceAlarm("07:00", at(6, 59, 59)), -1);
-  assert.equal(minutesSinceAlarm("07:00", at(7, 0, 30)), 0);
-  assert.equal(minutesSinceAlarm("07:00", at(7, 1, 5)), 1);
-  assert.ok(minutesSinceAlarm("07:00", at(7, 1, 5)) < CATCHUP_MINUTES);
-  assert.ok(minutesSinceAlarm("07:00", at(7, 2, 0)) >= CATCHUP_MINUTES);
-  assert.equal(minutesSinceAlarm("bad", at(7, 0)), null);
+  const alarm = { enabled: true, time: "07:00", repeatDays: [2], lastTriggeredDate: "" };
+  const at = (h, m, s = 0) => new Date(2026, 8, 8, h, m, s); // a Tuesday
+  assert.equal(dueAlarmDate(alarm, at(6, 59, 59)), null);
+  assert.equal(dueAlarmDate(alarm, at(7, 0, 30)), "2026-09-08");
+  assert.equal(dueAlarmDate(alarm, at(7, 1, 5)), "2026-09-08");
+  assert.equal(dueAlarmDate(alarm, at(7, 0 + CATCHUP_MINUTES, 0)), null);
+  assert.equal(dueAlarmDate({ ...alarm, time: "bad" }, at(7, 0)), null);
+});
+
+test("an alarm just before midnight still rings when caught just after", () => {
+  const alarm = { enabled: true, time: "23:59", repeatDays: [2], lastTriggeredDate: "" };
+  const wednesday = new Date(2026, 8, 9, 0, 0, 30);
+  assert.equal(dueAlarmDate(alarm, wednesday), "2026-09-08", "Tuesday's alarm");
+  assert.equal(alarmDue(alarm, wednesday), "alarm");
+  assert.equal(alarmDue({ ...alarm, lastTriggeredDate: "2026-09-08" }, wednesday), null);
 });
 
 test("alarmDue rings on repeat days inside the window, once per day", () => {

@@ -31,7 +31,6 @@
 .page-heading h1 {
   font-size: clamp(2rem, 2.5vw, 2.25rem);
   margin: 0;
-  letter-spacing: -0.045em;
 }
 /* Two columns on a wide screen: the stage, as wide as its artwork and set
    against the left edge under the heading, then the playlist taking the
@@ -96,7 +95,6 @@
   color: var(--action-ink);
   border-radius: 10px;
   padding: 20px;
-  box-shadow: none;
 }
 .station-art strong {
   font-size: clamp(2rem, 5vw, 4rem);
@@ -152,7 +150,6 @@
 .now-song-actions {
   grid-area: actions;
   display: flex;
-  gap: 0;
   margin: -6px -12px -6px 0;
 }
 .now-controls {
@@ -182,12 +179,12 @@
   min-height: 56px;
   flex-shrink: 0;
   border-radius: 16px;
-  background: color-mix(in srgb, var(--text) 7%, transparent);
+  background: var(--soft-fill);
   color: var(--text);
   transition: background-color 0.15s;
 }
 .hero-cast:hover {
-  background: color-mix(in srgb, var(--text) 11%, transparent);
+  background: var(--soft-fill-hover);
 }
 .now-status {
   font-size: 0.875rem;
@@ -216,24 +213,13 @@
   font-size: 1.3125rem;
 }
 .live-lists .track-row {
-  padding-block: 12px;
   gap: 13px;
-}
-.live-lists .track-row > img {
-  width: 46px;
-  height: 46px;
 }
 .track-time {
   font-variant-numeric: tabular-nums;
   font-size: 0.875rem;
   color: var(--muted);
   white-space: nowrap;
-}
-.track-row > .icon-button {
-  width: 44px;
-}
-.playlist-more {
-  margin-top: 10px;
 }
 .playlist-empty {
   padding: 48px 20px;

@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef, useState } from "react";
-import { Icon, Art, shareText } from "../ui.jsx";
+import { useId, useRef, useState } from "react";
+import { flushSync } from "react-dom";
+import { Icon, Art, focusFirstItem, shareText } from "../ui.jsx";
 import { showToast } from "../toast.js";
 import { PlaylistMenuItems } from "./PlaylistSync.jsx";
 import { addToCalendar } from "../calendar.js";
@@ -70,8 +71,8 @@ function firstSaveHint(type) {
   );
 }
 
-// A heart toggle for any saveable item: a song, show, or episode. Once saved,
-// the heart takes a color from the item's artwork.
+// A heart toggle for any saveable item: a song, show, episode, concert or
+// video. Once saved, the heart takes a color from the item's artwork.
 export function SaveButton({ type, item, name, className = "icon-button", children, onToggle }) {
   const saved = useIsFavorite(type, item);
   const { art, preset } = tintSource(type, item);
@@ -81,8 +82,10 @@ export function SaveButton({ type, item, name, className = "icon-button", childr
   return (
     <button
       className={`${className} ${saved ? "saved" : ""}`}
-      aria-pressed={saved}
-      aria-label={children ? undefined : `${saved ? "Remove" : "Save"} ${name}`}
+      // A heart alone keeps one name and says on/off with aria-pressed; a
+      // button with words ("Following") says it in the words instead.
+      aria-pressed={children ? undefined : saved}
+      aria-label={children ? undefined : `Save ${name}`}
       data-pop={pop || undefined}
       data-tinted={tint ? "" : undefined}
       style={tint ? { "--tint-light": tint.light, "--tint-dark": tint.dark } : undefined}
@@ -138,13 +141,15 @@ export function SaveButton({ type, item, name, className = "icon-button", childr
 export function SongMenu({ track, stationLabel = "WXPN" }) {
   const menuId = `song-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   // The menu's contents exist only while it is open: a list of 50 songs
-  // then carries 50 buttons, not 50 menus.
+  // then carries 50 buttons, not 50 menus. They are drawn at once on
+  // opening, so focus can move to the first of them.
   const [open, setOpen] = useState(false);
   const menu = useRef(null);
-  useEffect(() => {
-    if (open) menu.current?.querySelector("button, a")?.focus({ preventScroll: true });
-  }, [open]);
-  const close = () => document.getElementById(menuId)?.hidePopover?.();
+  const onToggle = (e) => {
+    flushSync(() => setOpen(e.newState === "open"));
+    focusFirstItem(e);
+  };
+  const close = () => menu.current?.hidePopover();
   const share = async () => {
     close();
     showToast(
@@ -158,7 +163,7 @@ export function SongMenu({ track, stationLabel = "WXPN" }) {
   return (
     <>
       <button
-        className="icon-button more-button"
+        className="icon-button"
         popoverTarget={menuId}
         aria-label={`More for ${track.title}`}
         style={{ anchorName: `--${menuId}` }}
@@ -168,7 +173,7 @@ export function SongMenu({ track, stationLabel = "WXPN" }) {
       <div
         id={menuId}
         ref={menu}
-        onToggle={(e) => setOpen(e.newState === "open")}
+        onToggle={onToggle}
         className="popover-menu"
         popover="auto"
         role="dialog"
@@ -200,21 +205,24 @@ export const SaveSong = ({ track }) => (
   <SaveButton type="songs" item={{ ...track, id: songId(track) }} name={track.title} />
 );
 
+// A show's artwork, name and host as one button (so only words that may sit
+// in a button: no headings or paragraphs inside it).
 export function ShowCard({ show, onOpen }) {
   return (
     <button className="show-card" onClick={() => onOpen(show.id)}>
-      <div className="show-cover">
+      <span className="show-cover">
         <Art src={show.img} alt="" loading="lazy" />
-      </div>
-      <h2>{shortName(show)}</h2>
-      <p>{show.host || show.times?.[0]}</p>
+      </span>
+      <strong className="show-card-name">{shortName(show)}</strong>
+      <small className="show-card-when">{show.host || show.times?.[0]}</small>
     </button>
   );
 }
 
 // A song in a list. `showTime` adds when it played, for the station's
 // playlist; saved songs leave it out. A saved song's heart carries its color.
-export function TrackRow({ track, showTime = false }) {
+// `stationLabel` names the station it played on, for sharing.
+export function TrackRow({ track, showTime = false, stationLabel }) {
   return (
     <div className="track-row">
       <Art src={track.img} loading="lazy" />
@@ -226,7 +234,7 @@ export function TrackRow({ track, showTime = false }) {
         </small>
       </span>
       <SaveSong track={track} />
-      <SongMenu track={track} />
+      <SongMenu track={track} stationLabel={stationLabel} />
     </div>
   );
 }

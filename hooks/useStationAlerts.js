@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent } from "react";
 import { useFavoriteItems } from "../favorites.js";
 import { openPage } from "../links.js";
 import {
@@ -58,10 +58,7 @@ export function useStationAlerts(updates, { onWatch }) {
   // A followed show already has its reminder; no second notification.
   const reminded = reminders.enabled ? followed.map((s) => s.id).join(",") : "";
 
-  const watch = useRef(onWatch);
-  useEffect(() => {
-    watch.current = onWatch;
-  });
+  const watch = useEffectEvent((live) => onWatch(live));
 
   useEveryShow(() => {
     if (!notificationsAreNative()) return;
@@ -90,7 +87,7 @@ export function useStationAlerts(updates, { onWatch }) {
     () =>
       onNotification("station-alert", (extra) => {
         if (extra?.action === "watch" && extra.live?.watch) {
-          watch.current({ ...extra.live, state: "live" });
+          watch({ ...extra.live, state: "live" });
         } else if (extra?.action === "open") {
           openPage(extra.url);
         }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Icon, Art, Modal } from "../ui.jsx";
-import { shortName, showStream, onAirAt, nextAiringOf, untilLabel } from "../catalog.js";
+import { shortName, onAirAt, nextAiringOf, untilLabel } from "../catalog.js";
 import { deviceIsEastern } from "../time.js";
 import { useFavoriteItems } from "../favorites.js";
 import { playStream, selectStream } from "../player.js";
@@ -14,9 +14,9 @@ import { chooseVideoSection, useVideos } from "../videos.js";
 import { VideoCard } from "./VideoCard.jsx";
 import { useArtTint } from "../art-tint.js";
 
-// A show's sheet: who hosts it and when, Follow, a band to listen while it is
-// on the air, its videos (World Cafe) and its recent broadcasts; or one of
-// those broadcasts, opened.
+// A show's sheet, washed in the show's own color: who hosts it and when,
+// Follow, a row to listen while it is on the air, its videos (World Cafe) and
+// its recent broadcasts; or one of those broadcasts, opened.
 
 // Right after a follow, while the reason is obvious, the sheet offers
 // reminders (only if they are off and the show has a schedule). Inline rather
@@ -42,7 +42,7 @@ function ReminderOffer({ show, onDone }) {
 }
 
 // "Next on air: Tomorrow at 2pm", in the listener's own time. While the show
-// is on, the band below says so instead.
+// is on, the row below says so instead.
 function Airing({ show }) {
   const now = new Date(useNow());
   if (onAirAt(now)?.show.id === show.id) return null;
@@ -50,21 +50,14 @@ function Airing({ show }) {
   return next ? <p className="airing">Next on air: {next.label}</p> : null;
 }
 
-// While the show is on the air: a band like the one on Listen, saying so,
-// that plays the station live. It never looks like an episode's Play, since
-// it isn't one.
-function OnAirBand({ show, onListen }) {
+// While the show is on the air: a row saying so that plays the station live.
+// It never looks like an episode's Play, since it isn't one.
+function OnAirRow({ show, onListen }) {
   const now = new Date(useNow());
   const onAirNow = onAirAt(now);
   if (onAirNow?.show.id !== show.id) return null;
   return (
-    <button
-      className="show-on-air"
-      onClick={onListen}
-      style={
-        show.tint ? { "--tint-light": show.tint.light, "--tint-dark": show.tint.dark } : undefined
-      }
-    >
+    <button className="show-on-air" onClick={onListen}>
       <span className="show-on-air-text">
         <span className="on-air-label">
           <i className="on-air-dot" data-live="" />
@@ -129,12 +122,12 @@ export function ShowDetail({
   const episode =
     episodeId &&
     (archived.find((ep) => ep.id === episodeId) || saved.find((ep) => ep.id === episodeId));
-  const stream = showStream(show);
   // The sheet takes a light wash of the show's own color (its artwork's),
   // so each show's page carries a little of its branding.
   const tint = useArtTint(show.img, show.tint || null);
   const listen = () => {
-    selectStream(stream);
+    // Every show in the guide airs on 88.5 FM.
+    selectStream("xpn");
     playStream();
     onListen();
   };
@@ -165,7 +158,7 @@ export function ShowDetail({
                   </>
                 )}
                 <ul className="show-times">
-                  {(show.times || [show.time]).map((line) => (
+                  {show.times.map((line) => (
                     <li key={line}>{line}</li>
                   ))}
                 </ul>
@@ -184,9 +177,9 @@ export function ShowDetail({
               </div>
             </div>
             {offer && <ReminderOffer show={show} onDone={() => setOffer(false)} />}
-            <OnAirBand show={show} onListen={listen} />
+            <OnAirRow show={show} onListen={listen} />
             <p className="show-description">{show.desc}</p>
-            {videoSectionOf(show) && onWatch && (
+            {videoSectionOf(show) && (
               <ShowVideos show={show} onNavigate={onNavigate} onWatch={onWatch} />
             )}
             {archived.length > 0 && (
