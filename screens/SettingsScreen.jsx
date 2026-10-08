@@ -1,5 +1,5 @@
 import { Capacitor } from "@capacitor/core";
-import { Icon, Segmented } from "../ui.jsx";
+import { Icon, Segmented, Switch } from "../ui.jsx";
 import { setVolume, VOLUME_SETTABLE } from "../player.js";
 import { usePlayer, useVolume, chooseAudioOutput } from "../hooks/usePlayer.js";
 import { NewsletterPanel } from "../components/Newsletter.jsx";
@@ -10,6 +10,8 @@ import { useNotificationTrouble } from "../notifications.js";
 import { CONCERTS_ENABLED } from "../config.js";
 import { SocialLinks } from "../components/SocialLinks.jsx";
 import { CALENDAR_URL, DONATE_URL, PRIVACY_URL, STATION_EMAIL } from "../links.js";
+import { reportingAvailable, reportingStore, setReporting } from "../analytics.js";
+import { useLocalStore } from "../storage.js";
 
 // The app's version, from package.json (see vite.config.js).
 const VERSION = __APP_VERSION__;
@@ -32,6 +34,29 @@ const THEMES = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
 ];
+
+// Usage reporting (analytics.js), on unless the listener turns it off.
+function UsageReporting() {
+  const { on } = useLocalStore(reportingStore);
+  return (
+    <section className="settings-panel">
+      <h2>
+        <Icon name="settings" />
+        Privacy
+      </h2>
+      <div className="alert-row">
+        <span>
+          <strong id="usage-label">Share app usage</strong>
+          <small id="usage-note">
+            Which screens and features are used, and errors, so WXPN can improve the app. Never who
+            you are.
+          </small>
+        </span>
+        <Switch on={on} onChange={setReporting} labelledBy="usage-label" describedBy="usage-note" />
+      </div>
+    </section>
+  );
+}
 
 export function SettingsScreen({
   alarm,
@@ -109,6 +134,7 @@ export function SettingsScreen({
               options={THEMES}
             />
           </section>
+          {reportingAvailable() && <UsageReporting />}
           <NewsletterPanel />
           <section className="settings-panel">
             <h2>

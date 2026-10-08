@@ -7,6 +7,16 @@ import { startPlaylistSync } from "./playlist-sync.js";
 // request on launch, and text renders the same offline.
 import "@fontsource-variable/figtree";
 import "./global.css";
+import { reportError, startAnalytics } from "./analytics.js";
+import { followTextSize } from "./text-size.js";
+import { startCarAudio } from "./car.js";
+import {
+  getPlayerSnapshot,
+  pauseStream,
+  playStream,
+  selectStream,
+  subscribePlayer,
+} from "./player.js";
 
 // Menus (song, sleep timer, calendar) use the Popover API, which Safari has
 // from 17. Older iPhones (iOS 15–16) get a small polyfill, loaded only there.
@@ -34,8 +44,21 @@ if (devicePreview) {
 } else {
   // Hearted songs follow to Spotify or Apple Music once connected.
   startPlaylistSync();
+  startAnalytics();
+  followTextSize();
+  startCarAudio({
+    select: selectStream,
+    play: playStream,
+    pause: pauseStream,
+    subscribe: subscribePlayer,
+    getSnapshot: getPlayerSnapshot,
+  });
   createRoot(document.getElementById("root"), {
-    onCaughtError: (error, info) => console.error("WXPN app error:", error, info.componentStack),
+    onCaughtError: (error, info) => {
+      console.error("WXPN app error:", error, info.componentStack);
+      reportError(error, { where: "screen", fatal: true });
+    },
+    onUncaughtError: (error) => reportError(error, { where: "app", fatal: true }),
   }).render(
     <StrictMode>
       <ErrorBoundary>

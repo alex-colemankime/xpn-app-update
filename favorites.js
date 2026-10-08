@@ -3,6 +3,7 @@ import { createLocalStore, readJson, useLocalStore, writeJson } from "./storage.
 import { webUrl } from "./text.js";
 import { SHOWS, showSegment } from "./catalog.js";
 import { calendarDay } from "./time.js";
+import { track } from "./analytics.js";
 
 // Songs have no feed id, so artist + title is the identity. Letters and digits
 // from any script count, so "봄날" and "작은 것들을 위한 시" by the same artist
@@ -218,6 +219,7 @@ export function restoreFavorite(type, record) {
 export function toggleFavorite(type, item) {
   const id = keyFor(type, item);
   if (!id) return;
+  track(favoritesStore.getSnapshot()[type]?.[id] ? "unsave" : "save", { item_type: type });
   favoritesStore.set((current) => {
     const bucket = { ...current[type] };
     if (bucket[id]) delete bucket[id];

@@ -1,0 +1,18 @@
+<!--
+  Android Auto: add inside <application> in android/app/src/main/AndroidManifest.xml.
+  Also add to android/app/build.gradle dependencies:
+      implementation "androidx.media:media:1.7.0"
+  and register the plugin in MainActivity.java, before super.onCreate:
+      registerPlugin(CarAudioPlugin.class);
+-->
+<meta-data
+    android:name="com.google.android.gms.car.application"
+    android:resource="@xml/automotive_app_desc" />
+
+<service
+    android:name=".WxpnCarService"
+    android:exported="true">
+    <intent-filter>
+        <action android:name="android.media.browse.MediaBrowserService" />
+    </intent-filter>
+</service>

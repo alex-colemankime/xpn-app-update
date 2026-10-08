@@ -2,21 +2,11 @@ import { Art, Icon, heightVar } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { STATION_ART } from "../assets.js";
 import { localClock } from "../time.js";
-import { DONATE_URL } from "../links.js";
+import { isDonatePage } from "../links.js";
 import { dismissUpdate } from "../hooks/useStationUpdates.js";
 
 const liveArt = (live) => live.image || SHOWS[live.show]?.img || STATION_ART;
 const trackHeight = heightVar("--banner-h");
-// The same page as the header's Donate button, give or take a trailing slash.
-const page = (url) => {
-  try {
-    const u = new URL(url);
-    return `${u.origin}${u.pathname.replace(/\/$/, "")}`;
-  } catch {
-    return url;
-  }
-};
-const isDonate = (url) => page(url) === page(DONATE_URL);
 const liveWhen = (live) =>
   live.state === "live" ? "Live now" : `Today at ${localClock(live.starts)}`;
 
@@ -59,7 +49,7 @@ export function StationBanner({ banner, live, liveDismissed, onWatch, onListenSc
           target="_blank"
           rel="noreferrer"
           // On phones the header's Donate sits just above; one is enough.
-          data-donate={isDonate(banner.action.url) || undefined}
+          data-donate={isDonatePage(banner.action.url) || undefined}
         >
           {banner.action.label}
         </a>

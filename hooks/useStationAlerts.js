@@ -12,7 +12,10 @@ import { createLocalStore, useLocalStore } from "../storage.js";
 import { showToast } from "../toast.js";
 import { alertPlan } from "../updates.js";
 import { OFF_IN_SETTINGS, useReminderSettings } from "./useShowReminders.js";
+import { onPushTap, pushIsOn, syncPushTopics } from "../push.js";
+import { playStream, selectStream } from "../player.js";
 import { useEveryShow } from "./useEveryShow.js";
+import { track } from "../analytics.js";
 
 // Notifications from the station that a listener has asked for in Settings:
 // live video (Free at Noon and other sessions) and member drives. Both are
@@ -45,6 +48,7 @@ export async function setAlert(topic, on) {
     return false;
   }
   alertsStore.set((c) => ({ ...c, [topic]: on }));
+  if (on) track("turn_on", { feature: topic });
   if (on) showToast(TURNED_ON[topic]);
   return true;
 }
@@ -60,11 +64,28 @@ export function useStationAlerts(updates, { onWatch }) {
 
   const watch = useEffectEvent((live) => onWatch(live));
 
+  // With push set up, the station's sender delivers these; the phone only
+  // keeps the listener's subscriptions up to date with it.
+  useEffect(() => {
+    syncPushTopics(settings)
+      .then((ok) => {
+        if (!ok) {
+          alertsStore.set({ live: false, drives: false });
+          showToast(OFF_IN_SETTINGS);
+        }
+      })
+      .catch(() => {});
+  }, [settings]);
+
   useEveryShow(() => {
     if (!notificationsAreNative()) return;
-    const plan = alertPlan(updates, settings, {
-      remindedShows: reminded ? reminded.split(",") : [],
-    }).map(({ key, at, title, body, extra }) => ({
+    const plan = (
+      pushIsOn()
+        ? []
+        : alertPlan(updates, settings, {
+            remindedShows: reminded ? reminded.split(",") : [],
+          })
+    ).map(({ key, at, title, body, extra }) => ({
       id: reminderId(`alert:${key}`, at),
       at,
       title,
@@ -83,15 +104,22 @@ export function useStationAlerts(updates, { onWatch }) {
 
   // A tap opens what the notice is about: the video, or the station's page
   // (the donate page in a drive).
-  useEffect(
-    () =>
-      onNotification("station-alert", (extra) => {
-        if (extra?.action === "watch" && extra.live?.watch) {
-          watch({ ...extra.live, state: "live" });
-        } else if (extra?.action === "open") {
-          openPage(extra.url);
-        }
-      }),
-    [],
-  );
+  const open = useEffectEvent((target) => {
+    if (target?.action === "watch" && target.live?.watch) {
+      watch({ ...target.live, state: "live" });
+    } else if (target?.action === "open") {
+      openPage(target.url);
+    } else if (target?.action === "listen") {
+      selectStream(target.stream);
+      playStream();
+    }
+  });
+  useEffect(() => {
+    const offLocal = onNotification("station-alert", open);
+    const offPush = onPushTap(open);
+    return () => {
+      offLocal();
+      offPush();
+    };
+  }, []);
 }

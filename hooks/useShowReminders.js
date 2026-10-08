@@ -12,6 +12,7 @@ import { LEAD_OPTIONS, reminderPlan } from "../reminders.js";
 import { createLocalStore, useLocalStore } from "../storage.js";
 import { showToast } from "../toast.js";
 import { useEveryShow } from "./useEveryShow.js";
+import { track } from "../analytics.js";
 
 // Reminders before followed shows start.
 //   - In the iOS and Android apps they are notifications scheduled on the
@@ -42,6 +43,7 @@ export async function enableReminders({ quiet = false } = {}) {
     return false;
   }
   remindersStore.set((c) => ({ ...c, enabled: true }));
+  track("turn_on", { feature: "reminders" });
   if (!quiet) showToast("Show reminders are on.");
   return true;
 }

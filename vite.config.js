@@ -79,6 +79,7 @@ function contentSecurityPolicy(env) {
         const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(
           ([, code]) => `'sha256-${createHash("sha256").update(code).digest("base64")}'`,
         );
+        const ga4 = /^G-[A-Z0-9]+$/.test(env.VITE_GA4_ID || "");
         const connect = [
           "'self'",
           "https://origin.xpn.org",
@@ -88,10 +89,19 @@ function contentSecurityPolicy(env) {
           "https://api.music.apple.com",
           "https://*.apple.com",
           origin(env.VITE_XPN_UPDATES_URL),
+          origin(env.VITE_PUSH_REGISTER_URL),
           origin(env.VITE_XPN_CONCERTS_ENDPOINT),
           origin(env.VITE_XPN_LIVESTREAM_PAGE),
           origin(env.VITE_APPLE_MUSIC_TOKEN_URL),
           ...archiveFeeds(env.VITE_XPN_ARCHIVE_FEEDS).map((f) => origin(f.url)),
+          // Usage reporting (analytics.js), only when a GA4 id is set.
+          ...(ga4
+            ? [
+                "https://www.googletagmanager.com",
+                "https://*.google-analytics.com",
+                "https://*.analytics.google.com",
+              ]
+            : []),
           // Videos: the player's config (its policy key) and the Playback API.
           ...(videoSections(env.VITE_BRIGHTCOVE_VIDEOS).length
             ? ["https://players.brightcove.net", "https://edge.api.brightcove.com"]
@@ -99,7 +109,7 @@ function contentSecurityPolicy(env) {
         ];
         const policy = [
           "default-src 'self'",
-          `script-src 'self' ${inline.join(" ")} https://js-cdn.music.apple.com`,
+          `script-src 'self' ${inline.join(" ")} https://js-cdn.music.apple.com${ga4 ? " https://www.googletagmanager.com" : ""}`,
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' https: data: blob:",
           "font-src 'self'",

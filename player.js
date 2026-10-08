@@ -17,6 +17,7 @@ import { createPlayer, fadeLevel } from "./player-core.js";
 import { createLocalStore, createStore } from "./storage.js";
 import { STREAMS } from "./streams.js";
 import { tap } from "./haptics.js";
+import { track } from "./analytics.js";
 
 // A media-controls failure should degrade silently (no lock-screen metadata),
 // never break audio or the app.
@@ -136,6 +137,7 @@ const playerStore = createStore({
   playing: false,
   streamId: "xpn",
   castAvailable: false,
+  track: null,
 });
 const update = (patch) => playerStore.set((current) => ({ ...current, ...patch }));
 export const subscribePlayer = playerStore.subscribe;
@@ -197,9 +199,18 @@ if (typeof window !== "undefined") {
 export function playStream() {
   focusStore.set("live");
   player.play();
+  track("play_station", { station: getPlayerSnapshot().streamId });
 }
 export const pauseStream = player.pause;
-export const setMetadata = player.setMetadata;
+// The song on the station, for the lock screen and (via the store) the car.
+export function setMetadata(track) {
+  player.setMetadata(track);
+  update({
+    track: track
+      ? { title: track.title || "", artist: track.artist || "", img: track.img || "" }
+      : null,
+  });
+}
 export const promptCast = player.promptCast;
 
 export function selectStream(id) {

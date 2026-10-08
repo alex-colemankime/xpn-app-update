@@ -24,6 +24,7 @@ import { CONCERTS_ENABLED, VIDEOS_ENABLED } from "./config.js";
 import { ListenScreen } from "./screens/ListenScreen.jsx";
 import { ShowsScreen } from "./screens/ShowsScreen.jsx";
 import { LibraryScreen } from "./screens/LibraryScreen.jsx";
+import { trackScreen } from "./analytics.js";
 
 const ONBOARDED_KEY = "xpn.onboarded";
 
@@ -55,6 +56,16 @@ function Screen({ id, label, current, children }) {
   );
 }
 
+// Screen names as GA4 reports them.
+const SCREEN_TITLES = {
+  listen: "Listen",
+  favorites: "Favorites",
+  shows: "Shows",
+  videos: "Videos",
+  concerts: "Concerts",
+  settings: "Settings",
+};
+
 export default function App() {
   const route = useRoute();
   const playlist = useNowPlaying(useStreamId());
@@ -81,6 +92,10 @@ export default function App() {
   // (Not on first load, which is already at the top.)
   const main = useRef(null);
   const shownScreen = useRef(route.screen);
+  useEffect(
+    () => trackScreen(route.screen, SCREEN_TITLES[route.screen] || route.screen),
+    [route.screen],
+  );
   useEffect(() => {
     if (shownScreen.current === route.screen) return;
     shownScreen.current = route.screen;

@@ -21,6 +21,7 @@ import {
 } from "./music-services.js";
 import { createLocalStore } from "./storage.js";
 import { showToast } from "./toast.js";
+import { track } from "./analytics.js";
 
 const EMPTY = {
   service: null, // "spotify" | "apple"
@@ -257,6 +258,7 @@ export async function connect(serviceId) {
 }
 
 function afterConnect(service) {
+  track("music_connect", { service: service.id });
   showToast(`Connected to ${service.name}. Adding your saved songs to “${PLAYLIST_NAME}”.`);
   syncNow();
 }

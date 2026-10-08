@@ -1,7 +1,20 @@
+import { track } from "./analytics.js";
 import { Capacitor } from "@capacitor/core";
 
 // Every xpn.org address the app links to, in one place.
 export const DONATE_URL = "https://xpn.org/donate/";
+// A link to the donate page, give or take a trailing slash or a query.
+export function isDonatePage(url) {
+  const page = (value) => {
+    try {
+      const u = new URL(value);
+      return `${u.origin}${u.pathname.replace(/\/$/, "")}`;
+    } catch {
+      return value;
+    }
+  };
+  return page(url) === page(DONATE_URL);
+}
 export const PLAYLIST_URL = "https://xpn.org/wxpn-playlists/";
 export const PROGRAM_GUIDE_URL = "https://xpn.org/program_guide/";
 export const CALENDAR_URL = "https://xpn.org/concert-and-events/";
@@ -46,6 +59,7 @@ export const SOCIAL = [
 // browser) this tab in front again, or at once if no tab could open.
 export function openPage(url, { onClose } = {}) {
   if (!url) return;
+  if (isDonatePage(url)) track("donate_click", { place: "notification" });
   let closed = false;
   const back = () => {
     if (closed) return;

@@ -19,6 +19,7 @@ import { SHOWS } from "./catalog.js";
 import { findEpisode, freshCopy, linkIsFresh } from "./archive.js";
 import { tap } from "./haptics.js";
 import { showToast } from "./toast.js";
+import { track } from "./analytics.js";
 
 // Where each episode was left: { [id]: { at, of, done, t } } in seconds, the
 // 300 most recent.
@@ -79,6 +80,7 @@ const withShow = (episode) => ({
 
 export function playEpisode(episode) {
   tap("medium");
+  track("episode_play", { show: episode.show || "" });
   const current = core.getState().episode;
   core.setVolume(getVolume());
   if (current?.id === episode.id) {

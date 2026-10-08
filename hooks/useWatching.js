@@ -6,6 +6,7 @@ import { getEpisodeState, pauseEpisode, resumeEpisode } from "../episode-player.
 import { openPage } from "../links.js";
 import { showToast } from "../toast.js";
 import { youTubeEmbed } from "../updates.js";
+import { track } from "../analytics.js";
 
 // The radio or an archive episode, paused for a video and offered back.
 let radioWasOn = false;
@@ -63,6 +64,7 @@ export function useWatching(
     if (!liveRoute) setChosen(null);
   }
   const watchLive = (update) => {
+    track("video_play", { video_id: update.id || "live" });
     if (Capacitor.getPlatform() === "ios" || !youTubeEmbed(update.watch)) {
       pauseForVideo();
       openPage(update.watch, { onClose: offerAudioBack });
@@ -74,7 +76,10 @@ export function useWatching(
   };
   // A station video, from a list or from the watch page's Up next (in place
   // of whatever was showing).
-  const watchVideo = (video) => openVideo(video.id);
+  const watchVideo = (video) => {
+    track("video_play", { video_id: video.id });
+    openVideo(video.id);
+  };
 
   const live = liveRoute ? liveToShow({ chosen, current: currentLive, updatesLoaded }) : null;
   // The live route with nothing to show (the video has ended): close it.

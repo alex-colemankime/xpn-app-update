@@ -33,7 +33,9 @@ Build-time settings are Vite env variables, set in the shell or a `.env.local` f
 | Variable                     | Effect                                                                                                                                                                                                                                                         |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `VITE_XPN_CONCERTS_ENDPOINT` | The concert calendar. Default: xpn.org's own calendar (`https://xpn.org/wp-json/tribe/events/v1/events`). `off` removes the Concerts tab.                                                                                                                      |
-| `VITE_XPN_UPDATES_URL`       | The station updates file (banner, live video). Unset: no updates (preview builds show samples). See "Station updates".                                                                                                                                         |
+| `VITE_XPN_UPDATES_URL`       | The station updates file (banner, live video), or an Advanced Ads group's REST address. Unset: no updates (preview builds show samples). See "Station updates".                                                                                                |
+| `VITE_PUSH_REGISTER_URL`     | Turns on push notifications: where the app registers a phone's push token and topics. Unset: live video and drive notifications are planned on the phone. See "Push notifications".                                                                            |
+| `VITE_GA4_ID`                | Turns on usage and crash reporting to this GA4 property (`G-…`). Unset: nothing is sent. See "Usage and crash reporting".                                                                                                                                      |
 | `VITE_XPN_ARCHIVE_FEEDS`     | Where on-demand episodes come from, as `show=URL` pairs (a show page on xpn.org, or a podcast feed). Default: the four shows xpn.org archives (Sleepy Hollow, Funky Friday, Land of the Lost, World Cafe). `off` removes the Archive tab. See "Audio archive". |
 | `VITE_BRIGHTCOVE_VIDEOS`     | The Videos tab's sections, as `Section name=playlist id` pairs. Default: the NPR Music Video Network's World Cafe and WXPN collections (the ones on livesessions.npr.org). `off` removes the tab. See "Videos".                                                |
 | `VITE_BRIGHTCOVE_ACCOUNT`    | The Brightcove account those playlists live in. Default: the NPR Music Video Network (`6416366397001`).                                                                                                                                                        |
@@ -54,7 +56,20 @@ The station can put a message in the app without a release: a banner across ever
 - **Free at Noon needs no update at all.** From two hours before each Free at Noon until it ends, the app reads xpn.org/livestream (the page staff already update each week) and offers that page's YouTube video, titled from the video's own title ("Free at Noon: Mikaela Davis"). A page not edited since last week's show ended is taken to be last week's and ignored. A live item in `updates.json` takes priority, for anything else the station streams.
 - **Behavior:** a banner shows between its start and end; listeners can dismiss it, and a new `id` shows again. A live video appears on Listen two hours before it starts ("Today at 12pm"), and while it is on it takes over the banner on the other screens. YouTube links play in the app, on the watch page (`#/listen/live`, so Back closes it); other links, and YouTube on iOS, open in the browser view. Either way the radio pauses and is offered back afterwards.
 - **Notifications (member drives, live video).** Listeners opt in under Settings › From WXPN; both are off until they do, with the consent wording beside each switch, as App Review 4.5.4 requires for anything promotional. A banner's `notify` list (up to six `{ at, title, text }`; the composer has room for three) becomes notifications for listeners who turned on member drives; a live video notifies those who turned on live video, 10 minutes before it starts (`"notify": false` skips one; a followed show with reminders on gets its reminder instead). The app schedules them on the phone, like show reminders, so no push service is needed. The catch: a phone learns of a notification when the app next opens, so post a drive's notifications before the drive starts. Tapping opens the video, or the banner's link (the donate page) in the browser view.
-- **Reaching phones that haven't opened the app** needs a push service (Firebase Cloud Messaging, or one with a sending dashboard such as OneSignal or Airship), an APNs key from the Apple Developer account, and `@capacitor/push-notifications`. The same two switches become the listener's subscriptions (one topic each), so nothing in Settings changes.
+- **Reaching phones that haven't opened the app** is push; see "Push notifications". With it set up, the phone stops planning these itself, so nothing arrives twice.
+- **From WordPress instead of a file:** point `VITE_XPN_UPDATES_URL` at an Advanced Ads group's REST address (Advanced Ads Pro › Settings › Pro › REST API; `https://xpn.org/wp-json/advanced-ads/v1/groups/<id>`). Each ad in the group is one update, and the ad's own start and expiry dates decide when it shows. An ad's content is either a plain message whose first link is the button (a banner), or the update as JSON from the composer's **Copy for Advanced Ads** (a live video, or a banner with notifications). WordPress's curly quotes are undone, and half-written JSON is skipped. The REST response's exact shape should be checked against a real group once it exists; `advancedAdsUpdates` in `updates.js` reads `content` (plain or `{ rendered }`) and `id` from each ad, as a list or `{ ads: [...] }`.
+
+## Push notifications
+
+Live video and member drive notifications that reach phones whether or not the app has been opened lately. The app side is done (`push.js`); it needs a sender, which can be any service that sends to Apple (APNs) and Google (FCM):
+
+- **The contract.** With `VITE_PUSH_REGISTER_URL` set, the phone app sends `POST { token, platform: "ios" | "android", topics: ["live", "drives"], app, version }` there whenever the listener's switches (Settings › From WXPN) or the phone's token change; an empty `topics` means send nothing. The token is an APNs device token on iOS and an FCM token on Android. A notification's data says what a tap opens: `{ "action": "watch", "watch": "<YouTube or video URL>", "title": "…" }`, `{ "action": "open", "url": "https://xpn.org/donate/" }` or `{ "action": "listen", "stream": "xpn" }`.
+- **Sender options.** A hosted service with a sending dashboard staff can use (OneSignal, Airship; register tokens with its API, or swap `push.js`'s registration for its SDK); Firebase Cloud Messaging (free; with the Firebase iOS SDK added, iOS tokens become FCM tokens too, so one API sends to both); or a small WordPress plugin that stores tokens and sends through APNs and FCM, so sending lives next to the content in WordPress.
+- **Native setup.** iOS: Xcode › Signing & Capabilities › + Push Notifications, and an APNs key (.p8) from the Apple Developer account for the sender. Android: a Firebase project's `google-services.json` in `android/app/` (FCM needs it even if the sender is elsewhere). Notifications arriving while the app is open show as banners (`capacitor.config.json` › `PushNotifications.presentationOptions`).
+
+## Usage and crash reporting
+
+With `VITE_GA4_ID` set, the app reports to that GA4 property (`analytics.js`): screens as `page_view`, and `play_station`, `save` / `unsave`, `episode_play`, `video_play`, `donate_click`, `share`, `turn_on` (reminders, alarm, live, drives), `music_connect`, and errors as `exception` (anonymous, each once per session; React's and the page's uncaught errors included). No cookies, advertising ids, Google signals or ad personalization; each install has a random id. Listeners can turn it off in Settings › Privacy, which forgets the id. The Content Security Policy allows Google's addresses only when an id is set. In GA4, mark `exception` and the events above as custom dimensions/reports as needed. Native crashes (outside the web view) need a native crash reporter such as Firebase Crashlytics or Sentry, added in Xcode and Android Studio.
 
 ## Videos
 
@@ -108,7 +123,12 @@ Use Node 22 or newer (`.nvmrc` pins 24, as CI does).
 8. **Store requirements in 2026:** App Store uploads must be built with Xcode 26 and the iOS 26 SDK (since April 28, 2026). Google Play requires new apps and updates to target Android 16 (API 36) from August 31, 2026; Capacitor 8 targets it. Android 15+ draws apps edge to edge with no opt-out; the CSS reads Capacitor's `--safe-area-inset-*` values for that (see `styles/base.css`).
 9. **Video on iOS:** YouTube refuses embedded players that can't send a web referrer, which an iOS app (`capacitor://localhost`) can't, so on iOS a live YouTube video (Free at Noon) opens in the in-app browser instead of the watch page. Brightcove videos play in the app everywhere.
 10. **Status bar**: `@capacitor/status-bar` switches the status bar text between light and dark with the app's theme, so it stays readable when the app and phone themes differ. No setup needed.
-11. After any web change: `npm run cap:sync`, then build from Xcode / Android Studio.
+11. **Larger text on iPhone:** nothing to set up. `@capacitor/text-zoom` applies iOS's Text Size setting at launch and whenever the app comes back to the front (`text-size.js`); check the screens at the largest sizes.
+12. **CarPlay and Android Auto** (`car.js`, with native code in `native/`, written but untested until the projects exist):
+    - **iOS:** request the CarPlay audio entitlement from Apple (developer.apple.com/contact/carplay) and add it to the App ID and an `App.entitlements` file (`com.apple.developer.carplay-audio`). Add `native/ios/*.swift` to the App target. In Main.storyboard set the Bridge View Controller's Custom Class to `MainViewController` (it registers the plugin). Add `native/ios/Info.plist.carplay.xml`'s scene manifest to `Info.plist`. Optional station artwork: image sets `car-xpn`, `car-xpn2`, `car-homegrown`. Test with Xcode's CarPlay simulator (I/O › External Displays › CarPlay), including starting from the car with the app closed.
+    - **Android:** the app module needs Kotlin (`apply plugin: 'kotlin-android'` in `android/app/build.gradle`, and the Kotlin Gradle plugin in the project's), plus `implementation "androidx.media:media:1.7.0"`. Copy `native/android/*.kt` into `android/app/src/main/java/org/xpn/wxpn/` and `res/xml/automotive_app_desc.xml` into `res/xml/`, add `AndroidManifest.car.xml`'s entries inside `<application>`, and in `MainActivity` call `registerPlugin(CarAudioPlugin.class);` before `super.onCreate`. Test with Android Studio's Desktop Head Unit. Google reviews Android Auto apps against its car app quality guidelines when the app is submitted.
+    - The car lists WXPN, XPN2 and Homegrown; choosing one plays it, and play and pause work as the app's. On CarPlay the song comes from the lock screen's information; Android Auto gets it from the app.
+13. After any web change: `npm run cap:sync`, then build from Xcode / Android Studio.
 
 The Android back button steps back through screens and closes the show sheet, because navigation uses hash routes with real history entries.
 
@@ -157,6 +177,10 @@ videos.js            Brightcove playlists, for Videos and show pages
 concerts.js          concert calendar (xpn.org)
 calendar.js          saved concerts into the listener's calendar
 updates.js           station updates: format, timing, notifications, YouTube
+push.js              push notifications: registering with the sender, taps
+analytics.js         usage and crash reporting (GA4)
+car.js               CarPlay and Android Auto, with native/ for the car side
+text-size.js         iPhone Text Size
 favorites.js         saved songs, shows, episodes, videos and concerts
 art-tint.js          heart colors from artwork
 playlist-sync.js     keeping the saved-songs playlist in step
@@ -185,10 +209,12 @@ brand/               logo source files (not shipped with the app)
 ## Known gaps before a store release
 
 - **iOS/Android device testing**, especially background audio, lock-screen controls and song updates while locked, interruptions such as phone calls, the Android back button, and notifications (reminders and the alarm arriving with the app closed, tapping one to start the stream).
-- **Larger text on iPhone:** browser zoom and Android's font size scale the app, but iOS's Text Size setting does not reach a web view. Adding `@capacitor/text-zoom` and applying its preferred zoom at launch would cover it.
+- **CarPlay and Android Auto:** the native code is written but has never been compiled; it needs the steps above, Apple's CarPlay entitlement and testing in the simulators and a car.
+- **Push sender:** choose the service (see "Push notifications") and set `VITE_PUSH_REGISTER_URL`.
 - **Station updates hosting:** choose where `updates.json` lives and who edits it.
 - **Playlist sync accounts:** a Spotify app (with extended quota) and an Apple Music developer token.
-- **Crash and usage reporting** are not wired up.
+- **Reporting:** set `VITE_GA4_ID` (a GA4 web data stream for the app). Native crashes need Crashlytics or Sentry.
+- **Store privacy answers:** with reporting on, Apple's App Privacy and Google's Data safety should declare Usage Data (product interaction) and Diagnostics (crash data), not linked to identity and not used for tracking; with push, a device id (push token) for app functionality. Favorites and settings stay on the phone.
 
 ## Design basis
 

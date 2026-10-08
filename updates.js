@@ -36,7 +36,7 @@
 // Times are ISO 8601 with an offset. Anything malformed is ignored rather
 // than shown half-broken. Everything here is pure, so it can be tested.
 
-import { oneLine, plainText, webUrl } from "./text.js";
+import { decodeEntities, oneLine, plainText, webUrl } from "./text.js";
 
 export const LIVE_ANNOUNCE_MINUTES = 120; // a live video is announced this long before it starts
 export const LIVE_ALERT_MINUTES = 10; // and notified this long before, to those who asked
@@ -96,8 +96,66 @@ function normalizeUpdate(raw) {
 }
 
 export function normalizeUpdates(json) {
+  if (!Array.isArray(json?.updates) && advancedAdsList(json)) return advancedAdsUpdates(json);
   const list = Array.isArray(json?.updates) ? json.updates : [];
   return list.map(normalizeUpdate).filter(Boolean);
+}
+
+// ---- Advanced Ads ----------------------------------------------------------
+// The same updates can come from WordPress instead of a file: an Advanced Ads
+// group (Advanced Ads Pro's REST API, /wp-json/advanced-ads/v1/groups/<id>
+// or /ads), set as VITE_XPN_UPDATES_URL. Each ad in the group is one update,
+// and Advanced Ads' own schedule (start and expiry dates) decides which ads
+// the API returns. An ad's content is either
+//   - the update as JSON, as tools/updates-composer.html writes it ("Copy
+//     for Advanced Ads"), for a live video or drive notifications; or
+//   - a plain message, for a banner: its text, and its first link as the
+//     button ("The Fall Member Drive is on. <a href="…/donate/">Donate</a>").
+// The ad's id names the update when the JSON has none, so dismissing it
+// sticks until the station posts a new ad.
+
+const adList = (json) =>
+  Array.isArray(json) ? json : Array.isArray(json?.ads) ? json.ads : json?.content ? [json] : null;
+const advancedAdsList = (json) => {
+  const list = adList(json);
+  return list && list.some((ad) => ad && typeof ad === "object" && "content" in ad) ? list : null;
+};
+const rendered = (value) => (typeof value === "string" ? value : (value?.rendered ?? ""));
+// WordPress displays straight quotes as curly ones; JSON needs them back.
+const straightQuotes = (value) => value.replace(/[“”″]/g, '"').replace(/[‘’′]/g, "'");
+
+function adUpdate(ad) {
+  if (!ad || typeof ad !== "object") return [];
+  const html = rendered(ad.content);
+  const body = straightQuotes(plainText(html));
+  const fallbackId = ad.id != null ? `ad-${oneLine(ad.id, 40)}` : "";
+  if (body.startsWith("{")) {
+    try {
+      const json = JSON.parse(body);
+      const list = Array.isArray(json.updates) ? json.updates : [json];
+      return list.map((u, i) => ({
+        id: list.length > 1 ? `${fallbackId}-${i}` : fallbackId,
+        ...u,
+      }));
+    } catch {
+      return []; // half-written JSON: nothing rather than a garbled banner
+    }
+  }
+  const link = /<a\s[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i.exec(html);
+  const label = link ? plainText(link[2]) : "";
+  const message = link ? plainText(html.replace(link[0], " ")) : body;
+  return [
+    {
+      id: fallbackId,
+      kind: "banner",
+      text: message,
+      action: link && label ? { label, url: decodeEntities(link[1]) } : undefined,
+    },
+  ];
+}
+
+export function advancedAdsUpdates(json) {
+  return (advancedAdsList(json) || []).flatMap(adUpdate).map(normalizeUpdate).filter(Boolean);
 }
 
 // What to show at a moment: { banner, live } (either may be null).

@@ -20,6 +20,7 @@ import {
 import { STREAMS } from "../streams.js";
 import { showToast } from "../toast.js";
 import { useEveryShow } from "./useEveryShow.js";
+import { track } from "../analytics.js";
 
 // Starts the wake-up station at the alarm volume. The station is selected
 // first: switching while paused reports "paused", which would otherwise
@@ -113,6 +114,7 @@ export function useRadioAlarm() {
       return;
     }
     updateAlarm({ enabled: on, snoozeUntil: 0 });
+    if (on) track("turn_on", { feature: "alarm" });
     if (on && !(await exactAlarmsAllowed())) {
       showToast("To ring on time, WXPN needs Alarms & reminders turned on.", {
         label: "Turn on",

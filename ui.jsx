@@ -2,6 +2,7 @@ import { useEffect, useId, useRef } from "react";
 import { STATION_ART } from "./assets.js";
 import { Icon } from "./icons.jsx";
 import { Toast, modalClosed, modalOpened } from "./components/Toast.jsx";
+import { track } from "./analytics.js";
 
 export { Icon };
 
@@ -232,10 +233,12 @@ export async function shareText(title, text, url) {
   try {
     if (navigator.share) {
       await navigator.share(url ? { title, text, url } : { title, text });
+      track("share", { method: "share_sheet" });
       return "Shared.";
     }
     if (!navigator.clipboard) return "Sharing is not available in this browser.";
     await navigator.clipboard.writeText(url ? `${text}\n${url}` : text);
+    track("share", { method: "clipboard" });
     return "Copied to clipboard.";
   } catch (error) {
     return error.name === "AbortError" ? "" : "Sharing is unavailable. Please try again.";

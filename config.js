@@ -24,6 +24,17 @@ export const CONCERTS_ENABLED = Boolean(CONCERTS_ENDPOINT);
 // except sample updates in preview builds.
 export const UPDATES_URL = import.meta.env?.VITE_XPN_UPDATES_URL || "";
 
+// Push notifications (push.js): where the app registers a phone's push token
+// and the listener's topics (live video, member drives) for the station's
+// sender. Unset: those notifications are planned on the phone instead.
+export const PUSH_REGISTER_URL = import.meta.env?.VITE_PUSH_REGISTER_URL || "";
+
+// Usage and crash reporting (analytics.js): the GA4 measurement id
+// ("G-XXXXXXX"). Unset: nothing is sent.
+export const GA4_ID = /^G-[A-Z0-9]+$/.test(import.meta.env?.VITE_GA4_ID || "")
+  ? import.meta.env.VITE_GA4_ID
+  : "";
+
 // The livestream page on xpn.org, read during Free at Noon so the week's
 // video appears without a station update (see updates.js). "off" disables.
 const livestreamSetting = import.meta.env?.VITE_XPN_LIVESTREAM_PAGE;

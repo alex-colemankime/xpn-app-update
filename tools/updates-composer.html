@@ -234,12 +234,19 @@
       <div class="bar">
         <button class="primary" id="copy">Copy</button>
         <button id="download">Download updates.json</button>
+        <button id="copy-ad">Copy for Advanced Ads</button>
       </div>
       <pre id="json"></pre>
       <p class="note">
         Times are entered in Eastern time. Only the first banner that is running shows, and the
         first live video; a live video takes over the banner while it is on. Notifications go only
         to listeners who turned them on in the app (Settings › From WXPN).
+      </p>
+      <p class="note">
+        <strong>Using Advanced Ads?</strong> Make one ad per message in the app’s ad group, paste
+        what “Copy for Advanced Ads” copies as the ad’s content (a plain-text ad, or the code
+        editor), and set the ad’s start and expiry dates. A banner with no notifications can also be
+        a plain message whose link is the button.
       </p>
     </main>
     <script>
@@ -455,6 +462,12 @@
           await navigator.clipboard.writeText($("#json").textContent);
           e.target.textContent = "Copied";
           setTimeout(() => (e.target.textContent = "Copy"), 1500);
+        }
+        if (e.target.id === "copy-ad") {
+          // One line: the ad editor keeps it as one paragraph.
+          await navigator.clipboard.writeText(JSON.stringify(file()));
+          e.target.textContent = "Copied";
+          setTimeout(() => (e.target.textContent = "Copy for Advanced Ads"), 1500);
         }
         if (e.target.id === "download") {
           const a = document.createElement("a");

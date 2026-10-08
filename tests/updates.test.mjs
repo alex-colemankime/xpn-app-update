@@ -219,3 +219,43 @@ test("Free at Noon is looked for only around its airing", () => {
   assert.equal(airingSoon("freeatnoon", 120, on("2026-10-09T13:00:00-04:00")), null, "after");
   assert.equal(airingSoon("freeatnoon", 120, on("2026-10-09T09:30:00-04:00")), null, "too early");
 });
+
+// Advanced Ads (WordPress): each ad in the group is an update.
+test("an Advanced Ads group becomes station updates", () => {
+  const ads = [
+    {
+      id: 412,
+      title: "Fall drive banner",
+      // A plain message, its link the button, as WordPress renders it.
+      content:
+        '<p>The Fall Member Drive is on. Keep WXPN independent. <a href="https://xpn.org/donate/?utm=app&amp;x=1">Donate</a></p>',
+    },
+    {
+      id: 413,
+      title: "Free at Noon",
+      // The composer's JSON, with the curly quotes WordPress puts on display.
+      content:
+        "<p>{“kind”: “live”, “title”: “Free at Noon: Dawes”, “watch”: “https://www.youtube.com/watch?v=abc”, “starts”: “2026-10-09T12:00:00-04:00”, “ends”: “2026-10-09T13:00:00-04:00”, “text”: “There’s a session”}</p>",
+    },
+    { id: 414, content: "<p>{“kind”: “live”, “title”: </p>" }, // half-written: left out
+  ];
+  const [banner, live, ...rest] = normalizeUpdates(ads);
+  assert.equal(rest.length, 0);
+  assert.equal(banner.id, "ad-412");
+  assert.equal(banner.kind, "banner");
+  assert.equal(banner.text, "The Fall Member Drive is on. Keep WXPN independent.");
+  assert.deepEqual(banner.action, { label: "Donate", url: "https://xpn.org/donate/?utm=app&x=1" });
+  assert.equal(banner.starts, null, "the ad's own schedule decides when it shows");
+  assert.equal(live.id, "ad-413");
+  assert.equal(live.kind, "live");
+  assert.equal(live.title, "Free at Noon: Dawes");
+  assert.equal(live.text, "There's a session");
+  assert.equal(live.starts, Date.parse("2026-10-09T12:00:00-04:00"));
+  // The same, wrapped as { ads: [...] } or as one ad, and the file format still works.
+  assert.equal(normalizeUpdates({ ads }).length, 2);
+  assert.equal(normalizeUpdates(ads[0])[0].id, "ad-412");
+  assert.equal(
+    normalizeUpdates({ updates: [{ id: "drive", kind: "banner", text: "x" }] }).length,
+    1,
+  );
+});
