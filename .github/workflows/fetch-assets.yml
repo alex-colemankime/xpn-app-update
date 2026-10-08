@@ -1,0 +1,58 @@
+name: Fetch artwork
+
+# Bundles show artwork from xpn.org into the app (public/shows), and fetches
+# the real video thumbnails the screens page screenshots use. Runs when
+# either script changes, or by hand.
+on:
+  push:
+    branches: [main]
+    paths:
+      - tools/fetch-show-art.mjs
+      - tools/fetch-video-fixtures.mjs
+      - .github/workflows/fetch-assets.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      # Image resizing for these scripts only; not an app dependency.
+      - name: Install sharp
+        run: npm i --no-save --no-package-lock sharp@0.34
+
+      - name: Bundle show artwork
+        run: node tools/fetch-show-art.mjs
+
+      - name: Commit show artwork
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/shows shows.json
+          git diff --cached --quiet || git commit -m "Bundle show artwork from xpn.org"
+          git push
+
+      - name: Fetch video thumbnails for the screens page
+        run: node tools/fetch-video-fixtures.mjs
+        env:
+          PLAYLISTS: "1876180529963365406,1874727417810648125"
+
+      - name: Publish them on the screens-fixtures branch
+        run: |
+          cd fixtures
+          git init -q -b screens-fixtures
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Video fixtures for the screens page"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" screens-fixtures
