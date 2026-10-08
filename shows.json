@@ -163,7 +163,7 @@
     "id": "overnight",
     "name": "WXPN Overnight",
     "host": "",
-    "img": "https://xpn.org/wp-content/uploads/2022/03/Overnight.jpg",
+    "img": "shows/overnight.jpg",
     "desc": "A handcrafted and curated music mix from the WXPN music library.",
     "schedule": [
       {
@@ -201,7 +201,7 @@
     "id": "firstcup",
     "name": "Your First Cup",
     "host": "Robert Drake",
-    "img": "https://xpn.org/wp-content/uploads/2022/03/FirstCup.jpg",
+    "img": "shows/firstcup.jpg",
     "desc": "As welcoming as an early morning mug of coffee, this is the perfect musical brew to get you ready to face the day.",
     "schedule": [
       {
@@ -226,7 +226,7 @@
     "id": "highs70s",
     "name": "Highs in the 70s",
     "host": "Dan Reed",
-    "img": "https://xpn.org/wp-content/uploads/2025/05/Highs-in-the-70s-Design-1900x1900-1.jpg",
+    "img": "shows/highs70s.jpg",
     "desc": "\"Highs in the 70s\" takes listeners on a groovy journey through the golden era of music: the 1970s.",
     "schedule": [
       {
@@ -250,7 +250,7 @@
     "id": "wxpnlocal",
     "name": "Homegrown – The XPN Local Show",
     "host": "Mike Vasilikos",
-    "img": "https://xpn.org/wp-content/uploads/2022/01/homegrown-local-show-_FINAL_square.jpg",
+    "img": "shows/wxpnlocal.jpg",
     "desc": "A weekly spotlight on up-and-coming bands from the tri-state area featuring new releases and exclusive live performances.",
     "schedule": [
       {
@@ -271,7 +271,7 @@
     "id": "indie",
     "name": "Indie Rock Hit Parade",
     "host": "Eric Schuman",
-    "img": "https://xpn.org/wp-content/uploads/2022/01/IRHP-2022.jpg",
+    "img": "shows/indie.jpg",
     "desc": "The latest indie-rock releases, the occasional classic, and special in-studio performances from new bands.",
     "schedule": [
       {
@@ -288,7 +288,7 @@
     "id": "evenings",
     "name": "WXPN Evenings",
     "host": "Abdur Rahman & Jim McGuinn",
-    "img": "https://xpn.org/wp-content/uploads/2022/03/Evenings.jpg",
+    "img": "shows/evenings.jpg",
     "desc": "This handcrafted, diverse mix of music from emerging and established artists creates the perfect vibe for your evening listening.",
     "schedule": [
       {
@@ -324,7 +324,7 @@
     "id": "culturecypher",
     "name": "Culture Cypher Radio",
     "host": "John Morrison",
-    "img": "https://xpn.org/wp-content/uploads/2022/01/culture_cypher_logo_slide.jpg",
+    "img": "shows/culturecypher.jpg",
     "desc": "An expansive selection of new and classic hip-hop music alongside the related worlds of jazz, soul, and experimental sounds.",
     "schedule": [
       {
@@ -341,7 +341,7 @@
     "id": "landlost",
     "name": "Land of the Lost",
     "host": "Robert Drake",
-    "img": "https://xpn.org/wp-content/uploads/2022/01/lotl_logo_shirt.jpg",
+    "img": "shows/landlost.jpg",
     "desc": "Rediscover the 1980s' diverse musical landscape with cult classics, punk, and new wave anthems.",
     "schedule": [
       {
@@ -358,7 +358,7 @@
     "id": "sleepyhollow",
     "name": "Sleepy Hollow",
     "host": "Keith Kelleher & Joey Sweeney",
-    "img": "https://xpn.org/wp-content/uploads/2022/01/the-Quiet-Sounds-for-WEekend-Mornings.png",
+    "img": "shows/sleepyhollow.png",
     "desc": "A mix of jazz, folk, instrumental, contemporary acoustic, and indie music perfectly blended for a distinct quiet sound.",
     "schedule": [
       {
@@ -380,7 +380,7 @@
     "id": "postsleepy",
     "name": "The Post Sleepy Hollow Experience",
     "host": "Bruce Warren",
-    "img": "https://xpn.org/wp-content/uploads/2022/03/SleepyHollow.jpg",
+    "img": "shows/postsleepy.jpg",
     "desc": "The perfect Saturday segue from the quiet sounds to WXPN's signature music mix.",
     "schedule": [
       {
@@ -401,7 +401,7 @@
     "id": "saturdaymix",
     "name": "Saturday Afternoon Mix",
     "host": "Wendy Rollins",
-    "img": "https://xpn.org/wp-content/uploads/2022/03/SAturay-afternoon-mix.png",
+    "img": "shows/saturdaymix.png",
     "desc": "Signature mix of music featuring new and legendary indie, classic and alternative rock, vintage R&B, soul, blues, and more.",
     "schedule": [
       {
@@ -422,7 +422,7 @@
     "id": "benvaughn",
     "name": "The Many Moods of Ben Vaughn",
     "host": "Ben Vaughn",
-    "img": "https://xpn.org/wp-content/uploads/2022/01/256138338_10160416659803646_2761755819641589633_n.jpg",
+    "img": "shows/benvaughn.jpg",
     "desc": "An eclectic mix of rock, blues, jazz, folk, soul, R&B, country, bossa nova, soundtracks, easy listening, and more.",
     "schedule": [
       {
@@ -439,7 +439,7 @@
     "id": "bluesshow",
     "name": "The Blues Show",
     "host": "Jonny Meister",
-    "img": "https://xpn.org/wp-content/uploads/2022/01/blues_show_logo.jpg",
+    "img": "shows/bluesshow.jpg",
     "desc": "A mix of Blues music from the 1920s to the present, ranging from the best-known to the most obscure.",
     "schedule": [
       {
@@ -460,7 +460,7 @@
     "id": "americanroutes",
     "name": "American Routes",
     "host": "Nick Spitzer",
-    "img": "https://xpn.org/wp-content/uploads/2022/01/american_routes_logo.png",
+    "img": "shows/americanroutes.jpg",
     "desc": "Songs and stories from blues and jazz, gospel and soul, rockabilly and country, Cajun, swamp pop, Tejano, Latin, and beyond.",
     "schedule": [
       {
@@ -481,7 +481,7 @@
     "id": "starsend",
     "name": "Star's End",
     "host": "Chuck van Zyl",
-    "img": "https://xpn.org/wp-content/uploads/2022/01/StarsEndDrafts_V1_Page_1.jpg",
+    "img": "shows/starsend.jpg",
     "desc": "A gentle aural soundscape of ambient music to accompany your sleep and dreams.",
     "schedule": [
       {
@@ -498,7 +498,7 @@
     "id": "davesworld",
     "name": "Dave's World",
     "host": "David Dye",
-    "img": "https://xpn.org/wp-content/uploads/2022/01/17493018_1852528051686724_1285190363288290186_o.jpg",
+    "img": "shows/davesworld.jpg",
     "desc": "David Dye's eclectic musical tastes and far-reaching knowledge of music come together for a unique listening experience.",
     "schedule": [
       {
@@ -519,7 +519,7 @@
     "id": "sundaymix",
     "name": "Sunday Afternoon Mix",
     "host": "Abdur Rahman & Wendy Rollins",
-    "img": "https://xpn.org/wp-content/uploads/2022/03/SunAfternoon.jpg",
+    "img": "shows/sundaymix.jpg",
     "desc": "This handcrafted, diverse mix of music from emerging and established artists creates the perfect vibe for your Sunday afternoon listening.",
     "schedule": [
       {
@@ -540,7 +540,7 @@
     "id": "americana",
     "name": "Americana Music Hour",
     "host": "Dan Reed",
-    "img": "https://xpn.org/wp-content/uploads/2022/03/Americana.jpg",
+    "img": "shows/americana.jpg",
     "desc": "Celebrating country, roots-rock, folk, bluegrass, R&B, blues, and other American roots music styles.",
     "schedule": [
       {
@@ -561,7 +561,7 @@
     "id": "mountainstage",
     "name": "Mountain Stage",
     "host": "",
-    "img": "https://xpn.org/wp-content/uploads/2022/01/mountain_stage.jpg",
+    "img": "shows/mountainstage.jpg",
     "desc": "Recorded live performances from musical legends and emerging stars in folk, blues, country, indie rock, synth-pop, world music, and beyond.",
     "schedule": [
       {
@@ -582,7 +582,7 @@
     "id": "folkshow",
     "name": "The Folk Show",
     "host": "Bruce Warren, Jim McGuinn & David Dye",
-    "img": "https://xpn.org/wp-content/uploads/2022/01/folk_show.jpg",
+    "img": "shows/folkshow.jpg",
     "desc": "A music mix spanning the last century of folk artists and recordings along with in-studio interviews and performances.",
     "schedule": [
       {
@@ -603,7 +603,7 @@
     "id": "cafeconversations",
     "name": "Conversations from the World Cafe",
     "host": "Raina Douris & Stephen Kallao",
-    "img": "https://xpn.org/wp-content/uploads/2022/04/wc_conversations.jpg",
+    "img": "shows/cafeconversations.jpg",
     "desc": "A weekly best-of collection of recent World Cafe interviews and performances.",
     "schedule": [
       {
@@ -624,7 +624,7 @@
     "id": "amazoncountry",
     "name": "Amazon Country",
     "host": "Debra D'Alessandro",
-    "img": "https://xpn.org/wp-content/uploads/2022/01/AmazonCountry_flag.jpg",
+    "img": "shows/amazoncountry.jpg",
     "desc": "A showcase of lesbian and feminist musicians celebrating the diversity of the Women's Music movement.",
     "schedule": [
       {
@@ -645,7 +645,7 @@
     "id": "outsounds",
     "name": "OUTsounds",
     "host": "Robert Drake",
-    "img": "https://xpn.org/wp-content/uploads/2022/01/OutSounds.png",
+    "img": "shows/outsounds.png",
     "desc": "OUTsounds celebrates out musicians worldwide.",
     "schedule": [
       {
@@ -662,7 +662,7 @@
     "id": "echoes",
     "name": "Echoes",
     "host": "John Diliberto",
-    "img": "https://xpn.org/wp-content/uploads/2022/01/echoes_logo_slide.jpg",
+    "img": "shows/echoes.jpg",
     "desc": "A cross-cultural and trans-millennial sound, merging cultures and forms, technology and tradition.",
     "schedule": [
       {
@@ -686,7 +686,7 @@
     "id": "jamnation",
     "name": "JamNation",
     "host": "Bruce Warren",
-    "img": "https://xpn.org/wp-content/uploads/2026/07/jamnation.jpg",
+    "img": "shows/jamnation.jpg",
     "desc": "Every Monday night, JamNation explores the artists who thrive on improvisation, exploration, and the magic of live performance, from the Allman Brothers Band, the Grateful Dead and Phish to Goose, Billy Strings and King Gizzard & the Lizard Wizard.",
     "schedule": [
       {
@@ -707,7 +707,7 @@
     "id": "newmusic",
     "name": "The New Music Show on XPN",
     "host": "Amber Miller",
-    "img": "https://xpn.org/wp-content/uploads/2026/07/new-music-show.png",
+    "img": "shows/newmusic.jpg",
     "desc": "Two hours of the newest music on XPN, every Monday night with Amber Miller.",
     "schedule": [
       {
