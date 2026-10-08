@@ -79,7 +79,6 @@ function AddToCalendar({ concert }) {
         </button>
         <a href={googleCalendarUrl(concert)} target="_blank" rel="noreferrer" onClick={close}>
           Google Calendar
-          <Icon name="arrowUp" size={16} />
         </a>
       </div>
     </>
@@ -123,7 +122,6 @@ export const ConcertRow = memo(function ConcertRow({ concert: c }) {
               aria-label={`Tickets for ${c.artist}`}
             >
               Tickets
-              <Icon name="arrowUp" size={14} />
             </a>
           )}
           <AddToCalendar concert={c} />

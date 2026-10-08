@@ -49,7 +49,7 @@
     background: color-mix(in srgb, var(--action) 88%, var(--text));
   }
   .secondary-button:hover {
-    background: var(--surface);
+    background: color-mix(in srgb, var(--text) 11%, transparent);
   }
 }
 
@@ -236,5 +236,13 @@
   .primary-button,
   .alarm-banner button {
     border: 1px solid ButtonText;
+  }
+}
+
+/* With forced colors the soft fills disappear; outlines keep the shapes. */
+@media (forced-colors: active) {
+  .secondary-button,
+  .chip {
+    border-color: ButtonText;
   }
 }

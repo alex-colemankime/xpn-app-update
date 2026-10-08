@@ -130,3 +130,11 @@
   align-items: center;
   gap: 8px 16px;
 }
+
+/* A show's sheet, washed lightly in the show's color (ShowDetail.jsx). */
+.show-dialog {
+  --surface: color-mix(in srgb, var(--show-light) 12%, #f2efe7);
+}
+:root[data-theme="dark"] .show-dialog {
+  --surface: color-mix(in srgb, var(--show-dark) 14%, #292c2f);
+}

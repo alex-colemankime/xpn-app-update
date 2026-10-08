@@ -54,9 +54,9 @@
   gap: 7px;
   flex-shrink: 0;
   min-height: 40px;
-  padding: 0 17px 0 14px;
+  padding: 0 16px 0 13px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 10px;
   background: var(--text);
   color: var(--bg);
   font-size: 0.9375rem;

@@ -306,6 +306,14 @@ h1 {
 .saved {
   color: var(--accent);
 }
+/* A labeled button ("Following", "Saved") keeps its words in the text
+   color; the heart alone shows it is on. */
+.secondary-button.saved {
+  color: var(--text);
+}
+.secondary-button.saved svg {
+  color: var(--accent);
+}
 /* A saved heart in its artwork's color (art-tint.js picks one per theme). */
 .saved[data-tinted] svg {
   color: var(--tint-light);

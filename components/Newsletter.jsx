@@ -24,7 +24,6 @@ export function NewsletterPanel() {
       >
         <Icon name="mail" size={18} />
         Sign up for the e-news
-        <Icon name="arrowUp" size={16} />
       </a>
       <a
         className="text-button newsletter-offer"
@@ -33,7 +32,6 @@ export function NewsletterPanel() {
         rel="noreferrer"
       >
         Or sign up with Top Stories and get a free 885 Greatest Cover Songs playlist
-        <Icon name="arrowUp" size={16} />
       </a>
     </section>
   );
@@ -53,7 +51,7 @@ export function NewsletterPrompt() {
         <strong>Get concert news by email</strong>
         <small>Sign up for WXPN’s free weekly e-news</small>
       </span>
-      <Icon name="arrowUp" size={16} />
+      <Icon name="chev" size={16} />
     </a>
   );
 }

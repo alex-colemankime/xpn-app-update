@@ -217,7 +217,6 @@ function RecentlyPlayed({ playlist, station }) {
             {(expanded || earlier.length <= RECENT_PREVIEW) && (
               <a className="text-button" href={PLAYLIST_URL} target="_blank" rel="noreferrer">
                 Full playlist on xpn.org
-                <Icon name="arrowUp" size={16} />
               </a>
             )}
           </div>
@@ -228,7 +227,6 @@ function RecentlyPlayed({ playlist, station }) {
           <p>The station has not reported any recent songs.</p>
           <a className="text-button" href={PLAYLIST_URL} target="_blank" rel="noreferrer">
             Open WXPN’s playlist
-            <Icon name="arrowUp" size={16} />
           </a>
         </div>
       )}

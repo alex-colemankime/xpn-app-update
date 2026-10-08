@@ -181,13 +181,13 @@
   width: 56px;
   min-height: 56px;
   flex-shrink: 0;
-  border: 1px solid var(--border);
   border-radius: 16px;
+  background: color-mix(in srgb, var(--text) 7%, transparent);
   color: var(--text);
   transition: background-color 0.15s;
 }
 .hero-cast:hover {
-  background: var(--row-alt);
+  background: color-mix(in srgb, var(--text) 11%, transparent);
 }
 .now-status {
   font-size: 0.875rem;

@@ -205,7 +205,7 @@ export function Welcome({ onDone }) {
                       {a.name} <small>{a.handle}</small>
                       <span className="sr-only"> ({owner})</span>
                     </span>
-                    <Icon name="arrowUp" size={16} />
+                    <Icon name="chev" size={16} />
                   </a>
                 ))}
               </div>

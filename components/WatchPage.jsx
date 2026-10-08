@@ -295,7 +295,6 @@ export function WatchPage({ videoId, live, onPick, onClose }) {
                 live?.watch && (
                   <a className="text-button" href={live.watch} target="_blank" rel="noreferrer">
                     Open in YouTube
-                    <Icon name="arrowUp" size={16} />
                   </a>
                 )
               }

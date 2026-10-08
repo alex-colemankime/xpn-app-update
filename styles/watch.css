@@ -155,8 +155,8 @@
 }
 .watch-follow {
   min-height: 38px;
-  padding: 6px 16px;
-  border-radius: 999px;
+  padding: 6px 14px;
+  border-radius: 10px;
   font-size: 0.875rem;
   font-weight: 650;
 }

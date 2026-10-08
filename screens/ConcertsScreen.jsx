@@ -21,7 +21,6 @@ function CalendarLink({ children = "See the concert calendar on xpn.org" }) {
   return (
     <a className="secondary-button" href={CALENDAR_URL} target="_blank" rel="noreferrer">
       {children}
-      <Icon name="arrowUp" size={17} />
     </a>
   );
 }
@@ -58,7 +57,7 @@ function SubmitConcert() {
         <strong>Playing a show?</strong>
         <small>Submit a concert or event to WXPN’s calendar</small>
       </span>
-      <Icon name="arrowUp" size={16} />
+      <Icon name="chev" size={16} />
     </a>
   );
 }
@@ -188,7 +187,7 @@ export function ConcertsScreen({ result }) {
             <strong>The full calendar</strong>
             <small>Every listing on xpn.org</small>
           </span>
-          <Icon name="arrowUp" size={16} />
+          <Icon name="chev" size={16} />
         </a>
         <NewsletterPrompt />
       </>

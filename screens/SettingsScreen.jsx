@@ -137,7 +137,7 @@ export function SettingsScreen({
                   ) : (
                     link.label
                   )}
-                  <Icon name={web ? "arrowUp" : "mail"} size={17} />
+                  <Icon name={web ? "chev" : "mail"} size={17} />
                 </a>
               );
             })}

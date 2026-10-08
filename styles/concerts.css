@@ -56,8 +56,9 @@
   min-height: 38px;
   margin-block: 3px;
   padding: 0 14px;
-  border: 1px solid var(--control-border);
-  border-radius: 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
   font-size: 0.9375rem;
   font-weight: 550;
   color: var(--text);
@@ -69,7 +70,6 @@
   inset: -4px 0;
 }
 .chip[aria-pressed="true"] {
-  border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 14%, var(--bg));
   color: var(--accent-strong);
   font-weight: 700;
@@ -79,7 +79,7 @@
 }
 @media (hover: hover) {
   .chip:not([aria-pressed="true"]):hover {
-    border-color: var(--text);
+    background: color-mix(in srgb, var(--text) 10%, transparent);
   }
 }
 .concert-count {

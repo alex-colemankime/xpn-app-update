@@ -60,7 +60,6 @@ export function PlaylistSyncPanel() {
                   rel="noreferrer"
                 >
                   Open in {service.name}
-                  <Icon name="arrowUp" size={16} />
                 </a>
               )
             )}

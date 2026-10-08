@@ -12,6 +12,7 @@ import { episodesOf, hasLeftArchive, useArchive } from "../archive.js";
 import { EpisodeDetail, EpisodeRow } from "./Archive.jsx";
 import { chooseVideoSection, useVideos } from "../videos.js";
 import { VideoCard } from "./VideoCard.jsx";
+import { useArtTint } from "../art-tint.js";
 
 // A show's sheet: who hosts it and when, Follow, a band to listen while it is
 // on the air, its videos (World Cafe) and its recent broadcasts; or one of
@@ -129,13 +130,21 @@ export function ShowDetail({
     episodeId &&
     (archived.find((ep) => ep.id === episodeId) || saved.find((ep) => ep.id === episodeId));
   const stream = showStream(show);
+  // The sheet takes a light wash of the show's own color (its artwork's),
+  // so each show's page carries a little of its branding.
+  const tint = useArtTint(show.img, show.tint || null);
   const listen = () => {
     selectStream(stream);
     playStream();
     onListen();
   };
   return (
-    <Modal title={show.name} onClose={onClose}>
+    <Modal
+      title={show.name}
+      onClose={onClose}
+      className={tint ? "show-dialog" : ""}
+      style={tint ? { "--show-light": tint.light, "--show-dark": tint.dark } : undefined}
+    >
       <div className="detail-body">
         {episode ? (
           <EpisodeDetail

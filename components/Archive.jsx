@@ -331,7 +331,6 @@ export function EpisodeDetail({ episode, show, onBack, gone = false }) {
       {episode.page && (
         <a className="text-button" href={episode.page} target="_blank" rel="noreferrer">
           Episode page
-          <Icon name="arrowUp" size={16} />
         </a>
       )}
     </>

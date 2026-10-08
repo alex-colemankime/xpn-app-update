@@ -58,7 +58,6 @@ export function Sidebar({ screen, navigate }) {
           aria-label="Donate to WXPN (opens in a new tab)"
         >
           Donate
-          <Icon name="arrowUp" size={16} />
         </a>
       </div>
     </aside>

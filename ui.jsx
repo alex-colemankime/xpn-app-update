@@ -73,7 +73,15 @@ export function Art({ src, alt = "", className = "", ...props }) {
 }
 
 // Native dialog provides focus containment, Escape dismissal, and a modal backdrop.
-export function Modal({ title, description, children, onClose, eyebrow = null, className = "" }) {
+export function Modal({
+  title,
+  description,
+  children,
+  onClose,
+  eyebrow = null,
+  className = "",
+  style,
+}) {
   const ref = useRef(null);
   const id = useId();
   useEffect(() => {
@@ -97,6 +105,7 @@ export function Modal({ title, description, children, onClose, eyebrow = null, c
     <dialog
       ref={ref}
       className={`detail-dialog ${className}`}
+      style={style}
       aria-labelledby={id}
       aria-describedby={description ? `${id}-description` : undefined}
       onCancel={(e) => {
