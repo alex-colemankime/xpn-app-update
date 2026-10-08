@@ -14,6 +14,16 @@ export const STATION_EMAIL = "wxpndesk@xpn.org";
 // Stories form that adds a free playlist.
 export const ENEWS_URL = "https://xpn.org/enews/";
 export const TOP_STORIES_URL = "https://xpn.org/signup-xpn-top-stories/";
+// The station's social accounts, as xpn.org's own footer links them.
+export const SOCIAL = [
+  { name: "Instagram", handle: "@wxpnfm", url: "https://www.instagram.com/wxpnfm/" },
+  { name: "Facebook", handle: "885wxpn", url: "https://www.facebook.com/885wxpn/" },
+  {
+    name: "YouTube",
+    handle: "xponentialmusic",
+    url: "https://www.youtube.com/user/xponentialmusic",
+  },
+];
 
 // Opens a web page beside the app: in the phone apps, in the system browser
 // view over the app (so giving happens on xpn.org, never inside the app, as

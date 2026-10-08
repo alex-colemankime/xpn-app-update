@@ -8,13 +8,14 @@ import { PlaylistSyncPanel } from "../components/PlaylistSync.jsx";
 import { RadioAlarmPanel } from "../components/RadioAlarm.jsx";
 import { useNotificationTrouble } from "../notifications.js";
 import { CONCERTS_ENABLED } from "../config.js";
-import { CALENDAR_URL, DONATE_URL, PRIVACY_URL, STATION_EMAIL } from "../links.js";
+import { CALENDAR_URL, DONATE_URL, PRIVACY_URL, SOCIAL, STATION_EMAIL } from "../links.js";
 
 // The app's version, from package.json (see vite.config.js).
 const VERSION = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "";
 
 const LINKS = [
   { label: "Donate to WXPN", url: DONATE_URL },
+  ...SOCIAL.map((s) => ({ label: `WXPN on ${s.name}`, note: s.handle, url: s.url })),
   ...(CONCERTS_ENABLED ? [] : [{ label: "Concert calendar", url: CALENDAR_URL }]),
   { label: "Contact the station", url: `mailto:${STATION_EMAIL}` },
   {
@@ -127,7 +128,13 @@ export function SettingsScreen({
                   target={web ? "_blank" : undefined}
                   rel="noreferrer"
                 >
-                  {link.label}
+                  {link.note ? (
+                    <span>
+                      {link.label} <small>{link.note}</small>
+                    </span>
+                  ) : (
+                    link.label
+                  )}
                   <Icon name={web ? "arrowUp" : "mail"} size={17} />
                 </a>
               );

@@ -208,3 +208,19 @@
 .welcome-bars i[data-on] {
   background: var(--accent);
 }
+
+/* The station's social accounts: one full-width link each. */
+.welcome-social {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+.welcome-social a {
+  justify-content: space-between;
+  width: 100%;
+}
+.welcome-social small {
+  margin-left: 6px;
+  font-weight: 500;
+  color: var(--muted);
+}

@@ -9,6 +9,7 @@ import { tap } from "../haptics.js";
 import { PLAYLIST_NAME } from "../music-services.js";
 import { connect } from "../playlist-sync.js";
 import { offeredServices } from "./PlaylistSync.jsx";
+import { SOCIAL } from "../links.js";
 
 // The featured shows with a place on the FM schedule, so each one can also
 // be reminded about.
@@ -73,8 +74,9 @@ function PlaylistPreview() {
   );
 }
 
-// First launch only: follow a few shows, turn on reminders for them, and
-// connect Spotify or Apple Music so hearted songs build a playlist. A step
+// First launch only: follow a few shows, turn on reminders for them,
+// connect Spotify or Apple Music so hearted songs build a playlist, and
+// finally the station's social accounts. A step
 // with nothing to offer is left out (no reminders without a followed show, no
 // playlist step when no service is set up). Closing it any way counts as
 // done; it never comes back.
@@ -85,6 +87,7 @@ export function Welcome({ onDone }) {
     "follow",
     ...(followed.length ? ["remind"] : []),
     ...(services.length ? ["music"] : []),
+    "social",
   ];
   const [stepName, setStepName] = useState("follow");
   const step = Math.max(0, steps.indexOf(stepName));
@@ -182,8 +185,40 @@ export function Welcome({ onDone }) {
             </div>
             <div className="welcome-actions">
               {counter}
-              <button className="text-button" onClick={onDone}>
+              <button className="text-button" onClick={next}>
                 Not now
+              </button>
+            </div>
+          </>
+        ) : stepName === "social" ? (
+          <>
+            <h3 ref={heading} tabIndex={-1}>
+              Follow WXPN
+            </h3>
+            <p className="welcome-lede">
+              Sessions, concert news and behind-the-scenes moments from the station. You can find
+              these any time in Settings › Stay connected.
+            </p>
+            <div className="welcome-social">
+              {SOCIAL.map((s) => (
+                <a
+                  key={s.name}
+                  className="secondary-button"
+                  href={s.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span>
+                    {s.name} <small>{s.handle}</small>
+                  </span>
+                  <Icon name="arrowUp" size={16} />
+                </a>
+              ))}
+            </div>
+            <div className="welcome-actions">
+              {counter}
+              <button className="primary-button" onClick={onDone}>
+                Start listening
               </button>
             </div>
           </>
