@@ -1,9 +1,5 @@
-// Build-time switches (see README), and features the station has turned
-// off remotely (remote-config.js; applied at launch).
-import { savedConfig } from "./remote-config.js";
-
-const OFF = new Set(savedConfig().off);
-export const featureOff = (feature) => OFF.has(feature);
+// Build-time switches (see README). What is set up here can still be turned
+// off and on by the station while the app runs (features.js).
 
 // Placeholder content (sample station updates, and music services shown before
 // they are configured) exists for design review only. It appears in `npm run dev` and in builds made with
@@ -22,19 +18,28 @@ export const CONCERTS_ENDPOINT =
   concertsSetting === "off"
     ? ""
     : concertsSetting || "https://xpn.org/wp-json/tribe/events/v1/events";
-export const CONCERTS_ENABLED = Boolean(CONCERTS_ENDPOINT) && !OFF.has("concerts");
+export const CONCERTS_ENABLED = Boolean(CONCERTS_ENDPOINT);
 
-// Station updates (a member-drive banner, a live video to watch): a small JSON
-// file the station hosts and edits; see updates.js and README. Unset: none,
-// except sample updates in preview builds.
-export const UPDATES_URL = import.meta.env?.VITE_XPN_UPDATES_URL || "";
+// Station updates (a member-drive banner, a live video to watch) and the app
+// switches (remote-config.js): a small JSON file the station edits; see
+// updates.js and README. Production builds read control/updates.json as
+// published with this repository's GitHub Pages site; VITE_XPN_UPDATES_URL
+// points elsewhere (an Advanced Ads group, a file on xpn.org), or "off".
+// Development and the design preview show sample updates instead.
+export const UPDATES_DEFAULT = "https://alex-colemankime.github.io/xpn-app-update/updates.json";
+export function updatesUrl(setting, production) {
+  if (setting === "off") return "";
+  return setting || (production ? UPDATES_DEFAULT : "");
+}
+export const UPDATES_URL = updatesUrl(
+  import.meta.env?.VITE_XPN_UPDATES_URL,
+  Boolean(import.meta.env?.PROD) && !SHOW_SAMPLES,
+);
 
 // Push notifications (push.js): where the app registers a phone's push token
 // and the listener's topics (live video, member drives) for the station's
 // sender. Unset: those notifications are planned on the phone instead.
-export const PUSH_REGISTER_URL = OFF.has("push")
-  ? ""
-  : import.meta.env?.VITE_PUSH_REGISTER_URL || "";
+export const PUSH_REGISTER_URL = import.meta.env?.VITE_PUSH_REGISTER_URL || "";
 
 // Usage and crash reporting (analytics.js): WXPN's "WXPN App" GA4 property
 // (account 552242, property 558304207, stream "WXPN app"). Production
@@ -88,7 +93,7 @@ export function parseArchiveFeeds(setting) {
     .map(([show, url]) => ({ show, url: url.trim() }));
 }
 export const ARCHIVE_FEEDS = parseArchiveFeeds(import.meta.env?.VITE_XPN_ARCHIVE_FEEDS);
-export const ARCHIVE_ENABLED = ARCHIVE_FEEDS.length > 0 && !OFF.has("archive");
+export const ARCHIVE_ENABLED = ARCHIVE_FEEDS.length > 0;
 
 // Videos (videos.js): Brightcove playlists, each a section of the Videos tab,
 // read with Brightcove's Playback API and played in a Brightcove Player.
@@ -116,4 +121,4 @@ export const VIDEO_PLAYER = /^[\w-]+$/.test(import.meta.env?.VITE_BRIGHTCOVE_PLA
   ? import.meta.env.VITE_BRIGHTCOVE_PLAYER
   : "default";
 export const VIDEO_SECTIONS = parseVideoSections(import.meta.env?.VITE_BRIGHTCOVE_VIDEOS);
-export const VIDEOS_ENABLED = VIDEO_SECTIONS.length > 0 && !OFF.has("videos");
+export const VIDEOS_ENABLED = VIDEO_SECTIONS.length > 0;

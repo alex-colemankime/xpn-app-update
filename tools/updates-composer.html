@@ -214,6 +214,30 @@
           grid-template-columns: 1fr;
         }
       }
+      #switches label {
+        display: block;
+        margin: 8px 0;
+      }
+      #switches label.check {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        flex-wrap: wrap;
+      }
+      #switches label.check small {
+        flex-basis: 100%;
+        margin-left: 26px;
+        color: var(--muted);
+      }
+      #switches .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      #switches input:not([type]) {
+        width: 100%;
+        box-sizing: border-box;
+      }
     </style>
   </head>
   <body>
@@ -230,6 +254,29 @@
         <button id="load">Load an existing file…</button>
       </div>
       <div id="items"></div>
+      <h2>App switches</h2>
+      <p class="note">
+        Changes for apps already on phones. Phones pick them up within minutes of the file being
+        published. Leave a field empty to keep what the app was built with.
+      </p>
+      <section class="card" id="switches">
+        <h3>Features</h3>
+        <div id="features"></div>
+        <h3>Stream addresses <small>only if StreamGuys moves a mount</small></h3>
+        <div id="streams"></div>
+        <h3>Ask to update <small>for versions below a minimum</small></h3>
+        <label>Minimum version <input data-c="minVersion" placeholder="e.g. 1.2.0" /></label>
+        <label
+          >Message <input data-c="message" placeholder="A new version of the WXPN app is ready."
+        /></label>
+        <label
+          >App Store link <input data-c="ios" placeholder="https://apps.apple.com/app/id…"
+        /></label>
+        <label class="check">
+          <input type="checkbox" data-c="required" /> Required: this version can no longer work, so
+          the request can't be set aside
+        </label>
+      </section>
       <h2>The file</h2>
       <div class="bar">
         <button class="primary" id="copy">Copy</button>
@@ -389,8 +436,87 @@
         return out;
       }
 
+      // App switches (remote-config.js and features.js in the app).
+      const FEATURES = [
+        ["videos", "Videos", "The Videos tab, and videos in Favorites and on show pages"],
+        ["concerts", "Concerts", "The Concerts tab (Settings then links to xpn.org's calendar)"],
+        ["archive", "Archive", "Shows › Archive, and saved episodes"],
+        ["playlistSync", "Playlist sync", "Spotify and Apple Music playlists"],
+        ["push", "Push notifications", "The phone plans live video and drive notifications itself"],
+        [
+          "liveVideo",
+          "Free at Noon from xpn.org",
+          "Reading the week's video from the livestream page",
+        ],
+        ["reviewPrompt", "Store rating request", "Asking listeners to rate the app"],
+      ];
+      const STATIONS = [
+        ["xpn", "WXPN"],
+        ["xpn2", "XPN2"],
+        ["homegrown", "Homegrown"],
+      ];
+      const config = {
+        off: [],
+        streams: {},
+        minVersion: "",
+        message: "",
+        ios: "",
+        required: false,
+      };
+      function renderSwitches() {
+        $("#features").innerHTML = FEATURES.map(
+          ([id, name, about]) => `<label class="check"><input type="checkbox" data-f="${id}"
+            ${config.off.includes(id) ? "" : "checked"} /> <strong>${esc(name)}</strong>
+            <small>${esc(about)}</small></label>`,
+        ).join("");
+        $("#streams").innerHTML = STATIONS.map(
+          ([id, name]) => `<div class="row"><label>${esc(name)}
+            <input data-s="${id}.url" value="${esc(config.streams[id]?.url)}" placeholder="Built-in address" /></label>
+            <label>Backup <input data-s="${id}.backupUrl" value="${esc(config.streams[id]?.backupUrl)}" placeholder="Built-in backup" /></label></div>`,
+        ).join("");
+        for (const field of ["minVersion", "message", "ios"])
+          $(`[data-c="${field}"]`).value = config[field];
+        $('[data-c="required"]').checked = config.required;
+      }
+      function configJson() {
+        const out = {};
+        if (config.off.length) out.off = config.off;
+        const streams = Object.fromEntries(
+          Object.entries(config.streams)
+            .map(([id, s]) => [
+              id,
+              Object.fromEntries(Object.entries(s).filter(([, v]) => v.trim())),
+            ])
+            .filter(([, s]) => Object.keys(s).length),
+        );
+        if (Object.keys(streams).length) out.streams = streams;
+        if (config.minVersion.trim()) {
+          out.update = { minVersion: config.minVersion.trim() };
+          if (config.required) out.update.required = true;
+          if (config.message.trim()) out.update.message = config.message.trim();
+          if (config.ios.trim()) out.update.ios = config.ios.trim();
+        }
+        return Object.keys(out).length ? out : null;
+      }
+      function onSwitch(e) {
+        const t = e.target;
+        if (t.dataset.f) {
+          config.off = config.off.filter((f) => f !== t.dataset.f);
+          if (!t.checked) config.off.push(t.dataset.f);
+        } else if (t.dataset.s) {
+          const [id, key] = t.dataset.s.split(".");
+          config.streams[id] = { ...config.streams[id], [key]: t.value };
+        } else if (t.dataset.c) {
+          config[t.dataset.c] = t.type === "checkbox" ? t.checked : t.value;
+        } else return;
+        $("#json").textContent = JSON.stringify(file(), null, 2);
+      }
+      document.addEventListener("input", onSwitch);
+
       function file() {
+        const settings = configJson();
         return {
+          ...(settings ? { config: settings } : {}),
           updates: items.map((it) => {
             const id =
               it.id || slug(`${it.kind}-${it.title || it.text}-${(it.starts || "").slice(0, 10)}`);
@@ -483,14 +609,23 @@
           if (!text) return;
           try {
             items.length = 0;
-            (JSON.parse(text).updates || []).forEach((u) =>
-              add(u.kind === "live" ? "live" : "banner", u),
-            );
+            const loaded = JSON.parse(text);
+            const c = loaded.config || {};
+            config.off = Array.isArray(c.off) ? c.off : [];
+            config.streams = c.streams || {};
+            config.minVersion = c.update?.minVersion || "";
+            config.message = c.update?.message || "";
+            config.ios = c.update?.ios || "";
+            config.required = c.update?.required === true;
+            renderSwitches();
+            (loaded.updates || []).forEach((u) => add(u.kind === "live" ? "live" : "banner", u));
+            render();
           } catch {
             alert("That isn’t a valid updates file.");
           }
         }
       });
+      renderSwitches();
       render();
     </script>
   </body>

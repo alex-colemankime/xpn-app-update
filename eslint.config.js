@@ -31,6 +31,8 @@ export default [
     // Playwright's fixtures hand over with a function named `use`, which
     // the React hooks rule would take for React's.
     files: ["tests/e2e/**"],
+    // Code passed to page.evaluate runs in the browser.
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
     rules: { "react-hooks/rules-of-hooks": "off" },
   },
 ];

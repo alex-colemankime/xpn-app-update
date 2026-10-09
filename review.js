@@ -9,6 +9,7 @@
 import { Capacitor } from "@capacitor/core";
 import { InAppReview } from "@capacitor-community/in-app-review";
 import { readJson, writeJson } from "./storage.js";
+import { featureOn } from "./features.js";
 
 const KEY = "xpn.review";
 const MIN_MINUTES = 120;
@@ -30,6 +31,7 @@ export function startReviewPrompts({ version, subscribeSaves }) {
   const save = (patch) => writeJson(KEY, (state = { ...state, ...patch }));
   subscribeSaves(() => {
     save({ saves: (state.saves || 0) + 1 });
+    if (!featureOn("reviewPrompt")) return;
     if (!shouldAskForReview(state, { now: Date.now(), version })) return;
     save({ askedAt: Date.now(), askedVersion: version });
     // A moment after the heart, so the request doesn't cover it.

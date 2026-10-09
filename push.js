@@ -30,12 +30,13 @@ import { PUSH_REGISTER_URL } from "./config.js";
 import { withTimeout } from "./net.js";
 import { readJson, writeJson } from "./storage.js";
 import { webUrl } from "./text.js";
+import { featureOn } from "./features.js";
 
 const SENT_KEY = "xpn.push.sent";
 const APP_ID = "org.xpn.wxpn";
 const VERSION = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "";
 
-export const pushIsOn = () => Boolean(PUSH_REGISTER_URL) && Capacitor.isNativePlatform();
+export const pushIsOn = () => featureOn("push") && Capacitor.isNativePlatform();
 
 // What a tap on a pushed notification asks for, from its data, or null.
 // Pure, so it can be tested; links are https only.

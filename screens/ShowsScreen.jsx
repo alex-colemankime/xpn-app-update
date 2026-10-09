@@ -7,8 +7,10 @@ import { ShowCard } from "../components/MusicRows.jsx";
 import { useNow } from "../hooks/useNow.js";
 import { ARCHIVE_ENABLED } from "../config.js";
 import { ArchiveList } from "../components/Archive.jsx";
+import { useFeatures } from "../features.js";
 
-// All shows, the week's schedule, and (when there is one) the audio archive.
+// All shows, the week's schedule, and (when there is one, and it is on) the
+// audio archive.
 const MODES = ["All shows", "Schedule", ...(ARCHIVE_ENABLED ? ["Archive"] : [])];
 
 const matchesQuery = (query) => {
@@ -23,7 +25,10 @@ const scrollToOnAir = (list) =>
   list?.querySelector(".on-air-row")?.scrollIntoView({ block: "center", behavior: "instant" });
 
 export function ShowsScreen({ onOpen }) {
-  const [mode, setMode] = useState("All shows");
+  const features = useFeatures();
+  const modes = features.archive ? MODES : MODES.filter((m) => m !== "Archive");
+  const [chosen, setMode] = useState("All shows");
+  const mode = modes.includes(chosen) ? chosen : "All shows";
   const now = new Date(useNow());
   const today = easternParts(now).day;
   const onAirNow = onAirAt(now);
@@ -39,7 +44,7 @@ export function ShowsScreen({ onOpen }) {
       {/* The tab bar (or sidebar) already says where this is. */}
       <h1 className="sr-only">Shows</h1>
       <div className="toolbar">
-        <Segmented label="Browse shows" value={mode} onChange={setMode} options={MODES} />
+        <Segmented label="Browse shows" value={mode} onChange={setMode} options={modes} />
         <SearchField
           value={query}
           onChange={setQuery}

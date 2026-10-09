@@ -14,6 +14,7 @@ import { EpisodeDetail, EpisodeRow } from "./Archive.jsx";
 import { chooseVideoSection, useVideos } from "../videos.js";
 import { VideoCard } from "./VideoCard.jsx";
 import { useArtTint } from "../art-tint.js";
+import { useFeatures } from "../features.js";
 
 // A show's sheet, washed in the show's own color: who hosts it and when,
 // Follow, a row to listen while it is on the air, its videos (World Cafe) and
@@ -117,6 +118,7 @@ export function ShowDetail({
   // The show's recent broadcasts from the archive. A saved episode still
   // opens after it has left the archive (and says so if played).
   const archive = useArchive();
+  const features = useFeatures();
   const saved = useFavoriteItems("episodes");
   const archived = episodesOf(archive, show.id);
   const [offer, setOffer] = useState(false);
@@ -191,10 +193,10 @@ export function ShowDetail({
             {offer && <ReminderOffer show={show} onDone={() => setOffer(false)} />}
             <OnAirRow show={show} onListen={listen} />
             <p className="show-description">{show.desc}</p>
-            {videoSectionOf(show) && (
+            {features.videos && videoSectionOf(show) && (
               <ShowVideos show={show} onNavigate={onNavigate} onWatch={onWatch} />
             )}
-            {archived.length > 0 && (
+            {features.archive && archived.length > 0 && (
               <>
                 <div className="section-heading">
                   <h3>Episodes</h3>

@@ -69,3 +69,33 @@ test("no errors on any screen", async ({ page }) => {
   }
   expect(errors).toEqual([]);
 });
+
+test("the station can switch a feature off and on again", async ({ page }) => {
+  let off = ["videos"];
+  // Page routes take priority over the fixtures' catch-all.
+  await page.route(/\/updates\.json/, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: { "access-control-allow-origin": "*" },
+      body: JSON.stringify({ updates: [], config: { off } }),
+    }),
+  );
+  await page.goto("/");
+  const videosTab = page.getByRole("button", { name: /^Videos$/ });
+  await expect(page.getByRole("button", { name: /^Shows$/ }).first()).toBeVisible();
+  await expect(videosTab).toHaveCount(0);
+  // Switched back on: the next check (here, coming back to the app) brings it back.
+  off = [];
+  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  await expect(videosTab.first()).toBeVisible();
+});
+
+test("going offline says so, and coming back clears it", async ({ page, context }) => {
+  await page.goto("/");
+  const notice = page.getByRole("status").filter({ hasText: "You’re offline" });
+  await context.setOffline(true);
+  await expect(notice).toBeVisible();
+  await context.setOffline(false);
+  await expect(notice).toBeHidden();
+});

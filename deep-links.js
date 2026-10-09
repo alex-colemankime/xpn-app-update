@@ -15,7 +15,7 @@
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 import { SHOWS } from "./catalog.js";
-import { CONCERTS_ENABLED } from "./config.js";
+import { featureOn } from "./features.js";
 
 const HOSTS = new Set(["xpn.org", "www.xpn.org"]);
 const slugOf = (page) => /\/program\/([^/]+)/.exec(page || "")?.[1] || "";
@@ -40,7 +40,7 @@ export function routeForUrl(value) {
     return `#/shows/show/${encodeURIComponent(SHOW_BY_SLUG.get(second))}`;
   }
   if (first === "listen" || first === "wxpn-playlists") return "#/listen";
-  if (first === "concert-and-events" && CONCERTS_ENABLED) return "#/concerts";
+  if (first === "concert-and-events" && featureOn("concerts")) return "#/concerts";
   return null;
 }
 

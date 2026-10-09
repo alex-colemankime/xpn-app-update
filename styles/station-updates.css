@@ -195,3 +195,16 @@
     height: 48px;
   }
 }
+
+/* No connection: a plain line across the top, in the page's own colors. */
+.offline-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 10px var(--edge-right) 10px var(--edge-left);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.875rem;
+}

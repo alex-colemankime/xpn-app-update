@@ -18,6 +18,7 @@ import { NowPlayingSync } from "./components/NowPlayingSync.jsx";
 import { PlayerBar } from "./components/PlayerBar.jsx";
 import { ShowDetail } from "./components/ShowDetail.jsx";
 import { StationBanner } from "./components/StationUpdates.jsx";
+import { OfflineNotice } from "./components/OfflineNotice.jsx";
 import { Toast } from "./components/Toast.jsx";
 import { readJson, writeJson } from "./storage.js";
 import { CONCERTS_ENABLED, VIDEOS_ENABLED } from "./config.js";
@@ -26,6 +27,7 @@ import { ShowsScreen } from "./screens/ShowsScreen.jsx";
 import { LibraryScreen } from "./screens/LibraryScreen.jsx";
 import { trackScreen } from "./analytics.js";
 import { UpdatePrompt } from "./components/UpdatePrompt.jsx";
+import { useFeatures } from "./features.js";
 
 const ONBOARDED_KEY = "xpn.onboarded";
 
@@ -91,6 +93,15 @@ export default function App() {
   // Each screen change reads as a new page: top of the page, focus on main
   // so screen readers announce the new content.
   // (Not on first load, which is already at the top.)
+  // A screen the station has switched off (features.js) while it was open:
+  // back to Listen.
+  const features = useFeatures();
+  const screenOff = features[route.screen] === false;
+  const { navigate } = route;
+  useEffect(() => {
+    if (screenOff) navigate("listen");
+  }, [screenOff, navigate]);
+
   const main = useRef(null);
   const shownScreen = useRef(route.screen);
   useEffect(
@@ -135,6 +146,7 @@ export default function App() {
         {alarm.ringing && (
           <AlarmBanner alarm={alarm.alarm} onSnooze={alarm.snooze} onDismiss={alarm.dismiss} />
         )}
+        <OfflineNotice />
         <StationBanner
           banner={updates.banner}
           live={updates.live}
@@ -154,12 +166,12 @@ export default function App() {
           <Screen id="shows" label="Shows" current={route.screen}>
             <ShowsScreen onOpen={route.openShow} />
           </Screen>
-          {VIDEOS_ENABLED && (
+          {VIDEOS_ENABLED && features.videos && (
             <Screen id="videos" label="Videos" current={route.screen}>
               <Videos onWatch={watching.watchVideo} />
             </Screen>
           )}
-          {CONCERTS_ENABLED && (
+          {CONCERTS_ENABLED && features.concerts && (
             <Screen id="concerts" label="Concerts" current={route.screen}>
               <Concerts result={concerts} />
             </Screen>

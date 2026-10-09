@@ -26,7 +26,16 @@ import { createStore, readJson, writeJson } from "./storage.js";
 import { oneLine, plainText, webUrl } from "./text.js";
 
 const KEY = "xpn.remote-config";
-export const FEATURES = ["videos", "concerts", "archive", "playlistSync", "push"];
+// What the station can turn off and on again (features.js says what each is).
+export const FEATURES = [
+  "videos",
+  "concerts",
+  "archive",
+  "playlistSync",
+  "push",
+  "liveVideo",
+  "reviewPrompt",
+];
 const STREAM_HOSTS = /(^|\.)(xpn\.org|streamguys1\.com|streamguys\.com)$/;
 const PLAY_STORE = "https://play.google.com/store/apps/details?id=org.xpn.wxpn";
 

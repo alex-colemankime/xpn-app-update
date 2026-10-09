@@ -10,17 +10,18 @@ npm run dev        # http://127.0.0.1:5173, sample content visible
 npm run check      # lint, formatting, tests and a production build
 ```
 
-| Script                | What it does                                            |
-| --------------------- | ------------------------------------------------------- |
-| `npm run dev`         | Dev server with hot reload                              |
-| `npm run build`       | Production build into `dist/`                           |
-| `npm run build:pages` | Build for the GitHub Pages preview (`/xpn-app-update/`) |
-| `npm test`            | Unit tests (`node --test`, no extra dependencies)       |
-| `npm run e2e`         | End-to-end tests: builds, serves and drives the app     |
-| `npm run lint`        | ESLint, including React hooks rules                     |
-| `npm run format`      | Prettier, in place                                      |
-| `npm run check`       | Everything CI runs except `npm audit`, in one go        |
-| `npm run cap:sync`    | Build and copy into the native projects                 |
+| Script                       | What it does                                              |
+| ---------------------------- | --------------------------------------------------------- |
+| `npm run dev`                | Dev server with hot reload                                |
+| `npm run build`              | Production build into `dist/`                             |
+| `npm run build:pages`        | Build for the GitHub Pages preview (`/xpn-app-update/`)   |
+| `npm test`                   | Unit tests (`node --test`, no extra dependencies)         |
+| `npm run e2e`                | End-to-end tests: builds, serves and drives the app       |
+| `node tools/store-shots.mjs` | Store screenshots from raw shots (see `store/listing.md`) |
+| `npm run lint`               | ESLint, including React hooks rules                       |
+| `npm run format`             | Prettier, in place                                        |
+| `npm run check`              | Everything CI runs except `npm audit`, in one go          |
+| `npm run cap:sync`           | Build and copy into the native projects                   |
 
 End-to-end tests (`tests/e2e`, Playwright) play the station, change station, save a song and find it in Favorites, open and follow a show, follow a show link, keep the dark theme, and open every screen without an error, at phone and desktop sizes. Every outside service is answered by fixtures (`tests/e2e/fixtures.mjs`; the streams are a few seconds of silence), so they run offline. To use a browser already installed, set `PLAYWRIGHT_CHROMIUM` to its path; otherwise `npx playwright install chromium` once.
 
@@ -36,7 +37,7 @@ Build-time settings are Vite env variables, set in the shell or a `.env.local` f
 | Variable                     | Effect                                                                                                                                                                                                                                                                        |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `VITE_XPN_CONCERTS_ENDPOINT` | The concert calendar. Default: xpn.org's own calendar (`https://xpn.org/wp-json/tribe/events/v1/events`). `off` removes the Concerts tab.                                                                                                                                     |
-| `VITE_XPN_UPDATES_URL`       | The station updates file (banner, live video), or an Advanced Ads group's REST address. Unset: no updates (preview builds show samples). See "Station updates".                                                                                                               |
+| `VITE_XPN_UPDATES_URL`       | The station updates and app switches. Production default: `control/updates.json` as published with the Pages site; another address (an xpn.org file, an Advanced Ads group), or `off`. Development and the preview show samples. See "Station updates" and "Remote config".   |
 | `VITE_PUSH_REGISTER_URL`     | Turns on push notifications: where the app registers a phone's push token and topics. Unset: live video and drive notifications are planned on the phone. See "Push notifications".                                                                                           |
 | `VITE_GA4_ID`                | Usage and crash reporting. Production builds report to WXPN's "WXPN App" GA4 property (`G-JDR8LLHT18`) by default; a `G-…` id names another, and `off` turns it off (the preview and the end-to-end tests). Development builds never report. See "Usage and crash reporting". |
 | `VITE_XPN_ARCHIVE_FEEDS`     | Where on-demand episodes come from, as `show=URL` pairs (a show page on xpn.org, or a podcast feed). Default: the four shows xpn.org archives (Sleepy Hollow, Funky Friday, Land of the Lost, World Cafe). `off` removes the Archive tab. See "Audio archive".                |
@@ -64,10 +65,12 @@ The station can put a message in the app without a release: a banner across ever
 
 ## Remote config
 
-Changes the station can make to apps already on phones, without a store release, in the same station updates (a `"config"` object beside `"updates"` in the file, or an Advanced Ads ad whose JSON is `{ "config": { … } }`). See `remote-config.js`.
+Changes the station can make to apps already on phones, without a store release, in the same station updates (a `"config"` object beside `"updates"` in the file, or an Advanced Ads ad whose JSON is `{ "config": { … } }`). See `remote-config.js` and `features.js`.
+
+**Where it lives:** production builds read `control/updates.json` from this repository, as the deploy publishes it (`https://alex-colemankime.github.io/xpn-app-update/updates.json`). To change it, edit the file on GitHub (or build it in `tools/updates-composer.html`, which now has an **App switches** section, and paste it in) and commit to `main`. CI checks the file (`tests/control-file.test.mjs`) before the deploy publishes it, and phones pick it up within minutes. To move it to xpn.org or an Advanced Ads group later, set `VITE_XPN_UPDATES_URL` for the build.
 
 - **`streams`:** new addresses for a station (`{ "xpn": { "url": "…", "backupUrl": "…" } }`), for when StreamGuys moves a mount. Used from the next connection. Only https addresses on xpn.org or StreamGuys hosts are accepted; removing the entry goes back to the built-in address.
-- **`off`:** features to hide (`videos`, `concerts`, `archive`, `playlistSync`, `push`), for a feed or service that breaks. Takes effect the next time the app opens.
+- **`off`:** features to turn off, for a feed or service that breaks: `videos`, `concerts`, `archive`, `playlistSync`, `push`, `liveVideo` (reading Free at Noon from xpn.org) and `reviewPrompt`. Phones follow while the app is open: a tab disappears (a listener on it goes back to Listen), and comes back when the feature is removed from the list.
 - **`update`:** `{ "minVersion": "1.2.0", "message": "…", "required": false, "ios": "<App Store link>" }`. Phone apps older than `minVersion` ask to update (Android links to the Play listing on its own). `required: true` can't be dismissed: for a version that can no longer work. Otherwise it can be set aside once per minimum version.
 
 The last config is kept on the phone, so it holds offline and from the first moment of the next launch.
@@ -233,6 +236,7 @@ brand/               logo source files (not shipped with the app)
 - **Station updates hosting:** choose where `updates.json` lives and who edits it.
 - **Playlist sync accounts:** a Spotify app (with extended quota) and an Apple Music developer token.
 - **Reporting:** GA4 is set up (WXPN App property); data starts with the first production build people use. Native crashes need Crashlytics or Sentry.
+- **Store listing:** screenshots (iPhone, iPad, Android), Play's feature graphic and the listing text are in `store/` (`store/listing.md`); confirm the support page before submitting.
 - **Store privacy answers:** with reporting on, Apple's App Privacy and Google's Data safety should declare Usage Data (product interaction) and Diagnostics (crash data), not linked to identity and not used for tracking; with push, a device id (push token) for app functionality. Favorites and settings stay on the phone.
 
 ## Design basis

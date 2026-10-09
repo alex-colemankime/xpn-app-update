@@ -12,6 +12,7 @@ import { TrackRow, ShowCard, SaveButton } from "../components/MusicRows.jsx";
 import { ConcertRow } from "../components/ConcertRow.jsx";
 import { PlaylistSyncPrompt } from "../components/PlaylistSync.jsx";
 import { calendarIsNative, downloadIcs } from "../calendar.js";
+import { useFeatures } from "../features.js";
 
 // Empty-state copy and the screen each category's call to action opens.
 const EMPTY = {
@@ -61,14 +62,17 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
   const today = easternToday();
 
   const archive = useArchiveState();
+  const features = useFeatures();
   const items = {
     songs,
     shows,
-    ...(ARCHIVE_ENABLED ? { episodes } : {}),
-    ...(VIDEOS_ENABLED ? { videos } : {}),
+    ...(ARCHIVE_ENABLED && features.archive ? { episodes } : {}),
+    ...(VIDEOS_ENABLED && features.videos ? { videos } : {}),
     // Saved with their details, so they show even while the feed is down;
     // past dates drop off.
-    ...(CONCERTS_ENABLED ? { concerts: concertsSaved.filter((c) => c.date >= today) } : {}),
+    ...(CONCERTS_ENABLED && features.concerts
+      ? { concerts: concertsSaved.filter((c) => c.date >= today) }
+      : {}),
   };
   const category = items[type] ? type : "songs";
   const q = query.trim().toLowerCase();

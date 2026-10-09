@@ -7,18 +7,18 @@ import { ShowReminders, StationAlerts } from "../components/NotificationSettings
 import { PlaylistSyncPanel } from "../components/PlaylistSync.jsx";
 import { RadioAlarmPanel } from "../components/RadioAlarm.jsx";
 import { useNotificationTrouble } from "../notifications.js";
-import { CONCERTS_ENABLED } from "../config.js";
 import { SocialLinks } from "../components/SocialLinks.jsx";
 import { CALENDAR_URL, DONATE_URL, PRIVACY_URL, STATION_EMAIL } from "../links.js";
 import { reportingAvailable, reportingStore, setReporting } from "../analytics.js";
 import { useLocalStore } from "../storage.js";
+import { useFeatures } from "../features.js";
 
 // The app's version, from package.json (see vite.config.js).
 const VERSION = __APP_VERSION__;
 
 const LINKS = [
   { label: "Donate to WXPN", url: DONATE_URL },
-  ...(CONCERTS_ENABLED ? [] : [{ label: "Concert calendar", url: CALENDAR_URL }]),
+  { label: "Concert calendar", url: CALENDAR_URL, whenOff: "concerts" },
   { label: "Contact the station", url: `mailto:${STATION_EMAIL}` },
   {
     label: "Technical support",
@@ -35,6 +35,8 @@ const THEMES = [
   { value: "dark", label: "Dark" },
 ];
 
+// Concert calendar: only while the Concerts tab is off (the build has none,
+// or the station switched it off), so the calendar is still a tap away.
 // Usage reporting (analytics.js), on unless the listener turns it off.
 function UsageReporting() {
   const { on } = useLocalStore(reportingStore);
@@ -67,6 +69,7 @@ export function SettingsScreen({
   onAppearance,
   onNavigate,
 }) {
+  const features = useFeatures();
   const volume = useVolume();
   const { castAvailable } = usePlayer();
   const trouble = useNotificationTrouble();
@@ -142,7 +145,7 @@ export function SettingsScreen({
               Stay connected
             </h2>
             <SocialLinks />
-            {LINKS.map((link) => {
+            {LINKS.filter((link) => !link.whenOff || !features[link.whenOff]).map((link) => {
               const web = link.url.startsWith("http");
               return (
                 <a

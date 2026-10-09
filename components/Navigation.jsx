@@ -1,9 +1,11 @@
 import { Icon, Wordmark } from "../ui.jsx";
 import { DONATE_URL } from "../links.js";
 import { CONCERTS_ENABLED, VIDEOS_ENABLED } from "../config.js";
+import { useFeatures } from "../features.js";
 
 // The app's screens, in navigation order. Videos and Concerts only have tabs
-// when there is something to show (see config.js).
+// when the build sets them up (config.js) and the station hasn't switched
+// them off (features.js).
 const NAV = [
   { id: "listen", label: "Listen live", short: "Listen", icon: "navLive" },
   { id: "favorites", label: "Favorites", short: "Favorites", icon: "heart" },
@@ -18,6 +20,12 @@ export const TITLES = {
   settings: "Settings",
 };
 
+// The screens with a tab right now.
+function useNav() {
+  const features = useFeatures();
+  return NAV.filter((n) => features[n.id] !== false);
+}
+
 // Props for a control that opens a screen: marked current while it is shown.
 const opens = (id, screen, navigate) => ({
   "aria-current": screen === id ? "page" : undefined,
@@ -26,6 +34,7 @@ const opens = (id, screen, navigate) => ({
 
 // Tablets and laptops: the wordmark, the screens, Settings and Donate.
 export function Sidebar({ screen, navigate }) {
+  const nav = useNav();
   return (
     <aside className="app-sidebar">
       <button className="brand" onClick={() => navigate("listen")}>
@@ -33,7 +42,7 @@ export function Sidebar({ screen, navigate }) {
         <Wordmark dot />
       </button>
       <nav aria-label="Main navigation">
-        {NAV.map((n) => (
+        {nav.map((n) => (
           <button
             key={n.id}
             className={`nav-button ${screen === n.id ? "active" : ""}`}
@@ -96,9 +105,10 @@ export function TopBar({ screen, navigate }) {
 
 // Phones: the screens as tabs along the bottom.
 export function TabBar({ screen, navigate }) {
+  const nav = useNav();
   return (
     <nav className="mobile-nav" aria-label="Mobile navigation">
-      {NAV.map((n) => (
+      {nav.map((n) => (
         <button
           key={n.id}
           className={screen === n.id ? "active" : ""}

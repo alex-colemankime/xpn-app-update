@@ -17,14 +17,10 @@
 //   remove(id, refs)     remove tracks (null where the service cannot)
 
 import { Capacitor } from "@capacitor/core";
-import {
-  APPLE_MUSIC_DEVELOPER_TOKEN,
-  APPLE_MUSIC_TOKEN_URL,
-  SPOTIFY_CLIENT_ID,
-  featureOff,
-} from "./config.js";
+import { APPLE_MUSIC_DEVELOPER_TOKEN, APPLE_MUSIC_TOKEN_URL, SPOTIFY_CLIENT_ID } from "./config.js";
 import { readJson, writeJson } from "./storage.js";
 import { withTimeout } from "./net.js";
+import { featureOn } from "./features.js";
 
 export const PLAYLIST_NAME = "WXPN Favorites";
 const PLAYLIST_DESCRIPTION =
@@ -427,7 +423,7 @@ const appleMusic = {
 export const SERVICES = { spotify, apple: appleMusic };
 // Playlist sync can be turned off remotely (remote-config.js).
 export const availableServices = () =>
-  featureOff("playlistSync") ? [] : Object.values(SERVICES).filter((s) => s.available());
+  !featureOn("playlistSync") ? [] : Object.values(SERVICES).filter((s) => s.available());
 
 // Spotify's return trip: on the web the app reloads at its own address with
 // ?code=…&state=…; in the phone apps the system hands back NATIVE_REDIRECT.

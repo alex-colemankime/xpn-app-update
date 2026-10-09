@@ -66,6 +66,11 @@ jobs:
       - name: Add the screens page
         run: cp -R design/screens dist/screens
 
+      # The station updates and app switches the phone apps read
+      # (config.js UPDATES_DEFAULT), at …/xpn-app-update/updates.json.
+      - name: Publish the app control file
+        run: cp control/updates.json dist/updates.json
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:

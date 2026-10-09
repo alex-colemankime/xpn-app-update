@@ -12,6 +12,7 @@ import { configFrom, saveConfig } from "../remote-config.js";
 import { applyStreamOverrides } from "../streams.js";
 import { createLocalStore, readJson, useLocalStore, writeJson } from "../storage.js";
 import { useNow } from "./useNow.js";
+import { applySwitches, featureOn } from "../features.js";
 
 // Station updates (see updates.js): fetched at launch, whenever the app comes
 // back to the front, and every few minutes while it is open. The last good
@@ -51,12 +52,13 @@ async function loadUpdates(signal) {
   const config = configFrom(json);
   saveConfig(config);
   applyStreamOverrides(config.streams);
+  applySwitches(config.off);
   return normalizeUpdates(json);
 }
 
 // Around each Free at Noon, the week's video from xpn.org's livestream page.
 async function loadLivestream(signal) {
-  const airing = LIVESTREAM_PAGE_URL && airingSoon("freeatnoon", LIVE_ANNOUNCE_MINUTES);
+  const airing = featureOn("liveVideo") && airingSoon("freeatnoon", LIVE_ANNOUNCE_MINUTES);
   if (!airing) return null;
   const response = await fetch(LIVESTREAM_PAGE_URL, {
     signal: withTimeout(signal),

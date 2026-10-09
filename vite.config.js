@@ -5,6 +5,7 @@ import babel from "@rolldown/plugin-babel";
 import { defineConfig, loadEnv } from "vite";
 import {
   ga4Id,
+  updatesUrl,
   parseArchiveFeeds as archiveFeeds,
   parseVideoSections as videoSections,
 } from "./config.js";
@@ -89,7 +90,7 @@ function contentSecurityPolicy(env, mode) {
           "https://accounts.spotify.com",
           "https://api.music.apple.com",
           "https://*.apple.com",
-          origin(env.VITE_XPN_UPDATES_URL),
+          origin(updatesUrl(env.VITE_XPN_UPDATES_URL, mode === "production")),
           origin(env.VITE_PUSH_REGISTER_URL),
           origin(env.VITE_XPN_CONCERTS_ENDPOINT),
           origin(env.VITE_XPN_LIVESTREAM_PAGE),
