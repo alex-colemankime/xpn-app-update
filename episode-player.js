@@ -62,6 +62,8 @@ const core = createEpisodePlayer({
 // What the player bar and the archive draw from. The core only reports
 // changes once something plays, so this starts from its idle state.
 const episodeStore = createStore(core.getState());
+export const subscribeEpisode = episodeStore.subscribe;
+export const getEpisodeSnapshot = episodeStore.getSnapshot;
 
 if (typeof window !== "undefined") {
   // The station starting again pauses the episode (it keeps its place).

@@ -78,6 +78,7 @@ export function Art({ src, alt = "", className = "", ...props }) {
 }
 
 // Native dialog provides focus containment, Escape dismissal, and a modal backdrop.
+// Without `onClose` it can't be dismissed (no Close key, Escape or backdrop).
 export function Modal({ title, children, onClose, className = "", style }) {
   const ref = useRef(null);
   const id = useId();
@@ -106,22 +107,24 @@ export function Modal({ title, children, onClose, className = "", style }) {
       aria-labelledby={id}
       onCancel={(e) => {
         e.preventDefault();
-        onClose();
+        onClose?.();
       }}
       onClick={(e) => {
         if (e.target !== e.currentTarget) return;
         const r = e.currentTarget.getBoundingClientRect();
         if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)
-          onClose();
+          onClose?.();
       }}
     >
       <div className="dialog-header">
         <h2 id={id} className="dialog-title" tabIndex={-1}>
           {title}
         </h2>
-        <button className="icon-button" onClick={onClose} aria-label="Close">
-          <Icon name="close" />
-        </button>
+        {onClose && (
+          <button className="icon-button" onClick={onClose} aria-label="Close">
+            <Icon name="close" />
+          </button>
+        )}
       </div>
       {children}
       <Toast inModal />

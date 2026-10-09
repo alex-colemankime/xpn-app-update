@@ -130,3 +130,11 @@
     );
   }
 }
+
+/* Share sits beside Follow: the show's xpn.org page, which opens the show
+   in the app for anyone who has it (deep-links.js). */
+.show-share {
+  margin-left: 4px;
+  vertical-align: middle;
+  color: var(--text);
+}

@@ -1,4 +1,9 @@
-// Build-time switches (see README).
+// Build-time switches (see README), and features the station has turned
+// off remotely (remote-config.js; applied at launch).
+import { savedConfig } from "./remote-config.js";
+
+const OFF = new Set(savedConfig().off);
+export const featureOff = (feature) => OFF.has(feature);
 
 // Placeholder content (sample station updates, and music services shown before
 // they are configured) exists for design review only. It appears in `npm run dev` and in builds made with
@@ -17,7 +22,7 @@ export const CONCERTS_ENDPOINT =
   concertsSetting === "off"
     ? ""
     : concertsSetting || "https://xpn.org/wp-json/tribe/events/v1/events";
-export const CONCERTS_ENABLED = Boolean(CONCERTS_ENDPOINT);
+export const CONCERTS_ENABLED = Boolean(CONCERTS_ENDPOINT) && !OFF.has("concerts");
 
 // Station updates (a member-drive banner, a live video to watch): a small JSON
 // file the station hosts and edits; see updates.js and README. Unset: none,
@@ -27,7 +32,9 @@ export const UPDATES_URL = import.meta.env?.VITE_XPN_UPDATES_URL || "";
 // Push notifications (push.js): where the app registers a phone's push token
 // and the listener's topics (live video, member drives) for the station's
 // sender. Unset: those notifications are planned on the phone instead.
-export const PUSH_REGISTER_URL = import.meta.env?.VITE_PUSH_REGISTER_URL || "";
+export const PUSH_REGISTER_URL = OFF.has("push")
+  ? ""
+  : import.meta.env?.VITE_PUSH_REGISTER_URL || "";
 
 // Usage and crash reporting (analytics.js): the GA4 measurement id
 // ("G-XXXXXXX"). Unset: nothing is sent.
@@ -75,7 +82,7 @@ export function parseArchiveFeeds(setting) {
     .map(([show, url]) => ({ show, url: url.trim() }));
 }
 export const ARCHIVE_FEEDS = parseArchiveFeeds(import.meta.env?.VITE_XPN_ARCHIVE_FEEDS);
-export const ARCHIVE_ENABLED = ARCHIVE_FEEDS.length > 0;
+export const ARCHIVE_ENABLED = ARCHIVE_FEEDS.length > 0 && !OFF.has("archive");
 
 // Videos (videos.js): Brightcove playlists, each a section of the Videos tab,
 // read with Brightcove's Playback API and played in a Brightcove Player.
@@ -103,4 +110,4 @@ export const VIDEO_PLAYER = /^[\w-]+$/.test(import.meta.env?.VITE_BRIGHTCOVE_PLA
   ? import.meta.env.VITE_BRIGHTCOVE_PLAYER
   : "default";
 export const VIDEO_SECTIONS = parseVideoSections(import.meta.env?.VITE_BRIGHTCOVE_VIDEOS);
-export const VIDEOS_ENABLED = VIDEO_SECTIONS.length > 0;
+export const VIDEOS_ENABLED = VIDEO_SECTIONS.length > 0 && !OFF.has("videos");

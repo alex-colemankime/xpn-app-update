@@ -8,6 +8,8 @@ import {
 } from "../updates.js";
 import { airingSoon } from "../catalog.js";
 import { withTimeout } from "../net.js";
+import { configFrom, saveConfig } from "../remote-config.js";
+import { applyStreamOverrides } from "../streams.js";
 import { createLocalStore, readJson, useLocalStore, writeJson } from "../storage.js";
 import { useNow } from "./useNow.js";
 
@@ -45,6 +47,10 @@ async function loadUpdates(signal) {
   if (!response.ok) throw new Error(`Updates: HTTP ${response.status}`);
   const json = await response.json();
   writeJson(CACHE_KEY, json);
+  // The station's remote config rides along (remote-config.js).
+  const config = configFrom(json);
+  saveConfig(config);
+  applyStreamOverrides(config.streams);
   return normalizeUpdates(json);
 }
 

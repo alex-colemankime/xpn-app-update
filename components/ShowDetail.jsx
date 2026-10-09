@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Icon, Art, Modal } from "../ui.jsx";
+import { Icon, Art, Modal, shareText } from "../ui.jsx";
+import { showToast } from "../toast.js";
 import { shortName, onAirAt, nextAiringOf, untilLabel } from "../catalog.js";
 import { deviceIsEastern } from "../time.js";
 import { useFavoriteItems } from "../favorites.js";
@@ -174,6 +175,17 @@ export function ShowDetail({
                 >
                   {(saved) => (saved ? "Following" : "Follow show")}
                 </SaveButton>
+                {show.page && (
+                  <button
+                    className="icon-button show-share"
+                    aria-label={`Share ${show.name}`}
+                    onClick={async () =>
+                      showToast(await shareText(show.name, `${show.name} on WXPN`, show.page))
+                    }
+                  >
+                    <Icon name="shareAlt" size={19} />
+                  </button>
+                )}
               </div>
             </div>
             {offer && <ReminderOffer show={show} onDone={() => setOffer(false)} />}

@@ -7,7 +7,13 @@ import { startPlaylistSync } from "./playlist-sync.js";
 // request on launch, and text renders the same offline.
 import "@fontsource-variable/figtree";
 import "./global.css";
-import { reportError, startAnalytics } from "./analytics.js";
+import { reportError, startAnalytics, track } from "./analytics.js";
+import { startListeningMeter } from "./listening.js";
+import { startDeepLinks } from "./deep-links.js";
+import { startReviewPrompts } from "./review.js";
+import { getSavedSongs, subscribeFavorites } from "./favorites.js";
+import { getEpisodeSnapshot, subscribeEpisode } from "./episode-player.js";
+import { onAirAt } from "./catalog.js";
 import { followTextSize } from "./text-size.js";
 import { startCarAudio } from "./car.js";
 import {
@@ -46,6 +52,28 @@ if (devicePreview) {
   startPlaylistSync();
   startAnalytics();
   followTextSize();
+  startDeepLinks();
+  // A store rating is asked for after a heart, once the listener knows the app.
+  let songs = getSavedSongs().length;
+  const reviews = startReviewPrompts({
+    version: __APP_VERSION__,
+    subscribeSaves: (onSave) =>
+      subscribeFavorites(() => {
+        const now = getSavedSongs().length;
+        if (now > songs) onSave();
+        songs = now;
+      }),
+  });
+  startListeningMeter({
+    track: (name, params) => {
+      track(name, params);
+      reviews.addMinutes(params.minutes);
+    },
+    live: { subscribe: subscribePlayer, getSnapshot: getPlayerSnapshot },
+    episode: { subscribe: subscribeEpisode, getSnapshot: getEpisodeSnapshot },
+    // The FM schedule names WXPN's shows; XPN2 and Homegrown have none.
+    showOnAir: (station) => (station === "xpn" ? onAirAt()?.show.id || "" : ""),
+  });
   startCarAudio({
     select: selectStream,
     play: playStream,

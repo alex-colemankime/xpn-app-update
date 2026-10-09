@@ -1,0 +1,16 @@
+<!--
+  App Links: add inside the main <activity> in android/app/src/main/AndroidManifest.xml.
+  Android verifies them against https://xpn.org/.well-known/assetlinks.json.
+-->
+<intent-filter android:autoVerify="true">
+    <action android:name="android.intent.action.VIEW" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+    <data android:scheme="https" />
+    <data android:host="xpn.org" />
+    <data android:host="www.xpn.org" />
+    <data android:pathPrefix="/program/" />
+    <data android:pathPrefix="/listen" />
+    <data android:pathPrefix="/wxpn-playlists" />
+    <data android:pathPrefix="/concert-and-events" />
+</intent-filter>

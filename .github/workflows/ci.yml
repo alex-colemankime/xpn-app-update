@@ -42,5 +42,9 @@ jobs:
       - name: Test
         run: npm test
 
+      # The main journeys in a real browser, against fixtures (tests/e2e).
+      - name: End-to-end tests
+        run: npx playwright install --with-deps chromium && npm run e2e
+
       - name: Build
         run: npm run build

@@ -16,12 +16,15 @@ npm run check      # lint, formatting, tests and a production build
 | `npm run build`       | Production build into `dist/`                           |
 | `npm run build:pages` | Build for the GitHub Pages preview (`/xpn-app-update/`) |
 | `npm test`            | Unit tests (`node --test`, no extra dependencies)       |
+| `npm run e2e`         | End-to-end tests: builds, serves and drives the app     |
 | `npm run lint`        | ESLint, including React hooks rules                     |
 | `npm run format`      | Prettier, in place                                      |
 | `npm run check`       | Everything CI runs except `npm audit`, in one go        |
 | `npm run cap:sync`    | Build and copy into the native projects                 |
 
-CI runs `lint`, `format:check`, `test` and `build` on every push and pull request, plus `npm audit` of everything the app ships (a high or critical advisory fails a branch's checks, and is flagged on `main` without blocking the preview). Pushes to `main` also deploy the preview to GitHub Pages:
+End-to-end tests (`tests/e2e`, Playwright) play the station, change station, save a song and find it in Favorites, open and follow a show, follow a show link, keep the dark theme, and open every screen without an error, at phone and desktop sizes. Every outside service is answered by fixtures (`tests/e2e/fixtures.mjs`; the streams are a few seconds of silence), so they run offline. To use a browser already installed, set `PLAYWRIGHT_CHROMIUM` to its path; otherwise `npx playwright install chromium` once.
+
+CI runs `lint`, `format:check`, `test`, the end-to-end tests and `build` on every push and pull request, plus `npm audit` of everything the app ships (a high or critical advisory fails a branch's checks, and is flagged on `main` without blocking the preview). Pushes to `main` also deploy the preview to GitHub Pages:
 
 - **Live preview:** https://alex-colemankime.github.io/xpn-app-update/ (on a computer, with Phone, Tablet and Laptop buttons)
 - **Every screen:** https://alex-colemankime.github.io/xpn-app-update/screens/ (light and dark, from `design/screens/`)
@@ -59,6 +62,16 @@ The station can put a message in the app without a release: a banner across ever
 - **Reaching phones that haven't opened the app** is push; see "Push notifications". With it set up, the phone stops planning these itself, so nothing arrives twice.
 - **From WordPress instead of a file:** point `VITE_XPN_UPDATES_URL` at an Advanced Ads group's REST address (Advanced Ads Pro › Settings › Pro › REST API; `https://xpn.org/wp-json/advanced-ads/v1/groups/<id>`). Each ad in the group is one update, and the ad's own start and expiry dates decide when it shows. An ad's content is either a plain message whose first link is the button (a banner), or the update as JSON from the composer's **Copy for Advanced Ads** (a live video, or a banner with notifications). WordPress's curly quotes are undone, and half-written JSON is skipped. The REST response's exact shape should be checked against a real group once it exists; `advancedAdsUpdates` in `updates.js` reads `content` (plain or `{ rendered }`) and `id` from each ad, as a list or `{ ads: [...] }`.
 
+## Remote config
+
+Changes the station can make to apps already on phones, without a store release, in the same station updates (a `"config"` object beside `"updates"` in the file, or an Advanced Ads ad whose JSON is `{ "config": { … } }`). See `remote-config.js`.
+
+- **`streams`:** new addresses for a station (`{ "xpn": { "url": "…", "backupUrl": "…" } }`), for when StreamGuys moves a mount. Used from the next connection. Only https addresses on xpn.org or StreamGuys hosts are accepted; removing the entry goes back to the built-in address.
+- **`off`:** features to hide (`videos`, `concerts`, `archive`, `playlistSync`, `push`), for a feed or service that breaks. Takes effect the next time the app opens.
+- **`update`:** `{ "minVersion": "1.2.0", "message": "…", "required": false, "ios": "<App Store link>" }`. Phone apps older than `minVersion` ask to update (Android links to the Play listing on its own). `required: true` can't be dismissed: for a version that can no longer work. Otherwise it can be set aside once per minimum version.
+
+The last config is kept on the phone, so it holds offline and from the first moment of the next launch.
+
 ## Push notifications
 
 Live video and member drive notifications that reach phones whether or not the app has been opened lately. The app side is done (`push.js`); it needs a sender, which can be any service that sends to Apple (APNs) and Google (FCM):
@@ -69,7 +82,7 @@ Live video and member drive notifications that reach phones whether or not the a
 
 ## Usage and crash reporting
 
-With `VITE_GA4_ID` set, the app reports to that GA4 property (`analytics.js`): screens as `page_view`, and `play_station`, `save` / `unsave`, `episode_play`, `video_play`, `donate_click`, `share`, `turn_on` (reminders, alarm, live, drives), `music_connect`, and errors as `exception` (anonymous, each once per session; React's and the page's uncaught errors included). No cookies, advertising ids, Google signals or ad personalization; each install has a random id. Listeners can turn it off in Settings › Privacy, which forgets the id. The Content Security Policy allows Google's addresses only when an id is set. In GA4, mark `exception` and the events above as custom dimensions/reports as needed. Native crashes (outside the web view) need a native crash reporter such as Firebase Crashlytics or Sentry, added in Xcode and Android Studio.
+With `VITE_GA4_ID` set, the app reports to that GA4 property (`analytics.js`): screens as `page_view`, and `play_station`, `save` / `unsave`, `episode_play`, `video_play`, `donate_click`, `share`, `turn_on` (reminders, alarm, live, drives), `music_connect`, and errors as `exception` (anonymous, each once per session; React's and the page's uncaught errors included). Listening time is reported as `listen_time` (`listening.js`): `{ content: "live" | "episode", station, show, minutes }`, every five minutes while audio plays and when it stops, so summing `minutes` (register it as a custom metric in GA4) gives listening hours by station and show. No cookies, advertising ids, Google signals or ad personalization; each install has a random id. Listeners can turn it off in Settings › Privacy, which forgets the id. The Content Security Policy allows Google's addresses only when an id is set. In GA4, mark `exception` and the events above as custom dimensions/reports as needed. Native crashes (outside the web view) need a native crash reporter such as Firebase Crashlytics or Sentry, added in Xcode and Android Studio.
 
 ## Videos
 
@@ -128,7 +141,9 @@ Use Node 22 or newer (`.nvmrc` pins 24, as CI does).
     - **iOS:** request the CarPlay audio entitlement from Apple (developer.apple.com/contact/carplay) and add it to the App ID and an `App.entitlements` file (`com.apple.developer.carplay-audio`). Add `native/ios/*.swift` to the App target. In Main.storyboard set the Bridge View Controller's Custom Class to `MainViewController` (it registers the plugin). Add `native/ios/Info.plist.carplay.xml`'s scene manifest to `Info.plist`. Optional station artwork: image sets `car-xpn`, `car-xpn2`, `car-homegrown`. Test with Xcode's CarPlay simulator (I/O › External Displays › CarPlay), including starting from the car with the app closed.
     - **Android:** the app module needs Kotlin (`apply plugin: 'kotlin-android'` in `android/app/build.gradle`, and the Kotlin Gradle plugin in the project's), plus `implementation "androidx.media:media:1.7.0"`. Copy `native/android/*.kt` into `android/app/src/main/java/org/xpn/wxpn/` and `res/xml/automotive_app_desc.xml` into `res/xml/`, add `AndroidManifest.car.xml`'s entries inside `<application>`, and in `MainActivity` call `registerPlugin(CarAudioPlugin.class);` before `super.onCreate`. Test with Android Studio's Desktop Head Unit. Google reviews Android Auto apps against its car app quality guidelines when the app is submitted.
     - The car lists WXPN, XPN2 and Homegrown; choosing one plays it, and play and pause work as the app's. On CarPlay the song comes from the lock screen's information; Android Auto gets it from the app.
-13. After any web change: `npm run cap:sync`, then build from Xcode / Android Studio.
+13. **Links that open the app** (`deep-links.js`): xpn.org show pages, Listen, the playlist page and the concert calendar open in the app on phones that have it; donate links always open the website. Host `native/well-known/apple-app-site-association` (with your Apple Team ID in place of `TEAMID`) and `native/well-known/assetlinks.json` (with the Play app signing key's SHA-256, from Play Console › App integrity) at `https://xpn.org/.well-known/` (and `www.`), served as `application/json` with no redirect. iOS: Signing & Capabilities › + Associated Domains › `applinks:xpn.org` and `applinks:www.xpn.org`. Android: add `native/android/AndroidManifest.links.xml`'s intent filter to the main activity. Show pages have a Share button that shares the show's xpn.org address, so a shared show opens in the app for anyone who has it.
+14. **Store review prompt** (`review.js`, `@capacitor-community/in-app-review`): nothing to set up. The app asks right after a heart, once the listener has listened two hours in all and saved three things, at most once per version and 120 days apart; the phone decides whether to show it.
+15. After any web change: `npm run cap:sync`, then build from Xcode / Android Studio.
 
 The Android back button steps back through screens and closes the show sheet, because navigation uses hash routes with real history entries.
 
@@ -181,6 +196,10 @@ push.js              push notifications: registering with the sender, taps
 analytics.js         usage and crash reporting (GA4)
 car.js               CarPlay and Android Auto, with native/ for the car side
 text-size.js         iPhone Text Size
+remote-config.js     station changes: stream addresses, features off, update prompt
+listening.js         listening time, for reporting
+deep-links.js        xpn.org links that open the app
+review.js            when to ask for a store rating
 favorites.js         saved songs, shows, episodes, videos and concerts
 art-tint.js          heart colors from artwork
 playlist-sync.js     keeping the saved-songs playlist in step

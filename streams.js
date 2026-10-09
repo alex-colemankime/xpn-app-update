@@ -1,3 +1,5 @@
+import { savedConfig } from "./remote-config.js";
+
 // The station's live mounts. Plain HTTPS MP3 from StreamGuys, so one <audio>
 // element plays them everywhere with no HLS library. Each station has a
 // backup: the mount xpn.org's own web player uses. A failed connection tries
@@ -47,6 +49,21 @@ export const STREAMS = {
     songFeed: null,
   },
 };
+
+// The addresses as built, so a remote change can be undone by removing it.
+const BUILT = Object.fromEntries(
+  Object.entries(STREAMS).map(([id, s]) => [id, { url: s.url, backupUrl: s.backupUrl }]),
+);
+
+// Addresses the station has changed remotely (remote-config.js, already
+// checked to be WXPN's or StreamGuys'). Applied in place, so the player
+// uses them from its next connection.
+export function applyStreamOverrides(overrides = {}) {
+  for (const [id, stream] of Object.entries(STREAMS)) {
+    Object.assign(stream, BUILT[id], overrides[id]);
+  }
+}
+applyStreamOverrides(savedConfig().streams);
 
 export const STREAM_IDS = Object.keys(STREAMS);
 

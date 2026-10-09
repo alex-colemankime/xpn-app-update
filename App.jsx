@@ -25,6 +25,7 @@ import { ListenScreen } from "./screens/ListenScreen.jsx";
 import { ShowsScreen } from "./screens/ShowsScreen.jsx";
 import { LibraryScreen } from "./screens/LibraryScreen.jsx";
 import { trackScreen } from "./analytics.js";
+import { UpdatePrompt } from "./components/UpdatePrompt.jsx";
 
 const ONBOARDED_KEY = "xpn.onboarded";
 
@@ -205,6 +206,7 @@ export default function App() {
       )}
       <Suspense fallback={null}>
         {welcome && !show && <Welcome onDone={finishWelcome} />}
+        <UpdatePrompt />
         {watching.watching && (
           <WatchPage
             videoId={route.videoId}

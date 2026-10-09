@@ -24,7 +24,13 @@ export default [
     },
   },
   {
-    files: ["tests/**", "tools/**", "*.config.js"],
+    files: ["tests/**", "tools/**", "*.config.js", "*.config.mjs"],
     languageOptions: { globals: globals.node },
+  },
+  {
+    // Playwright's fixtures hand over with a function named `use`, which
+    // the React hooks rule would take for React's.
+    files: ["tests/e2e/**"],
+    rules: { "react-hooks/rules-of-hooks": "off" },
   },
 ];
