@@ -38,3 +38,12 @@ test("errors are described without addresses, emails or long numbers", () => {
   assert.equal(describeError({ reason: { message: "boom" } }, "promise"), "promise: boom");
   assert.ok(describeError("x".repeat(500)).length <= 150);
 });
+
+test("production builds report to WXPN App's property unless turned off", async () => {
+  const { ga4Id, GA4_DEFAULT } = await import("../config.js");
+  assert.equal(GA4_DEFAULT, "G-JDR8LLHT18");
+  assert.equal(ga4Id(undefined, true), GA4_DEFAULT);
+  assert.equal(ga4Id("G-OTHER123", true), "G-OTHER123");
+  assert.equal(ga4Id("off", true), "", "the preview and the end-to-end tests");
+  assert.equal(ga4Id(undefined, false), "", "development and unit tests");
+});

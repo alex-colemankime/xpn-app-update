@@ -55,6 +55,8 @@ jobs:
         run: npm run build:pages
         env:
           VITE_SHOW_SAMPLES: "true"
+          # Staff reviewing the preview aren't listeners: no GA4 reporting.
+          VITE_GA4_ID: "off"
           # On a computer, the link opens in a phone, tablet or laptop frame.
           VITE_DEVICE_PREVIEW: "true"
           # The preview's address, for link previews when it is shared.

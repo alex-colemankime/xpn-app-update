@@ -36,11 +36,17 @@ export const PUSH_REGISTER_URL = OFF.has("push")
   ? ""
   : import.meta.env?.VITE_PUSH_REGISTER_URL || "";
 
-// Usage and crash reporting (analytics.js): the GA4 measurement id
-// ("G-XXXXXXX"). Unset: nothing is sent.
-export const GA4_ID = /^G-[A-Z0-9]+$/.test(import.meta.env?.VITE_GA4_ID || "")
-  ? import.meta.env.VITE_GA4_ID
-  : "";
+// Usage and crash reporting (analytics.js): WXPN's "WXPN App" GA4 property
+// (account 552242, property 558304207, stream "WXPN app"). Production
+// builds report there; VITE_GA4_ID names another property, or "off" (the
+// design preview and the end-to-end tests). Development and tests never
+// report.
+export const GA4_DEFAULT = "G-JDR8LLHT18";
+export function ga4Id(setting, production) {
+  if (setting === "off" || !production) return "";
+  return /^G-[A-Z0-9]+$/.test(setting || "") ? setting : GA4_DEFAULT;
+}
+export const GA4_ID = ga4Id(import.meta.env?.VITE_GA4_ID, Boolean(import.meta.env?.PROD));
 
 // The livestream page on xpn.org, read during Free at Noon so the week's
 // video appears without a station update (see updates.js). "off" disables.

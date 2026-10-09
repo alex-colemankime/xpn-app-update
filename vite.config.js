@@ -4,6 +4,7 @@ import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import { defineConfig, loadEnv } from "vite";
 import {
+  ga4Id,
   parseArchiveFeeds as archiveFeeds,
   parseVideoSections as videoSections,
 } from "./config.js";
@@ -69,7 +70,7 @@ const origin = (url) => {
 // A Content Security Policy for built apps (web and native): scripts only from
 // the app itself (plus Apple's MusicKit), network only to the services the
 // app uses. The inline theme script in index.html is allowed by its hash.
-function contentSecurityPolicy(env) {
+function contentSecurityPolicy(env, mode) {
   return {
     name: "wxpn-csp",
     apply: "build",
@@ -79,7 +80,7 @@ function contentSecurityPolicy(env) {
         const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(
           ([, code]) => `'sha256-${createHash("sha256").update(code).digest("base64")}'`,
         );
-        const ga4 = /^G-[A-Z0-9]+$/.test(env.VITE_GA4_ID || "");
+        const ga4 = Boolean(ga4Id(env.VITE_GA4_ID, mode === "production"));
         const connect = [
           "'self'",
           "https://origin.xpn.org",
@@ -146,7 +147,7 @@ export default defineConfig(({ mode }) => {
       react(),
       // React Compiler: memoizes components and hooks automatically.
       babel({ presets: [reactCompilerPreset()] }),
-      contentSecurityPolicy(env),
+      contentSecurityPolicy(env, mode),
       shareTags(env),
     ],
     define: {
