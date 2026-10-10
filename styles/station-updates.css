@@ -52,6 +52,9 @@
   flex: 1;
   min-width: 0;
   margin: 0;
+  /* Fill each line: evening out the lines ("pretty") left a gap before the
+     close key that read as the text squeezed to one side. */
+  text-wrap: wrap;
   font-size: 0.875rem;
   font-weight: 550;
   line-height: 1.35;

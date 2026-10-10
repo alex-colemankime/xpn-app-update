@@ -255,3 +255,14 @@
   font-size: 1.0625rem;
   color: var(--muted);
 }
+
+/* An empty list's way to the screen that fills it. */
+.empty-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  margin-top: 4px;
+  color: var(--accent-strong);
+  font-weight: 650;
+}

@@ -20,25 +20,25 @@ import { YouTubeSubscribe } from "../components/SocialLinks.jsx";
 const EMPTY = {
   songs: {
     icon: "music",
-    action: "Find a song",
+    action: "Go to Listen",
     target: "listen",
     text: "Tap the heart beside a song to save it here.",
   },
   shows: {
     icon: "headphones",
-    action: "Explore shows",
+    action: "Go to Shows",
     target: "shows",
     text: "Follow a show to keep its schedule here and get reminders, or save an episode to listen later.",
   },
   concerts: {
     icon: "navConcerts",
-    action: "Explore concerts",
+    action: "Go to Concerts",
     target: "concerts",
     text: "Save a concert to keep it here and add it to your calendar.",
   },
   videos: {
     icon: "video",
-    action: "Explore videos",
+    action: "Go to Videos",
     target: "videos",
     text: "Save a video to watch it later.",
   },
@@ -138,13 +138,14 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
           title={q ? "No matching favorites" : `No saved ${category} yet`}
           action={q ? "Clear search" : empty.action}
           onAction={() => (q ? setQuery("") : onNavigate(empty.target))}
+          link={!q}
         >
           {q ? "Try a different name." : empty.text}
         </Empty>
       ) : category === "songs" ? (
         <>
           {filtered.map((t) => (
-            <TrackRow key={t.id} track={t} />
+            <TrackRow key={t.id} track={t} wash />
           ))}
           <button className="text-button share-songs" onClick={shareSongs}>
             <Icon name="shareAlt" size={17} />

@@ -106,18 +106,20 @@ test("hearts keep 3:1 on a page, show sheet or player bar washed in any artwork'
   const tints = [...arts.map(themeTints), ...Object.values(shows).map((s) => s.tint)].filter(
     Boolean,
   );
-  // The Listen page (24% / 22%), a show's sheet (12% / 14%) and the player
-  // bar (26% / 24%), light / dark.
+  // The Listen page (24% / 22%), a show's sheet (12% / 14%), the player
+  // bar (26% / 24%) and a saved song's row (22% / 20%), light / dark.
   const grounds = (w) => ({
     light: [
       washed(w.light, "#faf8f3", 0.24),
       washed(w.light, "#f2efe7", 0.12),
       washed(w.light, "#f2efe7", 0.26),
+      washed(w.light, "#faf8f3", 0.22),
     ],
     dark: [
       washed(w.dark, "#202224", 0.22),
       washed(w.dark, "#292c2f", 0.14),
       washed(w.dark, "#292c2f", 0.24),
+      washed(w.dark, "#202224", 0.2),
     ],
   });
   for (const wash of tints) {
@@ -127,4 +129,15 @@ test("hearts keep 3:1 on a page, show sheet or player bar washed in any artwork'
       for (const ground of g.dark) assert.ok(contrast(rgb(heart.dark), ground) >= 3, heart.dark);
     }
   }
+});
+
+test("a muted cover still gives its overall tone; a grey one gives none", async () => {
+  const { averageTint, pickTint } = await import("../art-tint.js");
+  const fill = (rgb, n = 64) =>
+    Uint8ClampedArray.from({ length: n * 4 }, (_, i) => (i % 4 === 3 ? 255 : rgb[i % 4]));
+  // Dusky olive: too muted for pickTint, still a tone.
+  const olive = fill([92, 96, 78]);
+  assert.equal(pickTint(olive), null);
+  assert.ok(averageTint(olive));
+  assert.equal(averageTint(fill([120, 120, 120])), null);
 });

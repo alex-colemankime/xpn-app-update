@@ -98,6 +98,28 @@ export function pickTint(pixels) {
   return [0, 1, 2].map((k) => near(best).reduce((sum, n) => sum + sums[n][k], 0) / w);
 }
 
+// For artwork with no vivid color of its own (a muted or nearly black and
+// white cover): its overall tone, the average of its mid-tone pixels, so the
+// page still takes a little of the cover. Truly grey art gives null.
+const MIN_TONE = 0.06;
+export function averageTint(pixels) {
+  const sum = [0, 0, 0];
+  let n = 0;
+  for (let i = 0; i + 3 < pixels.length; i += 4) {
+    if (pixels[i + 3] < 128) continue;
+    const rgb = [pixels[i], pixels[i + 1], pixels[i + 2]];
+    const [, , l] = toHsl(rgb);
+    if (l < 0.12 || l > 0.92) continue;
+    sum[0] += rgb[0];
+    sum[1] += rgb[1];
+    sum[2] += rgb[2];
+    n++;
+  }
+  if (!n) return null;
+  const avg = sum.map((v) => v / n);
+  return toHsl(avg)[1] >= MIN_TONE ? avg : null;
+}
+
 // The color for each theme: lightness moved toward contrast, hue kept, and
 // saturation kept lively so the heart still reads as a color.
 export function themeTints(rgb) {
@@ -122,7 +144,19 @@ export function themeTints(rgb) {
 const cache = new Map();
 function sample(url) {
   if (cache.has(url)) return cache.get(url);
-  const result = new Promise((resolve) => {
+  // null: couldn't read it, so try a fresh copy; false: read, no color.
+  const result = readTint(url)
+    .then((tint) => (tint === null ? readTint(freshUrl(url)) : tint))
+    .then((tint) => tint || null);
+  cache.set(url, result);
+  return result;
+}
+// The same image at an address the browser hasn't cached: Safari can hand a
+// color-reading request the copy already on screen, loaded without
+// permission to read it, and the read fails.
+const freshUrl = (url) => `${url}${url.includes("?") ? "&" : "?"}tint=1`;
+function readTint(url) {
+  return new Promise((resolve) => {
     if (typeof Image === "undefined" || typeof document === "undefined") return resolve(null);
     const img = new Image();
     img.crossOrigin = "anonymous"; // only artwork served with CORS can be read
@@ -134,16 +168,15 @@ function sample(url) {
         canvas.width = canvas.height = size;
         const ctx = canvas.getContext("2d", { willReadFrequently: true });
         ctx.drawImage(img, 0, 0, size, size);
-        resolve(themeTints(pickTint(ctx.getImageData(0, 0, size, size).data)));
+        const pixels = ctx.getImageData(0, 0, size, size).data;
+        resolve(themeTints(pickTint(pixels) || averageTint(pixels)) ?? false);
       } catch {
-        resolve(null); // artwork without CORS: keep the accent
+        resolve(null); // couldn't read it: try a fresh copy, then keep the accent
       }
     };
     img.onerror = () => resolve(null);
     img.src = url;
   });
-  cache.set(url, result);
-  return result;
 }
 
 // { light, dark } for an artwork URL, or a precomputed tint ({ light, dark }

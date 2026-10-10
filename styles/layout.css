@@ -238,6 +238,25 @@ h1 {
   padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
+/* A saved song in Favorites, on a light wash of its artwork's color at the
+   page's own lightness (like Listen's), so its text and heart keep their
+   contrast: a stack of softly colored cards. */
+@supports (color: oklch(from red l c h)) {
+  .track-row[data-tinted] {
+    margin: 0 -10px 6px;
+    padding: 10px;
+    border-bottom: 0;
+    border-radius: 12px;
+    background-color: oklch(
+      from color-mix(in srgb, var(--tint-light) 22%, var(--paper)) var(--paper-l) c h
+    );
+  }
+  :root[data-theme="dark"] .track-row[data-tinted] {
+    background-color: oklch(
+      from color-mix(in srgb, var(--tint-dark) 20%, var(--paper)) var(--paper-l) c h
+    );
+  }
+}
 .share-songs {
   margin-top: 12px;
 }

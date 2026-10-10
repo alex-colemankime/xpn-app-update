@@ -5,6 +5,20 @@ import { localClock } from "../time.js";
 import { isDonatePage } from "../links.js";
 import { dismissUpdate } from "../hooks/useStationUpdates.js";
 
+// A hyphenated word ("listener-supported") kept on one line, so a line
+// never ends on its hyphen.
+function keepHyphenated(text) {
+  return text.split(/(\S+-\S+)/).map((part, i) =>
+    i % 2 ? (
+      <span key={i} className="nowrap">
+        {part}
+      </span>
+    ) : (
+      part
+    ),
+  );
+}
+
 const liveArt = (live) => live.image || SHOWS[live.show]?.img || STATION_ART;
 const trackHeight = heightVar("--banner-h");
 const liveWhen = (live) =>
@@ -40,7 +54,7 @@ export function StationBanner({ banner, live, liveDismissed, onWatch, onListenSc
           </span>
         </button>
       ) : (
-        <p className="station-banner-text">{banner.text}</p>
+        <p className="station-banner-text">{keepHyphenated(banner.text)}</p>
       )}
       {!showLive && banner.action && (
         <a

@@ -228,11 +228,18 @@ export function ShowCard({ show, onOpen }) {
 }
 
 // A song in a list. `showTime` adds when it played, for the station's
-// playlist; saved songs leave it out. A saved song's heart carries its color.
+// playlist; saved songs leave it out. A saved song's heart carries its color,
+// and in Favorites (`wash`) so does its row.
 // `stationLabel` names the station it played on, for sharing.
-export function TrackRow({ track, showTime = false, stationLabel }) {
+export function TrackRow({ track, showTime = false, stationLabel, wash = false }) {
+  // Saved songs (wash) sit on a light wash of their own artwork's color.
+  const tint = useArtTint(wash ? track.img : null);
   return (
-    <div className="track-row">
+    <div
+      className="track-row"
+      data-tinted={tint ? "" : undefined}
+      style={tint ? { "--tint-light": tint.light, "--tint-dark": tint.dark } : undefined}
+    >
       <Art src={track.img} loading="lazy" />
       <span>
         <strong>{track.title}</strong>

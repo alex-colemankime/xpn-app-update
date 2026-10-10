@@ -82,12 +82,14 @@
   /* Phones: the artwork takes the height left once the band, the song
      and Listen live are placed above the tab bar, so they all show without
      scrolling (less any banner, and the status bar and home indicator in
-     the phone apps). The song and controls keep the full width. */
+     the phone apps). The song and controls keep the full width. The insets
+     are the ones measured at launch (fixed-insets.js), so Safari's toolbar
+     collapsing on scroll doesn't resize the artwork. */
   .now-card {
     --stage-room: calc(
       100svh - 431px - var(--banner-h, 0px) - var(--alarm-h, 0px) -
-        var(--safe-area-inset-top, env(safe-area-inset-top)) -
-        var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
+        var(--safe-area-inset-top, var(--fixed-inset-top, 0px)) -
+        var(--safe-area-inset-bottom, var(--fixed-inset-bottom, 0px))
     );
     --stage: min(100%, max(176px, var(--stage-room)));
   }

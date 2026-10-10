@@ -16,6 +16,7 @@ import { getEpisodeSnapshot, subscribeEpisode } from "./episode-player.js";
 import { onAirAt } from "./catalog.js";
 import { followTextSize } from "./text-size.js";
 import { startCarAudio } from "./car.js";
+import { fixInsets } from "./fixed-insets.js";
 import {
   getPlayerSnapshot,
   pauseStream,
@@ -74,6 +75,7 @@ if (devicePreview) {
     // The FM schedule names WXPN's shows; XPN2 and Homegrown have none.
     showOnAir: (station) => (station === "xpn" ? onAirAt()?.show.id || "" : ""),
   });
+  fixInsets();
   startCarAudio({
     select: selectStream,
     play: playStream,

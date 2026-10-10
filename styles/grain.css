@@ -1,7 +1,7 @@
 /* ---------------------------------------------------------------------------
    Grain: a fine, still film grain over every surface that carries a color
    (the page washed in the playing artwork's color, a show's sheet, the On
-   air band, station banners and the tinted player bar), so a wash reads as
+   air band, station banners, the tinted player bar and saved songs), so a wash reads as
    printed rather than as a flat block.
    The grain is a small noise tile drawn in SVG, here in the stylesheet (no
    download), blended in soft-light so it lightens and darkens around each
@@ -22,7 +22,8 @@
 .show-dialog .dialog-header,
 .on-air,
 .station-banner,
-.player-bar[data-tinted] {
+.player-bar[data-tinted],
+.track-row[data-tinted] {
   background-image: var(--grain);
   background-size: 160px 160px;
   background-blend-mode: soft-light;

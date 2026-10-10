@@ -165,17 +165,25 @@ export function Segmented({
     </div>
   );
 }
-export function Empty({ icon, title, children, action, onAction }) {
+// An empty list: what goes here and how. `link` makes the action a way to
+// another screen ("Go to Videos ›") rather than a button that acts here.
+export function Empty({ icon, title, children, action, onAction, link = false }) {
   return (
     <div className="empty-state">
       <Icon name={icon} size={32} />
       <h2>{title}</h2>
       <p>{children}</p>
-      {action && (
-        <button className="secondary-button" onClick={onAction}>
-          {action}
-        </button>
-      )}
+      {action &&
+        (link ? (
+          <button className="text-button empty-link" onClick={onAction}>
+            {action}
+            <Icon name="chev" size={16} />
+          </button>
+        ) : (
+          <button className="secondary-button" onClick={onAction}>
+            {action}
+          </button>
+        ))}
     </div>
   );
 }

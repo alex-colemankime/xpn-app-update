@@ -211,3 +211,8 @@ p {
 .skip-link:focus {
   top: 15px;
 }
+
+/* Kept on one line (a hyphenated word in a banner). */
+.nowrap {
+  white-space: nowrap;
+}
