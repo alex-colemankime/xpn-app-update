@@ -183,7 +183,8 @@ function LiveBar({ playlist, onOpen }) {
                   {badge}
                 </span>
               )}
-              {current ? `${current.artist} · ${station.label}` : station.tagline}
+              {current ? current.artist : station.tagline}
+              {current && <span className="sr-only">, {station.label}</span>}
             </small>
           </span>
         </button>

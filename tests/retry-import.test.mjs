@@ -70,3 +70,25 @@ test("a retry asks for the failed module at a fresh address", async () => {
   assert.equal(await run(), "fresh");
   assert.deepEqual(asked, ["https://x.org/assets/Videos-ab12.js?retry=1"]);
 });
+
+test("a later load never asks for an address that already failed", async () => {
+  const asked = [];
+  const fails = () =>
+    retryImport(
+      async () => {
+        throw new TypeError("Failed to fetch dynamically imported module: https://x.org/a.js");
+      },
+      {
+        tries: 2,
+        wait: noWait,
+        online: () => true,
+        importUrl: async (url) => {
+          asked.push(url);
+          throw new TypeError(`Failed to fetch dynamically imported module: ${url}`);
+        },
+      },
+    )();
+  await assert.rejects(fails());
+  await assert.rejects(fails());
+  assert.equal(new Set(asked).size, asked.length);
+});

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useArtTint } from "../art-tint.js";
 import { selectStream, togglePlayback } from "../player.js";
 import { STATION_OPTIONS } from "../streams.js";
-import { playedLabel, useLiveSong } from "../nowplaying.js";
+import { useLiveSong } from "../nowplaying.js";
 import { onAirAt } from "../catalog.js";
 import { playbackText, statusLine } from "../playback-text.js";
 import { Icon, Art, Wordmark, Segmented } from "../ui.jsx";
@@ -155,7 +155,6 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
           {statusLine(player, playlist)}
         </div>
         <div className="now-footer">
-          <span>{current ? playedLabel(current, new Date(now)) : ""}</span>
           <SleepTimer onAirNow={onAirNow} />
         </div>
       </div>

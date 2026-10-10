@@ -55,3 +55,22 @@ export class ScreenErrorBoundary extends Component {
     );
   }
 }
+
+// For something laid over the app (the welcome, the watch page): if its code
+// can't load or it fails to draw, it steps aside and `onError` says so, and
+// the app underneath carries on. Keyed by its caller so it can try again.
+export class OverlayErrorBoundary extends Component {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch() {
+    this.props.onError?.();
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}

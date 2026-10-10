@@ -86,7 +86,8 @@ if (devicePreview) {
   createRoot(document.getElementById("root"), {
     onCaughtError: (error, info) => {
       console.error("WXPN app error:", error, info.componentStack);
-      reportError(error, { where: "screen", fatal: true });
+      // Caught: one screen or overlay stepped aside; the app carries on.
+      reportError(error, { where: "screen", fatal: false });
     },
     onUncaughtError: (error) => reportError(error, { where: "app", fatal: true }),
   }).render(

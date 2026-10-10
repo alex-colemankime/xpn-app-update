@@ -15,6 +15,9 @@ const isOnline = () => typeof navigator === "undefined" || navigator.onLine !== 
 const nextOnline = () =>
   new Promise((resolve) => window.addEventListener("online", resolve, { once: true }));
 const importFresh = (url) => import(/* @vite-ignore */ url);
+// Fresh addresses count up across every load, so a later attempt (the
+// watch page tried again) never asks for one that already failed.
+let fresh = 0;
 
 // The module address in a failed import's message, if it names one.
 export function failedModuleUrl(error) {
@@ -34,12 +37,12 @@ export function retryImport(
 ) {
   return async () => {
     let attempt = load;
-    for (let failed = 0, round = 0; ; round += 1) {
+    for (let failed = 0; ;) {
       try {
         return await attempt();
       } catch (error) {
         const url = failedModuleUrl(error);
-        if (url) attempt = () => importUrl(`${url}?retry=${round + 1}`);
+        if (url) attempt = () => importUrl(`${url}?retry=${(fresh += 1)}`);
         // Offline doesn't count as a try: the code is fine, the line is down.
         if (!online()) {
           await whenOnline();

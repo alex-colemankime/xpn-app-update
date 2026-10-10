@@ -35,6 +35,8 @@ test("a saved song is in Favorites", async ({ page }) => {
 
 test("a show opens, can be followed, and closes", async ({ page }) => {
   await page.goto("/#/shows");
+  // Shows opens on today's schedule; every show is under All shows.
+  await page.getByLabel("Browse shows").getByRole("button", { name: "All shows" }).click();
   await page
     .getByRole("button", { name: /World Cafe/ })
     .first()
@@ -45,6 +47,13 @@ test("a show opens, can be followed, and closes", async ({ page }) => {
   await expect(sheet.getByRole("button", { name: /Following/ })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(sheet).toBeHidden();
+});
+
+test("Shows opens on the schedule", async ({ page }) => {
+  await page.goto("/#/shows");
+  await expect(
+    page.getByLabel("Browse shows").getByRole("button", { name: "Schedule" }),
+  ).toHaveAttribute("aria-pressed", "true");
 });
 
 test("a link to a show opens its sheet", async ({ page }) => {

@@ -63,7 +63,6 @@ function firstSaveHint(type) {
     { title: "Saved to Favorites", text: `Your ${what}s are kept there.` },
     {
       label: "View",
-      brief: true,
       onClick: () => {
         window.location.hash = "#/favorites";
       },
@@ -109,7 +108,6 @@ export function SaveButton({
             { title: "Removed from Favorites", text: name || item.name || item.title },
             {
               label: "Undo",
-              brief: true,
               onClick: () => restoreFavorite(type, before),
             },
           );
@@ -121,7 +119,6 @@ export function SaveButton({
               { title: "Concert saved", text: concertWhen(item), icon: "calendarAdd" },
               {
                 label: "Add to calendar",
-                brief: true,
                 onClick: async () => {
                   if (!(await addToCalendar(item)))
                     showToast(

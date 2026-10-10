@@ -4,7 +4,6 @@ import {
   normalizePlaylist,
   mergeTracks,
   isFresh,
-  playedLabel,
   playedAt,
   durationMinutes,
   withNowPlaying,
@@ -77,16 +76,11 @@ test("freshness holds across midnight and expires after 15 minutes", () => {
   assert.equal(isFresh({ date: "", time: "" }), false);
 });
 
-test("report times read as minutes ago for the last hour", () => {
+test("a song's play time reads in the listener's own zone", () => {
   const track = { date: "2026-09-28", time: "14:00" };
-  const et = (hhmm) => new Date(`2026-09-28T${hhmm}:00-04:00`);
-  assert.equal(playedLabel(track, et("14:00")), "Played just now");
-  assert.equal(playedLabel(track, et("14:03")), "Played 3 min ago");
-  assert.equal(playedLabel(track, et("15:30"), "America/New_York"), "Played at 2pm");
-  // In the listener's own zone.
-  assert.equal(playedLabel(track, et("15:30"), "America/Los_Angeles"), "Played at 11am");
+  assert.equal(playedAt(track, "America/New_York"), "2pm");
+  assert.equal(playedAt(track, "America/Los_Angeles"), "11am");
   assert.equal(playedAt(track, "Europe/London"), "7pm");
-  assert.equal(playedLabel({}), "");
 });
 
 test("song lengths from the now-playing file", () => {

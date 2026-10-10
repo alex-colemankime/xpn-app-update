@@ -142,12 +142,19 @@ export function themeTints(rgb) {
 
 // Tints by artwork URL, shared by every heart showing the same art.
 const cache = new Map();
+const RETRY_UNREADABLE_MS = 60_000;
 function sample(url) {
   if (cache.has(url)) return cache.get(url);
   // null: couldn't read it, so try a fresh copy; false: read, no color.
   const result = readTint(url)
-    .then((tint) => (tint === null ? readTint(freshUrl(url)) : tint))
-    .then((tint) => tint || null);
+    .then((tint) => (tint === null && /^https?:/.test(url) ? readTint(freshUrl(url)) : tint))
+    .then((tint) => {
+      // Couldn't read it at all (offline, or a server that won't allow it):
+      // remembered only for a minute, so it's tried again later without
+      // every heart and row re-downloading it meanwhile.
+      if (tint === null) setTimeout(() => cache.delete(url), RETRY_UNREADABLE_MS);
+      return tint || null;
+    });
   cache.set(url, result);
   return result;
 }

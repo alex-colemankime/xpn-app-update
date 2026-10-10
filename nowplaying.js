@@ -97,14 +97,6 @@ export function playedAt(track, timeZone) {
   return at === null ? (track?.time ? clockLabel(track.time) : "") : localClock(at, timeZone);
 }
 
-// "Played just now", "Played 3 min ago" for the last hour, then the time.
-export function playedLabel(track, now = new Date(), timeZone) {
-  if (!track?.time) return "";
-  const age = reportAge(track, now);
-  if (age !== null && age < 60) return age < 1 ? "Played just now" : `Played ${age} min ago`;
-  return `Played at ${playedAt(track, timeZone)}`;
-}
-
 // The song on air now, or null once the latest report has gone stale (the
 // feed has paused overnight, or failed and kept its last list). Stale songs
 // stay in Recently played but are never shown as current.

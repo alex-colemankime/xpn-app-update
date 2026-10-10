@@ -8,7 +8,8 @@ import { dismissUpdate } from "../hooks/useStationUpdates.js";
 // A hyphenated word ("listener-supported") kept on one line, so a line
 // never ends on its hyphen.
 function keepHyphenated(text) {
-  return text.split(/(\S+-\S+)/).map((part, i) =>
+  // Words only (no addresses), and short ones, so nothing can overflow.
+  return text.split(/(\b[\p{L}\p{N}']{1,16}(?:-[\p{L}\p{N}']{1,16})+\b)/u).map((part, i) =>
     i % 2 ? (
       <span key={i} className="nowrap">
         {part}

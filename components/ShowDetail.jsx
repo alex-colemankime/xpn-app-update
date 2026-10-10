@@ -62,7 +62,7 @@ function OnAirRow({ show, onListen }) {
     <button className="show-on-air" onClick={onListen}>
       <span className="show-on-air-text">
         <span className="on-air-label">
-          <i className="on-air-dot" data-live="" />
+          <i className="on-air-dot" />
           On air now, {untilLabel(onAirNow)}
         </span>
         <strong>Listen live on WXPN</strong>

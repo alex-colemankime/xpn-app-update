@@ -45,15 +45,16 @@
   min-width: 0;
   /* One column width for the band, the artwork, the song and Listen live,
      also bounded by the window's height (less any banner across the top)
-     so Listen live stays above the player bar without scrolling. */
-  --stage-room: calc(100svh - 490px - var(--banner-h, 0px) - var(--alarm-h, 0px));
-  --stage: min(400px, 100%, max(220px, var(--stage-room)));
+     so Listen live usually stays above the player bar, down to a floor that
+     keeps the artwork large. */
+  --stage-room: calc(100svh - 440px - var(--banner-h, 0px) - var(--alarm-h, 0px));
+  --stage: min(480px, 100%, max(300px, var(--stage-room)));
 }
 @media (min-width: 1001px) {
   /* Sized by the window, not the column, since the column takes its width
      from the card. */
   .now-card {
-    --stage: min(400px, max(220px, var(--stage-room)));
+    --stage: min(480px, max(300px, var(--stage-room)));
     width: var(--stage);
   }
   .now-stage,
@@ -204,6 +205,10 @@
 }
 .now-footer .text-button {
   font-size: 0.875rem;
+}
+/* Only the sleep timer lives here, and only while the radio plays. */
+.now-footer:empty {
+  display: none;
 }
 .recent-panel > .section-heading {
   min-height: 40px;

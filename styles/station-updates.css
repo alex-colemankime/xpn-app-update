@@ -45,7 +45,7 @@
 }
 @media (hover: hover) {
   .station-banner[data-kind="live"]:has(.station-banner-watch:hover) {
-    background: color-mix(in srgb, var(--text) 88%, var(--bg));
+    background-color: color-mix(in srgb, var(--text) 88%, var(--bg));
   }
 }
 .station-banner-text {

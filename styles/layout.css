@@ -640,6 +640,10 @@ h1 {
     margin-left: 0;
     padding-left: 0;
   }
+  /* No AirPlay or Cast (the Android app): nothing left to show. */
+  .player-utilities:not(:has(.player-cast)) {
+    display: none;
+  }
   .live-badge {
     margin-right: 6px;
   }

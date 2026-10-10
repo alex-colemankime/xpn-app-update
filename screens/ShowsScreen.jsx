@@ -18,21 +18,23 @@ const matchesQuery = (query) => {
   return (show) => !q || `${show.name} ${show.host}`.toLowerCase().includes(q);
 };
 
-// Opening the schedule, or coming back to today, brings the show on air into
-// view (a ref callback on a list keyed by day, so it runs when a day's list
-// appears, not on every clock tick). Only today's list has an on-air row.
-const scrollToOnAir = (list) =>
-  list?.querySelector(".on-air-row")?.scrollIntoView({ block: "center", behavior: "instant" });
-
 export function ShowsScreen({ onOpen }) {
   const features = useFeatures();
   const modes = features.archive ? MODES : MODES.filter((m) => m !== "Archive");
-  const [chosen, setMode] = useState("All shows");
-  const mode = modes.includes(chosen) ? chosen : "All shows";
+  // Shows opens on the schedule: what's on today, the show on air marked.
+  const [chosen, setMode] = useState("Schedule");
+  const mode = modes.includes(chosen) ? chosen : "Schedule";
   const now = new Date(useNow());
   const today = easternParts(now).day;
   const onAirNow = onAirAt(now);
   const [day, setDay] = useState(today);
+  // The screen stays mounted for the life of the app, so when the date
+  // turns over, the schedule moves to the new today with it.
+  const [seenToday, setSeenToday] = useState(today);
+  if (seenToday !== today) {
+    setSeenToday(today);
+    setDay(today);
+  }
   const [query, setQuery] = useState("");
   const isOnAir = (slot) =>
     day === today && onAirNow?.show.id === slot.show.id && onAirNow.slot.start === slot.start;
@@ -101,7 +103,7 @@ export function ShowsScreen({ onOpen }) {
             <span className="subtle">All times Eastern</span>
           </div>
           {slots.length ? (
-            <div key={day} ref={scrollToOnAir}>
+            <div>
               {slots.map((slot) => (
                 <button
                   className={`schedule-row ${isOnAir(slot) ? "on-air-row" : ""}`}

@@ -27,9 +27,10 @@ import { ShowsScreen } from "./screens/ShowsScreen.jsx";
 import { LibraryScreen } from "./screens/LibraryScreen.jsx";
 import { trackScreen } from "./analytics.js";
 import { UpdatePrompt } from "./components/UpdatePrompt.jsx";
+import { showToast } from "./toast.js";
 import { useFeatures } from "./features.js";
 import { retryImport } from "./retry-import.js";
-import { ScreenErrorBoundary } from "./error-boundary.jsx";
+import { OverlayErrorBoundary, ScreenErrorBoundary } from "./error-boundary.jsx";
 
 const ONBOARDED_KEY = "xpn.onboarded";
 
@@ -47,7 +48,10 @@ const Concerts = lazyNamed(() => import("./screens/ConcertsScreen.jsx"), "Concer
 const Videos = lazyNamed(() => import("./screens/VideosScreen.jsx"), "VideosScreen");
 const Settings = lazyNamed(() => import("./screens/SettingsScreen.jsx"), "SettingsScreen");
 const Welcome = lazyNamed(() => import("./components/Welcome.jsx"), "Welcome");
-const WatchPage = lazyNamed(() => import("./components/WatchPage.jsx"), "WatchPage");
+// The watch page's lazy component. React keeps a failed lazy load failed
+// for good, so after one fails (OverlayErrorBoundary below) the app makes a
+// fresh one and the next Watch tries again.
+const makeWatchPage = () => lazyNamed(() => import("./components/WatchPage.jsx"), "WatchPage");
 
 // One screen of the app, shown or kept in the background. A hidden screen
 // keeps its state, but its effects and subscriptions are paused (React
@@ -89,6 +93,7 @@ export default function App() {
   // The first-run welcome, once. Not over a shared show link: that listener
   // came for the show.
   const [welcome, setWelcome] = useState(() => !readJson(ONBOARDED_KEY, false) && !route.showId);
+  const [WatchPage, setWatchPage] = useState(makeWatchPage);
   const finishWelcome = () => {
     writeJson(ONBOARDED_KEY, true);
     setWelcome(false);
@@ -223,18 +228,33 @@ export default function App() {
           onWatch={watching.watchVideo}
         />
       )}
-      <Suspense fallback={null}>
-        {welcome && !show && <Welcome onDone={finishWelcome} />}
-        <UpdatePrompt />
-        {watching.watching && (
-          <WatchPage
-            videoId={route.videoId}
-            live={watching.live}
-            onPick={watching.watchVideo}
-            onClose={route.closeVideo}
-          />
-        )}
-      </Suspense>
+      <UpdatePrompt />
+      {/* Laid over the app; one that can't load steps aside rather than
+          taking the app down with it (error-boundary.jsx). */}
+      <OverlayErrorBoundary>
+        <Suspense fallback={null}>
+          {welcome && !show && <Welcome onDone={finishWelcome} />}
+        </Suspense>
+      </OverlayErrorBoundary>
+      <OverlayErrorBoundary
+        key={watching.watching ? route.videoId || "live" : "closed"}
+        onError={() => {
+          showToast("That video couldn’t load. Check your connection and try again.");
+          setWatchPage(makeWatchPage);
+          route.closeVideo();
+        }}
+      >
+        <Suspense fallback={null}>
+          {watching.watching && (
+            <WatchPage
+              videoId={route.videoId}
+              live={watching.live}
+              onPick={watching.watchVideo}
+              onClose={route.closeVideo}
+            />
+          )}
+        </Suspense>
+      </OverlayErrorBoundary>
       <Toast />
     </div>
   );
