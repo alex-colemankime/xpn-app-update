@@ -22,6 +22,9 @@ export const SUBMIT_CONCERT_URL = "https://xpn.org/concert-event-submit/";
 export const LISTEN_URL = "https://xpn.org/listen/";
 export const PRIVACY_URL = "https://xpn.org/privacy-policy/";
 export const STATION_EMAIL = "wxpndesk@xpn.org";
+// The app's help page (draft copy in the "WXPN App Support page" doc). It's
+// also the Support URL in both store listings, so it must stay put.
+export const HELP_URL = "https://xpn.org/app/";
 // The weekly e-news (top stories and music news, concert and event alerts,
 // special announcements): the station's short signup form, and the Top
 // Stories form that adds a free playlist.

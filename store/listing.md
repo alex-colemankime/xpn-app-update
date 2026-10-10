@@ -8,7 +8,7 @@ Drafts for App Store Connect and the Google Play Console, within each field's li
 
 **Category:** Music (secondary on iOS: Entertainment)
 
-**Support URL:** https://xpn.org/contact/ (confirm the page; Apple requires a working support page) · **Marketing URL:** https://xpn.org · **Privacy policy:** https://xpn.org/privacy-policy/
+**Support URL:** https://xpn.org/app/ (the app help page; copy is drafted in the "WXPN App Support page" doc. It must be live, and load without signing in, before submitting: Apple's reviewers open it. Settings › App help links to it too) · **Marketing URL:** https://xpn.org · **Privacy policy:** https://xpn.org/privacy-policy/
 
 **Price:** free, no in-app purchases. Donating opens xpn.org in the browser view (App Review 3.2.2, approved nonprofits).
 

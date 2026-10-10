@@ -8,7 +8,7 @@ import { PlaylistSyncPanel } from "../components/PlaylistSync.jsx";
 import { RadioAlarmPanel } from "../components/RadioAlarm.jsx";
 import { useNotificationTrouble } from "../notifications.js";
 import { SocialLinks } from "../components/SocialLinks.jsx";
-import { CALENDAR_URL, DONATE_URL, PRIVACY_URL, STATION_EMAIL } from "../links.js";
+import { CALENDAR_URL, DONATE_URL, HELP_URL, PRIVACY_URL, STATION_EMAIL } from "../links.js";
 import { reportingAvailable, reportingStore, setReporting } from "../analytics.js";
 import { useLocalStore } from "../storage.js";
 import { useFeatures } from "../features.js";
@@ -20,6 +20,7 @@ const LINKS = [
   { label: "Donate to WXPN", url: DONATE_URL },
   { label: "Concert calendar", url: CALENDAR_URL, whenOff: "concerts" },
   { label: "Contact the station", url: `mailto:${STATION_EMAIL}` },
+  { label: "App help", url: HELP_URL },
   {
     label: "Technical support",
     url: `mailto:${STATION_EMAIL}?subject=${encodeURIComponent(
