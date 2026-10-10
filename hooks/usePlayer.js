@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { castEpisode } from "../episode-player.js";
 import {
   getPlayerSnapshot,
   getSleepEndsAt,
@@ -23,13 +24,17 @@ export const useVolume = () => useSyncExternalStore(subscribeVolume, getVolume);
 // When the sleep timer will stop playback (epoch ms), or null.
 export const useSleepTimer = () => useSyncExternalStore(subscribeSleep, getSleepEndsAt);
 
-// Opens the system picker for AirPlay / Chromecast-style outputs.
-export async function chooseAudioOutput() {
+// Opens the system picker for AirPlay or Google Cast (cast.js): for the
+// station, or with `open`, another player's (the episode's).
+async function choose(open) {
   try {
-    await promptCast();
+    await open();
   } catch (error) {
-    if (error.name !== "NotAllowedError") {
-      showToast("No audio output is available. Use your device’s audio controls.");
+    // Closing the picker without choosing isn't a failure.
+    if (error.name !== "NotAllowedError" && error.name !== "AbortError") {
+      showToast("No other speakers or TVs are available. Use your device’s audio controls.");
     }
   }
 }
+export const chooseAudioOutput = () => choose(promptCast);
+export const chooseEpisodeOutput = () => choose(castEpisode);

@@ -69,16 +69,20 @@ function rowMeta(episode, { ended, started, position, duration }) {
     .join(" · ");
 }
 
-// The round play key on an episode row.
+// The round play key on an episode row: solid, orange while it plays.
 function EpisodePlayKey({ episode }) {
   const s = useEpisodeState(episode);
   const verb = s.playing || s.busy ? "Pause" : s.started && !s.ended ? "Resume" : "Play";
   const label = `${verb} ${showName(episode)}, ${episode.title}`;
+  // Started and not finished: a ring around the key shows how much is heard.
+  const heard = s.started && !s.ended && s.duration ? Math.min(1, s.position / s.duration) : 0;
   return (
     <button
       className="episode-key"
       data-on={s.playing || s.busy || undefined}
       data-busy={s.busy || undefined}
+      data-heard={heard ? "" : undefined}
+      style={heard ? { "--heard": `${(heard * 360).toFixed(1)}deg` } : undefined}
       aria-label={label}
       onClick={() => toggleEpisode(episode)}
     >

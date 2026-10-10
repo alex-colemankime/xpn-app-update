@@ -401,13 +401,14 @@ h1 {
   background: color-mix(in srgb, var(--muted) 16%, transparent);
   color: var(--muted);
 }
-/* Play: the same orange key as Listen live, sized to the artwork beside it. */
+/* Play: a round orange key, the same family as the episode keys, sized to
+   the artwork beside it. */
 .player-play {
   position: relative;
   flex-shrink: 0;
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
   background: var(--action);
@@ -595,15 +596,20 @@ h1 {
     font-size: 0.875rem;
   }
   .player-now > .icon-button,
-  .player-utilities {
+  .player-volume {
     display: none;
+  }
+  /* What's left of the utilities on a phone is AirPlay or Cast, beside play. */
+  .player-utilities {
+    order: 1;
+    margin-left: 0;
+    padding-left: 0;
   }
   .live-badge {
     margin-right: 6px;
   }
   .player-play {
-    order: 1;
-    border-radius: 14px;
+    order: 2;
   }
   .mobile-nav {
     position: fixed;

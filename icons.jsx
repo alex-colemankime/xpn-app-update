@@ -81,6 +81,13 @@ const ICONS = {
       <line x1="2" y1="20" x2="2.01" y2="20" strokeWidth="3" />
     </>,
   ],
+  airplay: [
+    outline(1.8, rounded),
+    <>
+      <path d="M5 17H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-1" />
+      <path d="M12 15l5 6H7z" />
+    </>,
+  ],
   bell: [
     outline(1.7, rounded),
     <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" />,
@@ -169,9 +176,11 @@ const ICONS = {
       <rect x="13.3" y="5" width="4.2" height="14" rx="2.1" />
     </>,
   ],
+  // A softly rounded triangle whose weight sits on the center, so it needs
+  // no nudging to look centered in a round key.
   play: [
-    { ...solid, stroke: "currentColor", strokeWidth: 2, strokeLinejoin: "round" },
-    <path d="M8.5 5.5v13l10.5-6.5-10.5-6.5z" />,
+    solid,
+    <path d="M8 6.2c0-1.13 1.23-1.83 2.2-1.25l9.4 5.8c.92.57.92 1.92 0 2.5l-9.4 5.8C9.23 19.63 8 18.93 8 17.8V6.2z" />,
   ],
   plus: [outline(2, rounded), <path d="M12 5v14M5 12h14" />],
   search: [

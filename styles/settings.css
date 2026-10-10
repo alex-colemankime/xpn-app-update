@@ -390,3 +390,26 @@
   margin-top: 20px;
   border-top: 1px solid var(--border);
 }
+/* Under saved videos: each channel, and Subscribe. */
+.youtube-subscribe {
+  max-width: 560px;
+  margin-top: 28px;
+  border-top: 1px solid var(--border);
+}
+.youtube-channel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.youtube-channel > .icon {
+  color: var(--muted);
+}
+.youtube-channel small {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.youtube-subscribe .secondary-button {
+  padding-block: 8px;
+  min-height: 40px;
+}

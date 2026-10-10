@@ -1,7 +1,13 @@
 import { setVolume, togglePlayback, VOLUME_SETTABLE } from "../player.js";
 import { Icon, Art } from "../ui.jsx";
 import { SaveSong } from "./MusicRows.jsx";
-import { usePlayer, useVolume, chooseAudioOutput } from "../hooks/usePlayer.js";
+import {
+  usePlayer,
+  useVolume,
+  chooseAudioOutput,
+  chooseEpisodeOutput,
+} from "../hooks/usePlayer.js";
+import { CAST_KIND, CAST_LABEL } from "../cast.js";
 import { playbackText } from "../playback-text.js";
 import { useLiveSong } from "../nowplaying.js";
 import { clockTime, lengthLabel } from "../time.js";
@@ -31,6 +37,22 @@ function PlayerVolume() {
         style={{ "--fill": `${volume}%` }}
       />
     </label>
+  );
+}
+
+// AirPlay or Cast (cast.js), where the device has it: at the bar's far edge
+// on larger screens, beside play in the mini player on phones.
+function CastButton({ onClick }) {
+  if (!CAST_KIND) return null;
+  return (
+    <button
+      className="icon-button player-cast"
+      aria-label={CAST_LABEL[CAST_KIND]}
+      title={CAST_LABEL[CAST_KIND]}
+      onClick={onClick}
+    >
+      <Icon name={CAST_KIND} size={20} />
+    </button>
   );
 }
 
@@ -82,9 +104,10 @@ function EpisodeBar({ onOpenEpisode }) {
       <div className="player-seek">
         <EpisodeScrubber episode={episode} />
       </div>
-      {VOLUME_SETTABLE && (
+      {(VOLUME_SETTABLE || CAST_KIND) && (
         <div className="player-utilities">
-          <PlayerVolume />
+          {VOLUME_SETTABLE && <PlayerVolume />}
+          <CastButton onClick={chooseEpisodeOutput} />
         </div>
       )}
       <button
@@ -114,7 +137,7 @@ export function PlayerBar(props) {
 function LiveBar({ playlist, onOpen }) {
   const player = usePlayer();
   const current = useLiveSong(playlist);
-  const { station, playing, connecting, status, castAvailable } = player;
+  const { station, playing, connecting, status } = player;
   const text = playbackText(player);
   // A small badge beside the artist says what the stream is doing; paused
   // needs none, the play button already says it.
@@ -154,18 +177,10 @@ function LiveBar({ playlist, onOpen }) {
         </button>
         {current && <SaveSong track={current} />}
       </div>
-      {(VOLUME_SETTABLE || castAvailable) && (
+      {(VOLUME_SETTABLE || CAST_KIND) && (
         <div className="player-utilities">
           {VOLUME_SETTABLE && <PlayerVolume />}
-          {castAvailable && (
-            <button
-              className="icon-button"
-              aria-label="Choose audio output"
-              onClick={chooseAudioOutput}
-            >
-              <Icon name="cast" size={19} />
-            </button>
-          )}
+          <CastButton onClick={chooseAudioOutput} />
         </div>
       )}
     </footer>

@@ -14,6 +14,8 @@
 // for audio. Drops, stalls and errors while that is true are retried; the
 // same events after the listener paused are ignored.
 
+import { castKind, promptCast as openCastPicker } from "./cast.js";
+
 const noop = () => {};
 
 // A volume percentage as an <audio> element's 0–1 level. Anything unreadable
@@ -277,13 +279,9 @@ export function createPlayer({
     updateMetadata();
   }
 
-  const canCast = () => Boolean(audio?.remote?.prompt || audio?.webkitShowPlaybackTargetPicker);
-
-  async function promptCast() {
-    if (audio?.remote?.prompt) return audio.remote.prompt();
-    if (audio?.webkitShowPlaybackTargetPicker) return audio.webkitShowPlaybackTargetPicker();
-    throw new Error("Audio output selection is not available in this browser.");
-  }
+  // Playing on another device (cast.js): AirPlay or Google Cast.
+  const canCast = () => Boolean(castKind(audio));
+  const promptCast = () => openCastPicker(audio);
 
   return {
     init,

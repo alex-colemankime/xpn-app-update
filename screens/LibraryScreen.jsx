@@ -14,6 +14,7 @@ import { PlaylistSyncPrompt } from "../components/PlaylistSync.jsx";
 import { calendarIsNative, downloadIcs } from "../calendar.js";
 import { useFeatures } from "../features.js";
 import { savedShowGroups } from "../saved-shows.js";
+import { YouTubeSubscribe } from "../components/SocialLinks.jsx";
 
 // Empty-state copy and the screen each category's call to action opens.
 const EMPTY = {
@@ -173,6 +174,7 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
           ))}
         </div>
       ) : null}
+      {category === "videos" && !q && <YouTubeSubscribe />}
     </>
   );
 }

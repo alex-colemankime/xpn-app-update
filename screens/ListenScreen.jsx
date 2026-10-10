@@ -10,6 +10,7 @@ import { SaveSong, SongMenu, TrackRow } from "../components/MusicRows.jsx";
 import { OnAir, videoOfShow } from "../components/OnAir.jsx";
 import { SleepTimer } from "../components/SleepTimer.jsx";
 import { LiveCard } from "../components/StationUpdates.jsx";
+import { CAST_KIND } from "../cast.js";
 import { usePlayer, chooseAudioOutput } from "../hooks/usePlayer.js";
 import { useHeroVisibility } from "../hooks/useHeroVisibility.js";
 import { useNow } from "../hooks/useNow.js";
@@ -146,7 +147,7 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
               aria-label="Play on another device"
               title="Play on another device"
             >
-              <Icon name="cast" size={22} />
+              <Icon name={CAST_KIND || "cast"} size={22} />
             </button>
           )}
         </div>

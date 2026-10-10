@@ -106,7 +106,7 @@
   content: "";
   position: absolute;
   inset: -5px;
-  border-radius: 17px;
+  border-radius: 50%;
   border: 2px solid var(--action);
   animation: busy-pulse 0.9s ease-in-out infinite alternate;
 }

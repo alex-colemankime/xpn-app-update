@@ -227,8 +227,9 @@
   height: 64px;
 }
 
-/* The play key on a row: an outlined circle, filled orange while its
-   episode plays. */
+/* The play key on a row: a solid round key in the text color, orange while
+   its episode plays. Once an episode is started and not finished, a thin
+   ring around the key fills with how much has been heard. */
 .episode-key {
   position: relative;
   display: grid;
@@ -237,34 +238,54 @@
   height: 44px;
   flex-shrink: 0;
   border-radius: 50%;
-  border: 1.5px solid var(--control-border);
-  color: var(--text);
+  color: var(--bg);
+  isolation: isolate;
+}
+.episode-key::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  z-index: -1;
+  border-radius: 50%;
+  background: var(--text);
   transition:
     background-color 0.15s,
-    border-color 0.15s;
+    transform 0.15s;
 }
-.episode-key .icon {
-  margin-left: 1px;
+.episode-key[data-heard]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent) var(--heard), var(--border) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
 }
 .episode-key[data-on] {
-  background: var(--action);
-  border-color: var(--action);
   color: var(--action-ink);
 }
-.episode-key[data-on] .icon {
-  margin-left: 0;
+.episode-key[data-on]::before {
+  background: var(--action);
 }
-.episode-key[data-busy] {
+.episode-key[data-busy]::before {
   animation: busy-pulse 0.9s ease-in-out infinite alternate;
 }
 @media (hover: hover) {
-  .episode-key:not([data-on]):hover {
-    border-color: var(--accent);
-    color: var(--accent);
+  .episode-key:not([data-on]):hover::before {
+    background: var(--accent-strong);
   }
 }
-.episode-key:active {
-  transform: scale(0.94);
+.episode-key:active::before {
+  transform: scale(0.92);
+}
+@media (forced-colors: active) {
+  .episode-key::before {
+    border: 2px solid ButtonText;
+    background: Canvas;
+  }
+  .episode-key {
+    color: ButtonText;
+  }
 }
 
 /* The episode sheet. */

@@ -29,3 +29,38 @@ export function SocialLinks() {
     </div>
   );
 }
+
+// Subscribe to the station's YouTube channels: under saved videos, where
+// someone who keeps the sessions is most likely to want more of them.
+// YouTube's own address for subscribing asks them to confirm.
+const YOUTUBE = SOCIAL.map(({ owner, accounts }) => ({
+  owner,
+  ...accounts.find((a) => a.name === "YouTube"),
+})).filter((c) => c.url);
+
+export function YouTubeSubscribe() {
+  return (
+    <div className="social-links youtube-subscribe">
+      {YOUTUBE.map((c) => (
+        <div className="social-row" key={c.owner}>
+          <span className="youtube-channel">
+            <Icon name="youtube" size={22} />
+            <span>
+              <span className="social-owner">{c.owner}</span>
+              <small>on YouTube</small>
+            </span>
+          </span>
+          <a
+            className="secondary-button"
+            href={`${c.url}${c.url.includes("?") ? "&" : "?"}sub_confirmation=1`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Subscribe to ${c.owner} on YouTube`}
+          >
+            Subscribe
+          </a>
+        </div>
+      ))}
+    </div>
+  );
+}

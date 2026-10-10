@@ -2,6 +2,7 @@
 // real <audio> element, the lock screen, the listener's volume and saved
 // places, and handing over to and from the live station.
 import { useSyncExternalStore } from "react";
+import { promptCast } from "./cast.js";
 import { createEpisodePlayer, resumeAt } from "./episode-core.js";
 import { createLocalStore, createStore } from "./storage.js";
 import {
@@ -40,8 +41,10 @@ const CANT_PLAY = {
   audio: "That broadcast couldn’t play. Try again in a moment.",
 };
 
+// The episode's own <audio> element, kept for the AirPlay / Cast picker.
+let episodeAudio = null;
 const core = createEpisodePlayer({
-  createAudio: () => (typeof Audio === "undefined" ? null : new Audio()),
+  createAudio: () => (episodeAudio = typeof Audio === "undefined" ? null : new Audio()),
   mediaSession: mediaControls,
   onChange: (state) => episodeStore.set(state),
   onProgress: (id, place) =>
@@ -106,6 +109,8 @@ export function toggleEpisode(episode) {
 }
 
 export const pauseEpisode = () => core.pause();
+// Opens AirPlay or Cast for the episode (cast.js).
+export const castEpisode = () => promptCast(episodeAudio);
 export const getEpisodeState = () => core.getState();
 export const resumeEpisode = () => {
   tap("medium");
