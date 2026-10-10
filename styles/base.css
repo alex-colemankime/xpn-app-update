@@ -66,7 +66,7 @@
   --brand-w: #bf917c;
   --key-lit: color-mix(in srgb, var(--accent) 20%, var(--bg));
 }
-/* Listen, while a song with colorful artwork plays: the page takes a very
+/* Listen, while a song with colorful artwork plays: the page takes a
    light wash of the artwork's color (art-tint.js picks it, already adjusted
    per theme), so each song tints the screen a little differently. Set by
    the Listen screen while it is in front.
@@ -76,10 +76,10 @@
    Browsers without relative colors keep the plain page. */
 @supports (color: oklch(from red l c h)) {
   :root[data-art-wash] {
-    --bg: oklch(from color-mix(in srgb, var(--wash-light) 9%, var(--paper)) var(--paper-l) c h);
+    --bg: oklch(from color-mix(in srgb, var(--wash-light) 24%, var(--paper)) var(--paper-l) c h);
   }
   :root[data-art-wash][data-theme="dark"] {
-    --bg: oklch(from color-mix(in srgb, var(--wash-dark) 12%, var(--paper)) var(--paper-l) c h);
+    --bg: oklch(from color-mix(in srgb, var(--wash-dark) 22%, var(--paper)) var(--paper-l) c h);
   }
 }
 html,

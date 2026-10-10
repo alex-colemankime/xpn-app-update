@@ -334,6 +334,22 @@ h1 {
   background: var(--raised);
   border-top: 1px solid var(--border);
 }
+/* The bar takes a light wash of what's playing: the song's artwork, or the
+   episode's. Like the Listen page's, it keeps its lightness (here the
+   raised paper's), so text and hearts keep their contrast. */
+@supports (color: oklch(from red l c h)) {
+  .player-bar[data-tinted] {
+    background: oklch(
+      from color-mix(in srgb, var(--tint-light) 26%, var(--paper-raised)) var(--paper-raised-l) c h
+    );
+    transition: background-color 0.8s ease;
+  }
+  :root[data-theme="dark"] .player-bar[data-tinted] {
+    background: oklch(
+      from color-mix(in srgb, var(--tint-dark) 24%, var(--paper-raised)) var(--paper-raised-l) c h
+    );
+  }
+}
 /* The song, and its heart right beside it. */
 .player-now {
   display: flex;

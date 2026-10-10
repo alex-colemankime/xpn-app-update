@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Art, Icon, Segmented, Empty, SearchField, shareText } from "../ui.jsx";
+import { Icon, Segmented, Empty, SearchField, shareText } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { useFavoriteItems } from "../favorites.js";
 import { easternToday } from "../concerts.js";
 import { ARCHIVE_ENABLED, CONCERTS_ENABLED, VIDEOS_ENABLED } from "../config.js";
 import { VideoCard } from "../components/VideoCard.jsx";
-import { EpisodeRow } from "../components/Archive.jsx";
+import { EpisodeRow, ShowHead } from "../components/Archive.jsx";
 import { hasLeftArchive, useArchiveState } from "../archive.js";
 import { showToast } from "../toast.js";
 import { TrackRow, SaveButton } from "../components/MusicRows.jsx";
@@ -186,20 +186,17 @@ function SavedShow({ group, gone, onOpenShow }) {
   const headId = `saved-show-${id}`;
   return (
     <section className="archive-show" aria-labelledby={headId}>
-      <div className="archive-show-head saved-show-head">
-        <button className="saved-show-open" onClick={() => onOpenShow(id)}>
-          <Art src={show.img} alt="" loading="lazy" />
-          <span>
-            <strong id={headId}>{show.name}</strong>
-            <small>
-              {followed
-                ? [show.times?.[0], show.host].filter(Boolean).join(" · ") || "Following"
-                : "Not following"}
-            </small>
-          </span>
-        </button>
-        <SaveButton type="shows" item={{ ...show, id }} name={show.name} verb="Follow" />
-      </div>
+      <ShowHead
+        id={id}
+        show={show}
+        headId={headId}
+        line={
+          followed
+            ? [show.times?.[0], show.host].filter(Boolean).join(" · ") || "Following"
+            : "Not following"
+        }
+        onOpen={onOpenShow}
+      />
       {episodes.map((ep) => (
         <EpisodeRow
           key={ep.id}

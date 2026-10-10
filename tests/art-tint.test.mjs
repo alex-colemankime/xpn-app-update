@@ -80,7 +80,7 @@ const washed = (color, paper, share) => {
   return fromOklch([oklch(rgb(paper))[0], c, h]);
 };
 
-test("hearts keep 3:1 on a page or show sheet washed in any artwork's color", () => {
+test("hearts keep 3:1 on a page, show sheet or player bar washed in any artwork's color", () => {
   const arts = [];
   for (let h = 0; h < 360; h += 20) {
     for (const [s, l] of [
@@ -106,10 +106,19 @@ test("hearts keep 3:1 on a page or show sheet washed in any artwork's color", ()
   const tints = [...arts.map(themeTints), ...Object.values(shows).map((s) => s.tint)].filter(
     Boolean,
   );
-  // The Listen page (9% / 12%) and a show's sheet (12% / 14%), light / dark.
+  // The Listen page (24% / 22%), a show's sheet (12% / 14%) and the player
+  // bar (26% / 24%), light / dark.
   const grounds = (w) => ({
-    light: [washed(w.light, "#faf8f3", 0.09), washed(w.light, "#f2efe7", 0.12)],
-    dark: [washed(w.dark, "#202224", 0.12), washed(w.dark, "#292c2f", 0.14)],
+    light: [
+      washed(w.light, "#faf8f3", 0.24),
+      washed(w.light, "#f2efe7", 0.12),
+      washed(w.light, "#f2efe7", 0.26),
+    ],
+    dark: [
+      washed(w.dark, "#202224", 0.22),
+      washed(w.dark, "#292c2f", 0.14),
+      washed(w.dark, "#292c2f", 0.24),
+    ],
   });
   for (const wash of tints) {
     const g = grounds(wash);

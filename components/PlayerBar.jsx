@@ -19,6 +19,15 @@ import {
   useEpisodePlayer,
 } from "../episode-player.js";
 import { EpisodeScrubber } from "./Archive.jsx";
+import { useArtTint } from "../art-tint.js";
+
+// The bar's wash, from the artwork playing (styles/layout.css).
+function useBarTint(art) {
+  const tint = useArtTint(art || null);
+  return tint
+    ? { "data-tinted": "", style: { "--tint-light": tint.light, "--tint-dark": tint.dark } }
+    : {};
+}
 
 // The volume slider, where the device lets the app set it (not on iPhone,
 // where only the hardware buttons can).
@@ -64,8 +73,10 @@ function EpisodeBar({ onOpenEpisode }) {
   const busy = status === "loading";
   const playing = status === "playing" || busy;
   const left = duration ? Math.max(0, duration - position) : 0;
+  const tint = useBarTint(episode.image);
   return (
     <footer
+      {...tint}
       className="player-bar"
       data-source="episode"
       data-playing={playing || undefined}
@@ -142,8 +153,9 @@ function LiveBar({ playlist, onOpen }) {
   // A small badge beside the artist says what the stream is doing; paused
   // needs none, the play button already says it.
   const badge = playing || connecting || status === "error" ? text.badge : "";
+  const tint = useBarTint(current?.img);
   return (
-    <footer className="player-bar" aria-label="Radio player">
+    <footer {...tint} className="player-bar" aria-label="Radio player">
       <button
         className="player-play"
         onClick={togglePlayback}

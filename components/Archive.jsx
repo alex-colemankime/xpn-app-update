@@ -154,6 +154,23 @@ function SkeletonEpisodes() {
   );
 }
 
+// A show heading its episodes (Shows › Archive, Favorites › Shows): its art,
+// name and a line under it open the show; the heart beside it follows it.
+export function ShowHead({ id, show, headId, line, onOpen }) {
+  return (
+    <div className="archive-show-head">
+      <button className="show-head-open" onClick={() => onOpen(id)}>
+        <Art src={show.img} alt="" loading="lazy" />
+        <span>
+          <strong id={headId}>{show.name}</strong>
+          {line && <small>{line}</small>}
+        </span>
+      </button>
+      <SaveButton type="shows" item={{ ...show, id }} name={show.name} verb="Follow" />
+    </div>
+  );
+}
+
 // Shows › Archive: the shows xpn.org archives, newest broadcast first, each
 // with its latest few episodes and a way into the rest. Searching shows every
 // match.
@@ -196,18 +213,17 @@ export function ArchiveList({ query, onOpen, onOpenShow, onClearQuery }) {
         </Empty>
       ) : (
         [...shows].map(([id, episodes]) => {
-          const show = SHOWS[id] || { name: showName(episodes[0]), img: showArt(episodes[0]) };
+          const show = SHOWS[id] || { id, name: showName(episodes[0]), img: showArt(episodes[0]) };
           const shown = q ? episodes : episodes.slice(0, PER_SHOW);
           return (
             <section key={id} className="archive-show" aria-labelledby={`archive-${id}`}>
-              <button className="archive-show-head" onClick={() => onOpenShow(id)}>
-                <Art src={show.img} alt="" loading="lazy" />
-                <span>
-                  <strong id={`archive-${id}`}>{show.name}</strong>
-                  <small>{[show.times?.[0], show.host].filter(Boolean).join(" · ")}</small>
-                </span>
-                <Icon name="chev" size={18} />
-              </button>
+              <ShowHead
+                id={id}
+                show={show}
+                headId={`archive-${id}`}
+                line={[show.times?.[0], show.host].filter(Boolean).join(" · ")}
+                onOpen={onOpenShow}
+              />
               {shown.map((episode) => (
                 <EpisodeRow key={episode.id} episode={episode} onOpen={onOpen} showShow={false} />
               ))}
