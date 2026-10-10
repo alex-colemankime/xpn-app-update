@@ -1,0 +1,37 @@
+/* ---------------------------------------------------------------------------
+   Grain: a fine, still film grain over every surface that carries a color
+   (the page washed in the playing artwork's color, a show's sheet, the On
+   air band, station banners and the tinted player bar), so a wash reads as
+   printed rather than as a flat block.
+   The grain is a small noise tile drawn in SVG, here in the stylesheet (no
+   download), blended in soft-light so it lightens and darkens around each
+   color without graying it. Soft-light shows more on dark colors than on
+   light ones, so dark mode uses less. It never moves.
+   ------------------------------------------------------------------------ */
+
+:root {
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncG type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncB type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23n)' opacity='0.75'/%3E%3C/svg%3E");
+}
+:root[data-theme="dark"] {
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncG type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncB type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23n)' opacity='0.25'/%3E%3C/svg%3E");
+}
+
+:root[data-art-wash],
+:root[data-art-wash] :is(.app-sidebar, .mobile-nav),
+.show-dialog,
+.show-dialog .dialog-header,
+.on-air,
+.station-banner,
+.player-bar[data-tinted] {
+  background-image: var(--grain);
+  background-size: 160px 160px;
+  background-blend-mode: soft-light;
+}
+
+/* Asked for more contrast, or forced colors: plain surfaces. */
+@media (prefers-contrast: more), (forced-colors: active) {
+  :root,
+  :root[data-theme="dark"] {
+    --grain: none;
+  }
+}

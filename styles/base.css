@@ -95,7 +95,7 @@ body {
     BlinkMacSystemFont,
     sans-serif;
   color: var(--text);
-  background: var(--bg);
+  background-color: var(--bg);
   font-synthesis: none;
   /* Layout: the desktop player bar, and on phones the tab bar and the mini
      player that sits on it. */

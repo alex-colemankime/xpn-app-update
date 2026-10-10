@@ -13,7 +13,7 @@
   max-height: 100dvh;
   border: 0;
   border-left: 1px solid var(--border);
-  background: var(--surface);
+  background-color: var(--surface);
   color: var(--text);
   overflow-y: auto;
   /* Scrolling to the end of the sheet must not scroll the page behind it. */
@@ -46,7 +46,7 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--surface);
+  background-color: var(--surface);
   display: flex;
   justify-content: space-between;
   gap: 20px;

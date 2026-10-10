@@ -104,7 +104,11 @@ test("going offline says so, and coming back clears it", async ({ page, context 
   // own; the app around it, and the player, carry on.
   await page.goto("/#/settings");
   const settings = page.getByRole("region", { name: "Settings" });
-  await expect(settings.getByText(/^Privacy$|This screen didn’t load/).first()).toBeVisible();
+  await expect(
+    settings
+      .getByRole("heading", { name: "Settings", level: 1 })
+      .or(settings.getByText("This screen didn’t load")),
+  ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Something went wrong" })).toHaveCount(0);
   await expect(page.getByRole("contentinfo", { name: "Radio player" })).toBeVisible();
 });

@@ -15,12 +15,12 @@
   color: var(--text);
   /* One even wash of the show's color, edge to edge: no fade that reads as
      the band being cut off. */
-  background: color-mix(in srgb, var(--band) 13%, var(--bg));
+  background-color: color-mix(in srgb, var(--band) 13%, var(--bg));
   transition: background-color 0.15s;
 }
 :root[data-theme="dark"] .on-air {
   --band: var(--tint-dark, var(--accent));
-  background: color-mix(in srgb, var(--band) 17%, var(--bg));
+  background-color: color-mix(in srgb, var(--band) 17%, var(--bg));
 }
 .on-air-open {
   flex: 1;
@@ -32,10 +32,10 @@
 }
 @media (hover: hover) {
   .on-air:has(.on-air-open:hover) {
-    background: color-mix(in srgb, var(--band) 19%, var(--bg));
+    background-color: color-mix(in srgb, var(--band) 19%, var(--bg));
   }
   :root[data-theme="dark"] .on-air:has(.on-air-open:hover) {
-    background: color-mix(in srgb, var(--band) 24%, var(--bg));
+    background-color: color-mix(in srgb, var(--band) 24%, var(--bg));
   }
 }
 .on-air-open > .icon {

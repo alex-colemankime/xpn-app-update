@@ -11,12 +11,12 @@
   align-items: center;
   gap: 14px;
   padding: 10px var(--page-gutter);
-  background: color-mix(in srgb, var(--action) 15%, var(--bg));
+  background-color: color-mix(in srgb, var(--action) 15%, var(--bg));
   color: var(--text);
   border-bottom: 1px solid color-mix(in srgb, var(--action) 32%, var(--bg));
 }
 .station-banner[data-kind="live"] {
-  background: var(--text);
+  background-color: var(--text);
   color: var(--bg);
   border-bottom-color: var(--text);
 }

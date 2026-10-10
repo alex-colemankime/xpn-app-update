@@ -293,7 +293,7 @@
   /* On Listen, the big controls are the player; the mini player steps aside
      until they scroll out of view. */
   .player-bar {
-    background: var(--surface);
+    background-color: var(--surface);
     transition:
       translate 0.25s ease-out,
       opacity 0.2s ease-out,
