@@ -32,3 +32,26 @@ export class ErrorBoundary extends Component {
     );
   }
 }
+
+// One screen's share of the same: its code couldn't load (the connection
+// dropped, on the web) or it failed to draw. The other screens, the player
+// and the tab bar carry on; reloading brings it back.
+export class ScreenErrorBoundary extends Component {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <div className="screen-error" role="alert">
+        <p>This screen didn’t load. Check your connection, then reload the app.</p>
+        <button className="secondary-button" onClick={() => window.location.reload()}>
+          Reload the app
+        </button>
+      </div>
+    );
+  }
+}

@@ -94,10 +94,19 @@ test("the station can switch a feature off and on again", async ({ page }) => {
 test("going offline says so, and coming back clears it", async ({ page, context }) => {
   await page.goto("/");
   const notice = page.getByRole("status").filter({ hasText: "You’re offline" });
+  // Straight away, while the other screens are still loading in the
+  // background: their loads wait for the connection rather than failing.
   await context.setOffline(true);
   await expect(notice).toBeVisible();
   await context.setOffline(false);
   await expect(notice).toBeHidden();
+  // A screen whose code the drop cut off either loads now or says so on its
+  // own; the app around it, and the player, carry on.
+  await page.goto("/#/settings");
+  const settings = page.getByRole("region", { name: "Settings" });
+  await expect(settings.getByText(/^Privacy$|This screen didn’t load/).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Something went wrong" })).toHaveCount(0);
+  await expect(page.getByRole("contentinfo", { name: "Radio player" })).toBeVisible();
 });
 
 test("a show with a saved episode can be followed from Favorites", async ({ page, context }) => {

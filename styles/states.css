@@ -241,3 +241,17 @@
     border-color: ButtonText;
   }
 }
+
+/* One screen that couldn't load, in place of that screen only. */
+.screen-error {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  max-width: 34rem;
+  padding: 32px 0;
+}
+.screen-error p {
+  margin: 0;
+  font-size: 1.0625rem;
+  color: var(--muted);
+}

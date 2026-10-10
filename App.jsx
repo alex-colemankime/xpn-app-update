@@ -28,6 +28,8 @@ import { LibraryScreen } from "./screens/LibraryScreen.jsx";
 import { trackScreen } from "./analytics.js";
 import { UpdatePrompt } from "./components/UpdatePrompt.jsx";
 import { useFeatures } from "./features.js";
+import { retryImport } from "./retry-import.js";
+import { ScreenErrorBoundary } from "./error-boundary.jsx";
 
 const ONBOARDED_KEY = "xpn.onboarded";
 
@@ -38,7 +40,9 @@ const useStreamId = () => useSyncExternalStore(subscribePlayer, () => getPlayerS
 // Listen, Shows and Favorites are in the first download; the rest load just
 // after. (The React Compiler keeps each screen's element while its inputs are
 // unchanged, so screens re-render only when their own inputs change.)
-const lazyNamed = (load, name) => lazy(() => load().then((m) => ({ default: m[name] })));
+// A load that fails while offline waits for the connection (retry-import.js).
+const lazyNamed = (load, name) =>
+  lazy(() => retryImport(load)().then((m) => ({ default: m[name] })));
 const Concerts = lazyNamed(() => import("./screens/ConcertsScreen.jsx"), "ConcertsScreen");
 const Videos = lazyNamed(() => import("./screens/VideosScreen.jsx"), "VideosScreen");
 const Settings = lazyNamed(() => import("./screens/SettingsScreen.jsx"), "SettingsScreen");
@@ -53,7 +57,10 @@ function Screen({ id, label, current, children }) {
   return (
     <Activity mode={shown ? "visible" : "hidden"}>
       <section hidden={!shown} aria-label={label}>
-        <Suspense fallback={null}>{children}</Suspense>
+        {/* A screen that can't load says so, and the rest of the app carries on. */}
+        <ScreenErrorBoundary>
+          <Suspense fallback={null}>{children}</Suspense>
+        </ScreenErrorBoundary>
       </section>
     </Activity>
   );
