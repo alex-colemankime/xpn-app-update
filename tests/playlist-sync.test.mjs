@@ -380,3 +380,24 @@ test("signing in again as someone else starts their own playlist", async () => {
   assert.equal(syncState().playlistId, "pl-2");
   assert.equal(svc.calls.length, sent);
 });
+
+test("the station's playlist-sync switch stops a connected sync from running", async () => {
+  const { applySwitches } = await import("../features.js");
+  const calls = [];
+  Object.assign(SERVICES.spotify, {
+    available: () => true,
+    account: async () => "listener-1",
+    owns: async () => true,
+    ensurePlaylist: async (s) => (calls.push("ensure"), s.playlistId ? s : { playlistId: "pl9" }),
+    find: async (song) => (calls.push("find"), `uri:${song.title}`),
+    add: async () => calls.push("add"),
+    remove: async () => calls.push("remove"),
+  });
+  applySwitches(["playlistSync"]);
+  toggleFavorite("songs", { title: "Switched Off", artist: "Nobody" });
+  await syncNow();
+  assert.deepEqual(calls, [], "no request reaches the service while it's off");
+  applySwitches([]);
+  await syncNow();
+  assert.ok(calls.includes("add"), "back on, it catches up");
+});

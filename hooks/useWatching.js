@@ -37,7 +37,13 @@ function offerAudioBack() {
 export function liveToShow({ chosen, current, updatesLoaded }) {
   const now = youTubeEmbed(current?.watch) ? current : null;
   if (!chosen) return now;
-  if (now?.id === chosen.id) return now;
+  // The same video: by id, or, when the choice has none (a pushed
+  // notification carries only the link), by its address. (Two broadcasts
+  // can share one channel's live link, so an id decides when there is one.)
+  const same =
+    now &&
+    (chosen.id ? now.id === chosen.id : youTubeEmbed(now.watch) === youTubeEmbed(chosen.watch));
+  if (same) return now;
   return !updatesLoaded && youTubeEmbed(chosen.watch) ? chosen : null;
 }
 

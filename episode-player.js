@@ -46,6 +46,8 @@ let episodeAudio = null;
 const core = createEpisodePlayer({
   createAudio: () => (episodeAudio = typeof Audio === "undefined" ? null : new Audio()),
   mediaSession: mediaControls,
+  // The station took the controls back: the episode no longer writes there.
+  ownsControls: () => getFocus() === "episode",
   onChange: (state) => episodeStore.set(state),
   onProgress: (id, place) =>
     progressStore.set((all) => ({ ...all, [id]: { ...place, t: Date.now() } })),

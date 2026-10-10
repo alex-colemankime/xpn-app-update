@@ -28,7 +28,7 @@ import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { PUSH_REGISTER_URL } from "./config.js";
 import { withTimeout } from "./net.js";
-import { readJson, writeJson } from "./storage.js";
+import { createStore, readJson, writeJson } from "./storage.js";
 import { webUrl } from "./text.js";
 import { featureOn } from "./features.js";
 
@@ -56,10 +56,37 @@ export function pushTarget(data) {
 
 // The registration logic, with the phone's push API and the network passed
 // in so it can be tested with stand-ins. `api` is PushNotifications' shape.
-export function createPushClient({ api, post, platform, sent = readJson(SENT_KEY, null), save }) {
+// The topics in what was last sent ("token|drives,live"), or none.
+export const topicsIn = (sent) =>
+  sent?.token && typeof sent.key === "string"
+    ? sent.key
+        .slice(sent.key.indexOf("|") + 1)
+        .split(",")
+        .filter(Boolean)
+    : [];
+
+const REGISTER_TIMEOUT_MS = 15000;
+
+export function createPushClient({
+  api,
+  post,
+  platform,
+  sent = readJson(SENT_KEY, null),
+  save,
+  // Called whenever the server's copy changes (a late or replaced token).
+  onReported,
+  // A phone that never answers (no connection to Apple's push service, say)
+  // mustn't hold up later changes, turning everything off among them.
+  registerTimeout = REGISTER_TIMEOUT_MS,
+}) {
   let token = sent?.token || null;
   let topics = [];
   let registering = null;
+  let waiting = null;
+  let listening = false;
+  // Changes are sent one at a time, each with the latest topics, so a quick
+  // on-then-off can't end with the older "on" arriving last.
+  let queue = Promise.resolve();
 
   // Tell the server, once per change of token or topics.
   async function report() {
@@ -69,37 +96,57 @@ export function createPushClient({ api, post, platform, sent = readJson(SENT_KEY
     await post({ token, platform, topics, app: APP_ID, version: VERSION });
     sent = { token, key };
     save?.(sent);
+    onReported?.();
   }
 
-  // Ask the phone for its token. Resolves once the token has arrived (or
-  // registration failed); a new token later is reported by itself.
+  // The phone's answers to register(), listened for once.
+  function listen() {
+    if (listening) return;
+    listening = true;
+    api.addListener("registration", ({ value }) => {
+      token = value;
+      if (waiting) {
+        // The token register() is waiting for; setTopics reports it.
+        const { resolve } = waiting;
+        waiting = null;
+        resolve(value);
+      } else {
+        // A token later (the phone replaced it, or it answered after giving
+        // up) is reported by itself, in turn with any change under way.
+        queue = queue.then(report).catch(() => {});
+      }
+    });
+    api.addListener("registrationError", (error) => failed(error));
+  }
+  // A failed registration is forgotten, so the next attempt registers again.
+  function failed(error) {
+    registering = null;
+    if (!waiting) return;
+    const { reject } = waiting;
+    waiting = null;
+    reject(error);
+  }
+
+  // Ask the phone for its token, once per session once it has worked.
   function register() {
+    listen();
     registering ??= new Promise((resolve, reject) => {
-      let first = resolve;
-      api.addListener("registration", ({ value }) => {
-        token = value;
-        // The first token is reported by setTopics; a new one later (the
-        // phone replaced it) by itself.
-        if (first) {
-          first(value);
-          first = null;
-        } else {
-          report().catch(() => {});
-        }
-      });
-      api.addListener("registrationError", (error) => {
-        registering = null;
-        reject(error);
-      });
-      api.register().catch(reject);
+      const timer = setTimeout(
+        () => failed(new Error("Push registration: no answer")),
+        registerTimeout,
+      );
+      waiting = {
+        resolve: (value) => (clearTimeout(timer), resolve(value)),
+        reject: (error) => (clearTimeout(timer), reject(error)),
+      };
+      Promise.resolve()
+        .then(() => api.register())
+        .catch(failed);
     });
     return registering;
   }
 
-  // The listener's subscriptions changed (or the app opened). Turning any on
-  // registers the phone; turning all off tells the server to send nothing.
-  async function setTopics(next) {
-    topics = [...next].sort();
+  async function apply() {
     if (topics.length) {
       const { receive } = await api.checkPermissions();
       if (receive !== "granted") {
@@ -112,7 +159,21 @@ export function createPushClient({ api, post, platform, sent = readJson(SENT_KEY
     return true;
   }
 
-  return { setTopics };
+  // The listener's subscriptions changed (or the app opened). Turning any on
+  // registers the phone; turning all off tells the server to send nothing.
+  // Resolves true once the server has them, false if the phone refused
+  // notifications; rejects if registration or the server failed.
+  function setTopics(next) {
+    topics = [...next].sort();
+    const run = queue.then(apply);
+    queue = run.catch(() => {});
+    return run;
+  }
+
+  // The topics the sender has for this phone, as last confirmed.
+  const delivered = () => topicsIn(sent);
+
+  return { setTopics, delivered };
 }
 
 let client = null;
@@ -121,6 +182,7 @@ const realClient = () =>
     api: PushNotifications,
     platform: Capacitor.getPlatform(),
     save: (value) => writeJson(SENT_KEY, value),
+    onReported: () => setDelivered(topicsIn(readJson(SENT_KEY, null))),
     post: async (body) => {
       const response = await fetch(PUSH_REGISTER_URL, {
         method: "POST",
@@ -132,12 +194,35 @@ const realClient = () =>
     },
   }));
 
+// The topics the sender has for this phone (as of its last confirmed
+// request, kept from the last session too), so it delivers those and the
+// phone schedules only the rest itself (useStationAlerts). Empty while push
+// is off. A failed request leaves it as it was: the server still has those.
+const delivered = createStore(topicsIn(readJson(SENT_KEY, null)));
+export const subscribePushDelivered = delivered.subscribe;
+export const getPushDelivered = delivered.getSnapshot;
+const setDelivered = (topics) => {
+  const now = delivered.getSnapshot();
+  if (topics.join(",") !== now.join(",")) delivered.set(topics);
+};
+
 // The topics a listener has switched on, sent to the server. False when the
-// phone refused notifications.
+// phone refused notifications; rejects when registration or the server
+// failed (the phone then keeps scheduling what the sender doesn't have, and
+// tries again when the app comes back to the foreground or the connection
+// returns).
 export async function syncPushTopics(settings) {
-  if (!pushIsOn()) return true;
+  if (!pushIsOn()) {
+    setDelivered([]);
+    return true;
+  }
   const topics = Object.keys(settings).filter((topic) => settings[topic]);
-  return realClient().setTopics(topics);
+  const push = realClient();
+  try {
+    return await push.setTopics(topics);
+  } finally {
+    setDelivered(push.delivered());
+  }
 }
 
 // Call `handler(target)` when the listener taps a pushed notification.

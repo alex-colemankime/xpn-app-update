@@ -9,12 +9,15 @@ const STALE_MS = 3 * 3600000;
 // Concert listings: loaded once, again on retry (showing "loading"), and
 // refreshed in place when stale (keeping the list on screen meanwhile).
 // Only one load runs at a time, however often the app comes to the front.
-export function useConcerts() {
+// `enabled` false (the build has no Concerts tab, or the station switched it
+// off) loads nothing, and switching off stops a load under way.
+export function useConcerts(enabled = true) {
   const [attempt, setAttempt] = useState(0);
   const [result, setResult] = useState(null);
   const loadedAt = useRef(0);
   const last = useRef(null);
   useEffect(() => {
+    if (!enabled) return;
     const controller = new AbortController();
     let pending = null;
     const load = (quiet) => {
@@ -41,7 +44,7 @@ export function useConcerts() {
     };
     document.addEventListener("visibilitychange", onVisible, { signal: controller.signal });
     return () => controller.abort();
-  }, [attempt]);
+  }, [attempt, enabled]);
   const loaded = result?.attempt === attempt;
   return {
     concerts: result?.concerts || [],

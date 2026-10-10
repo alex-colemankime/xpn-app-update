@@ -83,7 +83,10 @@ const SCREEN_TITLES = {
 export default function App() {
   const route = useRoute();
   const playlist = useNowPlaying(useStreamId());
-  const concerts = useConcerts();
+  const features = useFeatures();
+  // Concerts load only while the tab exists: the build has it and the
+  // station hasn't switched it off (switching off stops a load under way).
+  const concerts = useConcerts(CONCERTS_ENABLED && features.concerts);
   const updates = useStationUpdates();
   const alarm = useRadioAlarm();
   const [appearance, setAppearance] = useAppearance();
@@ -107,7 +110,6 @@ export default function App() {
   // (Not on first load, which is already at the top.)
   // A screen the station has switched off (features.js) while it was open:
   // back to Listen.
-  const features = useFeatures();
   const screenOff = features[route.screen] === false;
   const { navigate } = route;
   useEffect(() => {

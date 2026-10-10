@@ -22,6 +22,7 @@ import { Capacitor, CapacitorHttp } from "@capacitor/core";
 import { useSyncExternalStore } from "react";
 import { useEveryShow } from "./hooks/useEveryShow.js";
 import { ARCHIVE_FEEDS } from "./config.js";
+import { featureOn } from "./features.js";
 import { SHOWS } from "./catalog.js";
 import { decodeEntities, plainText, webUrl } from "./text.js";
 import { createStore, readJson, writeJson } from "./storage.js";
@@ -44,10 +45,11 @@ const plain = (value) =>
 // pattern as they are.
 const tagText = (xml, name) =>
   new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}>`, "i").exec(xml)?.[1] ?? "";
-const tagAttr = (xml, name, attr) =>
-  decodeEntities(
-    new RegExp(`<${name}\\b[^>]*\\s${attr}\\s*=\\s*"([^"]*)"`, "i").exec(xml)?.[1] ?? "",
-  );
+// An attribute's value in double or single quotes (both are valid XML).
+const tagAttr = (xml, name, attr) => {
+  const m = new RegExp(`<${name}\\b[^>]*\\s${attr}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, "i").exec(xml);
+  return decodeEntities(m?.[1] ?? m?.[2] ?? "");
+};
 
 // A short, stable id from a feed's guid, for saving and resuming.
 function shortHash(text) {
@@ -152,10 +154,14 @@ export function parseArchivePage(html, { show, name = "", schedule = [] }) {
       ? BROADCAST_DAY.format(new Date(`${day}T12:00:00Z`))
       : raw.replace(new RegExp(`\\s*on\\s*${escapeRegExp(name)}\\s*$`, "i"), "").trim() || raw;
     const feature = dated ? plain(dated[5] || "") : "";
-    const key = `${title}|${feature}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
+    // The same broadcast listed twice on the page is kept once: the same
+    // track, or the same title on the same day. Two sessions that share a
+    // title ("Friko on World Cafe") on different days are both kept.
     const guid = pageAttr(tag, "data-track-guid") || audio.split("?")[0];
+    const key = `${title}|${feature}|${day}`;
+    if (seen.has(guid) || seen.has(key)) continue;
+    seen.add(guid);
+    seen.add(key);
     episodes.push({
       id: `${show}-${shortHash(guid)}`,
       show,
@@ -277,7 +283,9 @@ const saveCache = (episodes) => writeJson(CACHE_KEY, { episodes });
 
 export function loadArchive({ force = false } = {}) {
   const state = archiveStore.getSnapshot();
-  if (!ARCHIVE_FEEDS.length || inflight) return inflight;
+  // Switched off by the station (features.js): nothing is fetched.
+  if (!featureOn("archive") || !ARCHIVE_FEEDS.length) return null;
+  if (inflight) return inflight;
   const wait = state.complete ? STALE_MS : RETRY_MS;
   if (!force && state.loadedAt && Date.now() - state.loadedAt < wait) return null;
   if (force && !state.episodes.length) archiveStore.set({ ...state, source: "loading" });

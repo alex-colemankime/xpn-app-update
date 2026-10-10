@@ -40,20 +40,24 @@ export function createListeningMeter({ send, now = () => Date.now() }) {
   };
 }
 
+// What's being heard now, from the two players' snapshots, or null. Only
+// audio that is flowing counts: the station buffering or reconnecting keeps
+// `playing` (the listener asked for it) but isn't listening. Pure, so it can
+// be tested.
+export function listeningSource(player, ep, showOnAir) {
+  if (ep.status === "playing" && ep.episode) {
+    return { content: "episode", show: ep.episode.show || "" };
+  }
+  if (player.playing && player.status === "playing") {
+    return { content: "live", station: player.streamId, show: showOnAir(player.streamId) };
+  }
+  return null;
+}
+
 // At launch: follows the station and episode players.
 export function startListeningMeter({ track, live, episode, showOnAir }) {
   const meter = createListeningMeter({ send: track });
-  const source = () => {
-    const ep = episode.getSnapshot();
-    if (ep.status === "playing" && ep.episode) {
-      return { content: "episode", show: ep.episode.show || "" };
-    }
-    const player = live.getSnapshot();
-    if (player.playing) {
-      return { content: "live", station: player.streamId, show: showOnAir(player.streamId) };
-    }
-    return null;
-  };
+  const source = () => listeningSource(live.getSnapshot(), episode.getSnapshot(), showOnAir);
   const check = () => meter.update(source());
   live.subscribe(check);
   episode.subscribe(check);

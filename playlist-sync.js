@@ -9,6 +9,7 @@
 // each save, when the app comes back to the front, and after connecting.
 
 import { useSyncExternalStore } from "react";
+import { featureOn, subscribeFeatures } from "./features.js";
 import { getSavedSongs, songId, subscribeFavorites } from "./favorites.js";
 import {
   AuthError,
@@ -116,6 +117,9 @@ async function run(retried = false) {
   // Writes only while this run's connection is still the current one.
   const update = (p) => current() && patch(p);
   const state = syncStore.getSnapshot();
+  // The station's remote switch (features.js) stops syncing outright, not
+  // only the screens that offer it.
+  if (!featureOn("playlistSync")) return;
   const service = SERVICES[state.service];
   if (!service || !service.available()) return;
   update({ status: "syncing" });
@@ -309,6 +313,13 @@ export function startPlaylistSync() {
   });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") syncNow();
+  });
+  // Switched back on by the station: catch up.
+  let wasOn = featureOn("playlistSync");
+  subscribeFeatures(() => {
+    const on = featureOn("playlistSync");
+    if (on && !wasOn) syncNow();
+    wasOn = on;
   });
   if (isSpotifyReturn(window.location.href)) {
     const url = window.location.href;

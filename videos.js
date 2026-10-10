@@ -151,7 +151,14 @@ async function fetchPlaylist(playlist, offset = 0) {
   // A key the player has since replaced: read it again next time.
   if (response.status === 401 || response.status === 403) policyKey = null;
   if (!response.ok) throw new Error(`Videos: playlist HTTP ${response.status}`);
-  return parsePlaylist(await response.json());
+  const json = await response.json();
+  // `count`: how many entries the server sent, before duplicates and
+  // unusable ones are dropped. Whether there's another page, and where it
+  // starts, go by that, not by what's left to show.
+  return {
+    videos: parsePlaylist(json),
+    count: Array.isArray(json?.videos) ? json.videos.length : 0,
+  };
 }
 
 // One video, for a watch page opened from a link to a video no list holds.
@@ -241,8 +248,9 @@ export function loadVideos({ force = false } = {}) {
       videoStore.set((s) => ({
         ...s,
         sections: s.sections.map((old) => {
-          const videos = fresh.get(old.playlist);
-          if (videos && old.status === "live" && old.offset > videos.length) {
+          const got = fresh.get(old.playlist);
+          const videos = got?.videos;
+          if (videos && old.status === "live" && old.offset > got.count) {
             // The listener has opened further pages: the fresh first page
             // leads, and what they had loaded follows, so the list neither
             // shrinks under them nor loses its place for the next page.
@@ -257,9 +265,9 @@ export function loadVideos({ force = false } = {}) {
             return {
               ...old,
               videos,
-              more: videos.length === PAGE_SIZE,
+              more: got.count === PAGE_SIZE,
               moreFailed: false,
-              offset: videos.length,
+              offset: got.count,
               status: "live",
             };
           }
@@ -297,9 +305,9 @@ export function loadMoreVideos(playlist) {
           if (old.offset !== from) return {};
           const ids = new Set(old.videos.map((v) => v.id));
           return {
-            videos: [...old.videos, ...page.filter((v) => !ids.has(v.id))],
-            more: page.length === PAGE_SIZE,
-            offset: from + page.length,
+            videos: [...old.videos, ...page.videos.filter((v) => !ids.has(v.id))],
+            more: page.count === PAGE_SIZE,
+            offset: from + page.count,
           };
         }),
       () => updateSection(playlist, () => ({ moreFailed: true })),

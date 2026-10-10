@@ -198,3 +198,28 @@ test("archive sources: xpn.org's archived shows by default, a list, or off", () 
   );
   assert.deepEqual(parseArchiveFeeds("bad pair, x=http://insecure"), []);
 });
+
+test("two sessions sharing a title on different days are both kept", () => {
+  const page =
+    item("Friko on World Cafe", "20261007070000_2-FRIKO.mp3", "g-new") +
+    item("Friko on World Cafe", "20260930070000_1-FRIKO.mp3", "g-old") +
+    // The same broadcast listed twice: kept once.
+    item("Friko on World Cafe", "20261007070000_2-FRIKO.mp3", "g-new");
+  const episodes = parseArchivePage(page, { show: "worldcafe", name: "World Cafe" });
+  assert.deepEqual(
+    episodes.map((e) => e.date.slice(0, 10)),
+    ["2026-10-07", "2026-09-30"],
+  );
+  assert.notEqual(episodes[0].id, episodes[1].id);
+});
+
+test("a feed's attributes in single quotes are read too", () => {
+  const feed = `<?xml version='1.0'?><rss version='2.0'><channel><item>
+    <title>Single quotes</title>
+    <pubDate>Tue, 06 Oct 2026 15:09:06 +0000</pubDate>
+    <guid>ep-single</guid>
+    <enclosure url='https://audio.example.org/single.mp3' type='audio/mpeg'/>
+  </item></channel></rss>`;
+  const [episode] = parsePodcastFeed(feed, "worldcafe");
+  assert.equal(episode?.audio, "https://audio.example.org/single.mp3");
+});

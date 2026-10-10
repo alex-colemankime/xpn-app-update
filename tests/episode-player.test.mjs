@@ -437,3 +437,30 @@ test("switching episodes keeps the new one's saved place while it loads", async 
     "B's place is never saved as 0",
   );
 });
+
+test("an episode's late pause doesn't overwrite the station's lock screen", () => {
+  const audio = new FakeAudio();
+  const states = [];
+  let owner = "episode";
+  const player = createEpisodePlayer({
+    createAudio: () => audio,
+    mediaSession: {
+      setActionHandler: () => {},
+      setMetadata: () => {},
+      setPlaybackState: ({ playbackState }) => states.push(playbackState),
+      setPositionState: () => {},
+    },
+    ownsControls: () => owner === "episode",
+  });
+  player.play(EPISODE);
+  audio.metadata(684);
+  audio.fire("playing");
+  assert.equal(states.at(-1), "playing");
+  // The listener switches to the radio: the station takes the controls and
+  // says "playing"; the episode's pause arrives a moment later.
+  owner = "live";
+  states.push("playing");
+  audio.paused = true;
+  audio.fire("pause");
+  assert.equal(states.at(-1), "playing", "the radio is still shown playing");
+});

@@ -72,17 +72,13 @@ export function createAnalytics({ send, enabled = () => true, limit = 50 }) {
 
 const randomId = () => `${Math.floor(Math.random() * 2 ** 31)}.${Math.floor(Date.now() / 1000)}`;
 
-// gtag, loaded only when there is an id and reporting is on.
-function loadGtag() {
-  window.dataLayer = window.dataLayer || [];
-  // gtag reads `arguments`, as Google's own snippet does.
-  window.gtag = function gtag() {
-    window.dataLayer.push(arguments);
-  };
+// gtag's configuration, with this install's anonymous id: the stored one,
+// or a fresh one when there's none (first launch, or reporting turned back
+// on after being turned off, which forgot the old one).
+export function configureGtag(id = GA4_ID) {
   let clientId = readJson(CLIENT_KEY, null);
   if (!clientId) writeJson(CLIENT_KEY, (clientId = randomId()));
-  window.gtag("js", new Date());
-  window.gtag("config", GA4_ID, {
+  window.gtag("config", id, {
     send_page_view: false, // screens are reported as they open
     client_storage: "none", // no cookies; the id below instead
     client_id: clientId,
@@ -90,6 +86,17 @@ function loadGtag() {
     allow_ad_personalization_signals: false,
     app_version: typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "",
   });
+}
+
+// gtag, loaded only when there is an id and reporting is on.
+function loadGtag() {
+  window.dataLayer = window.dataLayer || [];
+  // gtag reads `arguments`, as Google's own snippet does.
+  window.gtag = function gtag() {
+    window.dataLayer.push(arguments);
+  };
+  window.gtag("js", new Date());
+  configureGtag();
   const script = document.createElement("script");
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`;
@@ -124,10 +131,20 @@ export function startAnalytics() {
   window.addEventListener("unhandledrejection", (e) => reportError(e.reason, { where: "promise" }));
 }
 
-// The Settings switch. Off forgets this install's id; on again starts anew.
-export function setReporting(on) {
+// The Settings switch. Off forgets this install's id; on again starts anew:
+// a fresh id, configured into gtag whether or not it was already loaded.
+// (`id`, `load` and `configure` are passed in by the tests.)
+export function setReporting(
+  on,
+  { id = GA4_ID, load = loadGtag, configure = () => configureGtag(id) } = {},
+) {
   reportingStore.set({ on });
-  if (!on) writeJson(CLIENT_KEY, null);
-  else if (GA4_ID && !window.gtag) loadGtag();
+  if (!on) {
+    writeJson(CLIENT_KEY, null);
+    return;
+  }
+  if (!id) return;
+  if (window.gtag) configure();
+  else load();
 }
 export const reportingAvailable = () => Boolean(GA4_ID);

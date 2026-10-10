@@ -18,6 +18,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         if let url = connectionOptions.urlContexts.first?.url {
             _ = ApplicationDelegateProxy.shared.application(UIApplication.shared, open: url, options: [:])
         }
+        // A universal link (a shared xpn.org show page) that launched the app
+        // arrives here, not in scene(_:continue:), which only covers links
+        // opened while the app is already running. The proxy keeps it as the
+        // launch URL, so the app's getLaunchUrl() finds it (deep-links.js).
+        for activity in connectionOptions.userActivities
+        where activity.activityType == NSUserActivityTypeBrowsingWeb {
+            _ = ApplicationDelegateProxy.shared.application(
+                UIApplication.shared, continue: activity, restorationHandler: { _ in })
+        }
     }
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {

@@ -33,7 +33,11 @@ const noop = () => {};
 
 export function createEpisodePlayer({
   createAudio,
-  mediaSession,
+  mediaSession: session,
+  // Whether the episode has the lock screen and headset controls now. After
+  // the station takes them back, the episode's late events (a pause arriving
+  // after the switch) mustn't overwrite the station's playing state there.
+  ownsControls = () => true,
   onChange = noop,
   onProgress = noop,
   onStart = noop,
@@ -49,6 +53,14 @@ export function createEpisodePlayer({
   resolveUrl = (src) => src,
   now = () => Date.now(),
 }) {
+  // The lock screen as the episode sees it: its playing state and place are
+  // written only while it has the controls.
+  const mediaSession = {
+    setMetadata: (m) => session.setMetadata(m),
+    setActionHandler: (a, fn) => session.setActionHandler(a, fn),
+    setPlaybackState: (p) => ownsControls() && session.setPlaybackState(p),
+    setPositionState: (p) => ownsControls() && session.setPositionState(p),
+  };
   let audio = null;
   let state = { episode: null, status: "idle", position: 0, duration: 0, error: null };
   let pendingSeek = null;

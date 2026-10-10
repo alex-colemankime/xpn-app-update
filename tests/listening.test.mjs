@@ -41,3 +41,25 @@ test("a change of station or show starts a new count; a tap isn't listening", ()
   m.flush();
   assert.equal(sent.at(-1)[1].minutes, 1);
 });
+
+test("buffering isn't listening: only audio that flows counts", async () => {
+  const { listeningSource } = await import("../listening.js");
+  const idle = { status: "idle", episode: null };
+  const onAir = () => "worldcafe";
+  assert.deepEqual(
+    listeningSource({ playing: true, status: "playing", streamId: "xpn" }, idle, onAir),
+    {
+      content: "live",
+      station: "xpn",
+      show: "worldcafe",
+    },
+  );
+  assert.equal(
+    listeningSource({ playing: true, status: "loading", streamId: "xpn" }, idle, onAir),
+    null,
+  );
+  assert.equal(
+    listeningSource({ playing: true, status: "reconnecting", streamId: "xpn" }, idle, onAir),
+    null,
+  );
+});

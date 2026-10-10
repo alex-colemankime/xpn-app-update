@@ -46,3 +46,26 @@ test("before the first check the choice stands; with no choice, what is live now
     "only a video that plays in the page",
   );
 });
+
+test("a video opened from a push (a link, no id) stays open once updates load", () => {
+  const pushed = {
+    watch: "https://www.youtube.com/watch?v=abcdefghijk",
+    title: "FAN",
+    state: "live",
+  };
+  const shown = liveToShow({
+    chosen: pushed,
+    current: week("this-week", "live"),
+    updatesLoaded: true,
+  });
+  assert.equal(shown?.id, "this-week");
+  assert.equal(
+    liveToShow({
+      chosen: pushed,
+      current: { ...week("other", "live"), watch: "https://www.youtube.com/watch?v=zyxwvutsrqp" },
+      updatesLoaded: true,
+    }),
+    null,
+    "a different video live now isn't the one pushed",
+  );
+});

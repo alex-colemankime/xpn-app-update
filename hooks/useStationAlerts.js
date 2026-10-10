@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent } from "react";
+import { useEffect, useEffectEvent, useSyncExternalStore } from "react";
 import { useFavoriteItems } from "../favorites.js";
 import { openPage } from "../links.js";
 import {
@@ -12,7 +12,14 @@ import { createLocalStore, useLocalStore } from "../storage.js";
 import { showToast } from "../toast.js";
 import { alertPlan } from "../updates.js";
 import { OFF_IN_SETTINGS, useReminderSettings } from "./useShowReminders.js";
-import { onPushTap, pushIsOn, syncPushTopics } from "../push.js";
+import {
+  getPushDelivered,
+  onPushTap,
+  pushIsOn,
+  subscribePushDelivered,
+  syncPushTopics,
+} from "../push.js";
+import { useFeatures } from "../features.js";
 import { playStream, selectStream } from "../player.js";
 import { useEveryShow } from "./useEveryShow.js";
 import { track } from "../analytics.js";
@@ -22,9 +29,8 @@ import { track } from "../analytics.js";
 // off until turned on there, with the consent wording beside the switch, as
 // the App Store requires for anything promotional (App Review 4.5.4).
 //
-// They are planned from the station's updates file (updates.js, alertPlan)
-// and scheduled on the phone like show reminders, so no push service is
-// involved. The trade-off: a phone learns of a notice when the app opens, so
+// Without push (push.js), they are planned from the station's updates file
+// (updates.js, alertPlan) and scheduled on the phone like show reminders. The trade-off: a phone learns of a notice when the app opens, so
 // the station posts them ahead (a drive's dates are known weeks out). A push
 // service would reach phones that haven't opened the app; these switches are
 // the consent it would use too.
@@ -35,6 +41,7 @@ const alertsStore = createLocalStore("xpn.alerts", { live: false, drives: false 
 }));
 
 export const useAlertSettings = () => useLocalStore(alertsStore);
+const NONE = [];
 
 const TURNED_ON = {
   live: "Live video notifications are on.",
@@ -64,9 +71,19 @@ export function useStationAlerts(updates, { onWatch }) {
 
   const watch = useEffectEvent((live) => onWatch(live));
 
-  // With push set up, the station's sender delivers these; the phone only
-  // keeps the listener's subscriptions up to date with it.
-  useEffect(() => {
+  // With push set up, the station's sender delivers these; the phone keeps
+  // the listener's subscriptions up to date with it. Until the sender has
+  // them (registration or the server failed), the phone schedules them
+  // itself below, and tries the sender again when the app comes back to the
+  // foreground or the connection returns. Follows the station's push switch
+  // too, so turning push on (or off) remotely applies straight away.
+  const pushOn = useFeatures().push;
+  const delivered = useSyncExternalStore(subscribePushDelivered, getPushDelivered);
+  // The topics the sender has: those the phone leaves to it.
+  const pushed = pushOn ? delivered : NONE;
+  const wanted = Object.keys(settings).filter((topic) => settings[topic]);
+  const behind = [...wanted].sort().join(",") !== [...pushed].sort().join(",");
+  const syncPush = useEffectEvent(() => {
     syncPushTopics(settings)
       .then((ok) => {
         if (!ok) {
@@ -75,16 +92,33 @@ export function useStationAlerts(updates, { onWatch }) {
         }
       })
       .catch(() => {});
-  }, [settings]);
+  });
+  useEffect(() => syncPush(), [settings, pushOn]);
+  useEffect(() => {
+    if (!pushOn || !behind) return;
+    const retry = () => {
+      if (document.visibilityState === "visible") syncPush();
+    };
+    document.addEventListener("visibilitychange", retry);
+    window.addEventListener("online", retry);
+    return () => {
+      document.removeEventListener("visibilitychange", retry);
+      window.removeEventListener("online", retry);
+    };
+  }, [pushOn, behind]);
 
   useEveryShow(() => {
     if (!notificationsAreNative()) return;
-    const plan = (
-      pushIsOn()
-        ? []
-        : alertPlan(updates, settings, {
-            remindedShows: reminded ? reminded.split(",") : [],
-          })
+    const plan = alertPlan(
+      updates,
+      // What the sender already delivers isn't scheduled here as well.
+      {
+        live: settings.live && !(pushIsOn() && pushed.includes("live")),
+        drives: settings.drives && !(pushIsOn() && pushed.includes("drives")),
+      },
+      {
+        remindedShows: reminded ? reminded.split(",") : [],
+      },
     ).map(({ key, at, title, body, extra }) => ({
       id: reminderId(`alert:${key}`, at),
       at,
@@ -100,7 +134,7 @@ export function useStationAlerts(updates, { onWatch }) {
         }
       })
       .catch(() => {});
-  }, [updates, settings, reminded]);
+  }, [updates, settings, reminded, pushed]);
 
   // A tap opens what the notice is about: the video, or the station's page
   // (the donate page in a drive).
@@ -114,12 +148,7 @@ export function useStationAlerts(updates, { onWatch }) {
       playStream();
     }
   });
-  useEffect(() => {
-    const offLocal = onNotification("station-alert", open);
-    const offPush = onPushTap(open);
-    return () => {
-      offLocal();
-      offPush();
-    };
-  }, []);
+  useEffect(() => onNotification("station-alert", open), []);
+  // Pushed notifications' taps, while push is switched on.
+  useEffect(() => (pushOn ? onPushTap(open) : undefined), [pushOn]);
 }

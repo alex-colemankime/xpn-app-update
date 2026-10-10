@@ -146,3 +146,16 @@ test("a show with a saved episode can be followed from Favorites", async ({ page
   await expect(follow).toHaveAttribute("aria-pressed", "true");
   await expect(group.getByText("Not following")).toBeHidden();
 });
+
+test("concerts switched off by the station fetch no listings", async ({ page, context }) => {
+  await context.addInitScript(() =>
+    localStorage.setItem("xpn.remote-config", JSON.stringify({ off: ["concerts"] })),
+  );
+  let listings = 0;
+  page.on("request", (r) => /wp-json\/tribe\/events/.test(r.url()) && listings++);
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: /^Shows$/ }).first()).toBeVisible();
+  await page.waitForTimeout(1500);
+  expect(listings).toBe(0);
+  await expect(page.getByRole("button", { name: /^Concerts$/ })).toHaveCount(0);
+});
