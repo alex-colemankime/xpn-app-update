@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Icon, Segmented, Empty, SearchField, shareText } from "../ui.jsx";
+import { Art, Icon, Segmented, Empty, SearchField, shareText } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { useFavoriteItems } from "../favorites.js";
 import { easternToday } from "../concerts.js";
@@ -8,11 +8,12 @@ import { VideoCard } from "../components/VideoCard.jsx";
 import { EpisodeRow } from "../components/Archive.jsx";
 import { hasLeftArchive, useArchiveState } from "../archive.js";
 import { showToast } from "../toast.js";
-import { TrackRow, ShowCard, SaveButton } from "../components/MusicRows.jsx";
+import { TrackRow, SaveButton } from "../components/MusicRows.jsx";
 import { ConcertRow } from "../components/ConcertRow.jsx";
 import { PlaylistSyncPrompt } from "../components/PlaylistSync.jsx";
 import { calendarIsNative, downloadIcs } from "../calendar.js";
 import { useFeatures } from "../features.js";
+import { savedShowGroups } from "../saved-shows.js";
 
 // Empty-state copy and the screen each category's call to action opens.
 const EMPTY = {
@@ -26,13 +27,7 @@ const EMPTY = {
     icon: "headphones",
     action: "Explore shows",
     target: "shows",
-    text: "Follow a show to keep its schedule here and get reminders.",
-  },
-  episodes: {
-    icon: "headphones",
-    action: "Explore shows",
-    target: "shows",
-    text: "Save an episode from the archive to listen later.",
+    text: "Follow a show to keep its schedule here and get reminders, or save an episode to listen later.",
   },
   concerts: {
     icon: "navConcerts",
@@ -63,10 +58,18 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
 
   const archive = useArchiveState();
   const features = useFeatures();
+  const archiveOn = ARCHIVE_ENABLED && features.archive;
+  const q = query.trim().toLowerCase();
+  // Followed shows and saved episodes, together: one list per show.
+  const showGroups = savedShowGroups({
+    followed: shows,
+    episodes: archiveOn ? episodes : [],
+    catalog: SHOWS,
+    query: q,
+  });
   const items = {
     songs,
-    shows,
-    ...(ARCHIVE_ENABLED && features.archive ? { episodes } : {}),
+    shows: showGroups,
     ...(VIDEOS_ENABLED && features.videos ? { videos } : {}),
     // Saved with their details, so they show even while the feed is down;
     // past dates drop off.
@@ -75,11 +78,14 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
       : {}),
   };
   const category = items[type] ? type : "songs";
-  const q = query.trim().toLowerCase();
-  const filtered = items[category].filter((item) => !q || searchText(item).includes(q));
+  // Show groups arrive searched already.
+  const filtered =
+    category === "shows"
+      ? showGroups
+      : items[category].filter((item) => !q || searchText(item).includes(q));
   const empty = EMPTY[category];
   // Until something is saved, search has nothing to work on.
-  const anything = Object.values(items).some((list) => list.length);
+  const anything = Boolean(q) || Object.values(items).some((list) => list.length);
 
   const shareSongs = async () =>
     showToast(
@@ -145,12 +151,14 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
           </button>
         </>
       ) : category === "shows" ? (
-        <div className="show-grid all-shows">
-          {filtered.map((s) => (
-            <div className="saved-show" key={s.id}>
-              <ShowCard show={SHOWS[s.id] || s} onOpen={onOpenShow} />
-              <SaveButton type="shows" item={s} name={s.name} />
-            </div>
+        <div className="archive-list saved-shows">
+          {filtered.map((group) => (
+            <SavedShow
+              key={group.id}
+              group={group}
+              gone={(ep) => hasLeftArchive(archive, ep)}
+              onOpenShow={onOpenShow}
+            />
           ))}
         </div>
       ) : category === "concerts" ? (
@@ -164,16 +172,41 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
             </div>
           ))}
         </div>
-      ) : (
-        filtered.map((ep) => (
-          <EpisodeRow
-            key={ep.id}
-            episode={ep}
-            gone={hasLeftArchive(archive, ep)}
-            onOpen={(e) => onOpenShow(e.show || e.showId, e.id)}
-          />
-        ))
-      )}
+      ) : null}
     </>
+  );
+}
+
+// One show in Favorites › Shows: the show at the head, its heart full if
+// it's followed, empty if only episodes are saved, then those episodes.
+function SavedShow({ group, gone, onOpenShow }) {
+  const { id, show, followed, episodes } = group;
+  const headId = `saved-show-${id}`;
+  return (
+    <section className="archive-show" aria-labelledby={headId}>
+      <div className="archive-show-head saved-show-head">
+        <button className="saved-show-open" onClick={() => onOpenShow(id)}>
+          <Art src={show.img} alt="" loading="lazy" />
+          <span>
+            <strong id={headId}>{show.name}</strong>
+            <small>
+              {followed
+                ? [show.times?.[0], show.host].filter(Boolean).join(" · ") || "Following"
+                : "Not following"}
+            </small>
+          </span>
+        </button>
+        <SaveButton type="shows" item={{ ...show, id }} name={show.name} verb="Follow" />
+      </div>
+      {episodes.map((ep) => (
+        <EpisodeRow
+          key={ep.id}
+          episode={ep}
+          showShow={false}
+          gone={gone(ep)}
+          onOpen={(e) => onOpenShow(e.show || e.showId || id, e.id)}
+        />
+      ))}
+    </section>
   );
 }

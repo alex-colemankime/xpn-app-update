@@ -257,17 +257,3 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
   font-size: 1rem;
   font-weight: 600;
 }
-.saved-show {
-  position: relative;
-}
-.saved-show > .icon-button {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-}
-.saved-show .show-card {
-  width: 100%;
-}
-.saved-show .show-card-when {
-  padding-right: 36px;
-}

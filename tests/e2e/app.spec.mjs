@@ -99,3 +99,28 @@ test("going offline says so, and coming back clears it", async ({ page, context 
   await context.setOffline(false);
   await expect(notice).toBeHidden();
 });
+
+test("a show with a saved episode can be followed from Favorites", async ({ page, context }) => {
+  await context.addInitScript(() => {
+    const episode = {
+      id: "f1",
+      show: "funky",
+      showId: "funky",
+      showName: "Funky Friday",
+      title: "Funky Friday for October 2",
+      date: "2026-10-02T22:00:00-04:00",
+      savedAt: 1,
+    };
+    localStorage.setItem("xpn.favorites.v1", JSON.stringify({ episodes: { f1: episode } }));
+  });
+  await page.goto("/#/favorites");
+  const favorites = page.getByRole("region", { name: "Favorites" });
+  await favorites.getByRole("button", { name: "Shows", exact: true }).click();
+  const group = favorites.getByRole("region", { name: "Funky Friday" });
+  await expect(group.getByText("Funky Friday for October 2")).toBeVisible();
+  await expect(group.getByText("Not following")).toBeVisible();
+  const follow = group.getByRole("button", { name: "Follow Funky Friday" });
+  await follow.click();
+  await expect(follow).toHaveAttribute("aria-pressed", "true");
+  await expect(group.getByText("Not following")).toBeHidden();
+});

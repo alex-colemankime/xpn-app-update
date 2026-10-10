@@ -73,7 +73,15 @@ function firstSaveHint(type) {
 
 // A heart toggle for any saveable item: a song, show, episode, concert or
 // video. Once saved, the heart takes a color from the item's artwork.
-export function SaveButton({ type, item, name, className = "icon-button", children, onToggle }) {
+export function SaveButton({
+  type,
+  item,
+  name,
+  verb = "Save",
+  className = "icon-button",
+  children,
+  onToggle,
+}) {
   const saved = useIsFavorite(type, item);
   const { art, preset } = tintSource(type, item);
   const tint = useArtTint(saved ? art : null, saved ? preset : null);
@@ -85,7 +93,7 @@ export function SaveButton({ type, item, name, className = "icon-button", childr
       // A heart alone keeps one name and says on/off with aria-pressed; a
       // button with words ("Following") says it in the words instead.
       aria-pressed={children ? undefined : saved}
-      aria-label={children ? undefined : `Save ${name}`}
+      aria-label={children ? undefined : `${verb} ${name}`}
       data-pop={pop || undefined}
       data-tinted={tint ? "" : undefined}
       style={tint ? { "--tint-light": tint.light, "--tint-dark": tint.dark } : undefined}
