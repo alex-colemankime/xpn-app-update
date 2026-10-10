@@ -100,6 +100,10 @@ export function syncNow() {
     .catch(() => {})
     .finally(() => {
       running = null;
+      // A run stopped by the switch doesn't leave "syncing" on screen.
+      if (!featureOn("playlistSync") && syncStore.getSnapshot().status === "syncing") {
+        patch({ status: "idle" });
+      }
       if (again) {
         again = false;
         syncNow();
@@ -110,7 +114,14 @@ export function syncNow() {
 
 async function run(retried = false) {
   let gen = generation;
-  const current = () => gen === generation;
+  // Still this connection's run, and still switched on: checked after every
+  // wait, so switching playlist sync off stops a run under way before its
+  // next request to the service.
+  const connected = () => gen === generation;
+  const current = () => connected() && featureOn("playlistSync");
+  // What the service has already done is recorded even if the switch went
+  // off meanwhile, so switching back on doesn't add the same songs again.
+  const record = (p) => connected() && patch(p);
   // The sign-in this run started under. Signing in again to the same service
   // lets the run finish, but its view of the account no longer counts.
   const signIn = signIns;
@@ -174,11 +185,12 @@ async function run(retried = false) {
     const refs = [...new Set(Object.values(found))].filter((ref) => !knownRefs.has(ref));
     if (refs.length) {
       await service.add(playlist.playlistId, refs);
-      if (!current()) return;
+      if (!connected()) return;
     }
     // Record the additions now, so a failed removal below can't make the
     // next run add the same songs again.
-    update({ matched: { ...syncStore.getSnapshot().matched, ...found }, missing });
+    record({ matched: { ...syncStore.getSnapshot().matched, ...found }, missing });
+    if (!current()) return;
     if (plan.toRemove.length) {
       const matched = syncStore.getSnapshot().matched;
       const removing = new Set(plan.toRemove);
@@ -191,10 +203,11 @@ async function run(retried = false) {
         (ref) => !retained.has(ref),
       );
       if (refs.length) await service.remove(playlist.playlistId, refs);
-      if (!current()) return;
+      if (!connected()) return;
       const after = { ...syncStore.getSnapshot().matched };
       plan.toRemove.forEach((id) => delete after[id]);
-      update({ matched: after });
+      record({ matched: after });
+      if (!current()) return;
     }
     update({ lastSync: Date.now(), status: "idle" });
     if (plan.toFind.length > MAX_FINDS_PER_RUN) again = true;

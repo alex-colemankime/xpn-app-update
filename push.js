@@ -73,8 +73,8 @@ export function createPushClient({
   platform,
   sent = readJson(SENT_KEY, null),
   save,
-  // Called whenever the server's copy changes (a late or replaced token).
-  onReported,
+  // Called whenever status() may have changed.
+  onChange,
   // A phone that never answers (no connection to Apple's push service, say)
   // mustn't hold up later changes, turning everything off among them.
   registerTimeout = REGISTER_TIMEOUT_MS,
@@ -84,6 +84,13 @@ export function createPushClient({
   let registering = null;
   let waiting = null;
   let listening = false;
+  // Whether the last attempt to bring the server up to date failed
+  // (registration, or a request: a new topic list or a replaced token).
+  let failing = false;
+  const settle = (ok) => {
+    failing = !ok;
+    onChange?.();
+  };
   // Changes are sent one at a time, each with the latest topics, so a quick
   // on-then-off can't end with the older "on" arriving last.
   let queue = Promise.resolve();
@@ -96,7 +103,6 @@ export function createPushClient({
     await post({ token, platform, topics, app: APP_ID, version: VERSION });
     sent = { token, key };
     save?.(sent);
-    onReported?.();
   }
 
   // The phone's answers to register(), listened for once.
@@ -113,7 +119,10 @@ export function createPushClient({
       } else {
         // A token later (the phone replaced it, or it answered after giving
         // up) is reported by itself, in turn with any change under way.
-        queue = queue.then(report).catch(() => {});
+        queue = queue.then(report).then(
+          () => settle(true),
+          () => settle(false),
+        );
       }
     });
     api.addListener("registrationError", (error) => failed(error));
@@ -165,15 +174,22 @@ export function createPushClient({
   // notifications; rejects if registration or the server failed.
   function setTopics(next) {
     topics = [...next].sort();
-    const run = queue.then(apply);
+    const run = queue.then(apply).then(
+      (ok) => (settle(true), ok),
+      (error) => {
+        settle(false);
+        throw error;
+      },
+    );
     queue = run.catch(() => {});
     return run;
   }
 
-  // The topics the sender has for this phone, as last confirmed.
-  const delivered = () => topicsIn(sent);
+  // The topics the sender has for this phone, as last confirmed, and
+  // whether bringing it up to date last failed.
+  const status = () => ({ topics: topicsIn(sent), failing });
 
-  return { setTopics, delivered };
+  return { setTopics, status };
 }
 
 let client = null;
@@ -182,7 +198,7 @@ const realClient = () =>
     api: PushNotifications,
     platform: Capacitor.getPlatform(),
     save: (value) => writeJson(SENT_KEY, value),
-    onReported: () => setDelivered(topicsIn(readJson(SENT_KEY, null))),
+    onChange: () => setStatus(client.status()),
     post: async (body) => {
       const response = await fetch(PUSH_REGISTER_URL, {
         method: "POST",
@@ -194,40 +210,51 @@ const realClient = () =>
     },
   }));
 
-// The topics the sender has for this phone (as of its last confirmed
-// request, kept from the last session too), so it delivers those and the
-// phone schedules only the rest itself (useStationAlerts). Empty while push
-// is off. A failed request leaves it as it was: the server still has those.
-const delivered = createStore(topicsIn(readJson(SENT_KEY, null)));
-export const subscribePushDelivered = delivered.subscribe;
-export const getPushDelivered = delivered.getSnapshot;
-const setDelivered = (topics) => {
-  const now = delivered.getSnapshot();
-  if (topics.join(",") !== now.join(",")) delivered.set(topics);
+// What the sender has for this phone: its topics (as of the last confirmed
+// request, kept from the last session too) and whether bringing it up to
+// date last failed. The phone schedules itself whatever the sender doesn't
+// cover (useStationAlerts), and everything while it's failing, since a
+// replaced token may have left the old one dead.
+const NO_PUSH = { topics: [], failing: false };
+const statusStore = createStore({ ...NO_PUSH, topics: topicsIn(readJson(SENT_KEY, null)) });
+export const subscribePushStatus = statusStore.subscribe;
+export const getPushStatus = statusStore.getSnapshot;
+const setStatus = (next) => {
+  const now = statusStore.getSnapshot();
+  if (next.failing !== now.failing || next.topics.join(",") !== now.topics.join(",")) {
+    statusStore.set(next);
+  }
 };
 
-// The topics a listener has switched on, sent to the server. False when the
-// phone refused notifications; rejects when registration or the server
-// failed (the phone then keeps scheduling what the sender doesn't have, and
-// tries again when the app comes back to the foreground or the connection
-// returns).
+// What the sender should have for this phone: the topics switched on, or
+// none once the station switches push off. Pure, so it can be tested.
+export const topicsToSend = (settings, pushOn) =>
+  pushOn ? Object.keys(settings).filter((topic) => settings[topic]) : [];
+
+// The topics a listener has switched on, sent to the server. With push
+// switched off by the station, the server is told to send nothing (when it
+// had anything). False when the phone refused notifications; rejects when
+// registration or the server failed (the phone then schedules the notices
+// itself, and tries again when the app comes back to the foreground or the
+// connection returns).
 export async function syncPushTopics(settings) {
-  if (!pushIsOn()) {
-    setDelivered([]);
+  if (!Capacitor.isNativePlatform() || !PUSH_REGISTER_URL) {
+    setStatus(NO_PUSH);
     return true;
   }
-  const topics = Object.keys(settings).filter((topic) => settings[topic]);
-  const push = realClient();
-  try {
-    return await push.setTopics(topics);
-  } finally {
-    setDelivered(push.delivered());
+  const on = featureOn("push");
+  if (!on && !client && !topicsIn(readJson(SENT_KEY, null)).length) {
+    setStatus(NO_PUSH);
+    return true;
   }
+  return realClient().setTopics(topicsToSend(settings, on));
 }
 
-// Call `handler(target)` when the listener taps a pushed notification.
+// Call `handler(target)` when the listener taps a pushed notification
+// (useStationAlerts listens while push is on, or the sender still has
+// topics for this phone).
 export function onPushTap(handler) {
-  if (!pushIsOn()) return () => {};
+  if (!Capacitor.isNativePlatform()) return () => {};
   const handle = PushNotifications.addListener("pushNotificationActionPerformed", (event) => {
     const target = pushTarget(event.notification?.data);
     if (target) handler(target);

@@ -69,3 +69,15 @@ test("a video opened from a push (a link, no id) stays open once updates load", 
     "a different video live now isn't the one pushed",
   );
 });
+
+test("a pushed video plays from its own link even when updates don't list it", () => {
+  const pushed = {
+    watch: "https://www.youtube.com/watch?v=abcdefghijk",
+    title: "FAN",
+    state: "live",
+    pushed: true,
+  };
+  assert.equal(liveToShow({ chosen: pushed, current: null, updatesLoaded: true }), pushed);
+  const other = { ...week("other", "live"), watch: "https://www.youtube.com/watch?v=zyxwvutsrqp" };
+  assert.equal(liveToShow({ chosen: pushed, current: other, updatesLoaded: true }), pushed);
+});

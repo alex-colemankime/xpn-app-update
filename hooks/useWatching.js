@@ -44,6 +44,10 @@ export function liveToShow({ chosen, current, updatesLoaded }) {
     now &&
     (chosen.id ? now.id === chosen.id : youTubeEmbed(now.watch) === youTubeEmbed(chosen.watch));
   if (same) return now;
+  // Opened from a pushed notification: the notification's own link plays,
+  // whatever the station's updates say (missing, not live yet, or already
+  // moved on), until the listener leaves the live route.
+  if (chosen.pushed && youTubeEmbed(chosen.watch)) return chosen;
   return !updatesLoaded && youTubeEmbed(chosen.watch) ? chosen : null;
 }
 

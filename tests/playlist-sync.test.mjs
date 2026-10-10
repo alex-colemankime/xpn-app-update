@@ -401,3 +401,54 @@ test("the station's playlist-sync switch stops a connected sync from running", a
   await syncNow();
   assert.ok(calls.includes("add"), "back on, it catches up");
 });
+
+test("switching playlist sync off mid-run stops it before its next request", async () => {
+  const { applySwitches } = await import("../features.js");
+  const calls = [];
+  let release;
+  const searching = new Promise((r) => (release = r));
+  Object.assign(SERVICES.spotify, {
+    available: () => true,
+    account: async () => "listener-1",
+    owns: async () => true,
+    ensurePlaylist: async (s) => (s.playlistId ? s : { playlistId: "pl9" }),
+    find: async (song) => (await searching, `uri:${song.title}`),
+    add: async () => calls.push("add"),
+    remove: async () => calls.push("remove"),
+  });
+  applySwitches([]);
+  toggleFavorite("songs", { title: "Mid Run", artist: "Somebody" });
+  const run = syncNow();
+  await new Promise((r) => setTimeout(r, 5)); // the run is waiting on its search
+  applySwitches(["playlistSync"]);
+  release();
+  await run;
+  assert.deepEqual(calls, [], "nothing added after it was switched off");
+  applySwitches([]);
+});
+
+test("switched off while a song is being added, it's still recorded: no second copy", async () => {
+  const { applySwitches } = await import("../features.js");
+  const added = [];
+  let release;
+  const adding = new Promise((r) => (release = r));
+  Object.assign(SERVICES.spotify, {
+    available: () => true,
+    account: async () => "listener-1",
+    owns: async () => true,
+    ensurePlaylist: async (s) => (s.playlistId ? s : { playlistId: "pl9" }),
+    find: async (song) => `uri:${song.title}`,
+    add: async (id, refs) => (added.push(...refs), await adding),
+    remove: async () => {},
+  });
+  applySwitches([]);
+  toggleFavorite("songs", { title: "In Flight", artist: "Somebody" });
+  const run = syncNow();
+  await new Promise((r) => setTimeout(r, 5)); // the add is under way
+  applySwitches(["playlistSync"]);
+  release();
+  await run;
+  applySwitches([]);
+  await syncNow();
+  assert.equal(added.filter((r) => r === "uri:In Flight").length, 1, "added once");
+});

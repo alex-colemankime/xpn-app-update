@@ -13,10 +13,10 @@ import { showToast } from "../toast.js";
 import { alertPlan } from "../updates.js";
 import { OFF_IN_SETTINGS, useReminderSettings } from "./useShowReminders.js";
 import {
-  getPushDelivered,
+  getPushStatus,
   onPushTap,
   pushIsOn,
-  subscribePushDelivered,
+  subscribePushStatus,
   syncPushTopics,
 } from "../push.js";
 import { useFeatures } from "../features.js";
@@ -78,11 +78,14 @@ export function useStationAlerts(updates, { onWatch }) {
   // foreground or the connection returns. Follows the station's push switch
   // too, so turning push on (or off) remotely applies straight away.
   const pushOn = useFeatures().push;
-  const delivered = useSyncExternalStore(subscribePushDelivered, getPushDelivered);
-  // The topics the sender has: those the phone leaves to it.
-  const pushed = pushOn ? delivered : NONE;
-  const wanted = Object.keys(settings).filter((topic) => settings[topic]);
-  const behind = [...wanted].sort().join(",") !== [...pushed].sort().join(",");
+  const status = useSyncExternalStore(subscribePushStatus, getPushStatus);
+  // What the sender covers, left to it; while it's failing, the phone
+  // schedules everything (a replaced token may have left the old one dead).
+  const pushed = status.failing ? NONE : status.topics;
+  // What the sender should have: the listener's topics while push is on,
+  // nothing once the station switches it off.
+  const wanted = pushIsOn() ? Object.keys(settings).filter((topic) => settings[topic]) : NONE;
+  const behind = status.failing || [...wanted].sort().join(",") !== status.topics.join(",");
   const syncPush = useEffectEvent(() => {
     syncPushTopics(settings)
       .then((ok) => {
@@ -95,7 +98,7 @@ export function useStationAlerts(updates, { onWatch }) {
   });
   useEffect(() => syncPush(), [settings, pushOn]);
   useEffect(() => {
-    if (!pushOn || !behind) return;
+    if (!behind) return;
     const retry = () => {
       if (document.visibilityState === "visible") syncPush();
     };
@@ -105,7 +108,7 @@ export function useStationAlerts(updates, { onWatch }) {
       document.removeEventListener("visibilitychange", retry);
       window.removeEventListener("online", retry);
     };
-  }, [pushOn, behind]);
+  }, [behind]);
 
   useEveryShow(() => {
     if (!notificationsAreNative()) return;
@@ -140,7 +143,8 @@ export function useStationAlerts(updates, { onWatch }) {
   // (the donate page in a drive).
   const open = useEffectEvent((target) => {
     if (target?.action === "watch" && target.live?.watch) {
-      watch({ ...target.live, state: "live" });
+      // `pushed`: the link itself is what to play (useWatching, liveToShow).
+      watch({ ...target.live, state: "live", pushed: true });
     } else if (target?.action === "open") {
       openPage(target.url);
     } else if (target?.action === "listen") {
@@ -149,6 +153,8 @@ export function useStationAlerts(updates, { onWatch }) {
     }
   });
   useEffect(() => onNotification("station-alert", open), []);
-  // Pushed notifications' taps, while push is switched on.
-  useEffect(() => (pushOn ? onPushTap(open) : undefined), [pushOn]);
+  // Pushed notifications' taps, while push is on or the sender may still
+  // send (it has topics for this phone until told otherwise).
+  const pushTaps = pushOn || status.topics.length > 0;
+  useEffect(() => (pushTaps ? onPushTap(open) : undefined), [pushTaps]);
 }

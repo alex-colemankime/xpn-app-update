@@ -2,7 +2,7 @@
 // listener's topics with the station's sender, and what a tap opens.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createPushClient, pushTarget } from "../push.js";
+import { createPushClient, pushTarget, topicsToSend } from "../push.js";
 
 // A stand-in for the phone's push API: permission, and a token on register().
 function phone({ permission = "granted", grant = "granted", fail = false } = {}) {
@@ -222,8 +222,42 @@ test("what the sender has stays known through a failed change", async () => {
     },
   });
   await push.setTopics(["live"]);
-  assert.deepEqual(push.delivered(), ["live"]);
+  assert.deepEqual(push.status(), { topics: ["live"], failing: false });
   up = false;
   await assert.rejects(push.setTopics(["drives", "live"]));
-  assert.deepEqual(push.delivered(), ["live"], "the sender still has live, and only live");
+  assert.deepEqual(
+    push.status(),
+    { topics: ["live"], failing: true },
+    "the sender still has live, and only live, and the change is to be tried again",
+  );
+});
+
+test("a replaced token that can't be reported marks push as failing, until it is", async () => {
+  const api = phone();
+  let up = true;
+  const changes = [];
+  const push = createPushClient({
+    api,
+    platform: "android",
+    sent: null,
+    onChange: () => changes.push(push.status().failing),
+    post: async () => {
+      if (!up) throw new Error("server down");
+    },
+  });
+  await push.setTopics(["live"]);
+  up = false;
+  api.newToken("token-2"); // the phone replaces its token; the report fails
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(push.status(), { topics: ["live"], failing: true });
+  up = true;
+  await push.setTopics(["live"]); // the retry (app back in front) reports it
+  assert.deepEqual(push.status(), { topics: ["live"], failing: false });
+  assert.deepEqual(changes.slice(-2), [true, false]);
+});
+
+test("push switched off by the station sends the sender an empty list", () => {
+  const settings = { live: true, drives: false };
+  assert.deepEqual(topicsToSend(settings, true), ["live"]);
+  assert.deepEqual(topicsToSend(settings, false), []);
 });
