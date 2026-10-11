@@ -203,6 +203,8 @@ export function findVideo(sections, id) {
 //   offset      where the next page starts in Brightcove's list (counted
 //               as asked for, apart from the videos shown, which drop
 //               repeats)
+//   generation  counts the times a refresh changed the list; a further page
+//               asked for before then belongs to the old list
 // A load that failed anywhere is tried again soon rather than after the
 // usual wait.
 const CACHE_KEY = "xpn.videos.cache";
@@ -222,6 +224,7 @@ const videoStore = createStore({
       more: true,
       moreFailed: false,
       offset: videos.length,
+      generation: 0,
       status: videos.length ? "cache" : "loading",
     };
   }),
@@ -276,7 +279,13 @@ export function loadVideos({ force = false } = {}) {
       ...s,
       sections: s.sections.map((old) => {
         const got = fresh.get(old.playlist);
-        if (got) return { ...old, ...got, status: "live" };
+        if (got) {
+          const same =
+            got.offset === old.offset &&
+            got.videos.length === old.videos.length &&
+            got.videos.every((v, i) => v.id === old.videos[i].id);
+          return { ...old, ...got, status: "live", generation: old.generation + (same ? 0 : 1) };
+        }
         return { ...old, status: old.videos.length ? "cache" : "error" };
       }),
       loadedAt: Date.now(),
@@ -316,21 +325,22 @@ async function readOn(playlist, first, through) {
 }
 
 // The next page of one section. A page that fails is marked, so the screen
-// can say so and offer it again. A page that arrives after the list was
-// replaced from somewhere else (it no longer starts where the list ends) is
-// let go rather than appended with a gap before it.
+// can say so and offer it again. A page that arrives after a refresh changed
+// the list is let go: Brightcove's list moved under it, even if the new list
+// happens to end at the same place, and appending it would skip videos.
 const loadingMore = new Set();
 export function loadMoreVideos(playlist) {
   const section = videoStore.getSnapshot().sections.find((s) => s.playlist === playlist);
   if (!section?.more || loadingMore.has(playlist)) return null;
   loadingMore.add(playlist);
   updateSection(playlist, () => ({ moreFailed: false }));
-  const from = section.offset;
+  const { offset: from, generation } = section;
+  const current = (old) => old.generation === generation && old.offset === from;
   return fetchPlaylist(playlist, from)
     .then(
       (page) =>
         updateSection(playlist, (old) => {
-          if (old.offset !== from) return {};
+          if (!current(old)) return {};
           const ids = new Set(old.videos.map((v) => v.id));
           return {
             videos: [...old.videos, ...page.videos.filter((v) => !ids.has(v.id))],
@@ -338,7 +348,7 @@ export function loadMoreVideos(playlist) {
             offset: from + page.count,
           };
         }),
-      () => updateSection(playlist, () => ({ moreFailed: true })),
+      () => updateSection(playlist, (old) => (current(old) ? { moreFailed: true } : {})),
     )
     .finally(() => loadingMore.delete(playlist));
 }

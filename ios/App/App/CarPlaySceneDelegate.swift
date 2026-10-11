@@ -75,18 +75,25 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
     }
 }
 
-/// Loads the phone app's web view when CarPlay starts the app on its own,
-/// so the station can play. Kept for as long as the app runs.
+/// The app's one web view (Main.storyboard's Capacitor bridge), shared by the
+/// phone's window and CarPlay. CarPlay can start the app with the phone app
+/// closed: the web view is loaded offscreen then, so the station can play,
+/// and the phone's window adopts that same one when it opens. Two would mean
+/// two players and two sets of native callbacks. Kept for as long as the app
+/// runs, so audio carries on if the phone's window is let go in the background.
 enum AppLauncher {
-    private static var offscreen: UIViewController?
+    private static var shared: UIViewController?
+
+    /// The web app's view controller, made the first time it's asked for.
+    static func webApp() -> UIViewController {
+        if let shared { return shared }
+        let made = UIStoryboard(name: "Main", bundle: nil).instantiateInitialViewController()
+            ?? MainViewController()
+        shared = made
+        return made
+    }
 
     static func ensureWebAppLoaded() {
-        let phoneSceneActive = UIApplication.shared.connectedScenes.contains {
-            $0.session.role == .windowApplication
-        }
-        guard !phoneSceneActive, offscreen == nil else { return }
-        let controller = UIStoryboard(name: "Main", bundle: nil).instantiateInitialViewController()
-        _ = controller?.view  // loads the Capacitor bridge and the app
-        offscreen = controller
+        _ = webApp().view  // loads the Capacitor bridge and the app, once
     }
 }

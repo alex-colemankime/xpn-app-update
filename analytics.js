@@ -23,7 +23,8 @@ import { GA4_ID } from "./config.js";
 import { createLocalStore, readJson, writeJson } from "./storage.js";
 
 const CLIENT_KEY = "xpn.analytics.client";
-export const reportingStore = createLocalStore("xpn.analytics", { on: true }, (v) => ({
+const REPORTING_KEY = "xpn.analytics";
+export const reportingStore = createLocalStore(REPORTING_KEY, { on: true }, (v) => ({
   on: v?.on !== false,
 }));
 
@@ -130,12 +131,32 @@ export const reportError = (error, options) => analytics.error(error, options);
 export const trackScreen = (screen, title) =>
   analytics.track("page_view", { page_title: title, page_location: pageLocation(screen) });
 
+// gtag set to match reporting being `on`: Google's switch, and gtag loaded,
+// or configured with this install's id, when on. (`id`, `load` and
+// `configure` are passed in by the tests.)
+function applyReporting(
+  on,
+  { id = GA4_ID, load = loadGtag, configure = () => configureGtag(id) } = {},
+) {
+  blockGtag(id, !on);
+  if (!on || !id) return;
+  if (window.gtag) configure();
+  else load();
+}
+
+// Reporting switched in another tab (the web app): this one follows. That
+// tab has already forgotten or made the id; this one matches gtag to it.
+export function followReportingInOtherTabs(options) {
+  window.addEventListener("storage", (event) => {
+    if (event.key === REPORTING_KEY) applyReporting(reportingStore.getSnapshot().on, options);
+  });
+}
+
 // At launch: load gtag and report errors the app doesn't catch itself.
 export function startAnalytics() {
   if (!GA4_ID || typeof window === "undefined") return;
-  const on = reportingStore.getSnapshot().on;
-  blockGtag(GA4_ID, !on);
-  if (on) loadGtag();
+  applyReporting(reportingStore.getSnapshot().on);
+  followReportingInOtherTabs();
   analytics.start();
   window.addEventListener("error", (e) => reportError(e.error || e.message, { fatal: true }));
   window.addEventListener("unhandledrejection", (e) => reportError(e.reason, { where: "promise" }));
@@ -144,20 +165,10 @@ export function startAnalytics() {
 // The Settings switch. Off stops gtag outright (Google's own switch, so
 // nothing more is sent even though it stays loaded) and forgets this
 // install's id; on again starts anew: a fresh id, configured into gtag
-// whether or not it was already loaded. (`id`, `load` and `configure` are
-// passed in by the tests.)
-export function setReporting(
-  on,
-  { id = GA4_ID, load = loadGtag, configure = () => configureGtag(id) } = {},
-) {
+// whether or not it was already loaded.
+export function setReporting(on, options) {
+  if (!on) writeJson(CLIENT_KEY, null);
   reportingStore.set({ on });
-  blockGtag(id, !on);
-  if (!on) {
-    writeJson(CLIENT_KEY, null);
-    return;
-  }
-  if (!id) return;
-  if (window.gtag) configure();
-  else load();
+  applyReporting(on, options);
 }
 export const reportingAvailable = () => Boolean(GA4_ID);

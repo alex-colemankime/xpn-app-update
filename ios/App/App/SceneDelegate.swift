@@ -1,7 +1,8 @@
 // The phone's own scene. CarPlay needs the app to use scenes; this keeps
-// the phone app exactly as it was (Main.storyboard, the Capacitor bridge)
-// and passes links back to Capacitor, so the Spotify sign-in return trip and
-// shared show links keep working.
+// the phone app as it was (Main.storyboard's Capacitor bridge, shared with
+// CarPlay through AppLauncher, so there is only ever one) and passes links
+// back to Capacitor, so the Spotify sign-in return trip and shared show
+// links keep working.
 
 import Capacitor
 import UIKit
@@ -13,8 +14,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         _ scene: UIScene, willConnectTo session: UISceneSession,
         options connectionOptions: UIScene.ConnectionOptions
     ) {
-        // Main.storyboard is set in Info.plist's scene configuration, so the
-        // window and the bridge view controller are created as before.
+        // The window is made here rather than from a storyboard, so it can
+        // show the web app CarPlay may already have started.
+        if let windowScene = scene as? UIWindowScene {
+            let window = UIWindow(windowScene: windowScene)
+            window.rootViewController = AppLauncher.webApp()
+            self.window = window
+            window.makeKeyAndVisible()
+        }
         if let url = connectionOptions.urlContexts.first?.url {
             _ = ApplicationDelegateProxy.shared.application(UIApplication.shared, open: url, options: [:])
         }
@@ -27,6 +34,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             _ = ApplicationDelegateProxy.shared.application(
                 UIApplication.shared, continue: activity, restorationHandler: { _ in })
         }
+    }
+
+    // The web app outlives the window (AppLauncher keeps it, playing).
+    func sceneDidDisconnect(_ scene: UIScene) {
+        window?.rootViewController = nil
+        window = nil
     }
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {

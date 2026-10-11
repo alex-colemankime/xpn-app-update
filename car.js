@@ -13,21 +13,37 @@ const CarAudio = registerPlugin("CarAudio");
 
 // What a command from the car does. Pure, so it can be tested.
 //   { action: "play", stationId }   that station, playing
-//   { action: "play" }              the current station, playing
-//   { action: "pause" }
-export function carCommand(event, { select, play, pause }) {
-  if (event?.action === "pause") return pause();
-  if (event?.action !== "play") return;
-  if (event.stationId) {
+//   { action: "play" }              whatever has the player bar, playing
+//   { action: "pause" }             whatever has the player bar, paused
+// `live` is the station's actions ({ select, play, pause }); `episode` the
+// archive player's ({ current, play, pause }), whose `current()` is its state
+// while an episode has the bar, else null.
+export function carCommand(event, { live, episode }) {
+  const action = event?.action;
+  if (action === "play" && event.stationId) {
     if (!STREAMS[event.stationId]) return;
-    select(event.stationId);
+    live.select(event.stationId);
+    return live.play();
   }
-  play();
+  const target = episode?.current() ? episode : live;
+  if (action === "pause") return target.pause();
+  if (action === "play") return target.play();
 }
 
-// What the car shows as playing: the station, and the song when one is
-// known. Pure, so it can be tested.
-export function carNowPlaying({ streamId, playing, track }) {
+// What the car shows as playing: the episode while one has the bar (no
+// station marked in the car's list), else the station, and the song when one
+// is known. Pure, so it can be tested.
+export function carNowPlaying({ streamId, playing, track }, episode = null) {
+  if (episode?.episode) {
+    const { episode: ep, status } = episode;
+    return {
+      stationId: "",
+      playing: status === "playing" || status === "loading",
+      title: ep.title || "WXPN",
+      artist: ep.showName || "WXPN",
+      artwork: ep.image || "",
+    };
+  }
   const station = STREAMS[streamId] || STREAMS.xpn;
   return {
     stationId: station.id,
@@ -38,21 +54,22 @@ export function carNowPlaying({ streamId, playing, track }) {
   };
 }
 
-// At launch (phone apps only). `player` gives the app's own actions and its
-// store; the car follows the store.
-export function startCarAudio({ select, play, pause, subscribe, getSnapshot }) {
+// At launch (phone apps only). `live` and `episode` are the two players'
+// actions (as for carCommand), each with `subscribe`; the car follows them.
+export function startCarAudio({ live, episode }) {
   if (!Capacitor.isNativePlatform()) return;
-  CarAudio.addListener("command", (event) => carCommand(event, { select, play, pause })).catch(
+  CarAudio.addListener("command", (event) => carCommand(event, { live, episode })).catch(
     () => {}, // a build without the native side: nothing to do
   );
   let last = "";
   const report = () => {
-    const now = carNowPlaying(getSnapshot());
+    const now = carNowPlaying(live.getSnapshot(), episode.current());
     const key = JSON.stringify(now);
     if (key === last) return;
     last = key;
     CarAudio.setNowPlaying(now).catch(() => {});
   };
-  subscribe(report);
+  live.subscribe(report);
+  episode.subscribe(report);
   report();
 }

@@ -142,6 +142,17 @@ export function closeEpisode() {
   setAudioFocus("live");
 }
 
+// The car's controls (car.js): the episode, while it has the player bar.
+export const episodeControls = {
+  current: () => (getFocus() === "episode" && core.getState().episode ? core.getState() : null),
+  play: () => core.resume(),
+  pause: () => core.pause(),
+  subscribe(listener) {
+    const stops = [episodeStore.subscribe(listener), subscribeFocus(listener)];
+    return () => stops.forEach((stop) => stop());
+  },
+};
+
 export const useEpisodePlayer = () =>
   useSyncExternalStore(episodeStore.subscribe, episodeStore.getSnapshot);
 export const useAudioFocus = () => useSyncExternalStore(subscribeFocus, getFocus);

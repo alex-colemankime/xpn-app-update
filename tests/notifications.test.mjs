@@ -147,3 +147,59 @@ test("an alarm about to ring survives a second, unrelated sync too", async () =>
   await scheduler.sync("radio-alarm", []);
   assert.ok(!device.pending.has(8));
 });
+
+// The phone's notification events, as Capacitor delivers them: an event with
+// nobody listening is held, and handed only to the first listener added.
+function capacitorEvents() {
+  const listeners = {};
+  const retained = {};
+  return {
+    added: () => Object.values(listeners).flat().length,
+    addListener(event, fn) {
+      (listeners[event] ||= []).push(fn);
+      if (listeners[event].length === 1 && retained[event]) {
+        retained[event].splice(0).forEach((p) => fn(p));
+      }
+      return Promise.resolve({ remove: async () => {} });
+    },
+    fire(event, payload) {
+      if (listeners[event]?.length) listeners[event].forEach((fn) => fn(payload));
+      else (retained[event] ||= []).push(payload);
+    },
+  };
+}
+const tap = (kind, more = {}) => ({ notification: { extra: { kind, ...more } } });
+
+test("a reminder tapped to open the app reaches its handler, though the alarm listened first", async () => {
+  const { createNotificationRouter } = await import("../notifications.js");
+  const phone = capacitorEvents();
+  // The tap that launched the app, before anything listens.
+  phone.fire("localNotificationActionPerformed", tap("show-reminder", { show: "worldcafe" }));
+  const on = createNotificationRouter(phone.addListener);
+  const alarms = [];
+  const reminders = [];
+  on("radio-alarm", (extra) => alarms.push(extra), { whileOpen: true });
+  on("show-reminder", (extra) => reminders.push(extra));
+  assert.deepEqual(alarms, []);
+  assert.deepEqual(reminders, [{ kind: "show-reminder", show: "worldcafe" }]);
+  assert.equal(phone.added(), 2, "one listener per event, shared by every kind");
+});
+
+test("arriving while open goes only to handlers that asked; taps wait, arrivals don't", async () => {
+  const { createNotificationRouter } = await import("../notifications.js");
+  const phone = capacitorEvents();
+  const on = createNotificationRouter(phone.addListener);
+  const alarms = [];
+  const reminders = [];
+  on("radio-alarm", (extra) => alarms.push(extra.kind), { whileOpen: true });
+  const stop = on("show-reminder", (extra) => reminders.push(extra.kind));
+  phone.fire("localNotificationReceived", tap("radio-alarm"));
+  phone.fire("localNotificationReceived", tap("show-reminder"));
+  assert.deepEqual(alarms, ["radio-alarm"]);
+  assert.deepEqual(reminders, []);
+  stop();
+  phone.fire("localNotificationActionPerformed", tap("show-reminder"));
+  phone.fire("localNotificationReceived", tap("show-reminder"));
+  on("show-reminder", (extra) => reminders.push(extra.kind));
+  assert.deepEqual(reminders, ["show-reminder"], "the tap waited for the next handler");
+});

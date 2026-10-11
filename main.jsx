@@ -12,7 +12,7 @@ import { startListeningMeter } from "./listening.js";
 import { startDeepLinks } from "./deep-links.js";
 import { startReviewPrompts } from "./review.js";
 import { getSavedSongs, subscribeFavorites } from "./favorites.js";
-import { getEpisodeSnapshot, subscribeEpisode } from "./episode-player.js";
+import { episodeControls, getEpisodeSnapshot, subscribeEpisode } from "./episode-player.js";
 import { onAirAt } from "./catalog.js";
 import { followTextSize } from "./text-size.js";
 import { startCarAudio } from "./car.js";
@@ -77,11 +77,14 @@ if (devicePreview) {
   });
   fixInsets();
   startCarAudio({
-    select: selectStream,
-    play: playStream,
-    pause: pauseStream,
-    subscribe: subscribePlayer,
-    getSnapshot: getPlayerSnapshot,
+    live: {
+      select: selectStream,
+      play: playStream,
+      pause: pauseStream,
+      subscribe: subscribePlayer,
+      getSnapshot: getPlayerSnapshot,
+    },
+    episode: episodeControls,
   });
   createRoot(document.getElementById("root"), {
     onCaughtError: (error, info) => {

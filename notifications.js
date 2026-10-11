@@ -197,17 +197,53 @@ const scheduler = createScheduler({
 // notifications have been switched off.
 export const syncNotifications = (kind, plan) => scheduler.sync(kind, plan);
 
-// Call `handler(extra)` when the listener taps a notification of `kind`, or,
-// with `whileOpen`, also when one arrives while the app is in front.
-export function onNotification(kind, handler, { whileOpen = false } = {}) {
+// Notification events, routed by kind. The phone holds a tap that opened
+// the app until something listens, then hands it to the first listener only,
+// so the app keeps a single listener per event and routes from there. A tap
+// whose kind has no handler yet (its feature still starting) waits for one.
+// `addListener` is LocalNotifications' shape, passed in so it can be tested.
+const TAPPED = "localNotificationActionPerformed";
+const RECEIVED = "localNotificationReceived";
+
+export function createNotificationRouter(addListener) {
+  const handlers = new Map(); // kind → Set of { handler, whileOpen }
+  const waiting = new Map(); // kind → taps not yet handled
+  let listening = false;
+
+  function deliver(event, payload) {
+    const extra = (payload?.notification || payload)?.extra;
+    const kind = extra?.kind;
+    if (!kind) return;
+    const tapped = event === TAPPED;
+    const ready = [...(handlers.get(kind) || [])].filter((h) => tapped || h.whileOpen);
+    if (ready.length) ready.forEach((h) => h.handler(extra));
+    else if (tapped) waiting.set(kind, [...(waiting.get(kind) || []), extra]);
+  }
+
+  // Call `handler(extra)` when the listener taps a notification of `kind`,
+  // or, with `whileOpen`, also when one arrives while the app is in front.
+  return function on(kind, handler, { whileOpen = false } = {}) {
+    if (!listening) {
+      listening = true;
+      for (const event of [TAPPED, RECEIVED]) {
+        Promise.resolve(addListener(event, (payload) => deliver(event, payload))).catch(() => {});
+      }
+    }
+    const entry = { handler, whileOpen };
+    if (!handlers.has(kind)) handlers.set(kind, new Set());
+    handlers.get(kind).add(entry);
+    const held = waiting.get(kind);
+    if (held) {
+      waiting.delete(kind);
+      held.forEach((extra) => handler(extra));
+    }
+    return () => handlers.get(kind)?.delete(entry);
+  };
+}
+
+const route = createNotificationRouter((event, fn) => LocalNotifications.addListener(event, fn));
+
+export function onNotification(kind, handler, options) {
   if (!notificationsAreNative()) return () => {};
-  const events = ["localNotificationActionPerformed"];
-  if (whileOpen) events.push("localNotificationReceived");
-  const handles = events.map((event) =>
-    LocalNotifications.addListener(event, (payload) => {
-      const notification = payload.notification || payload;
-      if (notification.extra?.kind === kind) handler(notification.extra);
-    }),
-  );
-  return () => handles.forEach((h) => h.then((x) => x.remove()).catch(() => {}));
+  return route(kind, handler, options);
 }

@@ -16,13 +16,45 @@ name: Release
 #
 # Build numbers are this workflow's run number, so each upload is higher
 # than the last; the version is package.json's.
+#
+# The app's own settings (config.js, README › Configuration) come from
+# repository variables (Settings › Secrets and variables › Actions ›
+# Variables) of the same names, and the Apple Music developer token from a
+# secret. Unset, each falls back to its default; for Spotify, Apple Music and
+# push that means the integration is left out of the build, so the run says so.
 on:
   workflow_dispatch:
 
 permissions:
   contents: read
 
+env:
+  VITE_SPOTIFY_CLIENT_ID: ${{ vars.VITE_SPOTIFY_CLIENT_ID }}
+  VITE_APPLE_MUSIC_TOKEN_URL: ${{ vars.VITE_APPLE_MUSIC_TOKEN_URL }}
+  VITE_APPLE_MUSIC_DEVELOPER_TOKEN: ${{ secrets.VITE_APPLE_MUSIC_DEVELOPER_TOKEN }}
+  VITE_PUSH_REGISTER_URL: ${{ vars.VITE_PUSH_REGISTER_URL }}
+  VITE_GA4_ID: ${{ vars.VITE_GA4_ID }}
+  VITE_XPN_UPDATES_URL: ${{ vars.VITE_XPN_UPDATES_URL }}
+  VITE_XPN_CONCERTS_ENDPOINT: ${{ vars.VITE_XPN_CONCERTS_ENDPOINT }}
+  VITE_XPN_LIVESTREAM_PAGE: ${{ vars.VITE_XPN_LIVESTREAM_PAGE }}
+  VITE_XPN_ARCHIVE_FEEDS: ${{ vars.VITE_XPN_ARCHIVE_FEEDS }}
+  VITE_BRIGHTCOVE_ACCOUNT: ${{ vars.VITE_BRIGHTCOVE_ACCOUNT }}
+  VITE_BRIGHTCOVE_PLAYER: ${{ vars.VITE_BRIGHTCOVE_PLAYER }}
+  VITE_BRIGHTCOVE_VIDEOS: ${{ vars.VITE_BRIGHTCOVE_VIDEOS }}
+
 jobs:
+  settings:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Integrations this build leaves out
+        run: |
+          [ -n "$VITE_SPOTIFY_CLIENT_ID" ] ||
+            echo "::warning::VITE_SPOTIFY_CLIENT_ID is not set: no Spotify playlist sync."
+          [ -n "$VITE_APPLE_MUSIC_TOKEN_URL$VITE_APPLE_MUSIC_DEVELOPER_TOKEN" ] ||
+            echo "::warning::VITE_APPLE_MUSIC_TOKEN_URL is not set: no Apple Music playlist sync."
+          [ -n "$VITE_PUSH_REGISTER_URL" ] ||
+            echo "::warning::VITE_PUSH_REGISTER_URL is not set: live video and drive alerts are planned on the phone, not pushed."
+
   android:
     runs-on: ubuntu-latest
     env:
