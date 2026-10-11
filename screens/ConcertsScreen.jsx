@@ -29,21 +29,44 @@ const CalendarEmpty = ({ title, children }) => (
   </div>
 );
 
-// Toggle chips. `value` is the selected id (or ids, for `multi`).
-function ChipGroup({ options, value, onChange, multi = false }) {
-  const on = (id) => (multi ? value.includes(id) : value === id);
+// Toggle chips for the dates: `value` is the chosen id.
+function ChipGroup({ options, value, onChange }) {
   return options.map((o) => (
     <button
       key={o.id}
       className="chip"
-      aria-pressed={on(o.id)}
-      onClick={() =>
-        onChange(multi ? (on(o.id) ? value.filter((v) => v !== o.id) : [...value, o.id]) : o.id)
-      }
+      aria-pressed={value === o.id}
+      onClick={() => onChange(o.id)}
     >
       {o.label}
     </button>
   ));
+}
+
+// The refinements under "Region & more": a list of choices, any number at
+// once, each with a box that takes a check. Text on the page rather than
+// another row of chips, so the panel doesn't stack pills under the dates'.
+function CheckGroup({ label, options, value, onChange }) {
+  return (
+    <div className="filter-checks" role="group" aria-label={label}>
+      {options.map((o) => {
+        const on = value.includes(o.id);
+        return (
+          <button
+            key={o.id}
+            className="filter-check"
+            aria-pressed={on}
+            onClick={() => onChange(on ? value.filter((v) => v !== o.id) : [...value, o.id])}
+          >
+            <span className="filter-box" aria-hidden="true">
+              {on && <Icon name="check" size={14} />}
+            </span>
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 export function ConcertsScreen({ result }) {
@@ -191,23 +214,24 @@ export function ConcertsScreen({ result }) {
             </summary>
             <div className="filter-options">
               {regionOptions.length > 0 && (
-                <div role="group" aria-label="Region">
+                <div>
                   <p className="filter-label">Where</p>
-                  <div className="chips">
-                    <ChipGroup
-                      options={regionOptions}
-                      value={regions}
-                      onChange={change(setRegions)}
-                      multi
-                    />
-                  </div>
+                  <CheckGroup
+                    label="Region"
+                    options={regionOptions}
+                    value={regions}
+                    onChange={change(setRegions)}
+                  />
                 </div>
               )}
-              <div role="group" aria-label="Concert type">
+              <div>
                 <p className="filter-label">Show only</p>
-                <div className="chips">
-                  <ChipGroup options={tagOptions} value={tags} onChange={change(setTags)} multi />
-                </div>
+                <CheckGroup
+                  label="Concert type"
+                  options={tagOptions}
+                  value={tags}
+                  onChange={change(setTags)}
+                />
               </div>
             </div>
           </details>

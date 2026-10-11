@@ -1,42 +1,57 @@
 // Retakes screenshots for the screens page (design/screens) from the built
 // app: phone size, light and dark, at the moment the page shows (a Tuesday
-// afternoon in October, World Cafe on the air) and with the same song
-// playing as the other shots. Writes PNGs to screens-out/; the Screens
-// workflow (.github/workflows/screens.yml) runs it and uploads them, and
-// they go into design/screens/img as WebP. Nothing here ships in the app.
+// afternoon in October, World Cafe on the air), with the same song on the
+// air and the same saved songs as the other shots. Writes PNGs to
+// screens-out/; the Screens workflow (.github/workflows/screens.yml) runs
+// it and publishes them, and they go into design/screens/img as WebP.
+// Nothing here ships in the app.
 //
 //   node tools/capture-screens.mjs [shot ...]   (every shot when none named)
 //
 // Needs the app built as the preview is (VITE_SHOW_SAMPLES=true) and served
-// at SCREENS_BASE_URL, and Playwright's Chromium. The concert calendar is
-// xpn.org's own for that week, read live; everything else the app would
-// fetch is answered here.
+// at SCREENS_BASE_URL, and Playwright's Chromium. Songs' artwork comes from
+// Apple's catalog and the concert calendar is xpn.org's own for that week,
+// both read live; everything else the app would fetch is answered here.
 import { chromium } from "@playwright/test";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 
 const BASE = process.env.SCREENS_BASE_URL || "http://127.0.0.1:4173/";
 const OUT = process.env.SCREENS_OUT || "screens-out";
 const NOW = new Date("2026-10-06T15:02:00-04:00");
 const WEEK = { from: "2026-10-06", to: "2026-10-11" };
-
-const SONG = {
-  title: "First Day Of My Life",
-  artist: "Bright Eyes",
-  album: "I'm Wide Awake, It's Morning",
-};
-const ART = "https://i.scdn.co/image/screens-first-day-of-my-life";
 const CORS = { "access-control-allow-origin": "*" };
+const SILENCE = await readFile(new URL("../tests/e2e/fixtures/silence.mp3", import.meta.url));
 
-// The album's artwork, from Apple's catalog; without it the song shows the
-// station's mark.
-async function artwork() {
+// The song on the air, then the rest of the saved songs, newest first.
+const SONGS = [
+  { title: "First Day Of My Life", artist: "Bright Eyes", album: "I'm Wide Awake, It's Morning" },
+  { title: "Billy Came Back", artist: "This is Lorelei", album: "Holo Boy" },
+  { title: "I Don't Have the Heart", artist: "Sharp Pins", album: "Radio DDR" },
+  { title: "Just One of the Guys", artist: "Jenny Lewis", album: "The Voyager" },
+  { title: "Cut Your Hair", artist: "Pavement", album: "Crooked Rain, Crooked Rain" },
+];
+const [ON_AIR] = SONGS;
+const slug = (text) =>
+  text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+// Where the app is told each song's artwork is; answered from ART below.
+const artUrl = (song) => `https://i.scdn.co/image/screens-${slug(song.title)}`;
+
+// A song's album artwork, from Apple's catalog, or null.
+async function artwork(song) {
   try {
-    const term = encodeURIComponent(`${SONG.artist} ${SONG.title}`);
+    const term = encodeURIComponent(`${song.artist} ${song.title}`);
     const response = await fetch(
-      `https://itunes.apple.com/search?term=${term}&entity=song&limit=10&country=US`,
+      `https://itunes.apple.com/search?term=${term}&entity=song&limit=15&country=US`,
     );
     const { results = [] } = await response.json();
-    const hit = results.find((r) => /first day of my life/i.test(r.trackName || ""));
+    const same = (a, b) => slug(a || "") === slug(b);
+    const hit =
+      results.find((r) => same(r.trackName, song.title) && same(r.artistName, song.artist)) ||
+      results.find((r) => same(r.trackName, song.title)) ||
+      results.find((r) => same(r.artistName, song.artist));
     if (!hit?.artworkUrl100) return null;
     const image = await fetch(hit.artworkUrl100.replace("100x100bb", "600x600bb"));
     return image.ok ? Buffer.from(await image.arrayBuffer()) : null;
@@ -71,33 +86,31 @@ const easternStamp = (date) =>
     dateStyle: "short",
     timeStyle: "medium",
   }).format(date);
+const minutesAgo = (n) => new Date(NOW.getTime() - n * 60000);
 
-function playlist() {
-  const minutesAgo = (n) => easternStamp(new Date(NOW.getTime() - n * 60000));
-  return [
-    {
-      artist: SONG.artist,
-      song: SONG.title,
-      album: SONG.album,
-      image: ART,
-      timeslice: minutesAgo(2),
-    },
-    {
-      artist: "Waxahatchee",
-      song: "Right Back to It",
-      album: "Tigers Blood",
-      image: "",
-      timeslice: minutesAgo(7),
-    },
-    {
-      artist: "Pavement",
-      song: "Cut Your Hair",
-      album: "Crooked Rain, Crooked Rain",
-      image: "",
-      timeslice: minutesAgo(11),
-    },
-  ];
-}
+// The station's playlist: the song on air two minutes ago, then the rest.
+const playlist = () =>
+  SONGS.map((song, i) => ({
+    artist: song.artist,
+    song: song.title,
+    album: song.album,
+    image: artUrl(song),
+    timeslice: easternStamp(minutesAgo(2 + i * 4)),
+  }));
+
+// The saved songs, as Favorites keeps them (favorites.js).
+const favorites = () => ({
+  songs: Object.fromEntries(
+    SONGS.map((song, i) => {
+      const [date, time] = easternStamp(minutesAgo(2 + i * 4)).split(" ");
+      const id = slug(`${song.artist} ${song.title}`);
+      return [
+        id,
+        { ...song, id, img: artUrl(song), date, time: time.slice(0, 5), savedAt: +minutesAgo(i) },
+      ];
+    }),
+  ),
+});
 
 const json = (route, body) =>
   route.fulfill({
@@ -107,7 +120,7 @@ const json = (route, body) =>
     body: JSON.stringify(body),
   });
 
-// Fonts in, artwork color worked out, nothing still loading or moving.
+// Fonts in, artwork colors worked out, nothing still loading or moving.
 async function settle(page) {
   await page.evaluate(() => globalThis.document.fonts.ready);
   await page.waitForLoadState("networkidle").catch(() => {});
@@ -115,7 +128,7 @@ async function settle(page) {
     .locator(".player-bar[data-tinted]")
     .waitFor({ timeout: 5000 })
     .catch(() => {});
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(800);
 }
 const scrollToEnd = async (page) => {
   await page.evaluate(() =>
@@ -123,9 +136,32 @@ const scrollToEnd = async (page) => {
   );
   await page.waitForTimeout(600);
 };
+// The station playing, as the mini player shows it ("Live").
+async function playStation(page) {
+  await page.locator(".player-bar .player-play").click();
+  await page.locator('.player-bar .live-badge[data-state="live"]').waitFor({ timeout: 10000 });
+}
 
 // Each shot: how to get there. Named as on the screens page (data-shot).
 const SHOTS = {
+  // Favorites › Songs, with the station playing.
+  "phone-favorites": async (page) => {
+    await page.goto(`${BASE}#/favorites`);
+    await page.locator(".track-row").first().waitFor();
+    await settle(page);
+    await page.locator(".track-row[data-tinted]").first().waitFor({ timeout: 5000 });
+    await playStation(page);
+    await page.waitForTimeout(400);
+  },
+  // Concerts with Region & more open, two filters chosen.
+  "phone-concert-filters": async (page) => {
+    await page.goto(`${BASE}#/concerts`);
+    await page.locator(".concert-row").first().waitFor({ timeout: 20000 });
+    await page.locator(".concert-refine summary").click();
+    await page.getByRole("button", { name: "Philadelphia Area", exact: true }).click();
+    await page.getByRole("button", { name: "WXPN Welcomes", exact: true }).click();
+    await settle(page);
+  },
   // Settings, scrolled to the end: the social accounts and the links under them.
   "phone-stay-connected": async (page) => {
     await page.goto(`${BASE}#/settings`);
@@ -146,18 +182,19 @@ const wanted = process.argv.slice(2).length ? process.argv.slice(2) : Object.key
 const unknown = wanted.filter((name) => !SHOTS[name]);
 if (unknown.length) throw new Error(`No such shot: ${unknown.join(", ")}`);
 
-const [art, events] = await Promise.all([artwork(), concerts()]);
+const [events, ...arts] = await Promise.all([concerts(), ...SONGS.map(artwork)]);
+const ART = new Map(SONGS.map((song, i) => [artUrl(song), arts[i]]));
 await mkdir(OUT, { recursive: true });
 // What went into the shots, beside them (CI logs aren't always to hand).
-const notes = [
-  `Artwork: ${art ? `${art.length} bytes` : "none"}; concerts that week: ${events.length}`,
-];
+const notes = [];
 const note = (line) => {
   console.log(line);
   notes.push(line);
 };
-console.log(notes[0]);
-const browser = await chromium.launch();
+note(`Concerts that week: ${events.length}`);
+SONGS.forEach((song, i) => note(`Artwork for ${song.title}: ${arts[i]?.length || "none"}`));
+
+const browser = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required"] });
 for (const theme of ["light", "dark"]) {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -168,37 +205,56 @@ for (const theme of ["light", "dark"]) {
     locale: "en-US",
     timezoneId: "America/New_York",
   });
-  await context.addInitScript((appearance) => {
-    globalThis.localStorage.setItem("xpn.onboarded", "true");
-    globalThis.localStorage.setItem("xpn.appearance", JSON.stringify(appearance));
-  }, theme);
+  await context.addInitScript(
+    ({ appearance, saved }) => {
+      const store = globalThis.localStorage;
+      store.setItem("xpn.onboarded", "true");
+      store.setItem("xpn.appearance", JSON.stringify(appearance));
+      store.setItem("xpn.favorites.v1", JSON.stringify(saved));
+    },
+    { appearance: theme, saved: favorites() },
+  );
   await context.route("**/*", (route) => {
     const url = new URL(route.request().url());
     if (url.origin === new URL(BASE).origin) return route.continue();
     if (/\/json\/\d{4}-\d\d-\d\d\.json$/.test(url.pathname)) return json(route, playlist());
     if (/nowplaying/i.test(url.pathname)) {
-      return json(route, [
-        { song: SONG.title, artist: SONG.artist, duration: "05:00", image: ART },
-      ]);
+      const { title, artist } = ON_AIR;
+      return json(route, [{ song: title, artist, duration: "05:00", image: artUrl(ON_AIR) }]);
     }
-    if (url.href === ART && art) {
-      return route.fulfill({ status: 200, contentType: "image/jpeg", headers: CORS, body: art });
+    if (ART.get(url.href)) {
+      return route.fulfill({
+        status: 200,
+        contentType: "image/jpeg",
+        headers: CORS,
+        body: ART.get(url.href),
+      });
+    }
+    if (/\.xpn\.org$/.test(url.hostname) && /mp3|nopreroll/.test(url.pathname)) {
+      return route.fulfill({ status: 200, contentType: "audio/mpeg", body: SILENCE });
     }
     if (url.hostname === "xpn.org" && url.pathname.includes("/tribe/events/")) {
       return json(route, { events, total: events.length, total_pages: 1 });
     }
     // Age limits, read live like the calendar.
-    if (url.hostname === "xpn.org" && url.pathname.includes("/wp-json/acf/"))
+    if (url.hostname === "xpn.org" && url.pathname.includes("/wp-json/acf/")) {
       return route.continue();
+    }
     return route.fulfill({ status: 404, body: "" });
   });
   for (const name of wanted) {
     const page = await context.newPage();
     await page.clock.setFixedTime(NOW);
-    await SHOTS[name](page);
-    const file = `${OUT}/${name}-${theme}.png`;
-    await writeFile(file, await page.screenshot({ animations: "disabled", caret: "hide" }));
-    note(`Wrote ${file}`);
+    try {
+      await SHOTS[name](page);
+      const file = `${OUT}/${name}-${theme}.png`;
+      await writeFile(file, await page.screenshot({ animations: "disabled", caret: "hide" }));
+      note(`Wrote ${file}`);
+    } catch (error) {
+      // One shot that can't be taken doesn't cost the rest; it's noted.
+      note(`Couldn't take ${name} (${theme}): ${error.message.split("\n")[0]}`);
+      await page.screenshot({ path: `${OUT}/failed-${name}-${theme}.png` }).catch(() => {});
+    }
     await page.close();
   }
   await context.close();

@@ -238,23 +238,34 @@ h1 {
   padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
-/* A saved song in Favorites, on a light wash of its artwork's color at the
-   page's own lightness (like Listen's), so its text and heart keep their
-   contrast: a stack of softly colored cards. */
+/* A saved song in Favorites, on a band of its artwork's color at the page's
+   own lightness (like Listen's), so its text and heart keep their contrast.
+   The band runs the full width of the screen and dissolves at its top and
+   bottom: a smooth fade, with grain scattered past it (styles/grain.css),
+   so each song's color breaks up into the page like a print rather than
+   ending at an edge, and the page shows through between songs. */
 @supports (color: oklch(from red l c h)) {
   .track-row[data-tinted] {
-    margin: 0 -10px 6px;
-    padding: 10px;
+    position: relative;
+    isolation: isolate;
+    margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
+    padding: 16px var(--edge-right) 16px var(--edge-left);
     border-bottom: 0;
-    border-radius: 12px;
-    background-color: oklch(
-      from color-mix(in srgb, var(--tint-light) 22%, var(--paper)) var(--paper-l) c h
-    );
+    --band: oklch(from color-mix(in srgb, var(--tint-light) 22%, var(--paper)) var(--paper-l) c h);
   }
   :root[data-theme="dark"] .track-row[data-tinted] {
-    background-color: oklch(
-      from color-mix(in srgb, var(--tint-dark) 20%, var(--paper)) var(--paper-l) c h
-    );
+    --band: oklch(from color-mix(in srgb, var(--tint-dark) 20%, var(--paper)) var(--paper-l) c h);
+  }
+  .track-row[data-tinted]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-color: var(--band);
+    /* Where grain can't shape the edge (styles/grain.css), a plain fade. */
+    -webkit-mask-image: var(--band-fade);
+    mask-image: var(--band-fade);
+    --band-fade: linear-gradient(transparent, #000 24%, #000 76%, transparent);
   }
 }
 .share-songs {

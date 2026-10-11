@@ -23,10 +23,36 @@
 .on-air,
 .station-banner,
 .player-bar[data-tinted],
-.track-row[data-tinted] {
+.track-row[data-tinted]::before {
   background-image: var(--grain);
   background-size: 160px 160px;
   background-blend-mode: soft-light;
+}
+
+/* A saved song's band (styles/layout.css) dissolves at its top and bottom
+   through the same grain: past the smooth fade, the color holds on only
+   where the grain is light, so it breaks up into specks that thin out
+   toward the edge. --grain-specks is that grain as a mask: the same noise
+   (same tile, frequency and seed, so the specks are the grain's own), its
+   light points opaque and the rest clear. The mask is the fade, plus the
+   specks within a wider fade. */
+:root {
+  --grain-specks: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.64 2.15 0.22 0 -1.3'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+@supports (mask-composite: intersect) {
+  .track-row[data-tinted]::before {
+    mask-image:
+      var(--band-fade), var(--grain-specks),
+      linear-gradient(transparent, #000 9%, #000 91%, transparent);
+    mask-size:
+      100% 100%,
+      160px 160px,
+      100% 100%;
+    mask-repeat: no-repeat, repeat, no-repeat;
+    /* Layers combine bottom up: the specks inside the wide fade, then the
+       smooth fade added on top. */
+    mask-composite: add, intersect, add;
+  }
 }
 
 /* Asked for more contrast, or forced colors: plain surfaces. */
@@ -34,5 +60,8 @@
   :root,
   :root[data-theme="dark"] {
     --grain: none;
+  }
+  .track-row[data-tinted]::before {
+    mask-image: var(--band-fade);
   }
 }

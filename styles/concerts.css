@@ -35,13 +35,60 @@
 }
 .filter-options {
   display: grid;
-  gap: 20px;
-  padding: 8px 0 24px;
+  gap: 14px;
+  padding: 4px 0 18px;
 }
 .filter-label {
-  margin: 0 0 10px;
+  margin: 0 0 2px;
   font-size: 0.875rem;
   color: var(--muted);
+}
+/* Region & more: choices as text with a box to check, two to a line, so
+   they read as a list on the page rather than more chips. */
+.filter-checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 168px), 1fr));
+  column-gap: 16px;
+}
+.filter-check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 0;
+  font-size: 0.9375rem;
+  font-weight: 550;
+  color: var(--text);
+  text-align: start;
+}
+.filter-box {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--control-border);
+  border-radius: 6px;
+  color: var(--action-ink);
+}
+.filter-check[aria-pressed="true"] {
+  color: var(--accent-strong);
+  font-weight: 650;
+}
+.filter-check[aria-pressed="true"] .filter-box {
+  border-color: var(--action);
+  background: var(--action);
+}
+@media (hover: hover) {
+  .filter-check:not([aria-pressed="true"]):hover .filter-box {
+    border-color: var(--text);
+  }
+}
+@media (forced-colors: active) {
+  .filter-check[aria-pressed="true"] .filter-box {
+    background: Highlight;
+    color: HighlightText;
+  }
 }
 .chips {
   display: flex;
