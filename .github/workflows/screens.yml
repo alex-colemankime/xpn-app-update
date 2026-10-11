@@ -3,8 +3,8 @@ name: Screens
 # Retakes screenshots for the screens page (design/screens) from the built
 # app, with tools/capture-screens.mjs, and puts them on the screens-out
 # branch (and in the "screens" artifact); they go into design/screens/img as
-# WebP. Run it by hand (naming shots, or all of them), or it runs when the
-# script changes on a branch.
+# WebP. Run it by hand (naming shots, or all of them), or it runs on a
+# branch when the script or the app's look changes, to see the change.
 on:
   workflow_dispatch:
     inputs:
@@ -17,6 +17,9 @@ on:
     paths:
       - tools/capture-screens.mjs
       - .github/workflows/screens.yml
+      - styles/**
+      - screens/**
+      - components/**
 
 permissions:
   contents: write # the screens-out branch
