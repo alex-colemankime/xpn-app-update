@@ -488,7 +488,7 @@ const browser =
   process.env.SCREENS_BROWSER === "webkit"
     ? await webkit.launch()
     : await chromium.launch({
-        // No scrollbars in the desktop shots, as on a Mac.
+        // No scrollbars, as on a Mac until the page scrolls.
         args: ["--autoplay-policy=no-user-gesture-required", "--hide-scrollbars"],
         // A browser already on the machine (PLAYWRIGHT_CHROMIUM), else Playwright's own.
         executablePath: process.env.PLAYWRIGHT_CHROMIUM || undefined,
@@ -526,6 +526,18 @@ for (const [theme, device] of ["light", "dark"].flatMap((t) =>
     },
     { appearance: theme, saved: favorites() },
   );
+  // A Mac's scrollbars float over the page, so the gutter the app keeps for
+  // them (styles/base.css) is empty there; here it would show as a strip.
+  if (device === "desk") {
+    await context.addInitScript(() => {
+      const doc = globalThis.document;
+      doc.addEventListener("DOMContentLoaded", () => {
+        const style = doc.createElement("style");
+        style.textContent = "html { scrollbar-gutter: auto; }";
+        doc.head.append(style);
+      });
+    });
+  }
   await context.route("**/*", async (route) => {
     const url = new URL(route.request().url());
     if (url.origin === new URL(BASE).origin) return route.continue();
