@@ -205,38 +205,6 @@
   .concert-info h2 {
     font-size: 1.0625rem;
   }
-  /* Chip rows scroll sideways on a phone rather than wrapping into a wall. */
-  .chips {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
-    padding-inline: var(--edge-left) var(--edge-right);
-    scrollbar-width: none;
-  }
-  /* Chips that run past the edge fade there, so the row reads as one to
-     swipe. */
-  .chips[data-overflow] {
-    mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
-  }
-  .chips::-webkit-scrollbar {
-    display: none;
-  }
-  /* Beside the dates chip, the row bleeds to the left edge only. */
-  .when-row .chips {
-    margin-right: 0;
-    padding-right: 0;
-  }
-  .when-row,
-  .chips {
-    gap: 6px;
-  }
-  .chip {
-    padding-inline: 11px;
-    font-size: 0.875rem;
-  }
-  .chip-dates:not([aria-pressed="true"]) {
-    padding-inline: 9px;
-  }
   .settings-grid {
     display: block;
   }
@@ -295,6 +263,12 @@
     bottom: calc(
       var(--tabbar-h) + var(--mini-h) + 10px +
         var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
+    );
+  }
+  /* With the mini player stepped aside, no room is kept for it. */
+  :root[data-hero-visible] .main-shell[data-screen="listen"] {
+    padding-bottom: calc(
+      var(--tabbar-h) + 4px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
     );
   }
   :root[data-hero-visible] .toast {

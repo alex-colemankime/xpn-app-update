@@ -9,15 +9,13 @@
   gap: 0 28px;
   align-items: start;
 }
-/* Every panel is a card with the same anatomy: a title line (with a switch,
-   when the panel has one), a line saying what it does, rows divided by
-   hairlines, and an optional note at the end. Cards group the settings the
-   way a phone's own Settings does, with an even gap between them. */
+/* Every panel has the same anatomy: a title line (with a switch, when the
+   panel has one), a line saying what it does, rows divided by hairlines,
+   and an optional note at the end. Panels are flat on the page, divided by
+   one rule, so nothing sits in a box inside another box. */
 .settings-panel {
-  margin-bottom: 14px;
-  padding: 8px 16px 12px;
-  border-radius: 16px;
-  background: var(--surface);
+  padding: 12px 0 16px;
+  border-top: 1px solid var(--border);
 }
 .settings-panel .section-heading {
   margin: 0;
@@ -32,11 +30,6 @@
   font-weight: 650;
   letter-spacing: -0.01em;
   margin: 0;
-}
-/* A card that ends in rows ends on the row, not on a gap under it. */
-.settings-panel > :is(.setting-row, .social-links, .service-list):last-child,
-.settings-panel > :is(.setting-choice, .alert-row):last-child {
-  margin-bottom: -6px;
 }
 /* The station, under the cards. */
 .settings-footer {
@@ -444,7 +437,7 @@ button.setting-row {
     color: var(--accent);
   }
 }
-/* In a Settings card, a hairline above each account, like every other row. */
+/* In Settings, a hairline above each account, like every other row. */
 .settings-panel .social-row {
   border-top: 1px solid var(--border);
   border-bottom: 0;
@@ -472,7 +465,8 @@ button.setting-row {
   font-size: 0.875rem;
   color: var(--muted);
 }
-.youtube-subscribe .secondary-button {
-  padding-block: 8px;
-  min-height: 40px;
+/* Subscribe: a text action in the accent, not a key. */
+.youtube-subscribe-link {
+  color: var(--accent);
+  font-weight: 650;
 }

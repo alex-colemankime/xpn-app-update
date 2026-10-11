@@ -362,11 +362,11 @@ const SHOTS = {
     await playStation(page);
     await page.waitForTimeout(400);
   },
-  // Concerts with Region & more open, two filters chosen.
+  // Concerts with Filter open, two filters chosen.
   "phone-concert-filters": async (page) => {
     await page.goto(`${BASE}#/concerts`);
     await page.locator(".concert-row").first().waitFor({ timeout: 20000 });
-    await page.locator(".concert-refine summary").click();
+    await page.locator(".filter-button").click();
     await page.getByRole("button", { name: "Philadelphia Area", exact: true }).click();
     await page.getByRole("button", { name: "WXPN Welcomes", exact: true }).click();
     await settle(page);

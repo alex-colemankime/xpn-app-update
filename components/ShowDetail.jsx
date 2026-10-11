@@ -11,7 +11,7 @@ import { enableReminders, useReminderSettings } from "../hooks/useShowReminders.
 import { VIDEO_SECTIONS } from "../config.js";
 import { episodesOf, hasLeftArchive, useArchive } from "../archive.js";
 import { EpisodeDetail, EpisodeRow } from "./Archive.jsx";
-import { chooseVideoSection, useVideos } from "../videos.js";
+import { useVideos } from "../videos.js";
 import { VideoCard } from "./VideoCard.jsx";
 import { useArtTint } from "../art-tint.js";
 import { useFeatures } from "../features.js";
@@ -32,7 +32,7 @@ function ReminderOffer({ show, onDone }) {
       <Icon name="bell" size={18} />
       <span>Get a reminder before {shortName(show)} starts?</span>
       <button
-        className="secondary-button"
+        className="text-button"
         onClick={async () => {
           if (await enableReminders()) onDone();
         }}
@@ -86,14 +86,8 @@ function ShowVideos({ show, onNavigate, onWatch }) {
     <>
       <div className="section-heading">
         <h3>Videos</h3>
-        <button
-          className="text-button"
-          onClick={() => {
-            chooseVideoSection(section.label);
-            onNavigate("videos");
-          }}
-        >
-          All {show.name} videos
+        <button className="text-button" onClick={() => onNavigate("videos")}>
+          More videos
         </button>
       </div>
       <div className="video-grid show-videos">

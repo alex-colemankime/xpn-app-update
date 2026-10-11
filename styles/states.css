@@ -240,8 +240,7 @@
     border: 1px solid ButtonText;
   }
   /* The soft fills disappear; outlines keep the shapes. */
-  .secondary-button,
-  .chip {
+  .secondary-button {
     border-color: ButtonText;
   }
 }

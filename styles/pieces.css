@@ -29,21 +29,25 @@
   content: "\00a0";
 }
 
+/* After a follow: one line on the page with a text action, like a note. */
 .reminder-offer {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 10px 12px;
-  margin: 18px 0 0;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--row-alt);
-  font-size: 0.875rem;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9375rem;
 }
 .reminder-offer > span:not(.icon) {
   flex: 1;
-  min-width: 12em;
+  min-width: 0;
+  color: var(--muted);
+}
+.reminder-offer .text-button {
+  color: var(--accent);
+  font-weight: 650;
+  white-space: nowrap;
 }
 .reminder-offer .icon {
   color: var(--accent);

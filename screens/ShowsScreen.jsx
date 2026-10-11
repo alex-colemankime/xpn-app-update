@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Icon, Art, Segmented, Empty, SearchField } from "../ui.jsx";
 import { SHOW_DIRECTORY, scheduleForDay, onAirAt } from "../catalog.js";
 import { DAYS, easternParts, clockLabel } from "../time.js";
-import { PROGRAM_GUIDE_URL } from "../links.js";
 import { ShowCard } from "../components/MusicRows.jsx";
 import { useNow } from "../hooks/useNow.js";
 import { ArchiveList } from "../components/Archive.jsx";
@@ -135,12 +134,6 @@ export function ShowsScreen({ onOpen }) {
               Try a different day or clear your search.
             </Empty>
           )}
-          <p className="data-note">
-            Regular schedule; special broadcasts may vary.{" "}
-            <a href={PROGRAM_GUIDE_URL} target="_blank" rel="noreferrer">
-              Check the station’s program guide
-            </a>
-          </p>
         </>
       )}
     </>

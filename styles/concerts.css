@@ -9,43 +9,67 @@
   gap: 12px;
   margin-bottom: 8px;
 }
-.concert-refine {
-  border-bottom: 1px solid var(--border);
-}
-.concert-refine summary {
+/* Filter: one key that opens every refinement (when, where, what) under it,
+   with a count of those in use. */
+.filter-button {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  width: 100%;
   min-height: 48px;
-  cursor: pointer;
-  list-style: none;
-  font-size: 0.875rem;
-  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9375rem;
+  font-weight: 650;
+  text-align: left;
 }
-.concert-refine summary::-webkit-details-marker {
-  display: none;
+.filter-button > .icon:first-child {
+  color: var(--accent);
 }
-.concert-refine[open] summary > .icon {
+.filter-button > .icon:last-child {
+  margin-left: auto;
+  color: var(--muted);
+  transition: rotate 0.2s;
+}
+.filter-button[aria-expanded="true"] > .icon:last-child {
   rotate: 180deg;
 }
 .filter-count {
-  margin-left: 12px;
-  color: var(--accent);
-  font-size: 0.875rem;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--action);
+  color: var(--action-ink);
+  font-size: 0.75rem;
+  font-weight: 750;
+  line-height: 20px;
+  text-align: center;
 }
 .filter-options {
   display: grid;
   gap: 14px;
-  padding: 4px 0 18px;
+  padding: 12px 0 4px;
+  border-bottom: 1px solid var(--border);
+}
+.filter-label span {
+  color: var(--accent-strong);
+  font-weight: 650;
+}
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20px;
+}
+.filter-done {
+  color: var(--accent);
+  font-weight: 650;
 }
 .filter-label {
   margin: 0 0 2px;
   font-size: 0.875rem;
   color: var(--muted);
 }
-/* Region & more: choices as text with a box to check, as many to a line as
-   fit, so they read as a list on the page rather than more chips. */
+/* Choices as text with a box to check, as many to a line as fit; the quick
+   ranges, one at a time, have round boxes. */
 .filter-checks {
   display: flex;
   flex-wrap: wrap;
@@ -72,6 +96,9 @@
   border-radius: 6px;
   color: var(--action-ink);
 }
+.filter-box.round {
+  border-radius: 50%;
+}
 .filter-check[aria-pressed="true"] {
   color: var(--accent-strong);
   font-weight: 650;
@@ -91,115 +118,83 @@
     color: HighlightText;
   }
 }
-.chips {
+/* Dates: one month, a tap for the first day and one for the last. */
+.range-calendar {
+  max-width: 340px;
+}
+.range-month {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  margin: 0 -10px 4px;
 }
-/* Filter chips: compact keys in the same family as the settings controls
-   (the chosen one lit in the accent), with a full-size touch target. */
-.chip {
-  position: relative;
-  min-height: 38px;
-  margin-block: 3px;
-  padding: 0 14px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: var(--soft-fill);
+.range-month strong {
   font-size: 0.9375rem;
-  font-weight: 550;
-  color: var(--text);
-  white-space: nowrap;
+  font-weight: 650;
 }
-.chip::after {
-  content: "";
-  position: absolute;
-  inset: -4px 0;
+.range-next .icon {
+  rotate: 180deg;
 }
-.chip[aria-pressed="true"] {
+.range-month .icon-button:disabled {
+  opacity: 0.3;
+}
+.range-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  row-gap: 2px;
+}
+.range-weekday {
+  padding: 4px 0;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--muted);
+  text-align: center;
+}
+.range-day {
+  display: grid;
+  place-items: center;
+  height: 40px;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+}
+.range-day > span {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+.range-day:disabled {
+  opacity: 0.35;
+}
+/* The days between: a band; the first and last: filled circles. */
+.range-day[data-in] {
   background: var(--key-lit);
-  color: var(--accent-strong);
+}
+.range-day[data-start] {
+  border-radius: 20px 0 0 20px;
+}
+.range-day[data-end] {
+  border-radius: 0 20px 20px 0;
+}
+.range-day[data-edge]:not([data-start], [data-end]) {
+  background: none;
+}
+.range-day[data-edge] > span {
+  background: var(--action);
+  color: var(--action-ink);
   font-weight: 700;
 }
 @media (hover: hover) {
-  .chip:not([aria-pressed="true"]):hover {
+  .range-day:not(:disabled, [data-edge]):hover > span {
     background: var(--soft-fill-hover);
   }
 }
-/* The dates: the quick ranges, then a calendar for dates of one's own,
-   kept at the end of the row (the quick ranges scroll on a narrow phone),
-   which says the range once there is one. */
-.when-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-/* The calendar follows the quick ranges; on a phone, where they run past
-   the edge and scroll, it stays in view at the end. */
-.when-row .chips {
-  flex: 0 1 auto;
-  min-width: 0;
-}
-.chip-dates {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding-inline: 11px;
-}
-.chip-dates[aria-pressed="true"] {
-  padding-inline: 12px 14px;
-}
-
-/* Choose dates: two date fields side by side, then Clear and Done. */
-@media (min-width: 768px) {
-  .popover-menu.date-range {
-    width: 340px;
+@media (forced-colors: active) {
+  .range-day[data-edge] > span {
+    background: Highlight;
+    color: HighlightText;
   }
-}
-.date-range-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 6px 12px 4px;
-}
-.date-range-fields label {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--muted);
-}
-.date-range-fields input {
-  width: 100%;
-  min-height: 46px;
-  padding: 0 12px;
-  border: 1px solid var(--control-border);
-  border-radius: 10px;
-  background: var(--bg);
-  color: var(--text);
-  font: inherit;
-  font-size: 1rem;
-  font-weight: 550;
-  min-width: 0;
-}
-.date-range-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 16px 12px 4px;
-}
-.popover-menu .date-range-actions button {
-  justify-content: center;
-  min-height: 46px;
-  border-radius: 10px;
-  font-weight: 650;
-  text-align: center;
-}
-.date-range-actions button:disabled {
-  opacity: 0.45;
 }
 .concert-count {
   display: flex;
@@ -267,59 +262,21 @@
 .concert-info {
   display: block;
 }
-/* WXPN Welcomes: the station's own shows, set apart as a card with a banner
-   across its top, a star leading the words. Free at Noon is a quieter flag
-   over the artist. */
-/* The card reaches a little past the list on each side, so its date,
-   artist and heart stay in line with every other row's. */
-.concert-row[data-welcomes] {
-  margin: 12px -12px;
-  padding: 0 12px 6px;
-  border: 0;
-  border-radius: 14px;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--action) 8%, var(--bg));
-}
-:root[data-theme="dark"] .concert-row[data-welcomes] {
-  background: color-mix(in srgb, var(--action) 11%, var(--bg));
-}
-.concert-banner {
-  grid-column: 1 / -1;
+/* WXPN Welcomes and Free at Noon: a line of small type over the artist, in
+   the accent, the station's own shows led by a star. */
+.concert-flags {
   display: flex;
-  align-items: center;
-  gap: 7px;
-  margin: 0 -12px 12px;
-  padding: 7px 12px;
-  background: var(--action);
-  color: var(--action-ink);
-  font-size: 0.75rem;
-  font-weight: 750;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  line-height: 1.3;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin-bottom: 3px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--accent-strong);
 }
-.concert-row[data-welcomes] .concert-date {
-  padding-top: 0;
-}
-.concert-tag {
+.concert-welcomes {
   display: inline-flex;
   align-items: center;
-  margin-bottom: 6px;
-  padding: 2px 7px;
-  border-radius: 5px;
-  background: var(--key-lit);
-  color: var(--accent-strong);
-  font-size: 0.75rem;
-  font-weight: 750;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  line-height: 1.3;
-}
-@media (forced-colors: active) {
-  .concert-tag,
-  .concert-row[data-welcomes] {
-    border: 1px solid CanvasText;
-  }
+  gap: 5px;
 }
 .concert-info h2 {
   font-size: 1.125rem;

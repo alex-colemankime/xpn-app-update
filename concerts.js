@@ -243,6 +243,14 @@ function inRange(date, when, today, range) {
   return true;
 }
 
+// A range picked on one calendar (RangeCalendar.jsx): the range after a tap
+// on `day`. The first tap is the start, the second the end; a day before the
+// start, or a tap once both are set, begins again from that day.
+export function pickDay({ from, to }, day) {
+  if (!from || to || day < from) return { from: day, to: "" };
+  return { from, to: day };
+}
+
 // "Oct 14–20", "Oct 30 – Nov 2", "From Oct 14": a chosen range, short.
 const RANGE_DAY = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
 const rangeDay = (iso) => RANGE_DAY.format(new Date(`${iso}T12:00:00`));

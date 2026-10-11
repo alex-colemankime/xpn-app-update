@@ -1,12 +1,6 @@
 import { useState } from "react";
-import { Empty, Icon, SearchField, Segmented } from "../ui.jsx";
-import {
-  chooseVideoSection,
-  loadMoreVideos,
-  loadVideos,
-  matchVideos,
-  useVideos,
-} from "../videos.js";
+import { Empty, Icon, SearchField } from "../ui.jsx";
+import { loadMoreFeed, loadVideos, matchVideos, oneFeed, useVideos } from "../videos.js";
 import { VideoCard } from "../components/VideoCard.jsx";
 
 // Under the newest video, the next four; each "Show more" adds a page.
@@ -30,43 +24,40 @@ function SkeletonVideos() {
   );
 }
 
-// Videos: the station's collections (World Cafe, WXPN), newest first, the
-// newest one large. Search looks through everything loaded in the
-// collection; "Show more" reveals the rest, loading further pages as needed.
+// Videos: the station's collections (World Cafe, WXPN) as one feed, newest
+// first, the newest one large. Search looks through everything loaded;
+// "Show more" reveals the rest, loading further pages as needed. No dates
+// here: the order says which are new.
 export function VideosScreen({ onWatch }) {
   const state = useVideos();
   const [query, setQuery] = useState("");
   const [count, setCount] = useState(FIRST);
-  const section = state.sections.find((s) => s.label === state.section) || state.sections[0];
-  const choose = (label) => {
-    chooseVideoSection(label);
-    setCount(FIRST);
-  };
-  const videos = section?.videos || [];
+  const section = oneFeed(state.sections);
+  const videos = section.videos;
   const found = matchVideos(videos, query);
   const searching = Boolean(query.trim());
   const [hero, ...rest] = found;
   const shown = searching ? found : rest.slice(0, count);
-  const more = !searching && (rest.length > count || section?.more);
+  const more = !searching && (rest.length > count || section.more);
   const showMore = () => {
     if (section.moreFailed) {
-      loadMoreVideos(section.playlist);
+      loadMoreFeed(state.sections);
       return;
     }
     const next = count + SHOW_STEP;
     setCount(next);
-    if (next + SHOW_STEP > rest.length) loadMoreVideos(section.playlist);
+    if (next + SHOW_STEP > rest.length) loadMoreFeed(state.sections);
   };
 
   const retry = () => loadVideos({ force: true });
   let content;
   if (!videos.length) {
     content =
-      section?.status === "error" ? (
+      section.status === "error" ? (
         <Empty icon="video" title="Videos are unavailable" action="Try again" onAction={retry}>
           Check your connection and try again.
         </Empty>
-      ) : section?.status === "loading" ? (
+      ) : section.status === "loading" ? (
         <SkeletonVideos />
       ) : (
         <Empty icon="video" title="No videos here yet">
@@ -95,10 +86,10 @@ export function VideosScreen({ onWatch }) {
             </button>
           </p>
         )}
-        {!searching && <VideoCard video={hero} onWatch={onWatch} hero />}
+        {!searching && <VideoCard video={hero} onWatch={onWatch} hero date={false} />}
         <div className="video-grid">
           {shown.map((video) => (
-            <VideoCard key={video.id} video={video} onWatch={onWatch} />
+            <VideoCard key={video.id} video={video} onWatch={onWatch} date={false} />
           ))}
         </div>
         {section.moreFailed && (
@@ -114,7 +105,7 @@ export function VideosScreen({ onWatch }) {
             </span>
           </button>
         )}
-        {searching && section?.more && (
+        {searching && section.more && (
           <p className="data-note">Searching the {videos.length} most recent videos.</p>
         )}
       </>
@@ -126,14 +117,6 @@ export function VideosScreen({ onWatch }) {
       {/* The tab bar (or sidebar) already says where this is. */}
       <h1 className="sr-only">Videos</h1>
       <div className="toolbar">
-        {state.sections.length > 1 && (
-          <Segmented
-            label="Video collection"
-            value={section.label}
-            onChange={choose}
-            options={state.sections.map((s) => s.label)}
-          />
-        )}
         <SearchField value={query} onChange={setQuery} placeholder="Search videos" />
       </div>
       <div className="videos">{content}</div>

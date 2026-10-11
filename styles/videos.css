@@ -29,12 +29,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
-}
-@media (hover: hover) {
-  .video-card:hover .video-thumb > img {
-    transform: scale(1.03);
-  }
 }
 /* The length, on the picture, where every video service puts it. */
 .video-length {

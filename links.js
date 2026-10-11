@@ -19,7 +19,6 @@ export function isDonatePage(url) {
 // "header", "sidebar", "settings", "banner" or "notification".
 export const trackDonate = (place) => track("donate_click", { place });
 export const PLAYLIST_URL = "https://xpn.org/wxpn-playlists/";
-export const PROGRAM_GUIDE_URL = "https://xpn.org/program_guide/";
 export const CALENDAR_URL = "https://xpn.org/concert-and-events/";
 export const SUBMIT_CONCERT_URL = "https://xpn.org/concert-event-submit/";
 export const LISTEN_URL = "https://xpn.org/listen/";

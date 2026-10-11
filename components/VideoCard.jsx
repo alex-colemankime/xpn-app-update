@@ -4,7 +4,8 @@ import { clockTime, lengthLabel, shortDay } from "../time.js";
 // One video: its poster with the length on it, then who and what; the whole
 // card plays it, as on any video service, so no play badge sits on the
 // picture. The hero is the same card, larger, for the newest video.
-export function VideoCard({ video, onWatch, hero = false }) {
+// `date` false leaves out when it was posted (the Videos tab, newest first).
+export function VideoCard({ video, onWatch, hero = false, date = true }) {
   const label = [video.artist, video.detail, lengthLabel(video.duration)]
     .filter(Boolean)
     .join(", ");
@@ -25,7 +26,9 @@ export function VideoCard({ video, onWatch, hero = false }) {
       <span className="video-text" aria-hidden="true">
         <strong>{video.artist || video.detail}</strong>
         {video.artist && <small>{video.detail}</small>}
-        {video.published && <small className="video-date">{shortDay(video.published)}</small>}
+        {date && video.published && (
+          <small className="video-date">{shortDay(video.published)}</small>
+        )}
       </span>
     </button>
   );

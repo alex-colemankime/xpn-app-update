@@ -102,8 +102,10 @@ export function EpisodeRow({ episode, gone = false }) {
             </span>
           )}
           <strong>{apMonths(episode.title)}</strong>
+          {/* Who or when, on the same line, at its end. */}
+          {meta && !gone && <small className="archive-meta">{meta}</small>}
         </span>
-        {meta && <small className="archive-meta">{meta}</small>}
+        {gone && <small className="archive-meta archive-gone">{meta}</small>}
       </Body>
       <SaveButton
         type="episodes"

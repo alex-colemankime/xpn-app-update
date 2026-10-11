@@ -122,3 +122,21 @@ test("video sections: World Cafe and WXPN by default, a list, or off", () => {
   ]);
   assert.deepEqual(parseVideoSections("off"), []);
 });
+
+test("the collections are one feed: newest first, each video once", async () => {
+  const { oneFeed } = await import("../videos.js");
+  const v = (id, published) => ({ id, published });
+  const feed = oneFeed([
+    { videos: [v("1", "2026-10-01"), v("2", "2026-09-01")], status: "live", more: false },
+    { videos: [v("3", "2026-10-05"), v("1", "2026-10-01")], status: "cache", more: true },
+  ]);
+  assert.deepEqual(
+    feed.videos.map((x) => x.id),
+    ["3", "1", "2"],
+  );
+  assert.equal(feed.status, "cache", "one collection couldn't be refreshed");
+  assert.equal(feed.more, true);
+  const empty = (status) => ({ videos: [], status, more: false });
+  assert.equal(oneFeed([empty("error"), empty("loading")]).status, "loading");
+  assert.equal(oneFeed([empty("error"), empty("error")]).status, "error");
+});

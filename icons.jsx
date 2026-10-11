@@ -120,6 +120,8 @@ const ICONS = {
     </>,
   ],
   heartF: [solid, <path d={HEART} />],
+  // Filter: three lines, each shorter, as a funnel.
+  filter: [outline(2, roundCaps), <path d="M4 7h16M7 12h10M10 17h4" />],
   // Privacy: a shield with a check.
   shield: [
     outline(1.7, rounded),

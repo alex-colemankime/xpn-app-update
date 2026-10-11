@@ -51,7 +51,7 @@ export function YouTubeSubscribe() {
             </span>
           </span>
           <a
-            className="secondary-button"
+            className="text-button youtube-subscribe-link"
             href={`${c.url}${c.url.includes("?") ? "&" : "?"}sub_confirmation=1`}
             target="_blank"
             rel="noreferrer"

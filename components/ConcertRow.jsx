@@ -98,14 +98,7 @@ export function ConcertRow({ concert: c }) {
   // with one.
   const where = [c.venue, c.city || c.region].filter(Boolean).join("\u00a0· ");
   return (
-    <div className="concert-row" data-welcomes={c.xpnWelcomes || undefined}>
-      {/* The station's own shows carry a banner across the top. */}
-      {c.xpnWelcomes && (
-        <p className="concert-banner" aria-hidden="true">
-          <Icon name="star" size={13} />
-          WXPN Welcomes
-        </p>
-      )}
+    <div className="concert-row">
       <div className="concert-date" aria-hidden="true">
         <span>{MONTH.format(date)}</span>
         <strong>{date.getDate()}</strong>
@@ -116,11 +109,19 @@ export function ConcertRow({ concert: c }) {
           className="concert-info"
           {...(c.pageUrl ? { href: c.pageUrl, target: "_blank", rel: "noreferrer" } : {})}
         >
-          <span className="sr-only">
-            {c.xpnWelcomes && "WXPN Welcomes. "}
-            {FULL_DATE.format(date)}:
-          </span>
-          {c.freeAtNoon && <span className="concert-tag">Free at Noon</span>}
+          <span className="sr-only">{FULL_DATE.format(date)}:</span>
+          {/* The station's own shows: a starred line over the artist. */}
+          {(c.xpnWelcomes || c.freeAtNoon) && (
+            <span className="concert-flags">
+              {c.xpnWelcomes && (
+                <span className="concert-welcomes">
+                  <Icon name="star" size={12} />
+                  WXPN Welcomes
+                </span>
+              )}
+              {c.freeAtNoon && <span>Free at Noon</span>}
+            </span>
+          )}
           {/* "Artist / Artist": a line never starts with the slash. */}
           <h2>{c.artist.replace(/ \/ /g, "\u00a0/ ")}</h2>
           {(where || age) && (

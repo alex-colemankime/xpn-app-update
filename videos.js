@@ -1,4 +1,4 @@
-// Videos: Brightcove playlists (config.js), one per section of the Videos
+// Videos: Brightcove playlists (config.js), together the feed on the Videos
 // tab, read with Brightcove's Playback API, the public interface its players
 // use, and played in the account's own Brightcove Player, so plays are
 // counted in Brightcove Analytics (as "wxpn-app").
@@ -228,7 +228,6 @@ const videoStore = createStore({
       status: videos.length ? "cache" : "loading",
     };
   }),
-  section: VIDEO_SECTIONS[0]?.label || "",
   loadedAt: 0,
   complete: false,
 });
@@ -353,10 +352,42 @@ export function loadMoreVideos(playlist) {
     .finally(() => loadingMore.delete(playlist));
 }
 
+// Every collection as one feed, newest first, each video once (one can be
+// in more than one collection): { videos, status, more, moreFailed }.
+// With nothing to show yet: "loading" while any collection still is, and
+// "error" only when every one failed. With videos: "cache" when any of them
+// couldn't be refreshed. Pure, so it can be tested.
+export function oneFeed(sections) {
+  const seen = new Set();
+  const videos = sections
+    .flatMap((s) => s.videos)
+    .filter((v) => !seen.has(v.id) && seen.add(v.id))
+    .sort((a, b) => (b.published || "").localeCompare(a.published || ""));
+  const has = (status) => sections.some((s) => s.status === status);
+  const status = videos.length
+    ? has("cache")
+      ? "cache"
+      : "live"
+    : has("loading") || !sections.length
+      ? "loading"
+      : sections.every((s) => s.status === "error")
+        ? "error"
+        : "live";
+  return {
+    videos,
+    status,
+    more: sections.some((s) => s.more),
+    moreFailed: sections.some((s) => s.moreFailed),
+  };
+}
+
+// The next page of every collection that has one.
+export function loadMoreFeed(sections) {
+  for (const s of sections) if (s.more) loadMoreVideos(s.playlist);
+}
+
 // The videos as they stand (the tests read it; screens use useVideos).
 export const getVideos = () => videoStore.getSnapshot();
-
-export const chooseVideoSection = (label) => videoStore.set((s) => ({ ...s, section: label }));
 
 export function useVideos() {
   useEveryShow(loadVideos, []);

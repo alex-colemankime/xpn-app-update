@@ -317,7 +317,7 @@ h1 {
   }
 }
 .share-songs {
-  margin-top: 12px;
+  margin-top: -6px;
 }
 .track-row > img {
   width: 46px;
@@ -614,7 +614,7 @@ h1 {
   .main-shell {
     margin: 0;
     padding-bottom: calc(
-      var(--tabbar-h) + var(--mini-h) + 23px +
+      var(--tabbar-h) + var(--mini-h) + 4px +
         var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
     );
   }
@@ -644,7 +644,7 @@ h1 {
     color: var(--accent);
   }
   .page-content {
-    padding: 23px var(--edge-right) 23px var(--edge-left);
+    padding: 23px var(--edge-right) 8px var(--edge-left);
   }
   .primary-button {
     padding: 12px 16px;
