@@ -74,6 +74,7 @@ export function SettingsScreen({
   updateAlarm,
   onAlarmEnabled,
   onTestAlarm,
+  testingAlarm,
   appearance,
   onAppearance,
   onNavigate,
@@ -99,40 +100,42 @@ export function SettingsScreen({
           updateAlarm={updateAlarm}
           onEnabled={onAlarmEnabled}
           onTest={onTestAlarm}
+          testing={testingAlarm}
         />
         <div>
           <ShowReminders onNavigate={onNavigate} />
           <StationAlerts />
           <PlaylistSyncPanel />
-          <section className="settings-panel">
-            <h2>
-              <Icon name="headphones" />
-              Listening
-            </h2>
-            {VOLUME_SETTABLE && (
-              <label className="setting-row">
-                <span>
-                  Volume <small>{volume}%</small>
-                </span>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={volume}
-                  onChange={(e) => setVolume(+e.target.value)}
-                />
-              </label>
-            )}
-            {castAvailable && (
-              <button className="setting-row full-width" onClick={chooseAudioOutput}>
-                <span>Choose audio output</span>
-                <Icon name={CAST_KIND || "cast"} />
-              </button>
-            )}
-            <p className="data-note">
-              Playback continues as you browse. Pausing disconnects the stream to save data.
-            </p>
-          </section>
+          {/* Volume (not on iPhone, where the buttons set it) and the audio
+              output, where there is either. */}
+          {(VOLUME_SETTABLE || castAvailable) && (
+            <section className="settings-panel">
+              <h2>
+                <Icon name="headphones" />
+                Listening
+              </h2>
+              {VOLUME_SETTABLE && (
+                <label className="setting-row">
+                  <span>
+                    Volume <small>{volume}%</small>
+                  </span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={volume}
+                    onChange={(e) => setVolume(+e.target.value)}
+                  />
+                </label>
+              )}
+              {castAvailable && (
+                <button className="setting-row full-width" onClick={chooseAudioOutput}>
+                  <span>Choose audio output</span>
+                  <Icon name={CAST_KIND || "cast"} />
+                </button>
+              )}
+            </section>
+          )}
           <section className="settings-panel appearance-settings">
             <h2>
               <Icon name="moon" />

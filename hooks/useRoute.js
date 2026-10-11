@@ -99,7 +99,18 @@ const actions = {
   navigate(screen) {
     const route = current();
     if (screen === route.screen && !route.showId) return;
-    withTransition(() => push({ screen }, { depth: 0 }));
+    // The screen it came from, so Settings can step back to it.
+    withTransition(() => push({ screen }, { depth: 0, from: route.screen }));
+  },
+  // The Settings key: opens Settings, and pressed again in Settings, goes
+  // back where the listener was (Back, so the history doesn't grow), or to
+  // Listen when Settings was opened directly.
+  toggleSettings() {
+    const route = current();
+    if (route.screen !== "settings") return actions.navigate("settings");
+    const from = window.history.state?.from;
+    if (from && from !== "settings" && !route.showId && !depth()) window.history.back();
+    else actions.navigate(from && from !== "settings" ? from : "listen");
   },
   openShow(showId, episodeId = null) {
     push({ screen: current().screen, showId, episodeId }, { depth: depth() + 1 });

@@ -81,8 +81,7 @@ export function PlaylistSyncPanel() {
       ) : (
         <>
           <p className="data-note">
-            Connect once, and every song you heart in the app goes into a “{PLAYLIST_NAME}” playlist
-            there, ready to play any time.
+            Connect once, and every song you heart goes into a “{PLAYLIST_NAME}” playlist there.
           </p>
           <ul className="service-list">
             {services.map((s) => (

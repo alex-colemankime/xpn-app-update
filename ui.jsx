@@ -143,15 +143,7 @@ export function Modal({ title, children, onClose, className = "", style }) {
 }
 // One choice among a few. "tabs" (underlined) switches between views of a
 // screen, or the station; "pill" (a joined row of keys) picks a setting.
-export function Segmented({
-  value,
-  onChange,
-  options,
-  label,
-  variant = "tabs",
-  className = "",
-  disabled = false,
-}) {
+export function Segmented({ value, onChange, options, label, variant = "tabs", className = "" }) {
   return (
     <div
       className={`segmented ${variant === "pill" ? "segmented-pill" : ""} ${className}`}
@@ -165,7 +157,6 @@ export function Segmented({
             key={o.value}
             aria-pressed={value === o.value}
             className={value === o.value ? "active" : ""}
-            disabled={disabled}
             onClick={() => onChange(o.value)}
           >
             {o.label}
@@ -288,20 +279,13 @@ export async function shareText(title, text, url) {
 
 // A setting with a few choices: its name, then the choices side by side, so
 // every option is visible and one tap away (no dropdown to open).
-export function ChoiceSetting({ label, value, onChange, options, disabled = false }) {
+export function ChoiceSetting({ label, value, onChange, options }) {
   return (
     <div className="setting-choice">
       <span className="setting-choice-label" aria-hidden="true">
         {label}
       </span>
-      <Segmented
-        label={label}
-        variant="pill"
-        value={value}
-        onChange={onChange}
-        options={options}
-        disabled={disabled}
-      />
+      <Segmented label={label} variant="pill" value={value} onChange={onChange} options={options} />
     </div>
   );
 }

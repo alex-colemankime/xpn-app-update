@@ -45,18 +45,22 @@ export function ShowReminders({ onNavigate }) {
           </button>
         </>
       )}
-      <ChoiceSetting
-        label="Remind me"
-        value={settings.lead}
-        disabled={!settings.enabled}
-        onChange={setReminderLead}
-        options={LEAD_CHOICES}
-      />
-      <p className="data-note">
-        {notificationsAreNative()
-          ? "Reminders arrive even when the app is closed."
-          : "In a browser, reminders appear while WXPN is open. The iPhone and Android apps remind you any time."}
-      </p>
+      {/* When to remind matters only while reminders are on. */}
+      {settings.enabled && (
+        <>
+          <ChoiceSetting
+            label="Remind me"
+            value={settings.lead}
+            onChange={setReminderLead}
+            options={LEAD_CHOICES}
+          />
+          <p className="data-note">
+            {notificationsAreNative()
+              ? "Reminders arrive even with the app closed."
+              : "In a browser, reminders appear while WXPN is open."}
+          </p>
+        </>
+      )}
     </section>
   );
 }
@@ -90,18 +94,12 @@ export function StationAlerts() {
         <Icon name="navLive" />
         From WXPN
       </h2>
-      <p className="data-note">
-        Notifications only if you turn them on. Turn them off here any time.
-      </p>
       <AlertSwitch topic="live" on={alerts.live} title="Live video">
-        Free at Noon and other live sessions, {LIVE_ALERT_MINUTES} minutes before they start.
+        A notification {LIVE_ALERT_MINUTES} minutes before Free at Noon and other live sessions.
       </AlertSwitch>
       <AlertSwitch topic="drives" on={alerts.drives} title="Member drives">
-        A few times a year, while a member drive is on.
+        A notification when a member drive begins, a few times a year.
       </AlertSwitch>
-      {!notificationsAreNative() && (
-        <p className="data-note">The iPhone and Android apps send these as notifications.</p>
-      )}
     </section>
   );
 }

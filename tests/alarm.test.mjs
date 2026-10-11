@@ -76,3 +76,12 @@ test("an alarm tapped late counts for its own day; none chosen keeps what was re
   assert.equal(ringDay(alarm, new Date(2026, 8, 28, 7, 0, 20)), "2026-09-28", "on time");
   assert.equal(ringDay({ ...alarm, repeatDays: [], lastTriggeredDate: "x" }, new Date()), "x");
 });
+
+test("the alarm's days, said short", async () => {
+  const { repeatLabel } = await import("../alarm.js");
+  assert.equal(repeatLabel([1, 2, 3, 4, 5]), "Weekdays");
+  assert.equal(repeatLabel([0, 6]), "Weekends");
+  assert.equal(repeatLabel([0, 1, 2, 3, 4, 5, 6]), "Every day");
+  assert.equal(repeatLabel([5, 1, 3]), "Mon, Wed, Fri");
+  assert.equal(repeatLabel([]), "No days chosen");
+});

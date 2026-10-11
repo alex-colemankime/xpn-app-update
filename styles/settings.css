@@ -6,43 +6,52 @@
   max-width: 1040px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 28px;
+  gap: 0 40px;
+  align-items: start;
 }
 /* Every panel has the same anatomy: a title line (with a switch, when the
    panel has one), a line saying what it does, rows divided by hairlines,
    and an optional note at the end. Panels are separated by one rule and an
    even gap, so no panel ends in a stray divider. */
 .settings-panel {
-  padding: 24px 0 28px;
+  padding: 16px 0 20px;
   border-top: 1px solid var(--border);
 }
-.settings-panel h2 {
+.settings-panel .section-heading {
+  margin: 0;
+}
+.settings-panel h2,
+.settings-panel .section-heading h2 {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 44px;
-  font-size: 1.3125rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  min-height: 40px;
+  font-size: 1.125rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
   margin: 0;
 }
 .settings-panel > .data-note {
-  margin: 16px 0 0;
+  margin: 12px 0 0;
 }
 /* The line under the title. */
 .settings-panel > :is(h2, .section-heading) + .data-note {
-  margin: 2px 0 14px;
+  margin: 0 0 4px;
 }
-.settings-panel > :is(h2, .section-heading) + :is(.setting-row, .setting-choice) {
-  margin-top: 10px;
+.settings-panel > :is(h2, .section-heading) + :is(.setting-row, .setting-choice, .alert-row) {
+  margin-top: 8px;
 }
 .settings-panel h2 .icon {
   color: var(--accent);
 }
+.settings-panel h2 .icon svg {
+  width: 19px;
+  height: 19px;
+}
 .alarm-time {
   display: flex;
   flex-direction: column;
-  margin: 18px 0 0;
+  margin: 10px 0 0;
 }
 .alarm-time-row {
   display: flex;
@@ -144,7 +153,7 @@
   display: grid;
   width: 100%;
   max-width: 440px;
-  margin: 18px 0 22px;
+  margin: 14px 0 16px;
 }
 .repeat-days button {
   padding: 0 2px;
@@ -153,8 +162,8 @@
 /* A setting with a few choices: name above, choices in one row below. */
 .setting-choice {
   display: grid;
-  gap: 10px;
-  padding: 16px 0 18px;
+  gap: 8px;
+  padding: 12px 0 14px;
   border-top: 1px solid var(--border);
 }
 .setting-choice-label {
@@ -164,9 +173,6 @@
   display: grid;
   width: 100%;
   max-width: 440px;
-}
-.segmented-pill button:disabled {
-  opacity: 0.45;
 }
 .service-list {
   list-style: none;
@@ -194,7 +200,7 @@
   text-underline-offset: 3px;
 }
 .setting-row {
-  min-height: 60px;
+  min-height: 52px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -216,10 +222,35 @@
   min-height: 36px;
 }
 .settings-panel .secondary-button {
-  margin-top: 18px;
+  margin-top: 12px;
 }
 .full-width {
   width: 100%;
+}
+button.setting-row {
+  text-align: left;
+}
+/* A small round key at the end of a row (test the alarm), in the accent;
+   filled while what it started plays. */
+.round-key {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+}
+.round-key[data-on] {
+  background: var(--action);
+  border-color: var(--action);
+  color: var(--action-ink);
+}
+@media (hover: hover) {
+  .alarm-test:hover .round-key:not([data-on]) {
+    background: var(--key-lit);
+  }
 }
 /* A notification from the station, with what it is under its name. */
 .alert-row {
@@ -227,7 +258,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 14px 0;
+  padding: 12px 0;
   border-top: 1px solid var(--border);
 }
 .alert-row > span {
@@ -361,7 +392,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-height: 60px;
+  min-height: 52px;
   border-bottom: 1px solid var(--border);
 }
 .social-owner {

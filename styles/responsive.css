@@ -236,12 +236,6 @@
   .chip-dates:not([aria-pressed="true"]) {
     padding-inline: 9px;
   }
-  .settings-panel {
-    padding: 22px 0;
-  }
-  .settings-panel h2 {
-    font-size: 1.25rem;
-  }
   .settings-grid {
     display: block;
   }

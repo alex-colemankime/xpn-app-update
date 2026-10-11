@@ -13,8 +13,7 @@ export function NewsletterPanel() {
         Newsletter
       </h2>
       <p className="data-note">
-        WXPN’s weekly email: top stories and music news, concert and event alerts, and special
-        announcements.
+        WXPN’s free weekly email: music news, concerts and events, and special announcements.
       </p>
       <a
         className="secondary-button newsletter-button"

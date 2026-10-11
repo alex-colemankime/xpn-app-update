@@ -1,9 +1,9 @@
 import { useRef } from "react";
 import { ChoiceSetting, Icon, Switch } from "../ui.jsx";
-import { DAY_LABELS, SNOOZE_OPTIONS } from "../alarm.js";
+import { DAY_LABELS, SNOOZE_OPTIONS, repeatLabel } from "../alarm.js";
 import { notificationsAreNative } from "../notifications.js";
 import { VOLUME_SETTABLE } from "../player.js";
-import { STATION_OPTIONS } from "../streams.js";
+import { STATION_OPTIONS, STREAMS } from "../streams.js";
 
 const SNOOZE_CHOICES = SNOOZE_OPTIONS.map((n) => ({ value: n, label: `${n} min` }));
 
@@ -117,75 +117,103 @@ function AlarmTime({ time, onChange }) {
   );
 }
 
-// The radio alarm's settings: on or off, when, which days, which station.
-export function RadioAlarmPanel({ alarm, updateAlarm, onEnabled, onTest }) {
+// The radio alarm's settings: on or off, and while on, when, which days,
+// which station, the snooze and the volume, and a test. Off, one line says
+// what turning it on would do.
+export function RadioAlarmPanel({ alarm, updateAlarm, onEnabled, onTest, testing }) {
   const toggleDay = (id) =>
     updateAlarm({
       repeatDays: alarm.repeatDays.includes(id)
         ? alarm.repeatDays.filter((x) => x !== id)
         : [...alarm.repeatDays, id].sort(),
     });
+  const [clock, period] = clockParts(alarm.time);
   return (
     <section className="settings-panel">
       <div className="section-heading">
-        <h2>
+        <h2 id="alarm-heading">
           <Icon name="clock" />
           Radio alarm
         </h2>
-        <Switch on={alarm.enabled} onChange={onEnabled} label="Enable radio alarm" />
+        <Switch
+          on={alarm.enabled}
+          onChange={onEnabled}
+          labelledBy="alarm-heading"
+          describedBy={alarm.enabled ? undefined : "alarm-summary"}
+        />
       </div>
-      <AlarmTime time={alarm.time} onChange={(time) => updateAlarm({ time })} />
-      <div className="repeat-days" role="group" aria-label="Repeat alarm on">
-        {DAY_LABELS.map((d) => (
-          <button
-            key={d.id}
-            aria-label={d.label}
-            aria-pressed={alarm.repeatDays.includes(d.id)}
-            className={alarm.repeatDays.includes(d.id) ? "active" : ""}
-            onClick={() => toggleDay(d.id)}
-          >
-            {d.label.slice(0, 3)}
-          </button>
-        ))}
-      </div>
-      {!alarm.repeatDays.length && (
-        <p className="data-note">Select at least one day for the alarm to ring.</p>
-      )}
-      <ChoiceSetting
-        label="Wake up to"
-        value={alarm.streamId}
-        onChange={(streamId) => updateAlarm({ streamId })}
-        options={STATION_OPTIONS}
-      />
-      <ChoiceSetting
-        label="Snooze for"
-        value={alarm.snoozeMinutes}
-        onChange={(snoozeMinutes) => updateAlarm({ snoozeMinutes })}
-        options={SNOOZE_CHOICES}
-      />
-      {VOLUME_SETTABLE && (
-        <label className="setting-row">
-          <span>
-            Alarm volume <small>{alarm.volume}%</small>
-          </span>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={alarm.volume}
-            onChange={(e) => updateAlarm({ volume: +e.target.value })}
+      {!alarm.enabled ? (
+        <p className="data-note" id="alarm-summary">
+          {[
+            `${clock} ${period}`.trim(),
+            repeatLabel(alarm.repeatDays),
+            STREAMS[alarm.streamId].label,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      ) : (
+        <>
+          <AlarmTime time={alarm.time} onChange={(time) => updateAlarm({ time })} />
+          <div className="repeat-days" role="group" aria-label="Repeat alarm on">
+            {DAY_LABELS.map((d) => (
+              <button
+                key={d.id}
+                aria-label={d.label}
+                aria-pressed={alarm.repeatDays.includes(d.id)}
+                className={alarm.repeatDays.includes(d.id) ? "active" : ""}
+                onClick={() => toggleDay(d.id)}
+              >
+                {d.label.slice(0, 3)}
+              </button>
+            ))}
+          </div>
+          {!alarm.repeatDays.length && (
+            <p className="data-note">Choose at least one day for the alarm to ring.</p>
+          )}
+          <ChoiceSetting
+            label="Wake up to"
+            value={alarm.streamId}
+            onChange={(streamId) => updateAlarm({ streamId })}
+            options={STATION_OPTIONS}
           />
-        </label>
+          <ChoiceSetting
+            label="Snooze for"
+            value={alarm.snoozeMinutes}
+            onChange={(snoozeMinutes) => updateAlarm({ snoozeMinutes })}
+            options={SNOOZE_CHOICES}
+          />
+          {VOLUME_SETTABLE && (
+            <label className="setting-row">
+              <span>
+                Alarm volume <small>{alarm.volume}%</small>
+              </span>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={alarm.volume}
+                onChange={(e) => updateAlarm({ volume: +e.target.value })}
+              />
+            </label>
+          )}
+          {/* A row like the others, with a small round key at its end. */}
+          <button className="setting-row full-width alarm-test" onClick={onTest}>
+            <span>
+              {testing ? "Stop the test" : "Test the alarm"}
+              <small>{STREAMS[alarm.streamId].label}, at the alarm volume</small>
+            </span>
+            <span className="round-key" data-on={testing || undefined} aria-hidden="true">
+              <Icon name={testing ? "pause" : "play"} size={14} />
+            </span>
+          </button>
+          <p className="data-note">
+            {notificationsAreNative()
+              ? "Rings as a notification, even with the app closed. Tap it to start the station."
+              : "In a browser, keep WXPN open and the screen on for the alarm to play."}
+          </p>
+        </>
       )}
-      <button className="secondary-button" onClick={onTest}>
-        <Icon name="play" size={17} />
-        Test alarm sound
-      </button>
-      <p className="data-note">
-        {notificationsAreNative()
-          ? "The alarm arrives as a notification, even with the app closed. Tap it to start the station."
-          : "Keep WXPN open and your screen on for the alarm to play. The iPhone and Android apps can wake you with the app closed."}
-      </p>
     </section>
   );
 }

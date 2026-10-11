@@ -38,6 +38,8 @@ function ring(settings) {
 export function useRadioAlarm() {
   const [alarm, updateAlarm] = useAlarmSettings();
   const [ringing, setRinging] = useState(false);
+  // A test from Settings is playing; the same key stops it.
+  const [testing, setTesting] = useState(false);
 
   // Effect Events: the timers and listeners below always see the latest
   // settings, without being torn down each time lastTriggeredDate is written.
@@ -53,7 +55,9 @@ export function useRadioAlarm() {
   // ring() reports its station switch before ringing is set, so this never
   // cancels an alarm as it starts.
   const onPlayerChange = useEffectEvent(() => {
-    if (ringing && !stationIsOn()) setRinging(false);
+    if (stationIsOn()) return;
+    if (ringing) setRinging(false);
+    if (testing) setTesting(false);
   });
   const checkDue = useEffectEvent(() => {
     const now = new Date();
@@ -128,6 +132,14 @@ export function useRadioAlarm() {
     ringing,
     snooze: () => stop(alarm.snoozeMinutes),
     dismiss: () => stop(0),
-    test: () => ring(alarm),
+    testing,
+    test: () => {
+      if (testing && stationIsOn()) {
+        pauseStream();
+        return;
+      }
+      ring(alarm);
+      setTesting(true);
+    },
   };
 }

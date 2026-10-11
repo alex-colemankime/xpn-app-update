@@ -156,7 +156,11 @@ export default function App() {
         data-screen={route.screen}
         aria-label={TITLES[route.screen]}
       >
-        <TopBar screen={route.screen} navigate={route.navigate} />
+        <TopBar
+          screen={route.screen}
+          navigate={route.navigate}
+          toggleSettings={route.toggleSettings}
+        />
         {alarm.ringing && (
           <AlarmBanner alarm={alarm.alarm} onSnooze={alarm.snooze} onDismiss={alarm.dismiss} />
         )}
@@ -205,6 +209,7 @@ export default function App() {
               updateAlarm={alarm.updateAlarm}
               onAlarmEnabled={alarm.setEnabled}
               onTestAlarm={alarm.test}
+              testingAlarm={alarm.testing}
               onNavigate={route.navigate}
             />
           </Screen>

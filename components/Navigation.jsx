@@ -71,8 +71,9 @@ export function Sidebar({ screen, navigate }) {
   );
 }
 
-// Phones: the wordmark, Donate and Settings across the top.
-export function TopBar({ screen, navigate }) {
+// Phones: the wordmark, Donate and Settings across the top. The Settings
+// key opens Settings, and closes it again.
+export function TopBar({ screen, navigate, toggleSettings }) {
   return (
     <header className="topbar">
       <button className="mobile-brand" onClick={() => navigate("listen")} aria-label="WXPN home">
@@ -92,8 +93,9 @@ export function TopBar({ screen, navigate }) {
         </a>
         <button
           className="mobile-settings icon-button"
-          aria-label="Settings"
-          {...opens("settings", screen, navigate)}
+          aria-label={screen === "settings" ? "Close settings" : "Settings"}
+          aria-current={screen === "settings" ? "page" : undefined}
+          onClick={toggleSettings}
         >
           <Icon name="settings" />
         </button>
