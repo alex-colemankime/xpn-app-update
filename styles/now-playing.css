@@ -177,6 +177,55 @@
   opacity: 0.25;
 }
 
+/* Two taps on the artwork heart the song (ListenScreen.jsx): a heart blooms
+   over it and fades. The artwork itself never selects, drags or pops up the
+   phone's image menu under the taps. */
+.now-art {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+.art-heart {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 18px rgb(0 0 0 / 0.35));
+  animation: art-heart 0.9s ease-out both;
+}
+@keyframes art-heart {
+  0% {
+    opacity: 0;
+    scale: 0.3;
+  }
+  18% {
+    opacity: 1;
+    scale: 1.14;
+  }
+  32% {
+    scale: 0.94;
+  }
+  46% {
+    scale: 1;
+  }
+  72% {
+    opacity: 1;
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.06;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .art-heart {
+    display: none;
+  }
+}
+
 /* A new song fades in rather than snapping into place. */
 .now-art,
 .now-info {

@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Icon } from "../icons.jsx";
 import { holdToast, showToast, useToast } from "../toast.js";
 import { createStore } from "../storage.js";
@@ -10,52 +10,75 @@ const openModals = createStore(0);
 export const modalOpened = () => openModals.set((n) => n + 1);
 export const modalClosed = () => openModals.set((n) => Math.max(0, n - 1));
 
+// How long a cleared notice takes to fade out (styles/notices.css).
+const LEAVE_MS = 180;
+
 export function Toast({ inModal = false }) {
   const message = useToast();
   const modals = useSyncExternalStore(openModals.subscribe, openModals.getSnapshot);
+  const shown = Boolean(message.text || message.title);
+  // The last notice stays drawn a moment after it's cleared, so it fades
+  // out rather than vanishing. (A timer, not animationend: with reduced
+  // motion there is no animation to end.)
+  const [last, setLast] = useState(null);
+  if (shown && last !== message) setLast(message);
+  const leaving = !shown && last !== null;
+  useEffect(() => {
+    if (!leaving) return;
+    const timer = setTimeout(() => setLast(null), LEAVE_MS);
+    return () => clearTimeout(timer);
+  }, [leaving]);
   if (!inModal && modals > 0) return null;
-  const shown = message.text || message.title;
+  const m = shown ? message : last;
+  const classes = [
+    "toast",
+    m?.brief && "brief",
+    m?.action && "has-action",
+    m?.action && m.title && m.text && "stacked",
+  ].filter(Boolean);
   return (
     <div role="status" aria-live="polite">
-      {shown && (
+      {m && (
         <div
-          className={`toast ${message.action ? "has-action" : ""} ${
-            message.action && message.title && message.text ? "stacked" : ""
-          }`}
+          className={classes.join(" ")}
+          data-leaving={leaving || undefined}
           onPointerEnter={() => holdToast(true)}
           onPointerLeave={() => holdToast(false)}
           onFocus={() => holdToast(true)}
           onBlur={() => holdToast(false)}
         >
-          {message.image ? (
-            <img className="toast-media" src={message.image} alt="" />
-          ) : message.icon ? (
+          {m.image ? (
+            <img className="toast-media" src={m.image} alt="" />
+          ) : m.icon ? (
             <span className="toast-media toast-icon">
-              <Icon name={message.icon} size={18} />
+              <Icon name={m.icon} size={18} />
             </span>
           ) : null}
           <span className="toast-text">
-            {message.title && <strong>{message.title}</strong>}
-            {message.text && <span>{message.text}</span>}
+            {m.title && <strong>{m.title}</strong>}
+            {m.text && <span>{m.text}</span>}
           </span>
-          {message.action && (
+          {m.action && (
             <>
               <button
                 className="toast-action"
                 onClick={() => {
-                  message.action.onClick();
+                  m.action.onClick();
                   showToast("");
                 }}
               >
-                {message.action.label}
+                {m.action.label}
               </button>
-              <button
-                className="toast-close icon-button"
-                aria-label="Dismiss"
-                onClick={() => showToast("")}
-              >
-                <Icon name="close" size={16} />
-              </button>
+              {/* A pill goes on its own in a moment; a bar can be closed. */}
+              {!m.brief && (
+                <button
+                  className="toast-close icon-button"
+                  aria-label="Dismiss"
+                  onClick={() => showToast("")}
+                >
+                  <Icon name="close" size={16} />
+                </button>
+              )}
             </>
           )}
         </div>

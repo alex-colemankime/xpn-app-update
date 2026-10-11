@@ -2,9 +2,11 @@
    Notices (toasts).
    ------------------------------------------------------------------------ */
 
-/* Notices rise from the bottom as a dark (in dark mode, light) bar, so they
-   stand apart from the page: optional artwork or icon, a title and a line,
-   one text action, and a close button when there is an action. */
+/* Notices rise from the bottom in the page's colors turned around, so they
+   stand apart from it. A short line is a small pill, sized to its words
+   (with Undo, say); a longer notice is a bar with optional artwork or icon,
+   a title and a line, one text action, and a close button when there is an
+   action. Both fade out when they go. */
 .toast {
   position: fixed;
   z-index: var(--z-toast);
@@ -26,13 +28,63 @@
     0 12px 32px rgb(0 0 0 / 0.22);
   font-size: 0.875rem;
   line-height: 1.35;
-  /* Rises into place. */
+  /* Rises into place, and fades as it goes. */
   transition:
     opacity 0.2s ease-out,
-    translate 0.2s ease-out;
+    translate 0.2s ease-out,
+    scale 0.2s ease-out;
+}
+.toast[data-leaving] {
+  opacity: 0;
+  translate: 0 6px;
+  pointer-events: none;
+  transition-duration: 0.18s;
+  transition-timing-function: ease-in;
 }
 .toast:not(.has-action) {
   padding-right: 16px;
+}
+/* The pill: as wide as its words, a little glass over the page. */
+.toast.brief {
+  width: max-content;
+  max-width: calc(100% - 32px);
+  min-height: 40px;
+  gap: 2px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--inverse-bg) 90%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.12),
+    0 6px 18px rgb(0 0 0 / 0.18);
+}
+.toast.brief.has-action {
+  padding-right: 4px;
+}
+.toast.brief .toast-action {
+  position: relative;
+  min-height: 32px;
+  margin-left: 6px;
+  padding: 0 12px;
+  border-radius: 999px;
+}
+/* A full-size target around the small key. */
+.toast.brief .toast-action::after {
+  content: "";
+  position: absolute;
+  inset: -6px -4px;
+}
+@media (hover: hover) {
+  .toast.brief .toast-action:hover {
+    background: color-mix(in srgb, var(--inverse-text) 12%, transparent);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .toast.brief {
+    background: var(--inverse-bg);
+  }
 }
 .toast-media {
   width: 38px;

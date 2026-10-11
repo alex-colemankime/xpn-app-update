@@ -6,7 +6,7 @@ import { useLiveSong } from "../nowplaying.js";
 import { onAirAt } from "../catalog.js";
 import { playbackText, statusLine } from "../playback-text.js";
 import { Icon, Art, EqBars, Wordmark, Segmented, SkeletonList } from "../ui.jsx";
-import { SaveSong, SongMenu, TrackRow } from "../components/MusicRows.jsx";
+import { heartSong, SaveSong, SongMenu, TrackRow } from "../components/MusicRows.jsx";
 import { OnAir, videoOfShow } from "../components/OnAir.jsx";
 import { SleepTimer } from "../components/SleepTimer.jsx";
 import { LiveCard } from "../components/StationUpdates.jsx";
@@ -18,6 +18,34 @@ import { PLAYLIST_URL } from "../links.js";
 
 const RECENT_PREVIEW = 6;
 const RECENT_MAX = 50;
+
+// Two taps on the artwork in quick succession, close together, heart the
+// song, and a heart blooms over it. Each bloom has its own key, so a second
+// double tap plays it again. Pointer events, so it works the same for a
+// finger and a mouse; a tap that turns into a scroll is cancelled by the
+// browser and never counts.
+const DOUBLE_TAP_MS = 320;
+const DOUBLE_TAP_SLOP = 40;
+function useDoubleTapHeart(song) {
+  const [bloom, setBloom] = useState(0);
+  const last = useRef(null);
+  const onPointerUp = (e) => {
+    if (!song || (e.pointerType === "mouse" && e.button !== 0)) return;
+    const prev = last.current;
+    const near =
+      prev &&
+      e.timeStamp - prev.at < DOUBLE_TAP_MS &&
+      Math.hypot(e.clientX - prev.x, e.clientY - prev.y) < DOUBLE_TAP_SLOP;
+    if (!near) {
+      last.current = { at: e.timeStamp, x: e.clientX, y: e.clientY };
+      return;
+    }
+    last.current = null;
+    heartSong(song);
+    setBloom((n) => n + 1);
+  };
+  return { bloom, onPointerUp, onBloomEnd: () => setBloom(0) };
+}
 
 // While Listen is in front, the page takes a light wash of the playing
 // song's artwork color (styles/base.css, data-art-wash). Artwork with no
@@ -45,6 +73,7 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
   const current = useLiveSong(playlist);
   useArtWash(current?.img);
   const text = playbackText(player);
+  const heart = useDoubleTapHeart(current);
   const controls = useRef(null);
   useHeroVisibility(controls);
   // The FM schedule only describes WXPN; XPN2 and Homegrown have none.
@@ -67,7 +96,7 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
         onWatch={onWatch}
       />
       <div className="now-stage">
-        <div className="now-art" key={`art-${songKey}`}>
+        <div className="now-art" key={`art-${songKey}`} onPointerUp={heart.onPointerUp}>
           {current?.img ? (
             <>
               {/* The artwork, blurred behind itself, tints the stage in each
@@ -77,6 +106,7 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
                 src={current.img}
                 alt={`${current.album || current.title} — ${current.artist}`}
                 fetchPriority="high"
+                draggable={false}
               />
             </>
           ) : (
@@ -85,6 +115,16 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
                 <Wordmark text={station.mark} />
               </strong>
             </div>
+          )}
+          {heart.bloom > 0 && (
+            <span
+              key={heart.bloom}
+              className="art-heart"
+              aria-hidden="true"
+              onAnimationEnd={heart.onBloomEnd}
+            >
+              <Icon name="heartF" size={88} />
+            </span>
           )}
         </div>
         {/* The label and the song's own actions (heart, menu) share the top

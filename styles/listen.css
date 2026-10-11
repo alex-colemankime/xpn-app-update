@@ -162,9 +162,9 @@
 /* The station's main action, labeled: "Listen live" / "Pause". */
 .now-controls .hero-play {
   flex: 1;
-  min-height: 56px;
+  min-height: 50px;
   padding: 0 24px;
-  border-radius: 16px;
+  border-radius: 14px;
   font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: 0.005em;
@@ -176,10 +176,10 @@
 .hero-cast {
   display: grid;
   place-items: center;
-  width: 56px;
-  min-height: 56px;
+  width: 50px;
+  min-height: 50px;
   flex-shrink: 0;
-  border-radius: 16px;
+  border-radius: 14px;
   background: var(--soft-fill);
   color: var(--text);
   transition: background-color 0.15s;

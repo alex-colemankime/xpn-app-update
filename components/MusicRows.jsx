@@ -103,14 +103,12 @@ export function SaveButton({
         toggleFavorite(type, item);
         onToggle?.(!saved);
         if (saved) {
-          // Removing is one tap, so it can be taken back.
-          showToast(
-            { title: "Removed from Favorites", text: name || item.name || item.title },
-            {
-              label: "Undo",
-              onClick: () => restoreFavorite(type, before),
-            },
-          );
+          // Removing is one tap, so it can be taken back: a small pill with
+          // Undo, gone in a moment.
+          showToast(type === "shows" ? "Unfollowed" : "Removed from Favorites", {
+            label: "Undo",
+            onClick: () => restoreFavorite(type, before),
+          });
         } else {
           setPop(true);
           if (type === "concerts") {
@@ -209,6 +207,16 @@ export function SongMenu({ track, stationLabel = "WXPN" }) {
 export const SaveSong = ({ track }) => (
   <SaveButton type="songs" item={{ ...track, id: songId(track) }} name={track.title} />
 );
+
+// Hearts a song without its button (a double tap on Listen's artwork): saves
+// it, or leaves it saved, as photo apps' double tap only ever likes.
+export function heartSong(track) {
+  tap();
+  const item = { ...track, id: songId(track) };
+  if (getFavorite("songs", item)) return;
+  toggleFavorite("songs", item);
+  firstSaveHint("songs");
+}
 
 // A show's artwork, name and host as one button (so only words that may sit
 // in a button: no headings or paragraphs inside it).

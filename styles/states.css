@@ -106,7 +106,7 @@
   content: "";
   position: absolute;
   inset: -5px;
-  border-radius: 50%;
+  border-radius: 18px;
   border: 2px solid var(--action);
   animation: busy-pulse 0.9s ease-in-out infinite alternate;
 }
@@ -171,6 +171,10 @@
   .toast {
     opacity: 0;
     translate: 0 10px;
+  }
+  .toast.brief {
+    translate: 0 6px;
+    scale: 0.94;
   }
 }
 

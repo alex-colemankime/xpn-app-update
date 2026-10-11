@@ -115,10 +115,11 @@
   }
   .now-controls .hero-play,
   .hero-cast {
-    min-height: 52px;
+    min-height: 46px;
+    border-radius: 13px;
   }
   .hero-cast {
-    width: 52px;
+    width: 46px;
   }
   .station-switcher.segmented button {
     min-height: 44px;

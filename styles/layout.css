@@ -495,14 +495,14 @@ h1 {
   background: color-mix(in srgb, var(--muted) 16%, transparent);
   color: var(--muted);
 }
-/* Play: a round orange key, the same family as the episode keys, sized to
-   the artwork beside it. */
+/* Play: an orange key, square with rounded corners like the artwork beside
+   it, and the same size. */
 .player-play {
   position: relative;
   flex-shrink: 0;
   width: 48px;
   height: 48px;
-  border-radius: 50%;
+  border-radius: 14px;
   display: grid;
   place-items: center;
   background: var(--action);
