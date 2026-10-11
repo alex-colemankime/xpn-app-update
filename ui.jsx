@@ -187,6 +187,26 @@ export function Empty({ icon, title, children, action, onAction, link = false })
     </div>
   );
 }
+// Row-shaped placeholders while a list loads, so it appears in place rather
+// than replacing a line of text. `rowClass` and `artClass` give the rows the
+// shape of the list they stand in for.
+export function SkeletonList({ label, count = 4, rowClass, artClass }) {
+  return (
+    <div role="status">
+      <span className="sr-only">{label}</span>
+      {Array.from({ length: count }, (_, i) => (
+        <div className={`${rowClass} skeleton-row`} aria-hidden="true" key={i}>
+          <span className={`skeleton-block ${artClass}`} />
+          <span className="skeleton-lines">
+            <span className="skeleton-block skeleton-line" />
+            <span className="skeleton-block skeleton-line" />
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function SearchField({ value, onChange, placeholder }) {
   const input = useRef(null);
   const id = useId();

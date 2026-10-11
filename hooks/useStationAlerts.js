@@ -20,7 +20,7 @@ import {
   syncPushTopics,
 } from "../push.js";
 import { useFeatures } from "../features.js";
-import { playStream, selectStream } from "../player.js";
+import { playStation } from "../player.js";
 import { useEveryShow } from "./useEveryShow.js";
 import { track } from "../analytics.js";
 
@@ -148,8 +148,7 @@ export function useStationAlerts(updates, { onWatch }) {
     } else if (target?.action === "open") {
       openPage(target.url);
     } else if (target?.action === "listen") {
-      selectStream(target.stream);
-      playStream();
+      playStation(target.stream);
     }
   });
   useEffect(() => onNotification("station-alert", open), []);

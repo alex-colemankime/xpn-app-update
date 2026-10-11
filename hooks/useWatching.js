@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { Capacitor } from "@capacitor/core";
-import { getPlayerSnapshot, isConnecting, pauseStream, playStream } from "../player.js";
-import { getEpisodeState, pauseEpisode, resumeEpisode } from "../episode-player.js";
+import { pauseStream, playStream, stationIsOn } from "../player.js";
+import { episodeIsOn, getEpisodeState, pauseEpisode, resumeEpisode } from "../episode-player.js";
 import { openPage } from "../links.js";
 import { showToast } from "../toast.js";
 import { youTubeEmbed } from "../updates.js";
@@ -12,12 +12,9 @@ import { track } from "../analytics.js";
 let radioWasOn = false;
 let episodeWasOn = false;
 function pauseForVideo() {
-  const { playing, status } = getPlayerSnapshot();
-  radioWasOn = playing || isConnecting(status);
+  radioWasOn = stationIsOn();
   if (radioWasOn) pauseStream();
-  const episode = getEpisodeState();
-  episodeWasOn =
-    Boolean(episode.episode) && (episode.status === "playing" || episode.status === "loading");
+  episodeWasOn = episodeIsOn(getEpisodeState());
   if (episodeWasOn) pauseEpisode();
 }
 function offerAudioBack() {

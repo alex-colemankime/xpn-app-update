@@ -4,7 +4,7 @@ import { showToast } from "../toast.js";
 import { shortName, onAirAt, nextAiringOf, untilLabel } from "../catalog.js";
 import { deviceIsEastern } from "../time.js";
 import { useFavoriteItems } from "../favorites.js";
-import { playStream, selectStream } from "../player.js";
+import { playStation } from "../player.js";
 import { SaveButton } from "./MusicRows.jsx";
 import { useNow } from "../hooks/useNow.js";
 import { enableReminders, useReminderSettings } from "../hooks/useShowReminders.js";
@@ -130,8 +130,7 @@ export function ShowDetail({
   const tint = useArtTint(show.img, show.tint || null);
   const listen = () => {
     // Every show in the guide airs on 88.5 FM.
-    selectStream("xpn");
-    playStream();
+    playStation("xpn");
     onListen();
   };
   return (

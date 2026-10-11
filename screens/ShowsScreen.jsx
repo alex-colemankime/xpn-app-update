@@ -5,13 +5,8 @@ import { DAYS, easternParts, clockLabel } from "../time.js";
 import { PROGRAM_GUIDE_URL } from "../links.js";
 import { ShowCard } from "../components/MusicRows.jsx";
 import { useNow } from "../hooks/useNow.js";
-import { ARCHIVE_ENABLED } from "../config.js";
 import { ArchiveList } from "../components/Archive.jsx";
 import { useFeatures } from "../features.js";
-
-// All shows, the week's schedule, and (when there is one, and it is on) the
-// audio archive.
-const MODES = ["All shows", "Schedule", ...(ARCHIVE_ENABLED ? ["Archive"] : [])];
 
 const matchesQuery = (query) => {
   const q = query.trim().toLowerCase();
@@ -19,8 +14,9 @@ const matchesQuery = (query) => {
 };
 
 export function ShowsScreen({ onOpen }) {
-  const features = useFeatures();
-  const modes = features.archive ? MODES : MODES.filter((m) => m !== "Archive");
+  // All shows, the week's schedule, and (when the build has it and the
+  // station hasn't switched it off: features.js) the audio archive.
+  const modes = ["All shows", "Schedule", ...(useFeatures().archive ? ["Archive"] : [])];
   // Shows opens on the schedule: what's on today, the show on air marked.
   const [chosen, setMode] = useState("Schedule");
   const mode = modes.includes(chosen) ? chosen : "Schedule";
@@ -36,8 +32,13 @@ export function ShowsScreen({ onOpen }) {
     setDay(today);
   }
   const [query, setQuery] = useState("");
+  // Today's slot, not one that began yesterday and runs past midnight (whose
+  // start is before today's): the same show's slot later today isn't on yet.
   const isOnAir = (slot) =>
-    day === today && onAirNow?.show.id === slot.show.id && onAirNow.slot.start === slot.start;
+    day === today &&
+    onAirNow?.show.id === slot.show.id &&
+    onAirNow.slot.start === slot.start &&
+    onAirNow.start >= 0;
   const matches = matchesQuery(query);
   const shows = SHOW_DIRECTORY.filter(matches);
   const slots = scheduleForDay(day).filter((slot) => matches(slot.show));

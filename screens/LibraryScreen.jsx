@@ -3,7 +3,6 @@ import { Icon, Segmented, Empty, SearchField, shareText } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { useFavoriteItems } from "../favorites.js";
 import { easternToday } from "../concerts.js";
-import { ARCHIVE_ENABLED, CONCERTS_ENABLED, VIDEOS_ENABLED } from "../config.js";
 import { VideoCard } from "../components/VideoCard.jsx";
 import { EpisodeRow, ShowHead } from "../components/Archive.jsx";
 import { hasLeftArchive, useArchiveState } from "../archive.js";
@@ -58,25 +57,24 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
   const today = easternToday();
 
   const archive = useArchiveState();
+  // Each feature here is on only when the build has it and the station
+  // hasn't switched it off (features.js).
   const features = useFeatures();
-  const archiveOn = ARCHIVE_ENABLED && features.archive;
   const q = query.trim().toLowerCase();
   // Followed shows and saved episodes, together: one list per show.
   const showGroups = savedShowGroups({
     followed: shows,
-    episodes: archiveOn ? episodes : [],
+    episodes: features.archive ? episodes : [],
     catalog: SHOWS,
     query: q,
   });
   const items = {
     songs,
     shows: showGroups,
-    ...(VIDEOS_ENABLED && features.videos ? { videos } : {}),
+    ...(features.videos ? { videos } : {}),
     // Saved with their details, so they show even while the feed is down;
     // past dates drop off.
-    ...(CONCERTS_ENABLED && features.concerts
-      ? { concerts: concertsSaved.filter((c) => c.date >= today) }
-      : {}),
+    ...(features.concerts ? { concerts: concertsSaved.filter((c) => c.date >= today) } : {}),
   };
   const category = items[type] ? type : "songs";
   // Show groups arrive searched already.

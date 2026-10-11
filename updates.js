@@ -114,7 +114,9 @@ export function normalizeUpdates(json) {
 // The ad's id names the update when the JSON has none, so dismissing it
 // sticks until the station posts a new ad.
 
-const adList = (json) =>
+// The ads in what the REST API returned (a list, { ads: [...] } or one ad),
+// or null. Shared with remote-config.js, which reads a "config" ad the same way.
+export const adList = (json) =>
   Array.isArray(json) ? json : Array.isArray(json?.ads) ? json.ads : json?.content ? [json] : null;
 const advancedAdsList = (json) => {
   const list = adList(json);
@@ -123,11 +125,14 @@ const advancedAdsList = (json) => {
 const rendered = (value) => (typeof value === "string" ? value : (value?.rendered ?? ""));
 // WordPress displays straight quotes as curly ones; JSON needs them back.
 const straightQuotes = (value) => value.replace(/[“”″]/g, '"').replace(/[‘’′]/g, "'");
+// An ad's content as one line of plain text, its quotes straight again, so
+// JSON pasted into the ad can be read.
+export const adText = (ad) => straightQuotes(plainText(rendered(ad?.content)));
 
 function adUpdate(ad) {
   if (!ad || typeof ad !== "object") return [];
   const html = rendered(ad.content);
-  const body = straightQuotes(plainText(html));
+  const body = adText(ad);
   const fallbackId = ad.id != null ? `ad-${oneLine(ad.id, 40)}` : "";
   if (body.startsWith("{")) {
     try {
@@ -154,7 +159,7 @@ function adUpdate(ad) {
   ];
 }
 
-export function advancedAdsUpdates(json) {
+function advancedAdsUpdates(json) {
   return (advancedAdsList(json) || []).flatMap(adUpdate).map(normalizeUpdate).filter(Boolean);
 }
 

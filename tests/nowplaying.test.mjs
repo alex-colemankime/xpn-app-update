@@ -7,6 +7,7 @@ import {
   playedAt,
   durationMinutes,
   withNowPlaying,
+  readPlaylist,
 } from "../nowplaying.js";
 import { shiftDate } from "../time.js";
 
@@ -155,4 +156,34 @@ test("decoding malformed feed characters is safe and preserves literal text", ()
     { song: "&lt;3 &#x1f3b5; &#99999999; &#xD800; &unknown;", artist: "Artist" },
   ]);
   assert.equal(track.title, "<3 🎵 &#99999999; &#xD800; &unknown;");
+});
+
+test("just after midnight, a day file not made yet leaves yesterday's songs showing", async () => {
+  const endpoint = { day: "https://feed.test/day/", now: "https://feed.test/now.json" };
+  const files = {
+    "https://feed.test/day/2026-10-10.json": [
+      { artist: "Late", song: "Last of the night", timeslice: "2026-10-10 23:58:00" },
+    ],
+  };
+  const real = globalThis.fetch;
+  globalThis.fetch = async (url) =>
+    files[url]
+      ? new Response(JSON.stringify(files[url]), { status: 200 })
+      : new Response("Not found", { status: 404 });
+  try {
+    // 12:03am Eastern: the station hasn't logged the new day's first song.
+    const early = new Date("2026-10-11T04:03:00Z");
+    const { tracks } = await readPlaylist(endpoint, undefined, early);
+    assert.deepEqual(
+      tracks.map((t) => t.title),
+      ["Last of the night"],
+    );
+    // Later in the day the day's own file is required, as before.
+    await assert.rejects(readPlaylist(endpoint, undefined, new Date("2026-10-11T14:00:00Z")));
+    // And with neither file there, the read fails.
+    delete files["https://feed.test/day/2026-10-10.json"];
+    await assert.rejects(readPlaylist(endpoint, undefined, early));
+  } finally {
+    globalThis.fetch = real;
+  }
 });

@@ -51,8 +51,8 @@ function reportAge(track, now) {
 export function isFresh(track, now = new Date()) {
   if (!track) return false;
   const age = reportAge(track, now);
-  const window = track.minutes > 0 ? track.minutes + SLACK_MINUTES : FRESH_MINUTES;
-  return age !== null && age < window;
+  const freshFor = track.minutes > 0 ? track.minutes + SLACK_MINUTES : FRESH_MINUTES;
+  return age !== null && age < freshFor;
 }
 
 // "04:22" -> 5 (whole minutes, rounded up). Null when missing or odd.
@@ -137,8 +137,10 @@ const sameTracks = (a, b) =>
 
 // One read of a station's playlist: today's file (and yesterday's in the
 // small hours, when the overnight songs are in it), plus the now-playing file
-// for the current song's length. Only today's file is required.
-async function readPlaylist(endpoint, signal) {
+// for the current song's length. Today's file is required, except in the
+// small hours: until the station logs the new day's first song its file
+// doesn't exist yet, and yesterday's carries the list meanwhile.
+export async function readPlaylist(endpoint, signal, date = new Date()) {
   const loadDay = async (date) => {
     const response = await fetch(`${endpoint.day}${date}.json`, { signal, cache: "no-store" });
     if (!response.ok) throw new Error("Playlist unavailable");
@@ -152,14 +154,15 @@ async function readPlaylist(endpoint, signal) {
       return null;
     }
   };
-  const now = easternParts();
+  const now = easternParts(date);
   const early = Number(now.time.slice(0, 2)) < EARLY_HOUR;
-  const [nowFile, ...lists] = await Promise.all([
+  const [nowFile, today, yesterday] = await Promise.all([
     loadNow(),
-    loadDay(now.date),
-    ...(early ? [loadDay(shiftDate(now.date, -1)).catch(() => [])] : []),
+    early ? loadDay(now.date).catch(() => null) : loadDay(now.date),
+    early ? loadDay(shiftDate(now.date, -1)).catch(() => null) : [],
   ]);
-  return { nowFile, tracks: mergeTracks(lists).slice(0, 80) };
+  if (!today && !yesterday) throw new Error("Playlist unavailable");
+  return { nowFile, tracks: mergeTracks([today || [], yesterday || []]).slice(0, 80) };
 }
 
 // The playlist for one station, polled every 30 seconds while the app is

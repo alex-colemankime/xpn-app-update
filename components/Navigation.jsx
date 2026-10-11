@@ -1,19 +1,16 @@
 import { Icon, Wordmark } from "../ui.jsx";
-import { DONATE_URL } from "../links.js";
-import { CONCERTS_ENABLED, VIDEOS_ENABLED } from "../config.js";
+import { DONATE_URL, trackDonate } from "../links.js";
 import { useFeatures } from "../features.js";
 
 // The app's screens, in navigation order. Videos and Concerts only have tabs
 // when the build sets them up (config.js) and the station hasn't switched
-// them off (features.js).
+// them off: features.js accounts for both.
 const NAV = [
   { id: "listen", label: "Listen live", short: "Listen", icon: "navLive" },
   { id: "favorites", label: "Favorites", short: "Favorites", icon: "heart" },
   { id: "shows", label: "Shows", short: "Shows", icon: "headphones" },
-  ...(VIDEOS_ENABLED ? [{ id: "videos", label: "Videos", short: "Videos", icon: "video" }] : []),
-  ...(CONCERTS_ENABLED
-    ? [{ id: "concerts", label: "Concerts", short: "Concerts", icon: "navConcerts" }]
-    : []),
+  { id: "videos", label: "Videos", short: "Videos", icon: "video" },
+  { id: "concerts", label: "Concerts", short: "Concerts", icon: "navConcerts" },
 ];
 export const TITLES = {
   ...Object.fromEntries(NAV.map((n) => [n.id, n.label])),
@@ -65,6 +62,7 @@ export function Sidebar({ screen, navigate }) {
           target="_blank"
           rel="noreferrer"
           aria-label="Donate to WXPN (opens in a new tab)"
+          onClick={() => trackDonate("sidebar")}
         >
           Donate
         </a>
@@ -88,6 +86,7 @@ export function TopBar({ screen, navigate }) {
           target="_blank"
           rel="noreferrer"
           aria-label="Donate to WXPN (opens in a new tab)"
+          onClick={() => trackDonate("header")}
         >
           <span>Donate</span>
         </a>

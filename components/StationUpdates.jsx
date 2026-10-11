@@ -2,7 +2,7 @@ import { Art, Icon, heightVar } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { STATION_ART } from "../assets.js";
 import { localClock } from "../time.js";
-import { isDonatePage } from "../links.js";
+import { isDonatePage, trackDonate } from "../links.js";
 import { dismissUpdate } from "../hooks/useStationUpdates.js";
 
 // A hyphenated word ("listener-supported") kept on one line, so a line
@@ -33,6 +33,7 @@ export function StationBanner({ banner, live, liveDismissed, onWatch, onListenSc
   const showLive = live?.state === "live" && !liveDismissed && !onListenScreen;
   if (!showLive && !banner) return null;
   const item = showLive ? live : banner;
+  const donate = !showLive && banner.action && isDonatePage(banner.action.url);
   return (
     <div
       className="station-banner"
@@ -64,7 +65,8 @@ export function StationBanner({ banner, live, liveDismissed, onWatch, onListenSc
           target="_blank"
           rel="noreferrer"
           // On phones the header's Donate sits just above; one is enough.
-          data-donate={isDonatePage(banner.action.url) || undefined}
+          data-donate={donate || undefined}
+          onClick={donate ? () => trackDonate("banner") : undefined}
         >
           {banner.action.label}
         </a>

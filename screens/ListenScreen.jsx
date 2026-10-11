@@ -5,7 +5,7 @@ import { STATION_OPTIONS } from "../streams.js";
 import { useLiveSong } from "../nowplaying.js";
 import { onAirAt } from "../catalog.js";
 import { playbackText, statusLine } from "../playback-text.js";
-import { Icon, Art, Wordmark, Segmented } from "../ui.jsx";
+import { Icon, Art, Wordmark, Segmented, SkeletonList } from "../ui.jsx";
 import { SaveSong, SongMenu, TrackRow } from "../components/MusicRows.jsx";
 import { OnAir, videoOfShow } from "../components/OnAir.jsx";
 import { SleepTimer } from "../components/SleepTimer.jsx";
@@ -162,25 +162,6 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
   );
 }
 
-// Row-shaped placeholders while the playlist loads, so the list appears in
-// place rather than replacing a line of text.
-function SkeletonRows() {
-  return (
-    <div role="status">
-      <span className="sr-only">Loading the station playlist…</span>
-      {Array.from({ length: 5 }, (_, i) => (
-        <div className="track-row skeleton-row" aria-hidden="true" key={i}>
-          <span className="skeleton-block skeleton-art" />
-          <span className="skeleton-lines">
-            <span className="skeleton-block skeleton-line" />
-            <span className="skeleton-block skeleton-line" />
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // Keyed by station in the parent, so switching stations collapses the list.
 function RecentlyPlayed({ playlist, station }) {
   const [expanded, setExpanded] = useState(false);
@@ -194,7 +175,12 @@ function RecentlyPlayed({ playlist, station }) {
         <span className="subtle">{station.label}</span>
       </div>
       {playlist.status === "loading" && !earlier.length ? (
-        <SkeletonRows />
+        <SkeletonList
+          label="Loading the station playlist…"
+          count={5}
+          rowClass="track-row"
+          artClass="skeleton-art"
+        />
       ) : earlier.length ? (
         <>
           {earlier.slice(0, expanded ? RECENT_MAX : RECENT_PREVIEW).map((t) => (

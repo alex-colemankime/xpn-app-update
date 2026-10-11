@@ -9,7 +9,14 @@ import { PlaylistSyncPanel } from "../components/PlaylistSync.jsx";
 import { RadioAlarmPanel } from "../components/RadioAlarm.jsx";
 import { useNotificationTrouble } from "../notifications.js";
 import { SocialLinks } from "../components/SocialLinks.jsx";
-import { CALENDAR_URL, DONATE_URL, HELP_URL, PRIVACY_URL, STATION_EMAIL } from "../links.js";
+import {
+  CALENDAR_URL,
+  DONATE_URL,
+  HELP_URL,
+  PRIVACY_URL,
+  STATION_EMAIL,
+  trackDonate,
+} from "../links.js";
 import { reportingAvailable, reportingStore, setReporting } from "../analytics.js";
 import { useLocalStore } from "../storage.js";
 import { useFeatures } from "../features.js";
@@ -18,7 +25,9 @@ import { useFeatures } from "../features.js";
 const VERSION = __APP_VERSION__;
 
 const LINKS = [
-  { label: "Donate to WXPN", url: DONATE_URL },
+  { label: "Donate to WXPN", url: DONATE_URL, onClick: () => trackDonate("settings") },
+  // Only while the Concerts tab is off (the build has none, or the station
+  // switched it off), so the calendar is still a tap away.
   { label: "Concert calendar", url: CALENDAR_URL, whenOff: "concerts" },
   { label: "Contact the station", url: `mailto:${STATION_EMAIL}` },
   { label: "App help", url: HELP_URL },
@@ -37,8 +46,6 @@ const THEMES = [
   { value: "dark", label: "Dark" },
 ];
 
-// Concert calendar: only while the Concerts tab is off (the build has none,
-// or the station switched it off), so the calendar is still a tap away.
 // Usage reporting (analytics.js), on unless the listener turns it off.
 function UsageReporting() {
   const { on } = useLocalStore(reportingStore);
@@ -157,14 +164,9 @@ export function SettingsScreen({
                   // mail links open the mail app; only web links need a new tab
                   target={web ? "_blank" : undefined}
                   rel="noreferrer"
+                  onClick={link.onClick}
                 >
-                  {link.note ? (
-                    <span>
-                      {link.label} <small>{link.note}</small>
-                    </span>
-                  ) : (
-                    link.label
-                  )}
+                  {link.label}
                   <Icon name={web ? "chev" : "mail"} size={17} />
                 </a>
               );

@@ -130,7 +130,8 @@ export function createScheduler({
       for (const [id, at] of held[kind]) if (at < moment - FIRED_MS) held[kind].delete(id);
     }
     const { notifications: pending = [] } = await api.getPending();
-    const ours = (n) => Object.hasOwn(plans, n.extra?.kind ?? "");
+    // (Not Object.hasOwn, which iOS gained only in 15.4.)
+    const ours = (n) => Object.prototype.hasOwnProperty.call(plans, n.extra?.kind ?? "");
     const kept = (n) => ours(n) && Boolean(held[n.extra.kind]?.has(n.id));
     // Notifications of a kind whose plan hasn't arrived yet this session stay
     // as they are, and count against the budget, as do the imminent ones.

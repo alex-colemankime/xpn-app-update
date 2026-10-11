@@ -78,7 +78,9 @@ function daysLabel(days) {
   if (key === "5,6") return "Weekends";
   if (idx.length === 1) return `${DAYS[idx[0]]}s`;
   const runs = idx.every((v, i) => i === 0 || v === idx[i - 1] + 1);
-  if (runs && idx.length > 2) return `${SHORT_DAYS[idx[0]]}–${SHORT_DAYS[idx.at(-1)]}`;
+  // (Indexed rather than .at(-1): this runs as the app loads, and iOS before
+  // 15.4 has no Array.prototype.at, so the app would never start there.)
+  if (runs && idx.length > 2) return `${SHORT_DAYS[idx[0]]}–${SHORT_DAYS[idx[idx.length - 1]]}`;
   return idx.map((i) => SHORT_DAYS[i]).join(idx.length === 2 ? " & " : ", ");
 }
 

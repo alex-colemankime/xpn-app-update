@@ -18,6 +18,7 @@ import { useSyncExternalStore } from "react";
 import { publicAsset } from "./assets.js";
 import { useEveryShow } from "./hooks/useEveryShow.js";
 import { VIDEO_ACCOUNT, VIDEO_PLAYER, VIDEO_SECTIONS } from "./config.js";
+import { featureOn } from "./features.js";
 import { withTimeout } from "./net.js";
 import { createStore, readJson, writeJson } from "./storage.js";
 import { oneLine, webUrl } from "./text.js";
@@ -232,6 +233,9 @@ const updateSection = (playlist, change) =>
 
 export function loadVideos({ force = false } = {}) {
   const state = videoStore.getSnapshot();
+  // Switched off by the station (features.js): nothing is fetched, even for
+  // the watch page's "More videos" under a live video.
+  if (!featureOn("videos")) return null;
   if (!VIDEO_SECTIONS.length || inflight) return inflight;
   const wait = state.complete ? STALE_MS : RETRY_MS;
   if (!force && state.loadedAt && Date.now() - state.loadedAt < wait) return null;

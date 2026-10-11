@@ -94,6 +94,22 @@ export function dueAlarmDate(alarm, now = new Date()) {
   return null;
 }
 
+// The day ("2026-10-08") a ring belongs to: the alarm's latest time, on one
+// of its days, at or before `now`. A snooze that rings after midnight, or an
+// alarm notification tapped late, belongs to the day the alarm went off;
+// recording today instead would skip today's own alarm. With no such time in
+// the past week (no days chosen), what was recorded stays.
+export function ringDay(alarm, now = new Date()) {
+  if (isValidTime(alarm.time)) {
+    const [hour, minute] = alarm.time.split(":").map(Number);
+    for (let back = 0; back < 7; back++) {
+      const at = new Date(now.getFullYear(), now.getMonth(), now.getDate() - back, hour, minute);
+      if (at <= now && alarm.repeatDays.includes(at.getDay())) return dateKey(at);
+    }
+  }
+  return alarm.lastTriggeredDate;
+}
+
 // A snooze whose end passed while the device slept still rings, up to an
 // hour late; an older one (say, left from days ago) never does.
 const SNOOZE_GRACE_MINUTES = 60;

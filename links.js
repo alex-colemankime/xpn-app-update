@@ -15,6 +15,9 @@ export function isDonatePage(url) {
   };
   return page(url) === page(DONATE_URL);
 }
+// A tap on a way to give, and where it was (analytics.js, "donate_click"):
+// "header", "sidebar", "settings", "banner" or "notification".
+export const trackDonate = (place) => track("donate_click", { place });
 export const PLAYLIST_URL = "https://xpn.org/wxpn-playlists/";
 export const PROGRAM_GUIDE_URL = "https://xpn.org/program_guide/";
 export const CALENDAR_URL = "https://xpn.org/concert-and-events/";
@@ -62,7 +65,9 @@ export const SOCIAL = [
 // browser) this tab in front again, or at once if no tab could open.
 export function openPage(url, { onClose } = {}) {
   if (!url) return;
-  if (isDonatePage(url)) track("donate_click", { place: "notification" });
+  // Only a notification's tap opens a donate link this way; every other way
+  // to give is a link of its own, which says where it was.
+  if (isDonatePage(url)) trackDonate("notification");
   let closed = false;
   const back = () => {
     if (closed) return;

@@ -43,9 +43,13 @@ public class CarAudioPlugin: CAPPlugin, CAPBridgedPlugin {
 
     override public func addListener(_ call: CAPPluginCall) {
         super.addListener(call)
-        if call.getString("eventName") == "command", let info = pending {
-            pending = nil
-            notifyListeners("command", data: info)
+        guard call.getString("eventName") == "command" else { return }
+        // `pending` is only touched on the main queue (see load()); plugin
+        // calls arrive on Capacitor's own queue.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let info = self.pending else { return }
+            self.pending = nil
+            self.notifyListeners("command", data: info)
         }
     }
 
@@ -53,12 +57,16 @@ public class CarAudioPlugin: CAPPlugin, CAPBridgedPlugin {
     /// information (MPNowPlayingInfoCenter); this only marks which station
     /// in the car's list is playing.
     @objc func setNowPlaying(_ call: CAPPluginCall) {
-        NotificationCenter.default.post(
-            name: .wxpnCarNowPlaying, object: nil,
-            userInfo: [
-                "stationId": call.getString("stationId") ?? "xpn",
-                "playing": call.getBool("playing") ?? false,
-            ])
+        let info: [String: Any] = [
+            "stationId": call.getString("stationId") ?? "xpn",
+            "playing": call.getBool("playing") ?? false,
+        ]
+        // Plugin calls run on Capacitor's queue, and observers run on the
+        // posting thread: post on main, since the car screen updates its
+        // CarPlay templates in response, which UIKit allows only there.
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .wxpnCarNowPlaying, object: nil, userInfo: info)
+        }
         call.resolve()
     }
 }

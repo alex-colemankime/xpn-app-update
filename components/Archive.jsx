@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Art, Empty, Icon } from "../ui.jsx";
+import { Art, Empty, Icon, SkeletonList } from "../ui.jsx";
 import { SaveButton } from "./MusicRows.jsx";
 import { SHOWS } from "../catalog.js";
 import { loadArchive, useArchive } from "../archive.js";
@@ -137,23 +137,6 @@ export function EpisodeRow({ episode, onOpen, showShow = true, gone = false }) {
   );
 }
 
-function SkeletonEpisodes() {
-  return (
-    <div role="status">
-      <span className="sr-only">Loading the archive…</span>
-      {[0, 1, 2, 3].map((i) => (
-        <div className="archive-row skeleton-row" aria-hidden="true" key={i}>
-          <span className="skeleton-block archive-skeleton-art" />
-          <span className="skeleton-lines">
-            <span className="skeleton-block skeleton-line" />
-            <span className="skeleton-block skeleton-line" />
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // A show heading its episodes (Shows › Archive, Favorites › Shows): its art,
 // name and a line under it open the show; the heart beside it follows it.
 export function ShowHead({ id, show, headId, line, onOpen }) {
@@ -183,7 +166,15 @@ export function ArchiveList({ query, onOpen, onOpenShow, onClearQuery }) {
       !q || `${e.title} ${e.feature} ${showName(e)} ${shortDay(e.date)}`.toLowerCase().includes(q),
   );
   if (!archive.episodes.length) {
-    if (archive.source === "loading") return <SkeletonEpisodes />;
+    if (archive.source === "loading") {
+      return (
+        <SkeletonList
+          label="Loading the archive…"
+          rowClass="archive-row"
+          artClass="archive-skeleton-art"
+        />
+      );
+    }
     return (
       <Empty
         icon="headphones"
@@ -315,13 +306,16 @@ export function EpisodeScrubber({ episode }) {
 // has left the archive says so in place of Play.
 export function EpisodeDetail({ episode, show, onBack, gone = false }) {
   const s = useEpisodeState(episode);
+  const left = lengthLabel(s.duration - s.position);
   const label =
     s.playing || s.busy
       ? "Pause"
       : s.ended
         ? "Play again"
         : s.started
-          ? `Resume · ${lengthLabel(s.duration - s.position)} left`
+          ? left
+            ? `Resume · ${left} left`
+            : "Resume"
           : "Play episode";
   return (
     <>

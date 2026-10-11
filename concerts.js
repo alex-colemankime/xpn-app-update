@@ -1,18 +1,12 @@
 import { CONCERTS_ENDPOINT } from "./config.js";
 import { withTimeout } from "./net.js";
 import { plainText, webUrl } from "./text.js";
-import { shiftDate } from "./time.js";
+import { easternParts, shiftDate } from "./time.js";
 
 // Feeds report local Eastern datetimes ("2026-06-12 20:00:00"). Parsing
 // those into a Date and taking toISOString() pushes evening events onto the
 // next day, so the calendar date is read textually when present and
-// otherwise formatted in the station's zone.
-const easternDate = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "America/New_York",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
+// otherwise taken in the station's zone.
 const ZONED = /(?:Z|[+-]\d{2}:?\d{2})$/i;
 export function isoDate(value) {
   const text = String(value ?? "").trim();
@@ -21,11 +15,11 @@ export function isoDate(value) {
   // it wrote. A zoned instant is converted into the station's day instead.
   if (literal && !ZONED.test(text)) return literal[0];
   const parsed = new Date(text);
-  return Number.isNaN(parsed.valueOf()) ? "" : easternDate.format(parsed);
+  return Number.isNaN(parsed.valueOf()) ? "" : easternParts(parsed).date;
 }
 
 // Today in the station's zone, as YYYY-MM-DD.
-export const easternToday = (now = new Date()) => easternDate.format(now);
+export const easternToday = (now = new Date()) => easternParts(now).date;
 
 // The station's calendar is The Events Calendar on xpn.org. Its categories
 // carry the regions plus two special ones; one parent category is internal.
@@ -160,7 +154,7 @@ export async function fetchConcertResult(signal, endpoint = CONCERTS_ENDPOINT) {
       concerts,
       source: "live",
       partial: failed > 0,
-      through: reported > pages ? concerts.at(-1)?.date || "" : "",
+      through: reported > pages ? concerts[concerts.length - 1]?.date || "" : "",
     };
   } catch {
     return { concerts: [], source: "error", partial: false, through: "" };

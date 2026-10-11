@@ -54,10 +54,8 @@ export function pushTarget(data) {
   return null;
 }
 
-// The registration logic, with the phone's push API and the network passed
-// in so it can be tested with stand-ins. `api` is PushNotifications' shape.
 // The topics in what was last sent ("token|drives,live"), or none.
-export const topicsIn = (sent) =>
+const topicsIn = (sent) =>
   sent?.token && typeof sent.key === "string"
     ? sent.key
         .slice(sent.key.indexOf("|") + 1)
@@ -67,6 +65,8 @@ export const topicsIn = (sent) =>
 
 const REGISTER_TIMEOUT_MS = 15000;
 
+// The registration logic, with the phone's push API and the network passed
+// in so it can be tested with stand-ins. `api` is PushNotifications' shape.
 export function createPushClient({
   api,
   post,

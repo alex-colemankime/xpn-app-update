@@ -51,5 +51,9 @@ test("the config is found in the file or in an Advanced Ads ad", () => {
     { id: 2, content: "<p>{“config”: {“off”: [“archive”]}}</p>" },
   ];
   assert.deepEqual(configFrom(ads).off, ["archive"]);
+  // Read the same ways as the updates in an ad group: { ads: [...] }, and a
+  // single ad (the REST address of one ad) with its content rendered.
+  assert.deepEqual(configFrom({ ads }).off, ["archive"]);
+  assert.deepEqual(configFrom({ id: 3, content: { rendered: ads[1].content } }).off, ["archive"]);
   assert.deepEqual(configFrom({ updates: [] }), { streams: {}, off: [], update: null });
 });

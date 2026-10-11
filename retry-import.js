@@ -20,7 +20,7 @@ const importFresh = (url) => import(/* @vite-ignore */ url);
 let fresh = 0;
 
 // The module address in a failed import's message, if it names one.
-export function failedModuleUrl(error) {
+function failedModuleUrl(error) {
   const found = String(error?.message || "").match(/(https?:\/\/[^\s'"]+?\.m?[jt]sx?)\b/);
   return found ? found[1] : "";
 }

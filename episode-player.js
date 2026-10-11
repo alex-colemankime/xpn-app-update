@@ -7,14 +7,14 @@ import { createEpisodePlayer, resumeAt } from "./episode-core.js";
 import { createLocalStore, createStore } from "./storage.js";
 import {
   getFocus,
-  getPlayerSnapshot,
   getVolume,
-  isConnecting,
   mediaControls,
   pauseStream,
   setAudioFocus,
+  stationIsOn,
   subscribeFocus,
   subscribeVolume,
+  togglePlayback,
 } from "./player.js";
 import { SHOWS } from "./catalog.js";
 import { findEpisode, freshCopy, linkIsFresh } from "./archive.js";
@@ -54,8 +54,7 @@ const core = createEpisodePlayer({
   // An episode starting pauses the station and takes the bar.
   onStart: () => {
     setAudioFocus("episode");
-    const { playing, status } = getPlayerSnapshot();
-    if (playing || isConnecting(status)) pauseStream();
+    if (stationIsOn()) pauseStream();
   },
   // Signed archive links run out: one read too long ago is read again from
   // the show's page first (archive.js).
@@ -70,11 +69,14 @@ const episodeStore = createStore(core.getState());
 export const subscribeEpisode = episodeStore.subscribe;
 export const getEpisodeSnapshot = episodeStore.getSnapshot;
 
+// Whether an episode is playing, or on its way (its key shows Pause).
+export const episodeIsOn = ({ episode, status }) =>
+  Boolean(episode) && (status === "playing" || status === "loading");
+
 if (typeof window !== "undefined") {
   // The station starting again pauses the episode (it keeps its place).
   subscribeFocus(() => {
-    const { status } = core.getState();
-    if (getFocus() === "live" && (status === "playing" || status === "loading")) core.pause();
+    if (getFocus() === "live" && episodeIsOn(core.getState())) core.pause();
   });
   // Episodes play at the listener's volume.
   subscribeVolume(() => core.setVolume(getVolume()));
@@ -101,13 +103,24 @@ export function playEpisode(episode) {
 }
 
 export function toggleEpisode(episode) {
-  const { episode: current, status } = core.getState();
-  if (current?.id === episode.id && (status === "playing" || status === "loading")) {
+  const state = core.getState();
+  if (state.episode?.id === episode.id && episodeIsOn(state)) {
     tap("medium");
     core.pause();
   } else {
     playEpisode(episode);
   }
+}
+
+// Play or pause whatever has the player bar: the episode while it does,
+// otherwise the station (the Space key, useSpaceToPlay).
+export function togglePlayer() {
+  if (getFocus() !== "episode" || !core.getState().episode) {
+    togglePlayback();
+    return;
+  }
+  tap("medium");
+  core.toggle();
 }
 
 export const pauseEpisode = () => core.pause();

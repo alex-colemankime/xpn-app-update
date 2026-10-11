@@ -464,8 +464,10 @@
         required: false,
       };
       function renderSwitches() {
+        // data-feature, not data-f: data-f names a message's fields, and the
+        // two listeners below would each take the other's for their own.
         $("#features").innerHTML = FEATURES.map(
-          ([id, name, about]) => `<label class="check"><input type="checkbox" data-f="${id}"
+          ([id, name, about]) => `<label class="check"><input type="checkbox" data-feature="${id}"
             ${config.off.includes(id) ? "" : "checked"} /> <strong>${esc(name)}</strong>
             <small>${esc(about)}</small></label>`,
         ).join("");
@@ -500,9 +502,9 @@
       }
       function onSwitch(e) {
         const t = e.target;
-        if (t.dataset.f) {
-          config.off = config.off.filter((f) => f !== t.dataset.f);
-          if (!t.checked) config.off.push(t.dataset.f);
+        if (t.dataset.feature) {
+          config.off = config.off.filter((f) => f !== t.dataset.feature);
+          if (!t.checked) config.off.push(t.dataset.feature);
         } else if (t.dataset.s) {
           const [id, key] = t.dataset.s.split(".");
           config.streams[id] = { ...config.streams[id], [key]: t.value };

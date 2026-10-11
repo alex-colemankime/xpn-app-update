@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { alarmDue, dueAlarmDate, CATCHUP_MINUTES } from "../alarm.js";
+import { alarmDue, alarmPlan, dueAlarmDate, ringDay, CATCHUP_MINUTES } from "../alarm.js";
 
 test("the alarm window catches a minute a throttled tab would skip", () => {
   const alarm = { enabled: true, time: "07:00", repeatDays: [2], lastTriggeredDate: "" };
@@ -47,4 +47,32 @@ test("a snooze rings when it ends, and a stale one never does", () => {
   assert.equal(alarmDue({ ...base, snoozeUntil: now.getTime() - 20 * 60000 }, now), "snooze");
   // Snoozed, switched off, re-enabled days later: must stay quiet.
   assert.equal(alarmDue({ ...base, snoozeUntil: now.getTime() - 3 * 86400000 }, now), null);
+});
+
+test("a ring is recorded on the day the alarm went off, not the day it ends", () => {
+  // Every day at 11:55pm, snoozed 10 minutes: the snooze rings on Wednesday.
+  const alarm = {
+    enabled: true,
+    time: "23:55",
+    repeatDays: [0, 1, 2, 3, 4, 5, 6],
+    lastTriggeredDate: "2026-09-08",
+    snoozeUntil: 0,
+  };
+  const snoozeRings = new Date(2026, 8, 9, 0, 5); // Wednesday 12:05am
+  const day = ringDay(alarm, snoozeRings);
+  assert.equal(day, "2026-09-08", "Tuesday's alarm, snoozed past midnight");
+  // So Wednesday's own alarm still rings, and is still planned.
+  const after = { ...alarm, lastTriggeredDate: day };
+  assert.equal(alarmDue(after, new Date(2026, 8, 9, 23, 55, 10)), "alarm");
+  assert.ok(
+    alarmPlan(after, snoozeRings).some((a) => a.at === new Date(2026, 8, 9, 23, 55).getTime()),
+  );
+});
+
+test("an alarm tapped late counts for its own day; none chosen keeps what was recorded", () => {
+  const alarm = { enabled: true, time: "07:00", repeatDays: [1], lastTriggeredDate: "" };
+  // Monday's alarm, tapped on Tuesday afternoon.
+  assert.equal(ringDay(alarm, new Date(2026, 8, 29, 15, 0)), "2026-09-28");
+  assert.equal(ringDay(alarm, new Date(2026, 8, 28, 7, 0, 20)), "2026-09-28", "on time");
+  assert.equal(ringDay({ ...alarm, repeatDays: [], lastTriggeredDate: "x" }, new Date()), "x");
 });

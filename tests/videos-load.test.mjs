@@ -93,3 +93,21 @@ test("a refresh while a further page loads leaves no gap and keeps the list", as
   );
   assert.equal(section(WXPN).more, false);
 });
+
+test("switched off by the station, the collections aren't read at all", async () => {
+  const { applySwitches } = await import("../features.js");
+  const real = globalThis.fetch;
+  let asked = 0;
+  globalThis.fetch = (...args) => {
+    asked++;
+    return real(...args);
+  };
+  try {
+    applySwitches(["videos"]);
+    assert.equal(loadVideos({ force: true }), null);
+    assert.equal(asked, 0, "no request to Brightcove");
+  } finally {
+    applySwitches([]);
+    globalThis.fetch = real;
+  }
+});

@@ -21,11 +21,28 @@ export default [
       "no-unused-vars": ["error", { argsIgnorePattern: "^_", caughtErrors: "none" }],
       // useEveryShow takes deps like useEffect; check them the same way.
       "react-hooks/exhaustive-deps": ["warn", { additionalHooks: "^useEveryShow$" }],
+      // The app runs on iOS 15 (Capacitor 8's floor), whose web view before
+      // 15.4 lacks these, and the build doesn't polyfill them. One at load
+      // time stops the app from starting at all there.
+      "no-restricted-properties": [
+        "error",
+        { object: "Object", property: "hasOwn", message: "iOS < 15.4 lacks it." },
+        { object: "AbortSignal", property: "timeout", message: "Use withTimeout (net.js)." },
+      ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "CallExpression[callee.property.name='at']",
+          message: "iOS < 15.4 lacks .at(); index from the end instead.",
+        },
+      ],
     },
   },
   {
+    // Node scripts, the config and the tests run on current Node.
     files: ["tests/**", "tools/**", "*.config.js", "*.config.mjs"],
     languageOptions: { globals: globals.node },
+    rules: { "no-restricted-properties": "off", "no-restricted-syntax": "off" },
   },
   {
     // Playwright's fixtures hand over with a function named `use`, which

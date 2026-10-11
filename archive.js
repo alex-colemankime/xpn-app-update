@@ -23,6 +23,7 @@ import { useSyncExternalStore } from "react";
 import { useEveryShow } from "./hooks/useEveryShow.js";
 import { ARCHIVE_FEEDS } from "./config.js";
 import { featureOn } from "./features.js";
+import { withTimeout } from "./net.js";
 import { SHOWS } from "./catalog.js";
 import { decodeEntities, plainText, webUrl } from "./text.js";
 import { createStore, readJson, writeJson } from "./storage.js";
@@ -219,8 +220,9 @@ async function readSource(url) {
     }
     return String(response.data ?? "");
   }
-  // Only the browser build reaches here, so AbortSignal.timeout is there.
-  const response = await fetch(url, { signal: AbortSignal.timeout(12000) });
+  // withTimeout, not AbortSignal.timeout, which older browsers lack (Safari
+  // before 16): there it would throw and no archive would ever load.
+  const response = await fetch(url, { signal: withTimeout(undefined, 12000) });
   if (!response.ok) throw new Error(`Archive: HTTP ${response.status}`);
   return response.text();
 }

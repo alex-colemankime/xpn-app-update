@@ -2,10 +2,13 @@
 // always wins, including when it was already cancelled before the request.
 export function withTimeout(signal, ms = 10000) {
   if (signal?.aborted) return signal;
+  // The one place AbortSignal.timeout may be used: only where it exists.
+  /* eslint-disable no-restricted-properties */
   if (typeof AbortSignal !== "undefined" && AbortSignal.any && AbortSignal.timeout) {
     const timeout = AbortSignal.timeout(ms);
     return signal ? AbortSignal.any([signal, timeout]) : timeout;
   }
+  /* eslint-enable no-restricted-properties */
   const controller = new AbortController();
   const cancel = () => controller.abort(signal.reason);
   const timer = setTimeout(

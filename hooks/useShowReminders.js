@@ -7,7 +7,7 @@ import {
   requestNotifications,
   syncNotifications,
 } from "../notifications.js";
-import { playStream, selectStream } from "../player.js";
+import { playStation } from "../player.js";
 import { LEAD_OPTIONS, reminderPlan } from "../reminders.js";
 import { createLocalStore, useLocalStore } from "../storage.js";
 import { showToast } from "../toast.js";
@@ -62,8 +62,7 @@ export function useShowReminders(onListen, { paused = false } = {}) {
   const ids = followed.map((s) => s.id).join(",");
 
   const listen = useEffectEvent(() => {
-    selectStream("xpn");
-    playStream();
+    playStation("xpn");
     onListen();
   });
 

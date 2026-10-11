@@ -15,6 +15,7 @@ import {
   useVideos,
 } from "../videos.js";
 import { youTubeEmbed } from "../updates.js";
+import { useFeatures } from "../features.js";
 
 // Watching a video, the way video apps do it: the picture full width at the
 // top (pinned there on phones while the rest scrolls), then the title, who
@@ -148,6 +149,7 @@ export function WatchPage({ videoId, live, onPick, onClose }) {
   const ref = useRef(null);
   const titleId = useId();
   const { sections } = useVideos();
+  const videosOn = useFeatures().videos;
   const found = videoId ? findVideo(sections, videoId) : { video: null, section: null };
 
   // Opened from a link to a video no list holds: ask Brightcove for it.
@@ -199,7 +201,10 @@ export function WatchPage({ videoId, live, onPick, onClose }) {
   }, [videoId]);
 
   const section = found.section || sections[0];
-  const next = (section?.videos || []).filter((v) => v.id !== videoId).slice(0, UP_NEXT);
+  // With videos switched off by the station, a live video stands alone.
+  const next = videosOn
+    ? (section?.videos || []).filter((v) => v.id !== videoId).slice(0, UP_NEXT)
+    : [];
   const framed = Boolean(video) && unframed !== "all" && unframed !== video.id;
   const src = video
     ? framed

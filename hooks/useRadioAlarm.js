@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useState } from "react";
-import { alarmDue, alarmPlan, dateKey, dueAlarmDate, useAlarmSettings } from "../alarm.js";
+import { alarmDue, alarmPlan, ringDay, useAlarmSettings } from "../alarm.js";
 import {
   exactAlarmsAllowed,
   notificationsAreNative,
@@ -9,12 +9,11 @@ import {
   syncNotifications,
 } from "../notifications.js";
 import {
-  getPlayerSnapshot,
-  isConnecting,
   pauseStream,
   playStream,
   selectStream,
   setTemporaryVolume,
+  stationIsOn,
   subscribePlayer,
 } from "../player.js";
 import { STREAMS } from "../streams.js";
@@ -47,15 +46,14 @@ export function useRadioAlarm() {
     const now = at || new Date();
     ring(alarm);
     setRinging(true);
-    updateAlarm({ lastTriggeredDate: dueAlarmDate(alarm, now) ?? dateKey(now), snoozeUntil: 0 });
+    updateAlarm({ lastTriggeredDate: ringDay(alarm, now), snoozeUntil: 0 });
   });
   // Stopped some other way (the play button, the lock screen, headphones):
   // the alarm is over, so the banner goes and the next alarm can ring.
   // ring() reports its station switch before ringing is set, so this never
   // cancels an alarm as it starts.
   const onPlayerChange = useEffectEvent(() => {
-    const { playing, status } = getPlayerSnapshot();
-    if (ringing && !playing && !isConnecting(status)) setRinging(false);
+    if (ringing && !stationIsOn()) setRinging(false);
   });
   const checkDue = useEffectEvent(() => {
     const now = new Date();

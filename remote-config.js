@@ -15,15 +15,16 @@
 //     }
 //   }
 //
-// Streams change at once. Features turned off (or back on) apply the next
-// time the app opens, since the app's tabs are set at launch. The last
-// config is kept on the device, so it holds offline and from the first
-// moment of the next launch. Stream addresses are https only, and only on
+// Streams change from the next connection; features turned off (or back on)
+// apply at once, while the app runs (features.js). The last config is kept
+// on the device, so it holds offline and from the first moment of the next
+// launch. Stream addresses are https only, and only on
 // WXPN's or StreamGuys' hosts, so a damaged or tampered file can't send
 // listeners elsewhere.
 
 import { createStore, readJson, writeJson } from "./storage.js";
-import { oneLine, plainText, webUrl } from "./text.js";
+import { oneLine, webUrl } from "./text.js";
+import { adList, adText } from "./updates.js";
 
 const KEY = "xpn.remote-config";
 // What the station can turn off and on again (features.js says what each is).
@@ -69,14 +70,12 @@ export function normalizeConfig(raw) {
 }
 
 // The config in what the updates source returned: the file's "config", or
-// the first Advanced Ads ad whose JSON holds one.
+// the first Advanced Ads ad whose JSON holds one (read as updates.js reads
+// the others).
 export function configFrom(json) {
   if (json?.config) return normalizeConfig(json.config);
-  const ads = Array.isArray(json) ? json : Array.isArray(json?.ads) ? json.ads : [];
-  for (const ad of ads) {
-    const body = plainText(typeof ad?.content === "string" ? ad.content : ad?.content?.rendered)
-      .replace(/[“”″]/g, '"')
-      .replace(/[‘’′]/g, "'");
+  for (const ad of adList(json) || []) {
+    const body = adText(ad);
     if (!body.startsWith("{")) continue;
     try {
       const parsed = JSON.parse(body);

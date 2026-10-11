@@ -19,5 +19,5 @@ async function applyPreferred() {
 export function followTextSize() {
   if (Capacitor.getPlatform() !== "ios") return;
   applyPreferred();
-  App.addListener("resume", applyPreferred);
+  App.addListener("resume", applyPreferred).catch(() => {});
 }

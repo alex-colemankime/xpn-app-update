@@ -203,11 +203,11 @@ export function playStream() {
 }
 export const pauseStream = player.pause;
 // The song on the station, for the lock screen and (via the store) the car.
-export function setMetadata(track) {
-  player.setMetadata(track);
+export function setMetadata(song) {
+  player.setMetadata(song);
   update({
-    track: track
-      ? { title: track.title || "", artist: track.artist || "", img: track.img || "" }
+    track: song
+      ? { title: song.title || "", artist: song.artist || "", img: song.img || "" }
       : null,
   });
 }
@@ -220,13 +220,24 @@ export function selectStream(id) {
   return true;
 }
 
+// A station, playing (a reminder's tap, a show's "Listen live").
+export function playStation(id) {
+  selectStream(id);
+  playStream();
+}
+
 // Is the listener waiting on audio (connecting, buffering or retrying)?
 export const isConnecting = (status) => status === "loading" || status === "reconnecting";
 
+// Whether the station is on: playing, or on its way (the button shows Pause).
+export function stationIsOn() {
+  const { playing, status } = getPlayerSnapshot();
+  return playing || isConnecting(status);
+}
+
 export function togglePlayback() {
   tap("medium");
-  const { playing, status } = getPlayerSnapshot();
-  if (playing || isConnecting(status)) {
+  if (stationIsOn()) {
     pauseStream();
     return;
   }
@@ -244,23 +255,25 @@ let sleepFading = false;
 export const subscribeSleep = sleepStore.subscribe;
 export const getSleepEndsAt = sleepStore.getSnapshot;
 
-export function cancelSleepTimer() {
-  if (sleepStore.getSnapshot() === null) return;
+// Stops the timer's clock. A timer stopped mid-fade brings the listener's
+// volume back: harmless when paused, and needed if the stream is
+// reconnecting (it would resume faded) or a new timer replaces it.
+function stopSleepTick() {
   clearInterval(sleepTick);
   sleepTick = null;
-  // Cancelled mid-fade: back to the listener's volume. Harmless when paused,
-  // and needed if the stream is reconnecting (it would resume faded).
   if (sleepFading) setVolume(volumeStore.getSnapshot());
   sleepFading = false;
+}
+
+export function cancelSleepTimer() {
+  if (sleepStore.getSnapshot() === null) return;
+  stopSleepTick();
   sleepStore.set(null);
 }
 
 // Stop playback at a moment (epoch ms), such as the end of the current show.
-// Replacing a timer that is already fading brings the volume back first.
 export function sleepUntil(endsAt) {
-  clearInterval(sleepTick);
-  if (sleepFading) setVolume(volumeStore.getSnapshot());
-  sleepFading = false;
+  stopSleepTick();
   sleepStore.set(endsAt);
   sleepTick = setInterval(() => {
     const remaining = endsAt - Date.now();

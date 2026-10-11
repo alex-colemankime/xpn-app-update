@@ -21,7 +21,6 @@ import { StationBanner } from "./components/StationUpdates.jsx";
 import { OfflineNotice } from "./components/OfflineNotice.jsx";
 import { Toast } from "./components/Toast.jsx";
 import { readJson, writeJson } from "./storage.js";
-import { CONCERTS_ENABLED, VIDEOS_ENABLED } from "./config.js";
 import { ListenScreen } from "./screens/ListenScreen.jsx";
 import { ShowsScreen } from "./screens/ShowsScreen.jsx";
 import { LibraryScreen } from "./screens/LibraryScreen.jsx";
@@ -86,7 +85,8 @@ export default function App() {
   const features = useFeatures();
   // Concerts load only while the tab exists: the build has it and the
   // station hasn't switched it off (switching off stops a load under way).
-  const concerts = useConcerts(CONCERTS_ENABLED && features.concerts);
+  // Each feature in `features` already accounts for both (features.js).
+  const concerts = useConcerts(features.concerts);
   const updates = useStationUpdates();
   const alarm = useRadioAlarm();
   const [appearance, setAppearance] = useAppearance();
@@ -180,12 +180,12 @@ export default function App() {
           <Screen id="shows" label="Shows" current={route.screen}>
             <ShowsScreen onOpen={route.openShow} />
           </Screen>
-          {VIDEOS_ENABLED && features.videos && (
+          {features.videos && (
             <Screen id="videos" label="Videos" current={route.screen}>
               <Videos onWatch={watching.watchVideo} />
             </Screen>
           )}
-          {CONCERTS_ENABLED && features.concerts && (
+          {features.concerts && (
             <Screen id="concerts" label="Concerts" current={route.screen}>
               <Concerts result={concerts} />
             </Screen>
