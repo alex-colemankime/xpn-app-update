@@ -1,0 +1,130 @@
+name: Release
+
+# Store builds, run by hand (Actions › Release › Run workflow), once WXPN's
+# developer accounts exist and their keys are added as repository secrets
+# (Settings › Secrets and variables › Actions). Each platform runs only
+# when its secrets are there; see README › Native apps › Store builds.
+#
+#   Android  ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+#            ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD: the upload key, which
+#            signs the app bundle (.aab, kept as the "android-release"
+#            artifact). With PLAY_SERVICE_ACCOUNT_JSON too, the bundle goes
+#            to Play's internal testing track.
+#   iOS      APPLE_TEAM_ID, ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8: an App
+#            Store Connect API key (Users and Access › Integrations), with
+#            which Xcode signs the app and uploads it to TestFlight.
+#
+# Build numbers are this workflow's run number, so each upload is higher
+# than the last; the version is package.json's.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    env:
+      SIGNED: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      UPLOAD: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+    steps:
+      - name: Without an upload key, nothing to build
+        if: env.SIGNED != 'true'
+        run: echo "::notice::Add the Android upload key secrets to build for Play."
+
+      - name: Checkout
+        if: env.SIGNED == 'true'
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        if: env.SIGNED == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Setup Java
+        if: env.SIGNED == 'true'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Build the app bundle
+        if: env.SIGNED == 'true'
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          npm ci
+          npm run build
+          npx cap sync android
+          export ANDROID_KEYSTORE="$RUNNER_TEMP/upload.jks"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE"
+          cd android && ./gradlew bundleRelease --no-daemon
+
+      - name: Keep the bundle
+        if: env.SIGNED == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release
+          path: android/app/build/outputs/bundle/release/app-release.aab
+
+      - name: Send it to Play's internal testing
+        if: env.SIGNED == 'true' && env.UPLOAD == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: org.xpn.wxpn
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed
+
+  ios:
+    runs-on: macos-26
+    env:
+      SIGNED: ${{ secrets.ASC_KEY_ID != '' && secrets.APPLE_TEAM_ID != '' }}
+    steps:
+      - name: Without an App Store Connect key, nothing to build
+        if: env.SIGNED != 'true'
+        run: echo "::notice::Add the App Store Connect API key secrets to build for TestFlight."
+
+      - name: Checkout
+        if: env.SIGNED == 'true'
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        if: env.SIGNED == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Archive, sign and upload to TestFlight
+        if: env.SIGNED == 'true'
+        env:
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ISSUER: ${{ secrets.ASC_ISSUER_ID }}
+          KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          npm ci
+          npm run build
+          npx cap sync ios
+          KEY="$RUNNER_TEMP/AuthKey_$KEY_ID.p8"
+          printf '%s' "$KEY_P8" > "$KEY"
+          AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY"
+                -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER")
+          VERSION=$(node -p "require('./package.json').version")
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath build/WXPN.xcarchive \
+            DEVELOPMENT_TEAM="$TEAM" MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" "${AUTH[@]}" archive
+          cp ios/App/ExportOptions.plist "$RUNNER_TEMP/ExportOptions.plist"
+          /usr/libexec/PlistBuddy -c "Add :teamID string $TEAM" "$RUNNER_TEMP/ExportOptions.plist"
+          xcodebuild -exportArchive -archivePath build/WXPN.xcarchive \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath build/export "${AUTH[@]}"

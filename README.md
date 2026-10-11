@@ -110,43 +110,45 @@ Like the playlist workout apps build from the songs you like: every song a liste
 
 - **Spotify:** create an app at developer.spotify.com, copy its Client ID to `VITE_SPOTIFY_CLIENT_ID`, and add these Redirect URIs: the web app's address (e.g. `https://xpn.org/app/`), and `org.xpn.wxpn://spotify-callback` for the phone apps. Sign-in uses PKCE, so there is no client secret to protect. Requests follow Spotify's February 2026 Web API (`POST /me/playlists`, `/playlists/{id}/items`).
   - **Limits as of 2026:** a Development Mode app works for at most 5 Spotify accounts the station allowlists, and the app owner needs Spotify Premium. Opening it to all listeners needs Extended Quota, which Spotify grants only to registered organizations with at least 250,000 monthly active users (applications take up to six weeks). If WXPN doesn't qualify, ship with Apple Music only and leave `VITE_SPOTIFY_CLIENT_ID` unset; the app then shows no Spotify option. A listener Spotify hasn't allowlisted sees "Spotify hasn't opened WXPN's playlist feature to your account yet" rather than a sign-in loop.
-- **Apple Music:** needs a MusicKit developer token (Apple Developer account › MusicKit identifier and key). Tokens expire within six months, so serve one from a small endpoint (`VITE_APPLE_MUSIC_TOKEN_URL`) rather than building it in. Apple's API cannot remove songs from a playlist, so unsaving leaves the song there (the app says so). MusicKit JS signs in through a popup, which works on the web; in the iOS app it needs testing, and a native MusicKit plugin may be needed.
+- **Apple Music:** needs a MusicKit developer token (Apple Developer account › MusicKit identifier and key). Tokens expire within six months, so the app asks a small endpoint for one (`VITE_APPLE_MUSIC_TOKEN_URL`) rather than having one built in. `services/apple-music-token.js` is that endpoint, ready to deploy as a Cloudflare Worker (free tier) with the MusicKit key as a secret; its header says how. It answers only the app's own origins and makes a fresh 30-day token as needed. Apple's API cannot remove songs from a playlist, so unsaving leaves the song there (the app says so). MusicKit JS signs in through a popup, which works on the web; in the iOS app it needs testing, and a native MusicKit plugin may be needed.
 - **Accounts:** the playlist belongs to the account that made it. After every sign-in, the next sync checks the playlist on record against the account now signed in (Spotify: its owner; Apple Music: that it is in this library) and starts a fresh one for a different account.
 - **Matching:** a song goes in only when the catalog has the same title (versions and featured artists aside) by the same lead artist; anything less certain is left out rather than risk the wrong song.
 - Each service shows in Settings only when configured; Favorites invites listeners to set it up.
 
 ## Native apps
 
-`capacitor.config.json` is ready; the native projects are generated on a Mac and are not in this repository yet.
+The iPhone and Android projects are in `ios/` and `android/` (Capacitor 8, app ID `org.xpn.wxpn`), set up for everything below. The **Native apps** workflow builds both on every push: an Android test build anyone can install (from `main`, the **Android test build** pre-release under Releases), and an unsigned iPhone simulator build that shows the project compiles. Each build's log is on the `native-out` branch. What only a phone can show is listed in [docs/device-testing.md](docs/device-testing.md).
 
-Use Node 22 or newer (`.nvmrc` pins 24, as CI does).
+Use Node 22 or newer (`.nvmrc` pins 24, as CI does). Capacitor must be 8.4.3 or later: 8.3.5–8.4.2 let remote content load at the app's origin ([GHSA-rvm3-566m-v7fv](https://github.com/advisories/GHSA-rvm3-566m-v7fv)).
 
-1. **Confirm the app ID.** `appId` is `org.xpn.wxpn`. It becomes the permanent store identity at the first upload, so confirm it before step 2.
-2. Generate the projects: `npm run build && npx cap add ios && npx cap add android`. Capacitor must be 8.4.3 or later: 8.3.5–8.4.2 let remote content load at the app's origin ([GHSA-rvm3-566m-v7fv](https://github.com/advisories/GHSA-rvm3-566m-v7fv)).
-   - App icon and splash: `brand/app-icon-1024.png` is the 1024×1024 source. `npx @capacitor/assets generate --iconBackgroundColor '#ef7149' --splashBackgroundColor '#faf8f3'` (with the icon copied to `assets/icon.png`) writes every native size.
-3. **iOS background audio** (required, or audio stops when the screen locks):
-   - Xcode › Signing & Capabilities › + Background Modes › **Audio, AirPlay, and Picture in Picture** (adds `UIBackgroundModes: audio` to `Info.plist`).
-   - In `AppDelegate.swift`, before returning from `application(_:didFinishLaunchingWithOptions:)`:
-     `try? AVAudioSession.sharedInstance().setCategory(.playback)` (with `import AVFoundation`).
-4. Android audio needs nothing extra: `@capgo/capacitor-media-session` provides the media notification and the foreground service that keeps audio alive in the background.
-5. **Notifications: show reminders and the radio alarm** (`@capacitor/local-notifications`):
-   - iOS: nothing to add. The permission prompt appears when the listener turns reminders or the alarm on.
-   - Android 13+: the plugin declares `POST_NOTIFICATIONS`; the prompt appears the same way. Add `<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />` to `AndroidManifest.xml` so the radio alarm can ring on the minute. Android 14+ leaves it off for apps that aren't alarm clocks, so turning the alarm on checks it and, if it's off, offers to open Settings › Alarms & reminders. (Don't use `USE_EXACT_ALARM`: Google Play allows it only for apps whose core purpose is an alarm clock or calendar.)
-   - Android needs a small monochrome icon at `res/drawable/ic_stat_wxpn.png` (white on transparent, 24dp). `capacitor.config.json` already names it; without the file Android shows a blank square.
-   - A notification cannot start audio by itself on either platform: the alarm notification wakes the listener, and tapping it starts the station.
-6. **Spotify sign-in return** (only with playlist sync): register the URL scheme `org.xpn.wxpn` (iOS: Info › URL Types; Android: an intent filter with `android:scheme="org.xpn.wxpn"` on the main activity). `@capacitor/app` delivers the return trip and `@capacitor/browser` shows the sign-in page.
-7. **Calendar** (adding saved concerts): `@ebarooni/capacitor-calendar` opens the system's New Event sheet. iOS needs `NSCalendarsWriteOnlyAccessUsageDescription` (and `NSCalendarsUsageDescription` for iOS 16) in Info.plist, for example "WXPN adds the concerts you choose to your calendar." Android needs `WRITE_CALENDAR` in the manifest.
-8. **Store requirements in 2026:** App Store uploads must be built with Xcode 26 and the iOS 26 SDK (since April 28, 2026). Google Play requires new apps and updates to target Android 16 (API 36) from August 31, 2026; Capacitor 8 targets it. Android 15+ draws apps edge to edge with no opt-out; the CSS reads Capacitor's `--safe-area-inset-*` values for that (see `styles/base.css`).
-9. **Video on iOS:** YouTube refuses embedded players that can't send a web referrer, which an iOS app (`capacitor://localhost`) can't, so on iOS a live YouTube video (Free at Noon) opens in the in-app browser instead of the watch page. Brightcove videos play in the app everywhere.
-10. **Status bar**: `@capacitor/status-bar` switches the status bar text between light and dark with the app's theme, so it stays readable when the app and phone themes differ. No setup needed.
-11. **Larger text on iPhone:** nothing to set up. `@capacitor/text-zoom` applies iOS's Text Size setting at launch and whenever the app comes back to the front (`text-size.js`); check the screens at the largest sizes.
-12. **CarPlay and Android Auto** (`car.js`, with native code in `native/`, written but untested until the projects exist):
-    - **iOS:** request the CarPlay audio entitlement from Apple (developer.apple.com/contact/carplay) and add it to the App ID and an `App.entitlements` file (`com.apple.developer.carplay-audio`). Add `native/ios/*.swift` to the App target. In Main.storyboard set the Bridge View Controller's Custom Class to `MainViewController` (it registers the plugin). Add `native/ios/Info.plist.carplay.xml`'s scene manifest to `Info.plist`. Optional station artwork: image sets `car-xpn`, `car-xpn2`, `car-homegrown`. Test with Xcode's CarPlay simulator (I/O › External Displays › CarPlay), including starting from the car with the app closed.
-    - **Android:** the app module needs Kotlin (`apply plugin: 'kotlin-android'` in `android/app/build.gradle`, and the Kotlin Gradle plugin in the project's), plus `implementation "androidx.media:media:1.7.0"`. Copy `native/android/*.kt` into `android/app/src/main/java/org/xpn/wxpn/` and `res/xml/automotive_app_desc.xml` into `res/xml/`, add `AndroidManifest.car.xml`'s entries inside `<application>`, and in `MainActivity` call `registerPlugin(CarAudioPlugin.class);` before `super.onCreate`. Test with Android Studio's Desktop Head Unit. Google reviews Android Auto apps against its car app quality guidelines when the app is submitted.
-    - The car lists WXPN, XPN2 and Homegrown; choosing one plays it, and play and pause work as the app's. On CarPlay the song comes from the lock screen's information; Android Auto gets it from the app.
-13. **Links that open the app** (`deep-links.js`): xpn.org show pages, Listen, the playlist page and the concert calendar open in the app on phones that have it; donate links always open the website. Host `native/well-known/apple-app-site-association` (with your Apple Team ID in place of `TEAMID`) and `native/well-known/assetlinks.json` (with the Play app signing key's SHA-256, from Play Console › App integrity) at `https://xpn.org/.well-known/` (and `www.`), served as `application/json` with no redirect. iOS: Signing & Capabilities › + Associated Domains › `applinks:xpn.org` and `applinks:www.xpn.org`. Android: add `native/android/AndroidManifest.links.xml`'s intent filter to the main activity. Show pages have a Share button that shares the show's xpn.org address, so a shared show opens in the app for anyone who has it.
-14. **Store review prompt** (`review.js`, `@capacitor-community/in-app-review`): nothing to set up. The app asks right after a heart, once the listener has listened two hours in all and saved three things, at most once per version and 120 days apart; the phone decides whether to show it.
-15. After any web change: `npm run cap:sync`, then build from Xcode / Android Studio.
+**Working on them:** after any web change, `npm run cap:sync`, then open `ios/App/App.xcodeproj` in Xcode or `android/` in Android Studio. Version: `package.json`'s, which Android reads itself; for iOS, set `MARKETING_VERSION` to match (the Release workflow does). Icons and launch screens come from `brand/app-icon-1024.png`: `python3 tools/make-native-assets.py`, then `npx @capacitor/assets generate --ios --android --iosProject ios/App --androidProject android --iconBackgroundColor '#ef7149' --splashBackgroundColor '#faf8f3' --splashBackgroundColorDark '#202224'`.
+
+**Before the first store upload** (these need WXPN's accounts):
+
+1. **Confirm the app ID.** `org.xpn.wxpn` becomes the permanent store identity at the first upload. To change it: `appId` in `capacitor.config.json`, `PRODUCT_BUNDLE_IDENTIFIER` in the Xcode project, `applicationId` and `namespace` in `android/app/build.gradle` (and the Java/Kotlin package), and the URL scheme in both projects and `music-services.js`.
+2. **Apple:** enroll WXPN in the Apple Developer Program (the fee is waived for nonprofits and accredited schools; Penn may publish under its own account). Register the App ID with Push Notifications and Associated Domains; Xcode can do this when it first signs. In Xcode, choose the team under Signing & Capabilities.
+3. **Google:** a Play Console account ($25 once), and a Firebase project's `google-services.json` in `android/app/` (push needs it, see "Push notifications").
+4. **Store builds:** the **Release** workflow (run by hand) builds a signed Play bundle and a TestFlight upload once the secrets it lists are added: an Android upload key, and an App Store Connect API key. Each platform runs only when its secrets are there.
+5. **Links that open the app** (`deep-links.js`): xpn.org show pages, Listen, the playlist page and the concert calendar open in the app on phones that have it; donate links always open the website. Both apps are set up for them; xpn.org has to vouch for the apps: host `native/well-known/apple-app-site-association` (with WXPN's Apple Team ID in place of `TEAMID`) and `native/well-known/assetlinks.json` (with the Play app signing key's SHA-256, from Play Console › App integrity) at `https://xpn.org/.well-known/` (and `www.`), served as `application/json` with no redirect. Show pages have a Share button that shares the show's xpn.org address, so a shared show opens in the app for anyone who has it.
+
+**What's set up:**
+
+- **Background audio.** iOS: `UIBackgroundModes: audio` and an `AVAudioSession` playback category (`AppDelegate.swift`), so the station plays with the screen locked and through the silent switch. Android: `@capgo/capacitor-media-session` provides the media notification and the foreground service that keeps audio alive.
+- **Notifications** (`@capacitor/local-notifications`): the permission prompt appears when the listener turns reminders or the alarm on. Android 13+ declares `POST_NOTIFICATIONS` and `SCHEDULE_EXACT_ALARM` (from the plugin); Android 14+ leaves exact alarms off for apps that aren't alarm clocks, so turning the alarm on checks and, if needed, offers Settings › Alarms & reminders. (Not `USE_EXACT_ALARM`: Play allows it only for alarm clock and calendar apps.) The notification icon is `res/drawable/ic_stat_wxpn.xml`, the Listen icon. A notification can't start audio by itself on either platform: the alarm wakes the listener, and tapping it starts the station.
+- **Push** (`@capacitor/push-notifications`): the iOS entitlement (`App.entitlements`) and the token hand-off in `AppDelegate.swift`. Notifications arriving while the app is open show as banners (`capacitor.config.json`).
+- **Spotify's sign-in return:** the URL scheme `org.xpn.wxpn` (iOS URL Types; an Android intent filter for `org.xpn.wxpn://spotify-callback`).
+- **Calendar** (`@ebarooni/capacitor-calendar`): iOS's usage text for adding concerts (`NSCalendarsWriteOnlyAccessUsageDescription`, and `NSCalendarsUsageDescription` for iOS 16). Android opens the calendar app's own New Event screen, which needs no permission.
+- **Links:** iOS Associated Domains `applinks:xpn.org` and `applinks:www.xpn.org` (`App.entitlements`); the Android App Links intent filter on the main activity.
+- **Scenes** (iOS): the phone's window (`SceneDelegate.swift`, one window, also on iPad) and CarPlay (`CarPlaySceneDelegate.swift`), in `Info.plist`.
+- **Export compliance:** `ITSAppUsesNonExemptEncryption` is false (the app uses only HTTPS), so TestFlight doesn't ask each upload.
+- **Store requirements in 2026:** App Store uploads must be built with Xcode 26 and the iOS 26 SDK (since April 28, 2026). Google Play requires new apps and updates to target Android 16 (API 36) from August 31, 2026; Capacitor 8 targets it. Android 15+ draws apps edge to edge with no opt-out; the CSS reads Capacitor's `--safe-area-inset-*` values for that (see `styles/base.css`).
+- **Video on iOS:** YouTube refuses embedded players that can't send a web referrer, which an iOS app (`capacitor://localhost`) can't, so on iOS a live YouTube video (Free at Noon) opens in the in-app browser instead of the watch page. Brightcove videos play in the app everywhere.
+- **Status bar**: `@capacitor/status-bar` switches the status bar text between light and dark with the app's theme, so it stays readable when the app and phone themes differ. No setup needed.
+- **Larger text on iPhone:** nothing to set up. `@capacitor/text-zoom` applies iOS's Text Size setting at launch and whenever the app comes back to the front (`text-size.js`); check the screens at the largest sizes.
+- **CarPlay and Android Auto** (`car.js`; `ios/App/App/CarPlaySceneDelegate.swift` and `CarAudioPlugin.swift`, registered by `MainViewController.swift`; `android/app/src/main/java/org/xpn/wxpn/WxpnCarService.kt` and `CarAudioPlugin.kt`, registered by `MainActivity.java`). The car lists WXPN, XPN2 and Homegrown; choosing one plays it, and play and pause work as the app's. On CarPlay the song comes from the lock screen's information; Android Auto gets it from the app.
+  - **CarPlay needs Apple's approval:** request the CarPlay audio entitlement (developer.apple.com/contact/carplay), and once granted, add `com.apple.developer.carplay-audio` (true) to `App.entitlements`. Until then the CarPlay scene simply never appears. Test with Xcode's CarPlay simulator (I/O › External Displays › CarPlay), including starting from the car with the app closed.
+  - **Android Auto** works without approval for testing (Android Studio's Desktop Head Unit); Google reviews it against the car app quality guidelines at submission. Starting the app from the car with it closed opens it in the background, which some phones block.
+- **Store review prompt** (`review.js`, `@capacitor-community/in-app-review`): nothing to set up. The app asks right after a heart, once the listener has listened two hours in all and saved three things, at most once per version and 120 days apart; the phone decides whether to show it.
 
 The Android back button steps back through screens and closes the show sheet, because navigation uses hash routes with real history entries.
 
@@ -198,7 +200,7 @@ calendar.js          saved concerts into the listener's calendar
 updates.js           station updates: format, timing, notifications, YouTube
 push.js              push notifications: registering with the sender, taps
 analytics.js         usage and crash reporting (GA4)
-car.js               CarPlay and Android Auto, with native/ for the car side
+car.js               CarPlay and Android Auto (the car side is in ios/ and android/)
 text-size.js         iPhone Text Size
 remote-config.js     station changes: stream addresses, features off, update prompt
 listening.js         listening time, for reporting
@@ -223,7 +225,11 @@ assets.js            files in public/, at the deploy base
 preview-shell.js     the phone, tablet and laptop frame of the shared preview
 global.css           imports every style sheet in styles/, in cascade order
 styles/              tokens and shell first, then each screen and feature
-tools/               updates-composer.html, for writing station updates
+ios/, android/       the iPhone and Android projects (Capacitor)
+native/well-known/   the files xpn.org hosts so its links open the app
+services/            the Apple Music token endpoint (a Cloudflare Worker)
+tools/               updates-composer.html, for writing station updates; screenshot and icon scripts
+docs/                device-testing.md, what to check on phones
 design/screens/      the screens page (every screen, light and dark)
 tests/               node:test suites, importing the real modules
 brand/               logo source files (not shipped with the app)
@@ -231,11 +237,12 @@ brand/               logo source files (not shipped with the app)
 
 ## Known gaps before a store release
 
-- **iOS/Android device testing**, especially background audio, lock-screen controls and song updates while locked, interruptions such as phone calls, the Android back button, and notifications (reminders and the alarm arriving with the app closed, tapping one to start the stream).
-- **CarPlay and Android Auto:** the native code is written but has never been compiled; it needs the steps above, Apple's CarPlay entitlement and testing in the simulators and a car.
+- **Testing on phones** ([docs/device-testing.md](docs/device-testing.md)): both apps build, but neither has run on a real phone yet. Background audio, the lock screen, interruptions, notifications arriving with the app closed, links, the Android back button.
+- **CarPlay and Android Auto:** the native code now compiles in both apps; it needs Apple's CarPlay entitlement and testing in the simulators and a car.
+- **Developer accounts and store builds:** see "Native apps › Before the first store upload".
 - **Push sender:** choose the service (see "Push notifications") and set `VITE_PUSH_REGISTER_URL`.
 - **Station updates hosting:** choose where `updates.json` lives and who edits it.
-- **Playlist sync accounts:** a Spotify app (with extended quota) and an Apple Music developer token.
+- **Playlist sync accounts:** a Spotify app (with extended quota), and for Apple Music, a MusicKit key served by `services/apple-music-token.js` (see "Playlist sync").
 - **Reporting:** GA4 is set up (WXPN App property); data starts with the first production build people use. Native crashes need Crashlytics or Sentry.
 - **Store listing:** screenshots (iPhone, iPad, Android), Play's feature graphic and the listing text are in `store/` (`store/listing.md`); confirm the support page before submitting.
 - **Store privacy answers:** with reporting on, Apple's App Privacy and Google's Data safety should declare Usage Data (product interaction) and Diagnostics (crash data), not linked to identity and not used for tracking; with push, a device id (push token) for app functionality. Favorites and settings stay on the phone.
