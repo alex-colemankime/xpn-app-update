@@ -238,38 +238,63 @@ h1 {
   padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
-/* A saved song in Favorites, on a band of its artwork's color at the page's
-   own lightness (like Listen's), so its text and heart keep their contrast.
-   The band runs the full width of the screen and dissolves at its top and
-   bottom: a smooth fade, with grain scattered past it (styles/grain.css),
-   so each song's color breaks up into the page like a print rather than
-   ending at an edge, and the page shows through between songs. */
+/* Saved songs in Favorites, each on a band of its artwork's color at the
+   page's own lightness (like Listen's), so text and hearts keep their
+   contrast. The bands run the full width of the screen and one after
+   another down the list, with no page between them: each reaches into its
+   neighbors, and where one song's color meets the next, the later band
+   comes in through the grain (styles/grain.css), so one color dissolves
+   into the next rather than ending at an edge. Next to a song without a
+   color, a band dissolves into the page the same way.
+   The bands sit in one layer under every row (.saved-songs), later ones
+   over earlier ones, so a band never covers the song above it. */
 @supports (color: oklch(from red l c h)) {
-  .track-row[data-tinted] {
+  .saved-songs {
     position: relative;
     isolation: isolate;
+    /* How far a band reaches into each neighbor, and room for the first
+       and last to reach into, so no band crosses what's around the list. */
+    --reach: 22px;
+    padding-block: var(--reach);
+  }
+  .track-row[data-tinted] {
+    position: relative;
     margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
     padding: 16px var(--edge-right) 16px var(--edge-left);
     border-bottom: 0;
-    --band: oklch(from color-mix(in srgb, var(--tint-light) 22%, var(--paper)) var(--paper-l) c h);
+    /* The band reaches past the row, which a skipped off-screen row would clip. */
+    content-visibility: visible;
+    --band: oklch(from color-mix(in srgb, var(--tint-light) 30%, var(--paper)) var(--paper-l) c h);
+    /* Where the band comes in, and goes out. */
+    --fade-top: calc(var(--reach) * 2);
+    --fade-bottom: calc(var(--reach) * 2);
   }
   :root[data-theme="dark"] .track-row[data-tinted] {
-    --band: oklch(from color-mix(in srgb, var(--tint-dark) 20%, var(--paper)) var(--paper-l) c h);
+    --band: oklch(from color-mix(in srgb, var(--tint-dark) 32%, var(--paper)) var(--paper-l) c h);
   }
-  /* The band's own fade parts it from the row before; no hairline too. */
+  /* Another colored song next: this band runs on, solid, under its grain. */
+  .track-row[data-tinted]:has(+ .track-row[data-tinted]) {
+    --fade-bottom: 0px;
+  }
+  /* The bands part the songs themselves; no hairline too. */
   .track-row:has(+ .track-row[data-tinted]) {
     border-bottom-color: transparent;
   }
   .track-row[data-tinted]::before {
     content: "";
     position: absolute;
-    inset: 0;
+    inset: calc(-1 * var(--reach)) 0;
     z-index: -1;
     background-color: var(--band);
     /* Where grain can't shape the edge (styles/grain.css), a plain fade. */
+    --band-fade: linear-gradient(
+      transparent,
+      #000 var(--fade-top),
+      #000 calc(100% - var(--fade-bottom)),
+      transparent
+    );
     -webkit-mask-image: var(--band-fade);
     mask-image: var(--band-fade);
-    --band-fade: linear-gradient(transparent, #000 24%, #000 76%, transparent);
   }
 }
 .share-songs {

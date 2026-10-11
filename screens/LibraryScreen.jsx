@@ -142,9 +142,12 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
         </Empty>
       ) : category === "songs" ? (
         <>
-          {filtered.map((t) => (
-            <TrackRow key={t.id} track={t} wash />
-          ))}
+          {/* One layer for every song's band (styles/layout.css). */}
+          <div className="saved-songs">
+            {filtered.map((t) => (
+              <TrackRow key={t.id} track={t} wash />
+            ))}
+          </div>
           <button className="text-button share-songs" onClick={shareSongs}>
             <Icon name="shareAlt" size={17} />
             Share your saved songs
