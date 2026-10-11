@@ -10,7 +10,7 @@
 
 import { useSyncExternalStore } from "react";
 import { featureOn, subscribeFeatures } from "./features.js";
-import { getSavedSongs, songId, subscribeFavorites } from "./favorites.js";
+import { getSavedSongs, legacySongId, songId, subscribeFavorites } from "./favorites.js";
 import {
   AuthError,
   NotAllowedError,
@@ -53,6 +53,28 @@ const syncStore = createLocalStore("xpn.playlistSync", EMPTY, (v) => ({
 // A sync interrupted by closing the app is simply run again. Only at launch:
 // a run in progress shows "syncing" ("Adding your songs…").
 if (syncStore.getSnapshot().status === "syncing") syncStore.set((s) => ({ ...s, status: "idle" }));
+
+// What the playlist holds (and what the service didn't have) was recorded
+// by song id; ids recorded before artist and title were kept apart
+// (favorites.js) move to each saved song's id now, so the next run neither
+// looks those songs up again nor takes them out of the playlist.
+export function migrateSongIds(state, saved) {
+  const now = new Map(saved.map((song) => [legacySongId(song), songId(song)]));
+  // An old id never holds "--"; one with no saved song stays as it is.
+  const move = (id) => (!id.includes("--") && now.get(id)) || id;
+  const ids = [...Object.keys(state.matched), ...state.missing];
+  if (ids.every((id) => move(id) === id)) return state;
+  return {
+    ...state,
+    matched: Object.fromEntries(Object.entries(state.matched).map(([id, ref]) => [move(id), ref])),
+    missing: [...new Set(state.missing.map(move))],
+  };
+}
+{
+  const before = syncStore.getSnapshot();
+  const after = migrateSongIds(before, getSavedSongs());
+  if (after !== before) syncStore.set(after);
+}
 
 export const usePlaylistSync = () =>
   useSyncExternalStore(syncStore.subscribe, syncStore.getSnapshot);

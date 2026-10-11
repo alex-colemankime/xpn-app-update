@@ -88,6 +88,14 @@ export function configureGtag(id = GA4_ID) {
   });
 }
 
+// Google's own switch for a property: with it set, gtag sends nothing at
+// all, including what it collects by itself (engagement time, first visit),
+// which the app's own events going quiet wouldn't stop. Set while reporting
+// is off, cleared when it's turned back on.
+function blockGtag(id, off) {
+  if (id && typeof window !== "undefined") window[`ga-disable-${id}`] = off;
+}
+
 // gtag, loaded only when there is an id and reporting is on.
 function loadGtag() {
   window.dataLayer = window.dataLayer || [];
@@ -125,20 +133,25 @@ export const trackScreen = (screen, title) =>
 // At launch: load gtag and report errors the app doesn't catch itself.
 export function startAnalytics() {
   if (!GA4_ID || typeof window === "undefined") return;
-  if (reportingStore.getSnapshot().on) loadGtag();
+  const on = reportingStore.getSnapshot().on;
+  blockGtag(GA4_ID, !on);
+  if (on) loadGtag();
   analytics.start();
   window.addEventListener("error", (e) => reportError(e.error || e.message, { fatal: true }));
   window.addEventListener("unhandledrejection", (e) => reportError(e.reason, { where: "promise" }));
 }
 
-// The Settings switch. Off forgets this install's id; on again starts anew:
-// a fresh id, configured into gtag whether or not it was already loaded.
-// (`id`, `load` and `configure` are passed in by the tests.)
+// The Settings switch. Off stops gtag outright (Google's own switch, so
+// nothing more is sent even though it stays loaded) and forgets this
+// install's id; on again starts anew: a fresh id, configured into gtag
+// whether or not it was already loaded. (`id`, `load` and `configure` are
+// passed in by the tests.)
 export function setReporting(
   on,
   { id = GA4_ID, load = loadGtag, configure = () => configureGtag(id) } = {},
 ) {
   reportingStore.set({ on });
+  blockGtag(id, !on);
   if (!on) {
     writeJson(CLIENT_KEY, null);
     return;

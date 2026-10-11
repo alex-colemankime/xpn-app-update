@@ -111,3 +111,23 @@ test("switched off by the station, the collections aren't read at all", async ()
     globalThis.fetch = real;
   }
 });
+
+test("after videos are taken out upstream, a refresh reads on so no video is skipped", async () => {
+  // The listener has loaded videos 1–96.
+  replies[WORLD_CAFE] = page(1, 48);
+  replies[`${WORLD_CAFE}@48`] = page(49, 48);
+  await loadVideos({ force: true });
+  await loadMoreVideos(WORLD_CAFE);
+  assert.equal(section(WORLD_CAFE).videos.length, 96);
+  // Then the first two are taken out of the collection: everything moves up.
+  replies[WORLD_CAFE] = page(3, 48);
+  replies[`${WORLD_CAFE}@48`] = page(51, 48);
+  replies[`${WORLD_CAFE}@96`] = page(99, 4);
+  await loadVideos({ force: true });
+  await loadMoreVideos(WORLD_CAFE);
+  assert.deepEqual(
+    section(WORLD_CAFE).videos.map((v) => Number(v.id)),
+    Array.from({ length: 100 }, (_, i) => i + 3),
+    "3 to 102 in order: 97 and 98 not skipped, and 1 and 2 gone",
+  );
+});

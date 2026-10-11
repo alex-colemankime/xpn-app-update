@@ -143,16 +143,29 @@ function getPolicyKey() {
   return policyKey;
 }
 
+// A Playback API request, with the player's key. Refused (the player has
+// replaced its key): the player's config is read again for the new one, and
+// the request tried once more with it. Only the key this request used is let
+// go, so requests refused together read the config once.
+async function playback(path, { what, signal } = {}, retried = false) {
+  const keyRead = getPolicyKey();
+  const key = await keyRead;
+  const response = await fetch(`${API}/${VIDEO_ACCOUNT}/${path}`, {
+    headers: { Accept: `application/json;pk=${key}` },
+    signal: withTimeout(signal),
+  });
+  if ((response.status === 401 || response.status === 403) && !retried) {
+    if (policyKey === keyRead) policyKey = null;
+    return playback(path, { what, signal }, true);
+  }
+  if (!response.ok) throw new Error(`Videos: ${what} HTTP ${response.status}`);
+  return response.json();
+}
+
 async function fetchPlaylist(playlist, offset = 0) {
-  const key = await getPolicyKey();
-  const response = await fetch(
-    `${API}/${VIDEO_ACCOUNT}/playlists/${playlist}?limit=${PAGE_SIZE}&offset=${offset}`,
-    { headers: { Accept: `application/json;pk=${key}` }, signal: withTimeout() },
-  );
-  // A key the player has since replaced: read it again next time.
-  if (response.status === 401 || response.status === 403) policyKey = null;
-  if (!response.ok) throw new Error(`Videos: playlist HTTP ${response.status}`);
-  const json = await response.json();
+  const json = await playback(`playlists/${playlist}?limit=${PAGE_SIZE}&offset=${offset}`, {
+    what: "playlist",
+  });
   // `count`: how many entries the server sent, before duplicates and
   // unusable ones are dropped. Whether there's another page, and where it
   // starts, go by that, not by what's left to show.
@@ -164,13 +177,8 @@ async function fetchPlaylist(playlist, offset = 0) {
 
 // One video, for a watch page opened from a link to a video no list holds.
 export async function fetchVideo(id, signal) {
-  const key = await getPolicyKey();
-  const response = await fetch(`${API}/${VIDEO_ACCOUNT}/videos/${encodeURIComponent(id)}`, {
-    headers: { Accept: `application/json;pk=${key}` },
-    signal: withTimeout(signal),
-  });
-  if (!response.ok) throw new Error(`Videos: video HTTP ${response.status}`);
-  const video = normalizeVideo(await response.json());
+  const json = await playback(`videos/${encodeURIComponent(id)}`, { what: "video", signal });
+  const video = normalizeVideo(json);
   if (!video) throw new Error("Videos: unusable video");
   return video;
 }
@@ -245,50 +253,66 @@ export function loadVideos({ force = false } = {}) {
       sections: state.sections.map((s) => (s.videos.length ? s : { ...s, status: "loading" })),
     });
   }
-  inflight = Promise.allSettled(VIDEO_SECTIONS.map((s) => fetchPlaylist(s.playlist)))
-    .then((results) => {
-      // Each section's fresh first page, or null where it couldn't be read.
-      const fresh = new Map(VIDEO_SECTIONS.map((s, i) => [s.playlist, results[i].value ?? null]));
-      videoStore.set((s) => ({
-        ...s,
-        sections: s.sections.map((old) => {
-          const got = fresh.get(old.playlist);
-          const videos = got?.videos;
-          if (videos && old.status === "live" && old.offset > got.count) {
-            // The listener has opened further pages: the fresh first page
-            // leads, and what they had loaded follows, so the list neither
-            // shrinks under them nor loses its place for the next page.
-            const ids = new Set(videos.map((v) => v.id));
-            return {
-              ...old,
-              videos: [...videos, ...old.videos.filter((v) => !ids.has(v.id))],
-              status: "live",
-            };
-          }
-          if (videos) {
-            return {
-              ...old,
-              videos,
-              more: got.count === PAGE_SIZE,
-              moreFailed: false,
-              offset: got.count,
-              status: "live",
-            };
-          }
-          return { ...old, status: old.videos.length ? "cache" : "error" };
+  inflight = (async () => {
+    const results = await Promise.allSettled(VIDEO_SECTIONS.map((s) => fetchPlaylist(s.playlist)));
+    // Each section's fresh list, or null where it couldn't be read. Where
+    // the listener had opened further pages, those are read again too, so
+    // the list neither shrinks under them nor keeps a place in Brightcove's
+    // list that has since moved (a video taken out shifts everything after
+    // it, and the next page would skip what moved up).
+    const before = videoStore.getSnapshot();
+    const fresh = new Map(
+      await Promise.all(
+        VIDEO_SECTIONS.map(async (s, i) => {
+          const got = results[i].value;
+          if (!got) return [s.playlist, null];
+          const old = before.sections.find((o) => o.playlist === s.playlist);
+          const through = old?.status === "live" ? old.offset : 0;
+          return [s.playlist, await readOn(s.playlist, got, through)];
         }),
-        loadedAt: Date.now(),
-        complete: results.every((r) => r.status === "fulfilled"),
-      }));
-      if (results.some((r) => r.status === "fulfilled")) {
-        const { sections } = videoStore.getSnapshot();
-        writeJson(CACHE_KEY, Object.fromEntries(sections.map((s) => [s.playlist, s.videos])));
-      }
-    })
-    .finally(() => {
-      inflight = null;
-    });
+      ),
+    );
+    videoStore.set((s) => ({
+      ...s,
+      sections: s.sections.map((old) => {
+        const got = fresh.get(old.playlist);
+        if (got) return { ...old, ...got, status: "live" };
+        return { ...old, status: old.videos.length ? "cache" : "error" };
+      }),
+      loadedAt: Date.now(),
+      complete: results.every((r) => r.status === "fulfilled"),
+    }));
+    if (results.some((r) => r.status === "fulfilled")) {
+      const { sections } = videoStore.getSnapshot();
+      writeJson(CACHE_KEY, Object.fromEntries(sections.map((s) => [s.playlist, s.videos])));
+    }
+  })().finally(() => {
+    inflight = null;
+  });
   return inflight;
+}
+
+// A section's list from its first page (`first`), read on page by page
+// until it reaches `through` in Brightcove's list: { videos, offset, more,
+// moreFailed }. A page that fails ends it there, marked, so "Show more"
+// carries on from the right place.
+async function readOn(playlist, first, through) {
+  const videos = [...first.videos];
+  const ids = new Set(videos.map((v) => v.id));
+  let offset = first.count;
+  let more = first.count === PAGE_SIZE;
+  while (more && offset < through) {
+    let page;
+    try {
+      page = await fetchPlaylist(playlist, offset);
+    } catch {
+      return { videos, offset, more, moreFailed: true };
+    }
+    for (const v of page.videos) if (!ids.has(v.id) && ids.add(v.id)) videos.push(v);
+    offset += page.count;
+    more = page.count === PAGE_SIZE;
+  }
+  return { videos, offset, more, moreFailed: false };
 }
 
 // The next page of one section. A page that fails is marked, so the screen

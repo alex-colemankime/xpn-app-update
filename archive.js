@@ -35,6 +35,8 @@ const LINK_FRESH_MS = 20 * 60000;
 export const linkIsFresh = (episode, now = Date.now()) =>
   Boolean(episode?.audio) && now - (Number(episode.fetchedAt) || 0) < LINK_FRESH_MS;
 
+// How many of a show's broadcasts the app lists. A source can hold more:
+// every one of them stays playable, and a saved one is found among them all.
 const PER_FEED = 40;
 const newestFirst = (a, b) => b.date.localeCompare(a.date);
 
@@ -101,8 +103,7 @@ export function parsePodcastFeed(xml, show) {
       };
     })
     .filter(Boolean)
-    .sort(newestFirst)
-    .slice(0, PER_FEED);
+    .sort(newestFirst);
 }
 
 // A show page's archive on xpn.org: one element per broadcast, carrying
@@ -177,7 +178,7 @@ export function parseArchivePage(html, { show, name = "", schedule = [] }) {
       aired: dated && slot ? `${clockLabel(slot.start)}–${clockLabel(slot.end)}` : "",
     });
   }
-  return episodes.sort(newestFirst).slice(0, PER_FEED);
+  return episodes.sort(newestFirst);
 }
 
 // Episodes from the cache or a snapshot, checked the same way as a feed's.
@@ -237,7 +238,7 @@ export function parseSource(text, show) {
   return episodes.map((e) => ({ ...e, image: e.image || info.img || "" }));
 }
 
-// One source's episodes, read now.
+// One source's episodes, read now: every one it lists, newest first.
 async function readFeed(feed) {
   const text = await readSource(feed.url);
   const fetchedAt = Date.now();
@@ -246,18 +247,22 @@ async function readFeed(feed) {
 
 // Every source, read at once. A source that can't be read keeps the episodes
 // it had (`previous`), so one failing page never empties its show. Resolves
-// to { episodes, source, failed } where source is "live", or "error" when no
-// source could be read at all, and `failed` lists the shows not read.
+// to { episodes, ids, source, failed } where `episodes` are the ones listed
+// (each show's newest PER_FEED), `ids` every id each source read lists,
+// source is "live", or "error" when no source could be read at all, and
+// `failed` lists the shows not read.
 async function fetchArchive(previous = []) {
   const results = await Promise.allSettled(ARCHIVE_FEEDS.map(readFeed));
   const failed = ARCHIVE_FEEDS.filter((_, i) => results[i].status === "rejected").map(
     (feed) => feed.show,
   );
   if (failed.length === ARCHIVE_FEEDS.length)
-    return { episodes: previous, source: "error", failed };
+    return { episodes: previous, ids: {}, source: "error", failed };
+  const read = ARCHIVE_FEEDS.map((feed, i) => [feed.show, results[i].value]).filter(([, e]) => e);
   const kept = previous.filter((e) => failed.includes(e.show));
   return {
-    episodes: [...results.flatMap((r) => r.value ?? []), ...kept].sort(newestFirst),
+    episodes: [...read.flatMap(([, e]) => e.slice(0, PER_FEED)), ...kept].sort(newestFirst),
+    ids: Object.fromEntries(read.map(([show, e]) => [show, e.map((ep) => ep.id)])),
     source: "live",
     failed,
   };
@@ -266,8 +271,9 @@ async function fetchArchive(previous = []) {
 // Shared by every screen that shows episodes: loaded once when first needed,
 // refreshed when stale, and the last good list kept for offline use. A load
 // that failed, wholly or in part, is tried again soon rather than after the
-// usual wait. `listed` holds the shows whose page was read this session, so
-// a saved episode missing from one is known to have left the archive.
+// usual wait. `sourceIds` holds, for each show whose page was read this
+// session, every episode id the page lists (more than are shown), so a
+// saved episode missing from it is known to have left the archive.
 const CACHE_KEY = "xpn.archive.cache";
 const STALE_MS = 30 * 60000;
 const RETRY_MS = 2 * 60000;
@@ -277,7 +283,7 @@ const archiveStore = createStore({
   source: cachedEpisodes.length ? "cache" : "loading",
   loadedAt: 0,
   complete: false,
-  listed: [],
+  sourceIds: {},
 });
 let inflight = null;
 
@@ -292,8 +298,7 @@ export function loadArchive({ force = false } = {}) {
   if (!force && state.loadedAt && Date.now() - state.loadedAt < wait) return null;
   if (force && !state.episodes.length) archiveStore.set({ ...state, source: "loading" });
   inflight = fetchArchive(state.episodes)
-    .then(({ episodes, source, failed }) => {
-      const read = ARCHIVE_FEEDS.map((f) => f.show).filter((show) => !failed.includes(show));
+    .then(({ episodes, ids, source, failed }) => {
       if (source === "live") saveCache(episodes);
       archiveStore.set((s) => ({
         episodes,
@@ -302,7 +307,7 @@ export function loadArchive({ force = false } = {}) {
         source: source === "error" && episodes.length ? "cache" : source,
         loadedAt: Date.now(),
         complete: !failed.length,
-        listed: [...new Set([...s.listed, ...read])],
+        sourceIds: { ...s.sourceIds, ...ids },
       }));
     })
     .finally(() => {
@@ -335,9 +340,11 @@ export function freshCopy(episode) {
 }
 
 // Whether a saved episode has left the archive: its show's page was read
-// this session and no longer lists it.
-export const hasLeftArchive = (archive, episode) =>
-  archive.listed.includes(episode.show) && !archive.episodes.some((e) => e.id === episode.id);
+// this session and no longer lists it, among all it lists.
+export function hasLeftArchive(archive, episode) {
+  const ids = archive.sourceIds[episode.show];
+  return Boolean(ids) && !ids.includes(episode.id);
+}
 
 // A playable copy of an episode with a fresh audio link, read again from its
 // show's page when the one on hand is too old. Rejects with { reason }:
@@ -364,14 +371,18 @@ export async function findEpisode(episode) {
   }
   // The show's list on screen is now the fresh one too.
   const s = archiveStore.getSnapshot();
-  const merged = [...s.episodes.filter((e) => e.show !== feed.show), ...episodes].sort(newestFirst);
+  const merged = [
+    ...s.episodes.filter((e) => e.show !== feed.show),
+    ...episodes.slice(0, PER_FEED),
+  ].sort(newestFirst);
   saveCache(merged);
   archiveStore.set({
     ...s,
     episodes: merged,
     source: s.source === "loading" || s.source === "error" ? "live" : s.source,
-    listed: s.listed.includes(feed.show) ? s.listed : [...s.listed, feed.show],
+    sourceIds: { ...s.sourceIds, [feed.show]: episodes.map((e) => e.id) },
   });
+  // Looked for among every broadcast the page lists, not only those shown.
   const found = episodes.find((e) => e.id === episode.id);
   if (!found) throw unavailable("gone");
   return found;

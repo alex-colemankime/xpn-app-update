@@ -85,3 +85,25 @@ test("a show whose page fails keeps its episodes, and the archive tries again so
   );
   assert.equal(storeState().source, "live");
 });
+
+test("a saved broadcast older than the newest 40 on its page still plays", async () => {
+  // 41 broadcasts on the page: the app lists the newest 40.
+  const day = (i) => {
+    const d = new Date(Date.UTC(2026, 0, 1 + i));
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${pad(d.getUTCMonth() + 1)}.${pad(d.getUTCDate())}.${d.getUTCFullYear()}`;
+  };
+  const items = Array.from({ length: 41 }, (_, i) => [`Sleepy Hollow - ${day(i)}`, `old${i}`]);
+  pages[SLEEPY_URL] = page(items, "many");
+  const { parseSource } = await import("../archive.js");
+  const all = parseSource(pages[SLEEPY_URL], "sleepyhollow");
+  assert.equal(all.length, 41, "every broadcast on the page is read");
+  const oldest = all[all.length - 1];
+  const saved = { id: oldest.id, show: "sleepyhollow", title: oldest.title };
+
+  const found = await findEpisode(saved);
+  assert.equal(found.id, oldest.id, "found among all of them, not only those listed");
+  assert.match(found.audio, /key=many/);
+  assert.equal(episodesOf(storeState(), "sleepyhollow").length, 40, "the list shows 40");
+  assert.equal(hasLeftArchive(storeState(), saved), false, "and it isn't called gone");
+});

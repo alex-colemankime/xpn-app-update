@@ -47,3 +47,21 @@ test("production builds report to WXPN App's property unless turned off", async 
   assert.equal(ga4Id("off", true), "", "the preview and the end-to-end tests");
   assert.equal(ga4Id(undefined, false), "", "development and unit tests");
 });
+
+test("turning reporting off stops Google's tag itself, and on lets it send again", async () => {
+  const { setReporting } = await import("../analytics.js");
+  globalThis.window = {};
+  try {
+    const id = "G-TEST123";
+    let loads = 0;
+    const options = { id, load: () => loads++, configure: () => {} };
+    setReporting(false, options);
+    assert.equal(globalThis.window[`ga-disable-${id}`], true, "gtag's own collection is off too");
+    assert.equal(loads, 0);
+    setReporting(true, options);
+    assert.equal(globalThis.window[`ga-disable-${id}`], false);
+    assert.equal(loads, 1, "loaded when it wasn't yet");
+  } finally {
+    delete globalThis.window;
+  }
+});

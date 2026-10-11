@@ -8,14 +8,25 @@ import { track } from "./analytics.js";
 // Songs have no feed id, so artist + title is the identity. Letters and digits
 // from any script count, so "봄날" and "작은 것들을 위한 시" by the same artist
 // stay distinct; accents are folded, so "Beyoncé" and "Beyonce" match.
-export function songId(song) {
-  return `${song.artist || ""}|${song.title || ""}`
+const idPart = (text) =>
+  String(text || "")
     .normalize("NFKD")
     .replace(/\p{M}+/gu, "")
     .toLowerCase()
     .replace(/[^\p{L}\p{N}]+/gu, "-")
     .replace(/^-|-$/g, "");
+// Artist and title are kept apart by "--", which neither can hold (each is
+// letters and digits with single hyphens between), so "A-B" singing "C" and
+// "A" singing "B-C" are two songs.
+export function songId(song) {
+  const artist = idPart(song.artist);
+  const title = idPart(song.title);
+  return artist || title ? `${artist}--${title}` : "";
 }
+// The id songs had until October 2026, artist and title run together
+// ("a-b-c" for both of those songs), so records kept under it can move to
+// the id the song has now. One never contains "--".
+export const legacySongId = (song) => idPart(`${song.artist || ""}|${song.title || ""}`);
 
 const isObject = (value) => value && typeof value === "object" && !Array.isArray(value);
 const isText = (value) => typeof value === "string" && value.trim() !== "";
@@ -163,8 +174,8 @@ function cleanBucket(type, bucket) {
       changed = true;
       continue;
     }
-    // Songs are re-keyed, which also carries over saves made under the older,
-    // Latin-only id scheme.
+    // Songs are re-keyed, which also carries over saves made under the older
+    // id schemes (Latin-only, then artist and title run together).
     if (repaired !== item || repaired.id !== key) changed = true;
     clean[repaired.id] = repaired;
   }
