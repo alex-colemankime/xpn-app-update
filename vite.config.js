@@ -159,5 +159,10 @@ export default defineConfig(({ mode }) => {
     build: {
       target: "es2022",
     },
+    // The native projects hold copies of the built app (ios/App/App/public,
+    // android/app/src/main/assets/public): the dev server neither scans
+    // them for dependencies nor reloads when they change.
+    optimizeDeps: { entries: ["index.html"] },
+    server: { watch: { ignored: ["**/ios/**", "**/android/**"] } },
   };
 });
