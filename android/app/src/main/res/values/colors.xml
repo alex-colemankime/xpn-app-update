@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The app's page (styles/base.css), behind the launch screen. -->
+    <color name="wxpn_page">#FAF8F3</color>
+</resources>

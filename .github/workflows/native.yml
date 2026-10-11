@@ -1,0 +1,162 @@
+name: Native apps
+
+# Builds the iPhone and Android apps (ios/, android/) from the web app, on
+# every push that touches them or the app itself:
+#   - Android: a debug build anyone can install for testing (Settings may
+#     ask to allow installing from the browser). From main it is published
+#     as the "Android test build" pre-release, to download on a phone.
+#   - iOS: a build for the iPhone simulator, unsigned, which shows the
+#     project compiles; the "ios-simulator-app" artifact runs in Xcode's
+#     simulator. A signed build for a phone needs WXPN's Apple developer
+#     account (see README › Native apps).
+# Each build's log goes on the native-out branch, to read without signing
+# in to GitHub.
+on:
+  push:
+    paths-ignore:
+      - "design/**"
+      - "store/**"
+      - "control/**"
+      - "**.md"
+  workflow_dispatch:
+
+permissions:
+  contents: write # the pre-release and the native-out branch
+
+concurrency:
+  group: native-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the web app into the project
+        run: npm run build && npx cap sync android
+
+      - name: Build the test app
+        working-directory: android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: |
+          set -o pipefail
+          mkdir -p ../native-out
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee ../native-out/android.log
+
+      - name: Keep the app
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Publish it as the test build
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk wxpn-test.apk
+          notes="Debug build of ${GITHUB_SHA::7} for testing. On an Android phone, download wxpn-test.apk and open it (allow installing from the browser if asked)."
+          if gh release view android-test >/dev/null 2>&1; then
+            gh release upload android-test wxpn-test.apk --clobber
+            gh release edit android-test --notes "$notes" --target "$GITHUB_SHA"
+          else
+            gh release create android-test wxpn-test.apk --prerelease \
+              --title "Android test build" --notes "$notes" --target "$GITHUB_SHA"
+          fi
+
+      - name: Keep the log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-log
+          path: native-out/
+
+  ios:
+    runs-on: macos-26
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the web app into the project
+        run: npm run build && npx cap sync ios
+
+      - name: Build for the simulator
+        run: |
+          set -o pipefail
+          mkdir -p native-out
+          xcodebuild -version | tee native-out/ios.log
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build 2>&1 | tee -a native-out/ios.log
+
+      - name: Keep the app
+        run: cd build/Build/Products/Debug-iphonesimulator && zip -qry ../../../../WXPN-simulator.zip App.app
+
+      - name: Upload it
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-app
+          path: WXPN-simulator.zip
+
+      - name: Keep the log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-log
+          path: native-out/
+
+  # Both builds' logs (their errors first) on the native-out branch.
+  logs:
+    if: always()
+    needs: [android, ios]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gather the logs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*-log"
+          merge-multiple: true
+          path: native-out
+
+      - name: Publish them on the native-out branch
+        run: |
+          cd native-out
+          for log in *.log; do
+            { grep -nE "error:|FAILURE|BUILD FAILED|e: |What went wrong" "$log" | head -60; } > "${log%.log}-errors.txt" || true
+            tail -n 200 "$log" > "${log%.log}-tail.txt"
+          done
+          printf "android: %s\nios: %s\ncommit: %s\n" "${{ needs.android.result }}" "${{ needs.ios.result }}" "$GITHUB_SHA" > result.txt
+          git init -q -b native-out
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Native build logs from ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" native-out

@@ -1,9 +1,9 @@
 // CarPlay and Android Auto (iOS and Android apps). The car shows the three
 // stations; choosing one plays it, and the car's play and pause buttons work
-// as the app's do. The native side (native/ios, native/android; see README)
-// lists the stations and hands the listener's choices to the app here
-// through a small plugin, "CarAudio", since the audio itself plays in the
-// app. On CarPlay, what's playing comes from the lock screen's information,
+// as the app's do. The native side (ios/App/App, android/app/src/main; see
+// README) lists the stations and hands the listener's choices to the app
+// here through a small plugin, "CarAudio", since the audio itself plays in
+// the app. On CarPlay, what's playing comes from the lock screen's information,
 // which the app already keeps current; Android Auto gets it from here.
 
 import { Capacitor, registerPlugin } from "@capacitor/core";
