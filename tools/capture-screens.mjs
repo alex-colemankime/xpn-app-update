@@ -211,6 +211,8 @@ for (const theme of ["light", "dark"]) {
       store.setItem("xpn.onboarded", "true");
       store.setItem("xpn.appearance", JSON.stringify(appearance));
       store.setItem("xpn.favorites.v1", JSON.stringify(saved));
+      // The member drive banner is a shot of its own (phone-drive).
+      store.setItem("xpn.updates.dismissed", JSON.stringify(["sample-fall-drive"]));
     },
     { appearance: theme, saved: favorites() },
   );

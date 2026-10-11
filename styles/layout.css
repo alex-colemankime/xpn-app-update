@@ -256,6 +256,10 @@ h1 {
   :root[data-theme="dark"] .track-row[data-tinted] {
     --band: oklch(from color-mix(in srgb, var(--tint-dark) 20%, var(--paper)) var(--paper-l) c h);
   }
+  /* The band's own fade parts it from the row before; no hairline too. */
+  .track-row:has(+ .track-row[data-tinted]) {
+    border-bottom-color: transparent;
+  }
   .track-row[data-tinted]::before {
     content: "";
     position: absolute;

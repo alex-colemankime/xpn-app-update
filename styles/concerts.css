@@ -43,12 +43,12 @@
   font-size: 0.875rem;
   color: var(--muted);
 }
-/* Region & more: choices as text with a box to check, two to a line, so
-   they read as a list on the page rather than more chips. */
+/* Region & more: choices as text with a box to check, as many to a line as
+   fit, so they read as a list on the page rather than more chips. */
 .filter-checks {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 168px), 1fr));
-  column-gap: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 26px;
 }
 .filter-check {
   display: flex;
