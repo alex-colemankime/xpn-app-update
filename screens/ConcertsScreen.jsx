@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { Icon, Empty, PromptLink, SearchField } from "../ui.jsx";
+import { Icon, Empty, PromptLink, SearchField, SkeletonList } from "../ui.jsx";
 import { useFavoriteItems } from "../favorites.js";
 import { ConcertRow } from "../components/ConcertRow.jsx";
 import { easternToday, filterConcerts, rangeLabel } from "../concerts.js";
@@ -189,10 +189,14 @@ export function ConcertsScreen({ result }) {
 
   let body;
   if (source === "loading") {
+    // Rows in the shape of the listings, so the list appears in place.
     body = (
-      <p role="status" className="loading-state">
-        Loading concerts…
-      </p>
+      <SkeletonList
+        label="Loading concerts…"
+        count={6}
+        rowClass="track-row concert-skeleton"
+        artClass="skeleton-date"
+      />
     );
   } else if (source === "unconfigured") {
     body = (

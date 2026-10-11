@@ -365,7 +365,14 @@
 .concert-row > .icon-button {
   margin-top: -6px;
 }
-.loading-state {
-  padding: 45px 20px;
-  text-align: center;
+/* While the calendar loads: a date block and two lines per row. */
+.skeleton-row.concert-skeleton {
+  gap: 20px;
+  padding: 18px 0;
+}
+.skeleton-row .skeleton-date {
+  flex: none;
+  width: 42px;
+  height: 56px;
+  border-radius: 8px;
 }
