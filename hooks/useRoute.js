@@ -98,7 +98,13 @@ const current = () => parseRoute(getHash());
 const actions = {
   navigate(screen) {
     const route = current();
-    if (screen === route.screen && !route.showId) return;
+    // The screen already in front, chosen again (its tab, or the wordmark):
+    // back to its top, as a phone's tab bar does.
+    if (screen === route.screen && !route.showId) {
+      const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+      return;
+    }
     // The screen it came from, so Settings can step back to it.
     withTransition(() => push({ screen }, { depth: 0, from: route.screen }));
   },

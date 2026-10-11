@@ -1,4 +1,13 @@
-import { Activity, lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  Activity,
+  lazy,
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { getPlayerSnapshot, subscribePlayer } from "./player.js";
 import { useNowPlaying } from "./nowplaying.js";
 import { SHOWS } from "./catalog.js";
@@ -105,9 +114,6 @@ export default function App() {
   useShowReminders(() => route.navigate("listen"), { paused: welcome });
   useStationAlerts(updates.all, { onWatch: watching.watchLive });
 
-  // Each screen change reads as a new page: top of the page, focus on main
-  // so screen readers announce the new content.
-  // (Not on first load, which is already at the top.)
   // A screen the station has switched off (features.js) while it was open:
   // back to Listen.
   const screenOff = features[route.screen] === false;
@@ -117,15 +123,37 @@ export default function App() {
   }, [screenOff, navigate]);
 
   const main = useRef(null);
-  const shownScreen = useRef(route.screen);
   useEffect(
     () => trackScreen(route.screen, SCREEN_TITLES[route.screen] || route.screen),
     [route.screen],
   );
+  // Each screen keeps its place, as a phone's tabs do: how far down it was
+  // is noted as the listener scrolls, and coming back to it returns there
+  // (its tab, pressed again, goes to the top: useRoute). Focus moves to main,
+  // so screen readers announce the new content. (Not on first load.) Before
+  // paint, so the screen never shows at the wrong place first, and before
+  // the browser reports the scroll the switch caused, so that is noted for
+  // the screen now in front.
+  const shownScreen = useRef(route.screen);
+  const places = useRef({});
   useEffect(() => {
+    let frame = 0;
+    const note = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        places.current[shownScreen.current] = window.scrollY;
+      });
+    };
+    window.addEventListener("scroll", note, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", note);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+  useLayoutEffect(() => {
     if (shownScreen.current === route.screen) return;
     shownScreen.current = route.screen;
-    window.scrollTo({ top: 0 });
+    window.scrollTo({ top: places.current[route.screen] || 0 });
     main.current?.focus({ preventScroll: true });
   }, [route.screen]);
 

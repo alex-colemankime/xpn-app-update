@@ -23,7 +23,7 @@ npm run check      # lint, formatting, tests and a production build
 | `npm run check`              | Everything CI runs except `npm audit`, in one go          |
 | `npm run cap:sync`           | Build and copy into the native projects                   |
 
-End-to-end tests (`tests/e2e`, Playwright) play the station, change station, save a song and find it in Favorites, open and follow a show, follow a show link, keep the dark theme, and open every screen without an error, at phone and desktop sizes. Every outside service is answered by fixtures (`tests/e2e/fixtures.mjs`; the streams are a few seconds of silence), so they run offline. To use a browser already installed, set `PLAYWRIGHT_CHROMIUM` to its path; otherwise `npx playwright install chromium` once.
+End-to-end tests (`tests/e2e`, Playwright) play the station, change station, save a song (and heart one with a double tap on its artwork) and find it in Favorites, keep each screen's place between tabs, open and follow a show, follow a show link, keep the dark theme, and open every screen without an error, at phone and desktop sizes. Every outside service is answered by fixtures (`tests/e2e/fixtures.mjs`; the streams are a few seconds of silence), so they run offline. To use a browser already installed, set `PLAYWRIGHT_CHROMIUM` to its path; otherwise `npx playwright install chromium` once.
 
 CI runs `lint`, `format:check`, `test`, the end-to-end tests and `build` on every push and pull request, plus `npm audit` of everything the app ships (a high or critical advisory fails a branch's checks, and is flagged on `main` without blocking the preview). Pushes to `main` also deploy the preview to GitHub Pages:
 
@@ -98,11 +98,11 @@ The Videos tab shows the station's video collections, newest first, the newest o
 
 ## Audio archive
 
-Shows › Archive lists recent broadcasts of the shows xpn.org archives, newest show first, each with its latest three (the rest in the show's sheet). They play in the app on their own player, with skip back 15 and ahead 30, lock-screen controls, and their place kept.
+Shows › Archive lists recent broadcasts of the shows xpn.org archives, newest show first, each with its latest three (the rest in the show's sheet). Each row leads with a small play key that says how long the broadcast is (its slot in the schedule until the file reports its own length), or how much is left once started. They play in the app on their own player, with skip back 15 and ahead 30, lock-screen controls, and their place kept.
 
 - **Source:** each archived show's page on xpn.org already lists its last ten broadcasts (from StreamGuys); the app reads that list (`parseArchivePage` in `archive.js`), so the station publishes nothing new. A dated title ("Sleepy Hollow - 10.04.2026") becomes the day it aired, in the show's slot; a feature ("Friko on World Cafe") keeps its name.
 - **Signed links:** the audio links carry a key and run out after a few hours. Each episode notes when its link was read; one read more than 20 minutes ago is read again from its show's page just before it plays (resuming, or recovering mid-listen, included). Favorites keep no link at all. A saved broadcast that has left the archive says so in Favorites and on its page, and tapping one that has gone explains why it can't play.
-- **Sturdier later:** a small JSON route on xpn.org returning the same list (title, date, audio, length) would replace reading the page's markup, and could add lengths before playback. Shows not archived on xpn.org (Echoes, The Folk Show…) appear once they are.
+- **Sturdier later:** a small JSON route on xpn.org returning the same list (title, date, audio, length) would replace reading the page's markup, and could give exact lengths before playback. Shows not archived on xpn.org (Echoes, The Folk Show…) appear once they are.
 
 ## Playlist sync
 
@@ -121,7 +121,7 @@ The iPhone and Android projects are in `ios/` and `android/` (Capacitor 8, app I
 
 Use Node 22 or newer (`.nvmrc` pins 24, as CI does). Capacitor must be 8.4.3 or later: 8.3.5–8.4.2 let remote content load at the app's origin ([GHSA-rvm3-566m-v7fv](https://github.com/advisories/GHSA-rvm3-566m-v7fv)).
 
-**Working on them:** after any web change, `npm run cap:sync`, then open `ios/App/App.xcodeproj` in Xcode or `android/` in Android Studio. Version: `package.json`'s, which Android reads itself; for iOS, set `MARKETING_VERSION` to match (the Release workflow does). Icons and launch screens come from `brand/app-icon-1024.png`: `python3 tools/make-native-assets.py`, then `npx @capacitor/assets generate --ios --android --iosProject ios/App --androidProject android --iconBackgroundColor '#ef7149' --splashBackgroundColor '#faf8f3' --splashBackgroundColorDark '#202224'`.
+**Working on them:** after any web change, `npm run cap:sync`, then open `ios/App/App.xcodeproj` in Xcode or `android/` in Android Studio. Version: `package.json`'s, which Android reads itself; for iOS, set `MARKETING_VERSION` to match (the Release workflow does). Icons and launch screens come from `brand/app-icon-1024.png`: `python3 tools/make-native-assets.py`, then `npx @capacitor/assets generate --ios --android --iosProject ios/App --androidProject android --iconBackgroundColor '#ef7149' --splashBackgroundColor '#f7f3ea' --splashBackgroundColorDark '#202224'`.
 
 **Before the first store upload** (these need WXPN's accounts):
 

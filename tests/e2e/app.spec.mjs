@@ -33,6 +33,35 @@ test("a saved song is in Favorites", async ({ page }) => {
   await expect(page.getByRole("region", { name: "Favorites" }).getByText(song)).toBeVisible();
 });
 
+test("a double tap on the artwork hearts the song, and never unhearts it", async ({ page }) => {
+  await page.goto("/");
+  const song = SONGS[0][0];
+  const heart = page
+    .locator(".now-song-actions")
+    .getByRole("button", { name: new RegExp(`Save ${song}`) });
+  await expect(heart).toHaveAttribute("aria-pressed", "false");
+  await page.locator(".now-art").dblclick();
+  await expect(heart).toHaveAttribute("aria-pressed", "true");
+  await page.locator(".now-art").dblclick();
+  await expect(heart).toHaveAttribute("aria-pressed", "true");
+  await page.goto("/#/favorites");
+  await expect(page.getByRole("region", { name: "Favorites" }).getByText(song)).toBeVisible();
+});
+
+test("each screen keeps its place, and its tab again goes to the top", async ({ page }) => {
+  await page.goto("/#/shows");
+  const nav = page.getByRole("navigation");
+  await expect(page.locator(".schedule-row").first()).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 400));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(400);
+  await nav.getByRole("button", { name: "Favorites", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await nav.getByRole("button", { name: "Shows", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(400);
+  await nav.getByRole("button", { name: "Shows", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+});
+
 test("a show opens, can be followed, and closes", async ({ page }) => {
   await page.goto("/#/shows");
   // Shows opens on today's schedule; every show is under All shows.
@@ -139,7 +168,8 @@ test("a show with a saved episode can be followed from Favorites", async ({ page
   const favorites = page.getByRole("region", { name: "Favorites" });
   await favorites.getByRole("button", { name: "Shows", exact: true }).click();
   const group = favorites.getByRole("region", { name: "Funky Friday" });
-  await expect(group.getByText("Funky Friday for October 2")).toBeVisible();
+  // Months are shortened AP style in a row ("Oct. 2"), so the date fits.
+  await expect(group.getByText("Funky Friday for Oct. 2")).toBeVisible();
   await expect(group.getByText("Not following")).toBeVisible();
   const follow = group.getByRole("button", { name: "Follow Funky Friday" });
   await follow.click();
