@@ -94,18 +94,23 @@ export function SettingsScreen({
           notifications). WXPN tries again each time you open it.
         </p>
       )}
+      {/* Two columns on a wide screen, one on a phone: what the app does
+          for the listener first, then how it plays and looks, and the
+          station. */}
       <div className="settings-grid">
-        <RadioAlarmPanel
-          alarm={alarm}
-          updateAlarm={updateAlarm}
-          onEnabled={onAlarmEnabled}
-          onTest={onTestAlarm}
-          testing={testingAlarm}
-        />
         <div>
+          <RadioAlarmPanel
+            alarm={alarm}
+            updateAlarm={updateAlarm}
+            onEnabled={onAlarmEnabled}
+            onTest={onTestAlarm}
+            testing={testingAlarm}
+          />
           <ShowReminders onNavigate={onNavigate} />
           <StationAlerts />
           <PlaylistSyncPanel />
+        </div>
+        <div>
           {/* Volume (not on iPhone, where the buttons set it) and the audio
               output, where there is either. */}
           {(VOLUME_SETTABLE || castAvailable) && (

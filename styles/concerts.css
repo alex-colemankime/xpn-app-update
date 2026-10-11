@@ -135,8 +135,10 @@
   align-items: center;
   gap: 8px;
 }
+/* The calendar follows the quick ranges; on a phone, where they run past
+   the edge and scroll, it stays in view at the end. */
 .when-row .chips {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
 }
 .chip-dates {
@@ -268,9 +270,11 @@
 /* WXPN Welcomes: the station's own shows, set apart as a card with a banner
    across its top, a star leading the words. Free at Noon is a quieter flag
    over the artist. */
+/* The card reaches a little past the list on each side, so its date,
+   artist and heart stay in line with every other row's. */
 .concert-row[data-welcomes] {
-  margin: 12px 0;
-  padding: 0 2px 6px 14px;
+  margin: 12px -12px;
+  padding: 0 12px 6px;
   border: 0;
   border-radius: 14px;
   overflow: hidden;
@@ -284,8 +288,8 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  margin: 0 -2px 12px -14px;
-  padding: 7px 14px;
+  margin: 0 -12px 12px;
+  padding: 7px 12px;
   background: var(--action);
   color: var(--action-ink);
   font-size: 0.75rem;
