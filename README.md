@@ -28,7 +28,7 @@ End-to-end tests (`tests/e2e`, Playwright) play the station, change station, sav
 CI runs `lint`, `format:check`, `test`, the end-to-end tests and `build` on every push and pull request, plus `npm audit` of everything the app ships (a high or critical advisory fails a branch's checks, and is flagged on `main` without blocking the preview). Pushes to `main` also deploy the preview to GitHub Pages:
 
 - **Live preview:** https://alex-colemankime.github.io/xpn-app-update/ (on a computer, with Phone, Tablet and Laptop buttons)
-- **Every screen:** https://alex-colemankime.github.io/xpn-app-update/screens/ (light and dark, from `design/screens/`)
+- **Every screen:** https://alex-colemankime.github.io/xpn-app-update/screens/ (light and dark, from `design/screens/`). To retake shots, run the **Screens** workflow (Actions › Screens, naming the shots or none for all): `tools/capture-screens.mjs` drives the built app in Chromium at the page's moment and song, and puts PNGs on the `screens-out` branch to convert to WebP for `design/screens/img`.
 
 ## Configuration
 
