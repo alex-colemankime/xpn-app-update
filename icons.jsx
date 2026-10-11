@@ -120,6 +120,14 @@ const ICONS = {
     </>,
   ],
   heartF: [solid, <path d={HEART} />],
+  // Privacy: a shield with a check.
+  shield: [
+    outline(1.7, rounded),
+    <>
+      <path d="M12 3 5 6v5.5c0 4.3 2.9 8 7 9.5 4.1-1.5 7-5.2 7-9.5V6l-7-3z" />
+      <path d="m9 12 2.2 2.2L15.5 10" />
+    </>,
+  ],
   more: [
     solid,
     <>

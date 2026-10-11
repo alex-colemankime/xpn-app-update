@@ -93,8 +93,19 @@ export function ConcertRow({ concert: c }) {
   // Midday avoids the date shifting across a timezone boundary when shown.
   const date = new Date(`${c.date}T12:00:00`);
   const Info = c.pageUrl ? "a" : "div";
+  // Where: the venue and its town (the region when the calendar names no
+  // town). The dot stays with the word before it, so a line never starts
+  // with one.
+  const where = [c.venue, c.city || c.region].filter(Boolean).join("\u00a0· ");
   return (
-    <div className="concert-row">
+    <div className="concert-row" data-welcomes={c.xpnWelcomes || undefined}>
+      {/* The station's own shows carry a banner across the top. */}
+      {c.xpnWelcomes && (
+        <p className="concert-banner" aria-hidden="true">
+          <Icon name="star" size={13} />
+          WXPN Welcomes
+        </p>
+      )}
       <div className="concert-date" aria-hidden="true">
         <span>{MONTH.format(date)}</span>
         <strong>{date.getDate()}</strong>
@@ -105,20 +116,19 @@ export function ConcertRow({ concert: c }) {
           className="concert-info"
           {...(c.pageUrl ? { href: c.pageUrl, target: "_blank", rel: "noreferrer" } : {})}
         >
-          <span className="sr-only">{FULL_DATE.format(date)}:</span>
-          {(c.xpnWelcomes || c.freeAtNoon) && (
-            <span className="concert-tags">
-              {c.xpnWelcomes && (
-                <span className="concert-tag welcomes">
-                  <Icon name="star" size={11} />
-                  WXPN Welcomes
-                </span>
-              )}
-              {c.freeAtNoon && <span className="concert-tag">Free at Noon</span>}
-            </span>
+          <span className="sr-only">
+            {c.xpnWelcomes && "WXPN Welcomes. "}
+            {FULL_DATE.format(date)}:
+          </span>
+          {c.freeAtNoon && <span className="concert-tag">Free at Noon</span>}
+          {/* "Artist / Artist": a line never starts with the slash. */}
+          <h2>{c.artist.replace(/ \/ /g, "\u00a0/ ")}</h2>
+          {(where || age) && (
+            <p className="concert-meta">
+              {where}
+              {age && <span className="concert-age">{age}</span>}
+            </p>
           )}
-          <h2>{c.artist}</h2>
-          <p className="concert-meta">{[c.venue, c.region, age].filter(Boolean).join(" · ")}</p>
         </Info>
         <div className="concert-actions">
           {c.ticketUrl && (

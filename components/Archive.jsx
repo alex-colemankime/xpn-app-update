@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Art, Empty, Icon, SkeletonList } from "../ui.jsx";
 import { SaveButton } from "./MusicRows.jsx";
 import { SHOWS } from "../catalog.js";
-import { loadArchive, useArchive } from "../archive.js";
+import { loadArchive, slotLength, useArchive } from "../archive.js";
 import { apMonths, clockTime, compactLength, lengthLabel, shortDay } from "../time.js";
 import { SKIP_AHEAD_S, SKIP_BACK_S } from "../episode-core.js";
 import {
@@ -72,7 +72,7 @@ export function EpisodeRow({ episode, gone = false }) {
     ? "Played"
     : inProgress
       ? `${compactLength(s.duration - s.position)} left`
-      : compactLength(s.duration) || "Play";
+      : compactLength(s.duration || slotLength(episode)) || "Play";
   const meta = gone
     ? "No longer in the xpn.org archive"
     : [episode.feature, !episode.aired && shortDay(episode.date)].filter(Boolean).join(" · ");
@@ -301,7 +301,10 @@ export function EpisodeDetail({ episode, show, onBack, gone = false }) {
         <Art className="episode-cover" src={showArt(episode) || show.img} alt="" />
         <div>
           <span className="eyebrow episode-when">
-            {[episode.aired || shortDay(episode.date), lengthLabel(s.duration)]
+            {[
+              episode.aired || shortDay(episode.date),
+              lengthLabel(s.duration || slotLength(episode)),
+            ]
               .filter(Boolean)
               .join(" · ")}
           </span>

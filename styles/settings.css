@@ -6,16 +6,18 @@
   max-width: 1040px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0 40px;
+  gap: 0 28px;
   align-items: start;
 }
-/* Every panel has the same anatomy: a title line (with a switch, when the
-   panel has one), a line saying what it does, rows divided by hairlines,
-   and an optional note at the end. Panels are separated by one rule and an
-   even gap, so no panel ends in a stray divider. */
+/* Every panel is a card with the same anatomy: a title line (with a switch,
+   when the panel has one), a line saying what it does, rows divided by
+   hairlines, and an optional note at the end. Cards group the settings the
+   way a phone's own Settings does, with an even gap between them. */
 .settings-panel {
-  padding: 16px 0 20px;
-  border-top: 1px solid var(--border);
+  margin-bottom: 14px;
+  padding: 8px 16px 12px;
+  border-radius: 16px;
+  background: var(--surface);
 }
 .settings-panel .section-heading {
   margin: 0;
@@ -25,11 +27,36 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 40px;
-  font-size: 1.125rem;
+  min-height: 44px;
+  font-size: 1.0625rem;
   font-weight: 650;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.01em;
   margin: 0;
+}
+/* A card that ends in rows ends on the row, not on a gap under it. */
+.settings-panel > :is(.setting-row, .social-links, .service-list):last-child,
+.settings-panel > :is(.setting-choice, .alert-row):last-child {
+  margin-bottom: -6px;
+}
+/* The station, under the cards. */
+.settings-footer {
+  display: grid;
+  gap: 2px;
+  max-width: 1040px;
+  margin: 18px 0 0;
+  padding: 0 4px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.settings-footer strong {
+  color: var(--text);
+  font-weight: 650;
+}
+.settings-footer small {
+  margin-top: 6px;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
 }
 .settings-panel > .data-note {
   margin: 12px 0 0;
@@ -416,6 +443,11 @@ button.setting-row {
     background: var(--soft-fill);
     color: var(--accent);
   }
+}
+/* In a Settings card, a hairline above each account, like every other row. */
+.settings-panel .social-row {
+  border-top: 1px solid var(--border);
+  border-bottom: 0;
 }
 .welcome .social-links {
   margin-top: 20px;

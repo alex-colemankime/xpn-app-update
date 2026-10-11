@@ -1,6 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalizeEpisodes, parseArchivePage, parsePodcastFeed, parseSource } from "../archive.js";
+import {
+  normalizeEpisodes,
+  parseArchivePage,
+  parsePodcastFeed,
+  parseSource,
+  slotLength,
+} from "../archive.js";
 import { clockTime, lengthLabel, parseDuration } from "../time.js";
 import { parseArchiveFeeds } from "../config.js";
 
@@ -154,6 +160,20 @@ test("an xpn.org show page's archive becomes broadcasts, by the day they aired",
   assert.equal(sunday.duration, null);
   assert.equal(parseArchivePage(PAGE, SLEEPY)[0].id, sunday.id, "ids are stable");
   assert.match(sunday.id, /^sleepyhollow-/);
+});
+
+test("a dated broadcast is as long as its slot until the file says otherwise", () => {
+  const [sunday] = parseArchivePage(PAGE, SLEEPY);
+  assert.equal(slotLength(sunday), 4 * 3600, "Sleepy Hollow, 6–10am");
+  // A saved copy keeps the show and when it aired, so it knows too.
+  assert.equal(
+    slotLength({ showId: "sleepyhollow", date: sunday.date, aired: sunday.aired }),
+    4 * 3600,
+  );
+  assert.equal(slotLength({ ...sunday, aired: "" }), 0, "a feature has no slot");
+  assert.equal(slotLength({ ...sunday, show: "nosuchshow" }), 0);
+  assert.equal(slotLength({ ...sunday, date: "2026-10-04T11:00:00.000Z" }), 0, "not its slot");
+  assert.equal(slotLength(null), 0);
 });
 
 test("a feature on a show page keeps its name, dated by its upload", () => {

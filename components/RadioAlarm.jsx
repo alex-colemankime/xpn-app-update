@@ -201,7 +201,11 @@ export function RadioAlarmPanel({ alarm, updateAlarm, onEnabled, onTest, testing
           <button className="setting-row full-width alarm-test" onClick={onTest}>
             <span>
               {testing ? "Stop the test" : "Test the alarm"}
-              <small>{STREAMS[alarm.streamId].label}, at the alarm volume</small>
+              <small>
+                {STREAMS[alarm.streamId].label}
+                {/* iPhone has no alarm volume of its own: its buttons set it. */}
+                {VOLUME_SETTABLE && ", at the alarm volume"}
+              </small>
             </span>
             <span className="round-key" data-on={testing || undefined} aria-hidden="true">
               <Icon name={testing ? "pause" : "play"} size={14} />

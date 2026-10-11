@@ -193,22 +193,25 @@ export function clockTime(seconds) {
   return h ? `${h}:${pad(m)}:${pad(s % 60)}` : `${m}:${pad(s % 60)}`;
 }
 
-// "Oct 1", or "Oct 1, 2025" for another year: when an episode or video aired.
-const SHORT_DAY = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
-const MEDIUM_DAY = new Intl.DateTimeFormat("en-US", {
-  month: "short",
+// "Oct. 1", "May 4", or "Sept. 30, 2025" for another year: when an episode
+// or video aired, its month shortened AP style like every date in the app.
+const DAY = new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric" });
+const DAY_AND_YEAR = new Intl.DateTimeFormat("en-US", {
+  month: "long",
   day: "numeric",
   year: "numeric",
 });
-export function shortDay(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.getFullYear() === new Date().getFullYear() ? SHORT_DAY.format(d) : MEDIUM_DAY.format(d);
+const dateOf = (iso) => {
+  const d = iso ? new Date(iso) : null;
+  return d && !Number.isNaN(d.getTime()) ? d : null;
+};
+export function shortDay(iso, now = new Date()) {
+  const d = dateOf(iso);
+  if (!d) return "";
+  return apMonths((d.getFullYear() === now.getFullYear() ? DAY : DAY_AND_YEAR).format(d));
 }
-// "Oct 1, 2026", always with the year.
+// "Oct. 1, 2026", always with the year.
 export function mediumDay(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "" : MEDIUM_DAY.format(d);
+  const d = dateOf(iso);
+  return d ? apMonths(DAY_AND_YEAR.format(d)) : "";
 }

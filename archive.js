@@ -27,6 +27,7 @@ import { withTimeout } from "./net.js";
 import { SHOWS } from "./catalog.js";
 import { decodeEntities, plainText, webUrl } from "./text.js";
 import { createStore, readJson, writeJson } from "./storage.js";
+import { slotMinutes } from "./schedule.js";
 import { calendarDay, clockLabel, easternParts, easternToEpoch, parseDuration } from "./time.js";
 
 // How long an audio link is trusted after it was read. Well inside the
@@ -179,6 +180,19 @@ export function parseArchivePage(html, { show, name = "", schedule = [] }) {
     });
   }
   return episodes.sort(newestFirst);
+}
+
+// How long a dated broadcast ran, in seconds: its slot in the show's
+// schedule that day. The length shown before the file reports its own (as a
+// podcast app shows one before playing); 0 when it isn't known (a feature, or
+// a show off the FM schedule). Works for a saved episode too, which keeps the
+// show and the moment it aired.
+export function slotLength(episode) {
+  const show = SHOWS[episode?.show || episode?.showId];
+  if (!episode?.aired || !show?.schedule?.length || !Date.parse(episode.date)) return 0;
+  const { day, time } = easternParts(new Date(episode.date));
+  const slot = show.schedule.find((s) => s.days.includes(day) && s.start === time);
+  return slot ? slotMinutes(slot) * 60 : 0;
 }
 
 // Episodes from the cache or a snapshot, checked the same way as a feed's.

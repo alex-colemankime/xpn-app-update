@@ -37,4 +37,12 @@ test("short lengths and AP months, for episode rows", async () => {
   assert.equal(apMonths("Sunday, September 27"), "Sunday, Sept. 27");
   assert.equal(apMonths("Friday, June 5"), "Friday, June 5");
   assert.equal(apMonths("September Sessions"), "September Sessions", "only a date's month");
+  const { mediumDay, shortDay } = await import("../time.js");
+  const now = new Date("2026-10-11T12:00:00");
+  assert.equal(shortDay("2026-09-30T18:00:00", now), "Sept. 30");
+  assert.equal(shortDay("2026-05-04T18:00:00", now), "May 4");
+  assert.equal(shortDay("2025-10-01T18:00:00", now), "Oct. 1, 2025");
+  assert.equal(shortDay("not a date", now), "");
+  assert.equal(mediumDay("2026-03-15T12:00:00"), "March 15, 2026");
+  assert.equal(mediumDay("2026-12-01T12:00:00"), "Dec. 1, 2026");
 });

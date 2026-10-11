@@ -52,7 +52,7 @@ function UsageReporting() {
   return (
     <section className="settings-panel">
       <h2>
-        <Icon name="settings" />
+        <Icon name="shield" />
         Privacy
       </h2>
       <div className="alert-row">
@@ -174,20 +174,14 @@ export function SettingsScreen({
                 </a>
               );
             })}
-            <p className="data-note">
-              WXPN · 88.5 FM Philadelphia
-              <br />
-              Listener-supported public radio.
-              {VERSION && (
-                <>
-                  <br />
-                  App version {VERSION}
-                </>
-              )}
-            </p>
           </section>
         </div>
       </div>
+      <p className="settings-footer">
+        <strong>WXPN 88.5 FM Philadelphia</strong>
+        Listener-supported public radio
+        {VERSION && <small>Version {VERSION}</small>}
+      </p>
     </>
   );
 }
