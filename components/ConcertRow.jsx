@@ -108,8 +108,13 @@ export function ConcertRow({ concert: c }) {
           <span className="sr-only">{FULL_DATE.format(date)}:</span>
           {(c.xpnWelcomes || c.freeAtNoon) && (
             <span className="concert-tags">
-              {c.freeAtNoon && <span>Free at Noon</span>}
-              {c.xpnWelcomes && <span>WXPN Welcomes</span>}
+              {c.xpnWelcomes && (
+                <span className="concert-tag welcomes">
+                  <Icon name="star" size={11} />
+                  WXPN Welcomes
+                </span>
+              )}
+              {c.freeAtNoon && <span className="concert-tag">Free at Noon</span>}
             </span>
           )}
           <h2>{c.artist}</h2>

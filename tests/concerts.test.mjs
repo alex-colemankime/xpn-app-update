@@ -6,6 +6,7 @@ import {
   easternToday,
   fetchConcertResult,
   filterConcerts,
+  rangeLabel,
   isoDate,
   normalizeEvent,
   upcomingConcerts,
@@ -221,6 +222,12 @@ test("filters combine: WXPN Welcomes in the Philadelphia Area, not one or the ot
   );
   assert.deepEqual(ids({ when: "weekend" }), ["welcomes-philly", "welcomes-delaware", "philly"]);
   assert.deepEqual(
+    ids({ when: "range", range: { from: "2026-10-10", to: "2026-10-20" } }),
+    ["welcomes-delaware", "philly", "lehigh"],
+    "a chosen range includes both ends",
+  );
+  assert.deepEqual(ids({ when: "range", range: { from: "2026-10-11", to: "" } }), ["lehigh"]);
+  assert.deepEqual(
     ids({ words: ["bethlehem"] }),
     ["lehigh"],
     "search reads artist, venue and city",
@@ -266,4 +273,12 @@ test("a long calendar is read to its last page; past the limit it says how far i
   const capped = await fetchConcertResult(undefined, "https://x.test/events");
   assert.equal(capped.concerts.length, 30);
   assert.equal(capped.through, capped.concerts.at(-1).date, "says how far the list reaches");
+});
+
+test("a chosen range reads short", () => {
+  assert.equal(rangeLabel({ from: "2026-10-14", to: "2026-10-20" }), "Oct 14–20");
+  assert.equal(rangeLabel({ from: "2026-10-30", to: "2026-11-02" }), "Oct 30 – Nov 2");
+  assert.equal(rangeLabel({ from: "2026-10-14", to: "2026-10-14" }), "Oct 14");
+  assert.equal(rangeLabel({ from: "2026-10-14", to: "" }), "From Oct 14");
+  assert.equal(rangeLabel({ from: "", to: "2026-10-20" }), "Through Oct 20");
 });

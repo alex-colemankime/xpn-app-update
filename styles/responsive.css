@@ -211,18 +211,30 @@
     margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
     padding-inline: var(--edge-left) var(--edge-right);
     scrollbar-width: none;
-    /* Chips fade at the screen's edge, so the row reads as one to swipe. */
+  }
+  /* Chips that run past the edge fade there, so the row reads as one to
+     swipe. */
+  .chips[data-overflow] {
     mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
   }
   .chips::-webkit-scrollbar {
     display: none;
   }
-  .filter-options .chips {
-    flex-wrap: wrap;
-    overflow: visible;
-    margin: 0;
-    padding: 0;
-    mask-image: none;
+  /* Beside the dates chip, the row bleeds to the left edge only. */
+  .when-row .chips {
+    margin-right: 0;
+    padding-right: 0;
+  }
+  .when-row,
+  .chips {
+    gap: 6px;
+  }
+  .chip {
+    padding-inline: 11px;
+    font-size: 0.875rem;
+  }
+  .chip-dates:not([aria-pressed="true"]) {
+    padding-inline: 9px;
   }
   .settings-panel {
     padding: 22px 0;

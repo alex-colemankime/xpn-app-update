@@ -158,6 +158,32 @@ export function lengthLabel(seconds) {
   return m ? `${h} hr ${m} min` : `${h} hr`;
 }
 
+// "3h 52m", "57m", "2h": a length as a podcast app writes it, short.
+export function compactLength(seconds) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "";
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
+}
+
+// "Saturday, Oct. 10": the months a date names, shortened in AP style
+// (March through July are written out).
+const AP_MONTHS = {
+  January: "Jan.",
+  February: "Feb.",
+  August: "Aug.",
+  September: "Sept.",
+  October: "Oct.",
+  November: "Nov.",
+  December: "Dec.",
+};
+export const apMonths = (text) =>
+  String(text ?? "").replace(
+    /\b(January|February|August|September|October|November|December)(?= \d)/g,
+    (month) => AP_MONTHS[month],
+  );
+
 // "4:05", "1:02:03", for a playback position in seconds.
 export function clockTime(seconds) {
   const s = Math.max(0, Math.floor(Number(seconds) || 0));

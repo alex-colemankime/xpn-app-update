@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
-import { Art, Empty, EqBars, Icon, SkeletonList } from "../ui.jsx";
+import { Art, Empty, Icon, SkeletonList } from "../ui.jsx";
 import { SaveButton } from "./MusicRows.jsx";
 import { SHOWS } from "../catalog.js";
 import { loadArchive, useArchive } from "../archive.js";
-import { clockTime, lengthLabel, shortDay } from "../time.js";
+import { apMonths, clockTime, compactLength, lengthLabel, shortDay } from "../time.js";
 import { SKIP_AHEAD_S, SKIP_BACK_S } from "../episode-core.js";
 import {
   playEpisode,
@@ -55,73 +55,55 @@ function useEpisodeState(episode) {
   };
 }
 
-// Under an episode's title: who it features, its date when the title isn't
-// one, and how long it is ("3 hr 52 min"), how much is left ("40 min left")
-// or "Played". Not the slot it aired in: that is the show's, said once at
-// the head of its episodes.
-function rowMeta(episode, { ended, started, position, duration }) {
-  const time = ended
-    ? "Played"
-    : started && duration
-      ? `${lengthLabel(duration - position)} left`
-      : lengthLabel(duration);
-  return [episode.feature, !episode.aired && shortDay(episode.date), time]
-    .filter(Boolean)
-    .join(" · ");
-}
-
-// A thin line showing how much of an episode has been heard.
-function ProgressLine({ position, duration, ended }) {
-  if (!duration || (!position && !ended)) return null;
-  const pct = ended ? 100 : Math.min(100, (position / duration) * 100);
-  return (
-    <span className="episode-progress" aria-hidden="true">
-      <i style={{ width: `${pct}%` }} />
-    </span>
-  );
-}
-
-// An episode in a list: its title (the day it aired, or who it features),
-// how long it is or how much is left, and its heart. Among one show's
-// episodes that is all; where shows mix (Favorites), the show's art and name
-// lead. As in a music app, the row itself plays it, and taps again to pause;
-// the one in the player wears the accent and the bars (still while paused),
-// and the mini player opens its page. A saved episode known to have left the
-// archive (`gone`) says so, and doesn't play.
-export function EpisodeRow({ episode, showShow = true, gone = false }) {
+// An episode in one show's list (its sheet, Shows › Archive, Favorites ›
+// Shows), as a podcast app lists them: a small play key saying how long it
+// is or how much is left, the day it aired (or who it features), and its
+// heart. The whole row plays it, and taps again to pause; the one in the
+// player is tinted, its key showing Pause while it plays, and the mini
+// player opens its page. Under the title: who a dated broadcast features,
+// and the date of one titled by who it features (the day it aired is the
+// title otherwise; the slot is the show's, said once at the head). A saved
+// episode known to have left the archive (`gone`) says so, and doesn't play.
+export function EpisodeRow({ episode, gone = false }) {
   const s = useEpisodeState(episode);
-  const meta = gone ? "No longer in the xpn.org archive" : rowMeta(episode, s);
-  const verb = s.playing || s.busy ? "Pause" : s.started && !s.ended ? "Resume" : "Play";
+  const on = s.playing || s.busy;
+  const inProgress = s.started && !s.ended && s.duration > 0;
+  const time = s.ended
+    ? "Played"
+    : inProgress
+      ? `${compactLength(s.duration - s.position)} left`
+      : compactLength(s.duration) || "Play";
+  const meta = gone
+    ? "No longer in the xpn.org archive"
+    : [episode.feature, !episode.aired && shortDay(episode.date)].filter(Boolean).join(" · ");
+  const verb = on ? "Pause" : inProgress ? "Resume" : "Play";
   const Body = gone ? "div" : "button";
   return (
-    <div
-      className="archive-row"
-      data-active={s.active || undefined}
-      data-plain={!showShow || undefined}
-    >
+    <div className="archive-row" data-active={s.active || undefined}>
       <Body
         className="archive-open"
         {...(!gone && {
           onClick: () => toggleEpisode(episode),
-          "aria-label": [`${verb} ${showName(episode)}, ${episode.title}`, meta]
-            .filter(Boolean)
+          "aria-label": [`${verb} ${showName(episode)}, ${episode.title}`, time, meta]
+            .filter((part) => part && part !== "Play")
             .join(", "),
         })}
       >
-        {showShow && <Art src={showArt(episode)} alt="" loading="lazy" />}
-        <span className="archive-text">
-          {showShow && <small className="archive-eyebrow">{showName(episode)}</small>}
-          <strong>
-            {s.active && <EqBars paused={!s.playing} />}
-            {episode.title}
-          </strong>
-          {meta && (
-            <small className="archive-meta">
-              {meta}
-              {!gone && <ProgressLine {...s} />}
-            </small>
+        <span className="archive-line">
+          {!gone && (
+            <span className="episode-key" data-on={on || undefined} aria-hidden="true">
+              <Icon name={on ? "pause" : "play"} size={12} />
+              {inProgress && (
+                <span className="episode-key-bar">
+                  <i style={{ width: `${Math.min(100, (s.position / s.duration) * 100)}%` }} />
+                </span>
+              )}
+              {time}
+            </span>
           )}
+          <strong>{apMonths(episode.title)}</strong>
         </span>
+        {meta && <small className="archive-meta">{meta}</small>}
       </Body>
       <SaveButton
         type="episodes"
@@ -166,7 +148,7 @@ export function ArchiveList({ query, onOpenShow, onClearQuery }) {
         <SkeletonList
           label="Loading the archive…"
           rowClass="archive-row"
-          artClass="archive-skeleton-art"
+          artClass="episode-key-skeleton"
         />
       );
     }
@@ -211,7 +193,7 @@ export function ArchiveList({ query, onOpenShow, onClearQuery }) {
                 onOpen={onOpenShow}
               />
               {shown.map((episode) => (
-                <EpisodeRow key={episode.id} episode={episode} showShow={false} />
+                <EpisodeRow key={episode.id} episode={episode} />
               ))}
               {episodes.length > shown.length && (
                 <button className="text-button archive-more" onClick={() => onOpenShow(id)}>
@@ -222,9 +204,6 @@ export function ArchiveList({ query, onOpenShow, onClearQuery }) {
           );
         })
       )}
-      <p className="data-note">
-        Recent broadcasts from the xpn.org archive. They play here, and keep your place.
-      </p>
     </div>
   );
 }

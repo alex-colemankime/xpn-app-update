@@ -25,3 +25,16 @@ test("clock labels read naturally", () => {
   assert.equal(clockLabel("12:00"), "noon");
   assert.equal(clockLabel("16:05"), "4:05pm");
 });
+
+test("short lengths and AP months, for episode rows", async () => {
+  const { apMonths, compactLength } = await import("../time.js");
+  assert.equal(compactLength(13920), "3h 52m");
+  assert.equal(compactLength(3420), "57m");
+  assert.equal(compactLength(7200), "2h");
+  assert.equal(compactLength(20), "1m");
+  assert.equal(compactLength(null), "");
+  assert.equal(apMonths("Saturday, October 10"), "Saturday, Oct. 10");
+  assert.equal(apMonths("Sunday, September 27"), "Sunday, Sept. 27");
+  assert.equal(apMonths("Friday, June 5"), "Friday, June 5");
+  assert.equal(apMonths("September Sessions"), "September Sessions", "only a date's month");
+});

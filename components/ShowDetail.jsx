@@ -201,7 +201,7 @@ export function ShowDetail({
                   <span className="subtle">{archived.length} recent broadcasts</span>
                 </div>
                 {archived.map((ep) => (
-                  <EpisodeRow key={ep.id} episode={ep} showShow={false} />
+                  <EpisodeRow key={ep.id} episode={ep} />
                 ))}
               </>
             )}

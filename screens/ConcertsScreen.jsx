@@ -1,21 +1,21 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Icon, Empty, PromptLink, SearchField } from "../ui.jsx";
 import { useFavoriteItems } from "../favorites.js";
 import { ConcertRow } from "../components/ConcertRow.jsx";
-import { easternToday, filterConcerts } from "../concerts.js";
+import { easternToday, filterConcerts, rangeLabel } from "../concerts.js";
 import { CALENDAR_URL, SUBMIT_CONCERT_URL } from "../links.js";
 import { mediumDay } from "../time.js";
 import { NewsletterPrompt } from "../components/Newsletter.jsx";
 
 const PAGE = 40;
 
-// The same quick ranges as the calendar on xpn.org.
+// The same quick ranges as the calendar on xpn.org. None chosen: every date.
 const WHEN = [
-  { id: "all", label: "All dates" },
   { id: "today", label: "Tonight" },
   { id: "weekend", label: "This weekend" },
   { id: "week", label: "Next 7 days" },
 ];
+const NO_RANGE = { from: "", to: "" };
 
 // With no listings to show, the way to the full calendar on xpn.org.
 const CalendarEmpty = ({ title, children }) => (
@@ -29,18 +29,88 @@ const CalendarEmpty = ({ title, children }) => (
   </div>
 );
 
-// Toggle chips for the dates: `value` is the chosen id.
-function ChipGroup({ options, value, onChange }) {
-  return options.map((o) => (
-    <button
-      key={o.id}
-      className="chip"
-      aria-pressed={value === o.id}
-      onClick={() => onChange(o.id)}
-    >
-      {o.label}
-    </button>
-  ));
+// Whether a row runs past its edge (a narrow phone), so it can fade there
+// to say there is more to swipe to.
+function useOverflow() {
+  const [over, setOver] = useState(false);
+  const ref = useCallback((el) => {
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const check = () => setOver(el.scrollWidth > el.clientWidth + 1);
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return [ref, over];
+}
+
+// The last chip: dates of the listener's own choosing, in a small sheet of
+// two date fields. Each change applies at once; Clear goes back to every date.
+function DateRangeChip({ active, range, today, onChange }) {
+  const sheet = useRef(null);
+  const label = active ? rangeLabel(range) : "";
+  const set = (next) => {
+    // A start after the end moves the end with it.
+    const fixed = next.from && next.to && next.to < next.from ? { ...next, to: next.from } : next;
+    onChange(fixed.from || fixed.to ? fixed : NO_RANGE);
+  };
+  return (
+    <>
+      <button
+        className="chip chip-dates"
+        aria-pressed={active}
+        aria-label={active ? `Dates: ${label}` : "Choose dates"}
+        popoverTarget="concert-dates"
+        style={{ anchorName: "--concert-dates" }}
+      >
+        <Icon name="navConcerts" size={18} />
+        {active && <span>{label}</span>}
+      </button>
+      <div
+        id="concert-dates"
+        ref={sheet}
+        popover="auto"
+        className="popover-menu date-range"
+        role="dialog"
+        aria-label="Choose dates"
+        style={{ positionAnchor: "--concert-dates" }}
+      >
+        <div className="popover-menu-head">
+          <span>
+            <strong>Choose dates</strong>
+            <small>Concerts from one day to another</small>
+          </span>
+        </div>
+        <div className="date-range-fields">
+          <label>
+            <span>From</span>
+            <input
+              type="date"
+              min={today}
+              value={range.from}
+              onChange={(e) => set({ ...range, from: e.target.value })}
+            />
+          </label>
+          <label>
+            <span>To</span>
+            <input
+              type="date"
+              min={range.from || today}
+              value={range.to}
+              onChange={(e) => set({ ...range, to: e.target.value })}
+            />
+          </label>
+        </div>
+        <div className="date-range-actions">
+          <button className="secondary-button" disabled={!active} onClick={() => set(NO_RANGE)}>
+            Clear
+          </button>
+          <button className="primary-button" onClick={() => sheet.current?.hidePopover()}>
+            Done
+          </button>
+        </div>
+      </div>
+    </>
+  );
 }
 
 // The refinements under "Region & more": a list of choices, any number at
@@ -72,9 +142,11 @@ function CheckGroup({ label, options, value, onChange }) {
 export function ConcertsScreen({ result }) {
   const [query, setQuery] = useState("");
   const [when, setWhen] = useState("all");
+  const [range, setRange] = useState(NO_RANGE);
   const [regions, setRegions] = useState([]);
   const [tags, setTags] = useState([]);
   const [shown, setShown] = useState(PAGE);
+  const [chipsRef, chipsOverflow] = useOverflow();
   const saved = useFavoriteItems("concerts");
   const savedIds = new Set(saved.map((c) => c.id));
   const { concerts, source, partial, through } = result;
@@ -91,10 +163,19 @@ export function ConcertsScreen({ result }) {
   ];
 
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const filtered = filterConcerts(concerts, { words, when, today, regions, tags, savedIds });
+  const filtered = filterConcerts(concerts, {
+    words,
+    when,
+    range,
+    today,
+    regions,
+    tags,
+    savedIds,
+  });
   const reset = () => {
     setQuery("");
     setWhen("all");
+    setRange(NO_RANGE);
     setRegions([]);
     setTags([]);
     setShown(PAGE);
@@ -199,8 +280,29 @@ export function ConcertsScreen({ result }) {
       {concerts.length > 0 && (
         <div className="concert-filters">
           <SearchField value={query} onChange={change(setQuery)} placeholder="Artist or venue" />
-          <div className="chips" role="group" aria-label="When">
-            <ChipGroup options={WHEN} value={when} onChange={change(setWhen)} />
+          <div className="when-row" role="group" aria-label="When">
+            <div className="chips" ref={chipsRef} data-overflow={chipsOverflow || undefined}>
+              {WHEN.map((o) => (
+                <button
+                  key={o.id}
+                  className="chip"
+                  aria-pressed={when === o.id}
+                  // The chosen range again: back to every date.
+                  onClick={() => change(setWhen)(when === o.id ? "all" : o.id)}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+            <DateRangeChip
+              active={when === "range"}
+              range={range}
+              today={today}
+              onChange={(next) => {
+                change(setRange)(next);
+                setWhen(next.from || next.to ? "range" : "all");
+              }}
+            />
           </div>
           <details className="concert-refine">
             <summary>

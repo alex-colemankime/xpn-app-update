@@ -224,9 +224,13 @@ export function subscribeAges(listener) {
 // Philadelphia Area (xpn.org's calendar can show one or the other); regions
 // chosen together mean any of them.
 //   words    search words, each found in artist, venue or city
-//   when     "all", "today", "weekend" (Friday to Sunday) or "week"
+//   when     "all", "today", "weekend" (Friday to Sunday), "week" or "range"
+//   range    for "range": { from, to } (YYYY-MM-DD; either may be "")
 //   regions  region names; tags  "welcomes", "fan" (Free at Noon), "saved"
-function inRange(date, when, today) {
+function inRange(date, when, today, range) {
+  if (when === "range") {
+    return (!range?.from || date >= range.from) && (!range?.to || date <= range.to);
+  }
   if (when === "today") return date === today;
   if (when === "week") return date >= today && date <= shiftDate(today, 6);
   if (when === "weekend") {
@@ -239,11 +243,25 @@ function inRange(date, when, today) {
   return true;
 }
 
+// "Oct 14–20", "Oct 30 – Nov 2", "From Oct 14": a chosen range, short.
+const RANGE_DAY = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
+const rangeDay = (iso) => RANGE_DAY.format(new Date(`${iso}T12:00:00`));
+export function rangeLabel({ from, to }) {
+  if (from && to) {
+    if (from === to) return rangeDay(from);
+    const [a, b] = [rangeDay(from), rangeDay(to)];
+    return from.slice(0, 7) === to.slice(0, 7) ? `${a}–${b.split(" ")[1]}` : `${a} – ${b}`;
+  }
+  if (from) return `From ${rangeDay(from)}`;
+  return to ? `Through ${rangeDay(to)}` : "";
+}
+
 export function filterConcerts(
   concerts,
   {
     words = [],
     when = "all",
+    range = null,
     today = easternToday(),
     regions = [],
     tags = [],
@@ -253,7 +271,7 @@ export function filterConcerts(
   return concerts.filter(
     (c) =>
       words.every((w) => `${c.artist} ${c.venue} ${c.city}`.toLowerCase().includes(w)) &&
-      inRange(c.date, when, today) &&
+      inRange(c.date, when, today, range) &&
       (!regions.length || c.regions.some((r) => regions.includes(r))) &&
       (!tags.includes("welcomes") || c.xpnWelcomes) &&
       (!tags.includes("fan") || c.freeAtNoon) &&

@@ -5,6 +5,7 @@
 /* Concert filters: search, then rows of chips (When, Region, Show only). */
 .concert-filters {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   margin-bottom: 8px;
 }
@@ -126,6 +127,78 @@
     background: var(--soft-fill-hover);
   }
 }
+/* The dates: the quick ranges, then a calendar for dates of one's own,
+   kept at the end of the row (the quick ranges scroll on a narrow phone),
+   which says the range once there is one. */
+.when-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.when-row .chips {
+  flex: 1;
+  min-width: 0;
+}
+.chip-dates {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-inline: 11px;
+}
+.chip-dates[aria-pressed="true"] {
+  padding-inline: 12px 14px;
+}
+
+/* Choose dates: two date fields side by side, then Clear and Done. */
+@media (min-width: 768px) {
+  .popover-menu.date-range {
+    width: 340px;
+  }
+}
+.date-range-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 6px 12px 4px;
+}
+.date-range-fields label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.date-range-fields input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid var(--control-border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 550;
+  min-width: 0;
+}
+.date-range-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 16px 12px 4px;
+}
+.popover-menu .date-range-actions button {
+  justify-content: center;
+  min-height: 46px;
+  border-radius: 10px;
+  font-weight: 650;
+  text-align: center;
+}
+.date-range-actions button:disabled {
+  opacity: 0.45;
+}
 .concert-count {
   display: flex;
   align-items: center;
@@ -192,13 +265,36 @@
 .concert-info {
   display: block;
 }
+/* WXPN Welcomes and Free at Noon: small flags over the artist, the station's
+   own shows marked with a star. */
 .concert-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 12px;
-  color: var(--accent);
-  font-size: 0.875rem;
-  font-weight: 650;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.concert-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 7px;
+  border-radius: 5px;
+  background: var(--key-lit);
+  color: var(--accent-strong);
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+.concert-tag.welcomes {
+  background: var(--action);
+  color: var(--action-ink);
+}
+@media (forced-colors: active) {
+  .concert-tag {
+    border: 1px solid CanvasText;
+  }
 }
 .concert-info h2 {
   font-size: 1.125rem;

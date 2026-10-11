@@ -199,6 +199,9 @@ h1 {
   margin-top: 20px;
 }
 .show-card {
+  /* At the top of its row: a button centers what it holds, so a card with a
+     shorter caption than its neighbor's would sit lower in the row. */
+  align-self: start;
   text-align: left;
   min-width: 0;
 }

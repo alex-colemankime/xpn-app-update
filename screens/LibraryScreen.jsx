@@ -200,7 +200,7 @@ function SavedShow({ group, gone, onOpenShow }) {
         onOpen={onOpenShow}
       />
       {episodes.map((ep) => (
-        <EpisodeRow key={ep.id} episode={ep} showShow={false} gone={gone(ep)} />
+        <EpisodeRow key={ep.id} episode={ep} gone={gone(ep)} />
       ))}
     </section>
   );

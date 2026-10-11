@@ -58,13 +58,6 @@
 .archive-more {
   margin-top: 6px;
 }
-/* Within one show's list the rows need no art: the day leads. */
-.archive-row[data-plain] {
-  contain-intrinsic-size: auto 68px;
-}
-.archive-row[data-plain] .archive-text strong {
-  font-size: 1.0625rem;
-}
 .episode-feature {
   margin: 4px 0 0;
   font-size: 1rem;
@@ -109,10 +102,10 @@
   color: var(--text);
 }
 
-/* An episode: art and show where shows mix, its title, length or time left
-   with a progress line, and its heart. The row plays it, so it answers the
-   pointer as a whole; the episode in the player is tinted, its title in the
-   accent behind the bars. Dividers inset like the song rows. */
+/* An episode: a play key with its length or time left, its title, and its
+   heart. The row plays it, so it answers the pointer as a whole; the
+   episode in the player is tinted, its title in the accent. Dividers inset
+   like the song rows. */
 .archive-row {
   display: flex;
   align-items: center;
@@ -126,7 +119,7 @@
   background-repeat: no-repeat;
   transition: background-color 0.15s;
   content-visibility: auto;
-  contain-intrinsic-size: auto 88px;
+  contain-intrinsic-size: auto 64px;
 }
 .archive-row[data-active] {
   background-color: color-mix(in srgb, var(--accent) 7%, var(--bg));
@@ -146,7 +139,7 @@
 .archive-row[data-active]:has(> button.archive-open:active) {
   background-color: color-mix(in srgb, var(--accent) 13%, var(--bg));
 }
-.archive-row[data-active] .archive-text strong {
+.archive-row[data-active] .archive-line strong {
   color: var(--accent-strong);
 }
 /* Out to the row's edges, so a tap anywhere but the heart plays. */
@@ -154,8 +147,9 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
   align-self: stretch;
   margin-block: -12px;
   margin-inline-start: -10px;
@@ -164,63 +158,74 @@
   border-radius: 10px;
   text-align: left;
 }
-.archive-open > img {
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
-  border-radius: 6px;
-  object-fit: cover;
+/* The key, then the title, on one line; a long title (a session's guest)
+   wraps beside the key. */
+.archive-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
-.archive-text {
+.archive-line strong {
   flex: 1;
   min-width: 0;
-  display: grid;
-  gap: 3px;
-}
-.archive-text strong {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
-  font-size: 1rem;
+  font-size: 1.0625rem;
   font-weight: 600;
   line-height: 1.3;
 }
-.archive-eyebrow {
-  display: flex;
-  font-size: 0.8125rem;
-  font-weight: 650;
-  color: var(--muted);
-}
 .archive-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   font-size: 0.875rem;
   color: var(--muted);
-  font-variant-numeric: tabular-nums;
 }
-.archive-row[data-active] .archive-meta {
+/* The play key, as a podcast app draws it: a small pill in the accent with
+   a play (or pause) glyph and the length, or a progress bar and the time
+   left. */
+.episode-key {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 11px 0 9px;
+  border-radius: 999px;
+  background: var(--key-lit);
   color: var(--accent-strong);
-  font-weight: 600;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
-.episode-progress {
-  flex: 0 1 72px;
+.archive-row[data-active] .episode-key {
+  background: var(--action);
+  color: var(--action-ink);
+}
+.episode-key-bar {
+  width: 20px;
   height: 3px;
   border-radius: 2px;
-  background: var(--border);
+  background: color-mix(in srgb, currentColor 28%, transparent);
   overflow: hidden;
 }
-.episode-progress i {
+.episode-key-bar i {
   display: block;
   height: 100%;
-  background: var(--accent);
+  background: currentColor;
 }
-.archive-skeleton-art {
+.episode-key-skeleton {
   flex: none;
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 28px;
+  border-radius: 999px;
+}
+@media (forced-colors: active) {
+  .episode-key {
+    border: 1px solid ButtonText;
+  }
 }
 
 /* The episode sheet. */
@@ -325,16 +330,8 @@
   }
 }
 @media (max-width: 767px) {
-  .archive-open > img,
-  .archive-skeleton-art {
-    width: 56px;
-    height: 56px;
-  }
-  .archive-open {
-    gap: 12px;
-  }
-  .archive-text strong {
-    font-size: 0.9375rem;
+  .archive-line strong {
+    font-size: 1rem;
   }
   .episode-cover {
     width: 96px;
