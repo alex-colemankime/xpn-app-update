@@ -222,7 +222,6 @@ export default function App() {
           key={show.id}
           show={show}
           episodeId={route.episodeId}
-          onOpenEpisode={route.openEpisode}
           onCloseEpisode={route.closeEpisode}
           onClose={route.closeShow}
           onListen={() => route.navigate("listen")}

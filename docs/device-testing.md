@@ -35,8 +35,9 @@ what you did, what happened, and a screen recording if you can.
 
 ## Archive
 
-- [ ] Play an episode from Shows › Archive; skip back 15 and ahead 30; the
-      lock screen shows the episode with skip and the scrubber.
+- [ ] Tap an episode in Shows › Archive: it plays, its row turns orange;
+      tap it again: it pauses. Skip back 15 and ahead 30; the lock screen
+      shows the episode with skip and the scrubber.
 - [ ] Pause, close the app fully, reopen: the episode resumes where it was.
 - [ ] Save an episode, wait an hour, play it from Favorites: it plays (the
       link is read again).

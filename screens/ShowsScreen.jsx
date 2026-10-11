@@ -62,7 +62,6 @@ export function ShowsScreen({ onOpen }) {
       {mode === "Archive" ? (
         <ArchiveList
           query={query}
-          onOpen={(episode) => onOpen(episode.show, episode.id)}
           onOpenShow={(id) => onOpen(id)}
           onClearQuery={() => setQuery("")}
         />

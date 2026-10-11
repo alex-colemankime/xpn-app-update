@@ -104,13 +104,9 @@ const actions = {
   openShow(showId, episodeId = null) {
     push({ screen: current().screen, showId, episodeId }, { depth: depth() + 1 });
   },
-  // Drilling into an episode from inside the sheet is undone by Back.
-  openEpisode(episodeId) {
-    push({ ...current(), episodeId }, { depth: depth() + 1, fromShow: true });
-  },
+  // An episode's page (opened from the mini player) gives way to its show's.
   closeEpisode() {
-    if (window.history.state?.fromShow) window.history.back();
-    else replace({ ...current(), episodeId: null });
+    replace({ ...current(), episodeId: null });
   },
   closeShow() {
     const d = depth();

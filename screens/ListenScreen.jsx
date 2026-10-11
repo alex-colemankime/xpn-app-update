@@ -5,7 +5,7 @@ import { STATION_OPTIONS } from "../streams.js";
 import { useLiveSong } from "../nowplaying.js";
 import { onAirAt } from "../catalog.js";
 import { playbackText, statusLine } from "../playback-text.js";
-import { Icon, Art, Wordmark, Segmented, SkeletonList } from "../ui.jsx";
+import { Icon, Art, EqBars, Wordmark, Segmented, SkeletonList } from "../ui.jsx";
 import { SaveSong, SongMenu, TrackRow } from "../components/MusicRows.jsx";
 import { OnAir, videoOfShow } from "../components/OnAir.jsx";
 import { SleepTimer } from "../components/SleepTimer.jsx";
@@ -18,15 +18,6 @@ import { PLAYLIST_URL } from "../links.js";
 
 const RECENT_PREVIEW = 6;
 const RECENT_MAX = 50;
-
-// Three bars that dance while audio plays: the universal "this is live" cue.
-const EqBars = () => (
-  <span className="eq" aria-hidden="true">
-    <i />
-    <i />
-    <i />
-  </span>
-);
 
 // While Listen is in front, the page takes a light wash of the playing
 // song's artwork color (styles/base.css, data-art-wash). Artwork with no

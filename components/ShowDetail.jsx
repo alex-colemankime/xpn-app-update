@@ -108,7 +108,6 @@ function ShowVideos({ show, onNavigate, onWatch }) {
 export function ShowDetail({
   show,
   episodeId,
-  onOpenEpisode,
   onCloseEpisode,
   onClose,
   onListen,
@@ -202,12 +201,7 @@ export function ShowDetail({
                   <span className="subtle">{archived.length} recent broadcasts</span>
                 </div>
                 {archived.map((ep) => (
-                  <EpisodeRow
-                    key={ep.id}
-                    episode={ep}
-                    showShow={false}
-                    onOpen={(e) => onOpenEpisode(e.id)}
-                  />
+                  <EpisodeRow key={ep.id} episode={ep} showShow={false} />
                 ))}
               </>
             )}

@@ -1,8 +1,9 @@
-import { Art, Icon } from "../ui.jsx";
+import { Art } from "../ui.jsx";
 import { clockTime, lengthLabel, shortDay } from "../time.js";
 
-// One video: its poster with the length on it, then who and what. The hero
-// is the same card, larger, for the newest video.
+// One video: its poster with the length on it, then who and what; the whole
+// card plays it, as on any video service, so no play badge sits on the
+// picture. The hero is the same card, larger, for the newest video.
 export function VideoCard({ video, onWatch, hero = false }) {
   const label = [video.artist, video.detail, lengthLabel(video.duration)]
     .filter(Boolean)
@@ -15,9 +16,6 @@ export function VideoCard({ video, onWatch, hero = false }) {
     >
       <span className="video-thumb">
         <Art src={video.poster} alt="" loading={hero ? "eager" : "lazy"} />
-        <span className="video-play" aria-hidden="true">
-          <Icon name="play" size={hero ? 26 : 18} />
-        </span>
         {video.duration && (
           <span className="video-length" aria-hidden="true">
             {clockTime(video.duration)}

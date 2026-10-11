@@ -11,7 +11,10 @@
 // Needs the app built as the preview is (VITE_SHOW_SAMPLES=true) and served
 // at SCREENS_BASE_URL, and Playwright's Chromium. Songs' artwork comes from
 // Apple's catalog and the concert calendar is xpn.org's own for that week,
-// both read live; everything else the app would fetch is answered here.
+// both read live. The videos are the collections as fetch-video-fixtures.mjs
+// saved them (the screens-fixtures branch, checked out at SCREENS_FIXTURES);
+// the archive is that week's broadcasts, written here; everything else the
+// app would fetch is answered here too.
 import { chromium, webkit } from "@playwright/test";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 
@@ -19,7 +22,7 @@ const BASE = process.env.SCREENS_BASE_URL || "http://127.0.0.1:4173/";
 const OUT = process.env.SCREENS_OUT || "screens-out";
 const NOW = new Date("2026-10-06T15:02:00-04:00");
 const WEEK = { from: "2026-10-06", to: "2026-10-11" };
-const CORS = { "access-control-allow-origin": "*" };
+const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "*" };
 const SILENCE = await readFile(new URL("../tests/e2e/fixtures/silence.mp3", import.meta.url));
 
 // The song on the air, then the rest of the saved songs, newest first.
@@ -104,8 +107,156 @@ const playlist = () =>
     timeslice: easternStamp(minutesAgo(2 + i * 4)),
   }));
 
-// The saved songs, as Favorites keeps them (favorites.js).
+// The xpn.org archive that week, as each show's page lists its broadcasts
+// (archive.js, parseArchivePage): dated ones by the day they aired, World
+// Cafe's by who they feature. Every file is four hours of silence.
+const ARCHIVE = {
+  "sleepy-hollow": {
+    name: "Sleepy Hollow",
+    show: "sleepyhollow",
+    dates: [
+      "10.04",
+      "10.03",
+      "09.27",
+      "09.26",
+      "09.20",
+      "09.19",
+      "09.13",
+      "09.12",
+      "09.06",
+      "09.05",
+    ],
+  },
+  "land-of-the-lost": {
+    name: "Land of the Lost",
+    show: "landlost",
+    dates: ["10.02", "09.25", "09.11", "09.04", "08.28", "08.21", "08.14", "08.07", "07.31"],
+  },
+  "funky-friday": {
+    name: "Funky Friday",
+    show: "funky",
+    dates: ["10.02", "09.25", "09.18", "09.11", "09.04"],
+  },
+  "world-cafe": {
+    name: "World Cafe",
+    show: "worldcafe",
+    features: [
+      ["Waxahatchee in the studio", "0930"],
+      ["Friko", "0924"],
+      ["Julia Jacklin", "0916"],
+    ],
+  },
+};
+// As archive.js names episodes: the show, then a hash of the page's id.
+function shortHash(text) {
+  let h = 5381;
+  for (let i = 0; i < text.length; i++) h = (h * 33) ^ text.charCodeAt(i);
+  return (h >>> 0).toString(36);
+}
+const archiveTracks = (slug) => {
+  const { name, show, dates = [], features = [] } = ARCHIVE[slug];
+  return [
+    ...dates.map((day) => ({
+      title: `${name} - ${day}.2026`,
+      stamp: `2026${day.replace(".", "")}`,
+    })),
+    ...features.map(([who, day]) => ({ title: `${who} on ${name}`, stamp: `2026${day}` })),
+  ].map((track) => ({ ...track, guid: `screens-${show}-${track.stamp}` }));
+};
+const archivePage = (slug) =>
+  archiveTracks(slug)
+    .map(
+      ({ title, stamp, guid }) =>
+        `<div data-track-url="https://xpn.org/wp-content/uploads/archive/${stamp}060000_${slug}.mp3"` +
+        ` data-track-title="${title}" data-track-guid="${guid}"></div>`,
+    )
+    .join("\n");
+const episodeId = (slug, index) =>
+  `${ARCHIVE[slug].show}-${shortHash(archiveTracks(slug)[index].guid)}`;
+// Four hours of silence as an MP3: one silent frame (MPEG-2.5 layer III,
+// 8 kHz mono at 8 kbps: 72 bytes, 72 ms) over and over, 3 hr 52 min long,
+// so an episode plays and tells its length as a broadcast's file would.
+const EPISODE_AUDIO = (() => {
+  const frame = Buffer.alloc(72);
+  frame.set([0xff, 0xe3, 0x18, 0xc0]);
+  return Buffer.concat(Array(193330).fill(frame));
+})();
+
+// The video collections, and each video's thumbnail, from SCREENS_FIXTURES
+// (null without them: the video shots are then skipped).
+const FIXTURES = process.env.SCREENS_FIXTURES || "screens-fixtures";
+const VIDEOS = await readFile(`${FIXTURES}/videos.json`, "utf8")
+  .then(JSON.parse)
+  .catch(() => null);
+const POSTERS = "https://cf-images.us-east-1.prod.boltdns.net/screens/";
+const withPoster = (video) => ({ ...video, poster: `${POSTERS}${video.id}.jpg` });
+const videoById = (id) =>
+  withPoster(
+    Object.values(VIDEOS || {})
+      .flat()
+      .find((video) => video.id === id) || { id },
+  );
+// A saved video as Favorites keeps it (videos.js, savedVideoItem).
+const savedVideo = (id, savedAt) => {
+  const video = videoById(id);
+  const artist = video.custom_fields?.artist_performer || "";
+  const detail = video.name
+    .slice(artist.length)
+    .replace(/^\s*(?:[-–—:|]|on\b)\s*/i, "")
+    .replace(/\s*\|\s*/g, " · ");
+  return {
+    id,
+    name: video.name,
+    artist,
+    detail,
+    poster: video.poster,
+    duration: Math.round(video.duration / 1000),
+    published: video.published_at || "",
+    tags: video.tags || [],
+    savedAt,
+  };
+};
+// A saved episode as Favorites keeps it (Archive.jsx, savedEpisodeItem).
+const savedEpisode = (slug, index, title, extra) => ({
+  id: episodeId(slug, index),
+  show: ARCHIVE[slug].show,
+  showId: ARCHIVE[slug].show,
+  showName: ARCHIVE[slug].name,
+  title,
+  image: `/shows/${ARCHIVE[slug].show}.jpg`,
+  ...extra,
+});
+
+// What's saved, as Favorites keeps it (favorites.js): the songs; World Cafe,
+// followed; two Funky Friday broadcasts and a World Cafe session; three
+// videos.
 const favorites = () => ({
+  shows: { worldcafe: { id: "worldcafe", name: "World Cafe", savedAt: +minutesAgo(90) } },
+  episodes: Object.fromEntries(
+    [
+      savedEpisode("funky-friday", 0, "Friday, October 2", {
+        date: "2026-10-02T20:00:00.000Z",
+        aired: "4pm–7pm",
+        savedAt: +minutesAgo(30),
+      }),
+      savedEpisode("funky-friday", 1, "Friday, September 25", {
+        date: "2026-09-25T20:00:00.000Z",
+        aired: "4pm–7pm",
+        savedAt: +minutesAgo(31),
+      }),
+      savedEpisode("world-cafe", 0, "Waxahatchee in the studio", {
+        date: "2026-09-30T18:00:00.000Z",
+        duration: 3420,
+        savedAt: +minutesAgo(60),
+      }),
+    ].map((episode) => [episode.id, episode]),
+  ),
+  videos: Object.fromEntries(
+    ["6405196152112", "6405626990112", "6405198430112"].map((id, i) => [
+      id,
+      savedVideo(id, +minutesAgo(40 + i)),
+    ]),
+  ),
   songs: Object.fromEntries(
     SONGS.map((song, i) => {
       const [date, time] = easternStamp(minutesAgo(2 + i * 4)).split(" ");
@@ -142,6 +293,52 @@ const scrollToEnd = async (page) => {
   );
   await page.waitForTimeout(600);
 };
+// Scrolls whatever holds `locator` (the page, or a sheet) to put it near
+// the top, under the sheet's heading.
+const scrollToTop = async (page, locator, gap = 96) => {
+  await locator.evaluate((el, gap) => {
+    el.scrollIntoView({ block: "start" });
+    let box = el.parentElement;
+    while (
+      box &&
+      !(
+        box.scrollHeight > box.clientHeight &&
+        /auto|scroll/.test(globalThis.getComputedStyle(box).overflowY)
+      )
+    )
+      box = box.parentElement;
+    (box || globalThis.document.scrollingElement).scrollBy(0, -gap);
+  }, gap);
+  await page.waitForTimeout(600);
+};
+// Shows › Archive, its broadcasts listed.
+const openArchive = async (page) => {
+  await page.goto(`${BASE}#/shows`);
+  await page.getByLabel("Browse shows").getByRole("button", { name: "Archive" }).click();
+  await page.locator(".archive-row button.archive-open").first().waitFor({ timeout: 10000 });
+};
+// An episode playing: its row tapped, then the mini player showing it.
+const playEpisodeRow = async (page, index) => {
+  await page.locator(".archive-row button.archive-open").nth(index).click();
+  await page
+    .locator('.player-bar[data-source="episode"][data-playing]')
+    .waitFor({ timeout: 10000 });
+  await page.waitForTimeout(2500);
+};
+const needVideos = () => {
+  if (!VIDEOS) throw new Error(`no video fixtures in ${FIXTURES}`);
+};
+// The Videos tab, its collections loaded.
+const openVideos = async (page) => {
+  needVideos();
+  await page.goto(`${BASE}#/videos`);
+  await page.locator(".video-card img").first().waitFor({ timeout: 10000 });
+};
+const favoritesTab = async (page, tab) => {
+  await page.goto(`${BASE}#/favorites`);
+  await page.getByLabel("Favorites category").getByRole("button", { name: tab }).click();
+};
+
 // The station playing, as the mini player shows it ("Live").
 // Audio doesn't always start in a headless browser: then the shot shows the
 // station paused, and the notes say so.
@@ -188,6 +385,85 @@ const SHOTS = {
     await settle(page);
     await scrollToEnd(page);
   },
+  // Shows › Archive: each show's latest broadcasts.
+  "phone-archive": async (page) => {
+    await openArchive(page);
+    await settle(page);
+  },
+  // The newest broadcast playing from its row, in the mini player too.
+  "phone-episode-bar": async (page) => {
+    await openArchive(page);
+    await playEpisodeRow(page, 0);
+    await settle(page);
+  },
+  // World Cafe's sheet, from the top.
+  "phone-sheet": async (page) => {
+    needVideos();
+    await page.goto(`${BASE}#/shows/show/worldcafe`);
+    await page
+      .getByRole("dialog", { name: "World Cafe" })
+      .locator(".video-card img")
+      .first()
+      .waitFor();
+    await settle(page);
+  },
+  // World Cafe's sheet at its videos.
+  "phone-sheet-videos": async (page) => {
+    needVideos();
+    await page.goto(`${BASE}#/shows/show/worldcafe`);
+    const sheet = page.getByRole("dialog", { name: "World Cafe" });
+    await sheet.locator(".video-card img").first().waitFor();
+    await settle(page);
+    await scrollToTop(page, sheet.getByRole("heading", { name: "Videos" }));
+  },
+  // Videos, World Cafe: the newest large, then the rest.
+  "phone-videos": async (page) => {
+    await openVideos(page);
+    await settle(page);
+  },
+  // Videos, WXPN, scrolled to the list.
+  "phone-videos-list": async (page) => {
+    await openVideos(page);
+    await page.getByRole("button", { name: "WXPN", exact: true }).click();
+    await page.waitForTimeout(600);
+    await settle(page);
+    await scrollToTop(page, page.locator(".video-hero .video-text"), 120);
+  },
+  // Favorites › Shows: World Cafe followed, Funky Friday's saved broadcasts.
+  "phone-fav-shows": async (page) => {
+    await favoritesTab(page, "Shows");
+    await page.locator(".saved-shows .archive-row").first().waitFor();
+    await settle(page);
+  },
+  // Favorites › Videos.
+  "phone-fav-videos": async (page) => {
+    needVideos();
+    await favoritesTab(page, "Videos");
+    await page.locator(".saved-videos .video-card img").first().waitFor();
+    await settle(page);
+  },
+  // Desktop: the archive with the second broadcast playing.
+  "desk-archive": async (page) => {
+    await openArchive(page);
+    await playEpisodeRow(page, 1);
+    await settle(page);
+  },
+  // Desktop: Videos.
+  "desk-videos": async (page) => {
+    await openVideos(page);
+    await settle(page);
+  },
+  // Desktop: World Cafe's sheet over the schedule.
+  "desk-sheet": async (page) => {
+    needVideos();
+    await page.goto(`${BASE}#/shows/show/worldcafe`);
+    await page
+      .getByRole("dialog", { name: "World Cafe" })
+      .locator(".video-card img")
+      .first()
+      .waitFor();
+    await settle(page);
+  },
 };
 
 const wanted = process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(SHOTS);
@@ -212,16 +488,29 @@ const browser =
   process.env.SCREENS_BROWSER === "webkit"
     ? await webkit.launch()
     : await chromium.launch({
-        args: ["--autoplay-policy=no-user-gesture-required"],
+        // No scrollbars in the desktop shots, as on a Mac.
+        args: ["--autoplay-policy=no-user-gesture-required", "--hide-scrollbars"],
         // A browser already on the machine (PLAYWRIGHT_CHROMIUM), else Playwright's own.
         executablePath: process.env.PLAYWRIGHT_CHROMIUM || undefined,
       });
-for (const theme of ["light", "dark"]) {
-  const context = await browser.newContext({
+// Phone shots at an iPhone's size; "desk-" shots in a laptop's window.
+const DEVICES = {
+  phone: {
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 2,
     isMobile: true,
     hasTouch: true,
+  },
+  desk: { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1.25 },
+};
+const deviceOf = (name) => (name.startsWith("desk-") ? "desk" : "phone");
+for (const [theme, device] of ["light", "dark"].flatMap((t) =>
+  Object.keys(DEVICES).map((d) => [t, d]),
+)) {
+  const shots = wanted.filter((name) => deviceOf(name) === device);
+  if (!shots.length) continue;
+  const context = await browser.newContext({
+    ...DEVICES[device],
     colorScheme: theme,
     locale: "en-US",
     timezoneId: "America/New_York",
@@ -237,7 +526,7 @@ for (const theme of ["light", "dark"]) {
     },
     { appearance: theme, saved: favorites() },
   );
-  await context.route("**/*", (route) => {
+  await context.route("**/*", async (route) => {
     const url = new URL(route.request().url());
     if (url.origin === new URL(BASE).origin) return route.continue();
     if (/\/json\/\d{4}-\d\d-\d\d\.json$/.test(url.pathname)) return json(route, playlist());
@@ -253,6 +542,38 @@ for (const theme of ["light", "dark"]) {
         body: ART.get(url.href),
       });
     }
+    if (url.hostname === "xpn.org" && url.pathname.startsWith("/program/")) {
+      const slug = url.pathname.split("/")[2];
+      if (!ARCHIVE[slug]) return route.fulfill({ status: 404, body: "" });
+      return route.fulfill({
+        status: 200,
+        contentType: "text/html",
+        headers: CORS,
+        body: archivePage(slug),
+      });
+    }
+    if (url.hostname === "xpn.org" && url.pathname.startsWith("/wp-content/uploads/archive/")) {
+      return route.fulfill({ status: 200, contentType: "audio/mpeg", body: EPISODE_AUDIO });
+    }
+    if (url.hostname === "players.brightcove.net" && url.pathname.endsWith("/config.json")) {
+      return json(route, { video_cloud: { policy_key: "screens" } });
+    }
+    if (url.hostname === "edge.api.brightcove.com") {
+      if (route.request().method() === "OPTIONS") {
+        return route.fulfill({ status: 204, headers: CORS, body: "" });
+      }
+      const playlist = /\/playlists\/(\d+)/.exec(url.pathname)?.[1];
+      const first = Number(url.searchParams.get("offset") || 0) === 0;
+      const videos = first && VIDEOS?.[playlist] ? VIDEOS[playlist].map(withPoster) : [];
+      return json(route, { videos });
+    }
+    if (url.href.startsWith(POSTERS)) {
+      const poster = await readFile(`${FIXTURES}/${url.pathname.split("/").pop()}`).catch(
+        () => null,
+      );
+      if (!poster) return route.fulfill({ status: 404, body: "" });
+      return route.fulfill({ status: 200, contentType: "image/jpeg", headers: CORS, body: poster });
+    }
     if (/\.xpn\.org$/.test(url.hostname) && /mp3|nopreroll/.test(url.pathname)) {
       return route.fulfill({ status: 200, contentType: "audio/mpeg", body: SILENCE });
     }
@@ -265,7 +586,7 @@ for (const theme of ["light", "dark"]) {
     }
     return route.fulfill({ status: 404, body: "" });
   });
-  for (const name of wanted) {
+  for (const name of shots) {
     const page = await context.newPage();
     await page.clock.setFixedTime(NOW);
     try {

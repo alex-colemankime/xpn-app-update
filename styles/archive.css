@@ -109,8 +109,10 @@
   color: var(--text);
 }
 
-/* An episode: art, show and date, title, time left with a progress line,
-   its heart and its play key. Dividers inset like the song rows. */
+/* An episode: art and show where shows mix, its title, length or time left
+   with a progress line, and its heart. The row plays it, so it answers the
+   pointer as a whole; the episode in the player is tinted, its title in the
+   accent behind the bars. Dividers inset like the song rows. */
 .archive-row {
   display: flex;
   align-items: center;
@@ -122,6 +124,7 @@
   background-size: calc(100% - 20px) 1px;
   background-position: 50% 100%;
   background-repeat: no-repeat;
+  transition: background-color 0.15s;
   content-visibility: auto;
   contain-intrinsic-size: auto 88px;
 }
@@ -129,12 +132,36 @@
   background-color: color-mix(in srgb, var(--accent) 7%, var(--bg));
   background-image: none;
 }
+@media (hover: hover) {
+  .archive-row:has(> button.archive-open:hover) {
+    background-color: color-mix(in srgb, var(--text) 4%, var(--bg));
+  }
+  .archive-row[data-active]:has(> button.archive-open:hover) {
+    background-color: color-mix(in srgb, var(--accent) 10%, var(--bg));
+  }
+}
+.archive-row:has(> button.archive-open:active) {
+  background-color: color-mix(in srgb, var(--text) 8%, var(--bg));
+}
+.archive-row[data-active]:has(> button.archive-open:active) {
+  background-color: color-mix(in srgb, var(--accent) 13%, var(--bg));
+}
+.archive-row[data-active] .archive-text strong {
+  color: var(--accent-strong);
+}
+/* Out to the row's edges, so a tap anywhere but the heart plays. */
 .archive-open {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
   gap: 14px;
+  align-self: stretch;
+  margin-block: -12px;
+  margin-inline-start: -10px;
+  padding-block: 12px;
+  padding-inline-start: 10px;
+  border-radius: 10px;
   text-align: left;
 }
 .archive-open > img {
@@ -178,13 +205,6 @@
   color: var(--accent-strong);
   font-weight: 600;
 }
-.eq-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: live-pulse 2s ease-in-out infinite;
-}
 .episode-progress {
   flex: 0 1 72px;
   height: 3px;
@@ -201,67 +221,6 @@
   flex: none;
   width: 64px;
   height: 64px;
-}
-
-/* The play key on a row: a solid round key in the text color, orange while
-   its episode plays. Once an episode is started and not finished, a thin
-   ring around the key fills with how much has been heard. */
-.episode-key {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  color: var(--bg);
-  isolation: isolate;
-}
-.episode-key::before {
-  content: "";
-  position: absolute;
-  inset: 4px;
-  z-index: -1;
-  border-radius: 50%;
-  background: var(--text);
-  transition:
-    background-color 0.15s,
-    transform 0.15s;
-}
-.episode-key[data-heard]::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(var(--accent) var(--heard), var(--border) 0);
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
-  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
-}
-.episode-key[data-on] {
-  color: var(--action-ink);
-}
-.episode-key[data-on]::before {
-  background: var(--action);
-}
-.episode-key[data-busy]::before {
-  animation: busy-pulse 0.9s ease-in-out infinite alternate;
-}
-@media (hover: hover) {
-  .episode-key:not([data-on]):hover::before {
-    background: var(--accent-strong);
-  }
-}
-.episode-key:active::before {
-  transform: scale(0.92);
-}
-@media (forced-colors: active) {
-  .episode-key::before {
-    border: 2px solid ButtonText;
-    background: Canvas;
-  }
-  .episode-key {
-    color: ButtonText;
-  }
 }
 
 /* The episode sheet. */

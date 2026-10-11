@@ -37,6 +37,13 @@ jobs:
           node-version: 24
           cache: npm
 
+      # The video collections the shots show (tools/fetch-video-fixtures.mjs).
+      - name: Checkout the video fixtures
+        uses: actions/checkout@v6
+        with:
+          ref: screens-fixtures
+          path: screens-fixtures
+
       - name: Install dependencies
         run: npm ci
 

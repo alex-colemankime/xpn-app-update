@@ -147,6 +147,30 @@ test("a show with a saved episode can be followed from Favorites", async ({ page
   await expect(group.getByText("Not following")).toBeHidden();
 });
 
+test("an archive episode plays from its row, and pauses from it", async ({ page }) => {
+  // Sleepy Hollow's page on xpn.org lists one broadcast (archive.js); the
+  // other shows' pages are unavailable.
+  await page.route(/xpn\.org\/program\/sleepy-hollow\//, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "text/html",
+      headers: { "access-control-allow-origin": "*" },
+      body: '<div data-track-url="https://media.xpn.org/archive/20261004060000_sh.mp3" data-track-title="Sleepy Hollow - 10.04.2026" data-track-guid="sh-1004"></div>',
+    }),
+  );
+  await page.goto("/#/shows");
+  await page.getByLabel("Browse shows").getByRole("button", { name: "Archive" }).click();
+  const episode = "Sleepy Hollow, Sunday, October 4";
+  await page.getByRole("button", { name: new RegExp(`^Play ${episode}`) }).click();
+  await expect(page.getByRole("contentinfo", { name: "Archive player" })).toBeVisible();
+  const pause = page.getByRole("button", { name: new RegExp(`^Pause ${episode}`) });
+  await pause.click();
+  await expect(pause).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: new RegExp(`^(Resume|Play) ${episode}`) }),
+  ).toBeVisible();
+});
+
 test("concerts switched off by the station fetch no listings", async ({ page, context }) => {
   await context.addInitScript(() =>
     localStorage.setItem("xpn.remote-config", JSON.stringify({ off: ["concerts"] })),
