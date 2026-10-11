@@ -238,38 +238,79 @@ h1 {
   padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
-/* A saved song in Favorites, on a band of its artwork's color at the page's
-   own lightness (like Listen's), so its text and heart keep their contrast.
-   The band runs the full width of the screen and dissolves at its top and
-   bottom: a smooth fade, with grain scattered past it (styles/grain.css),
-   so each song's color breaks up into the page like a print rather than
-   ending at an edge, and the page shows through between songs. */
+/* Saved songs in Favorites, on bands of their artwork's colors at the
+   page's own lightness (like Listen's), so text and hearts keep their
+   contrast. The bands run the full width of the screen, one straight into
+   the next with no page between them: across each line between two songs,
+   the lower song's color comes in through the grain over the upper one's,
+   a few specks at first, then more, until it has taken over (--blend-in,
+   styles/grain.css). A song without a color of its own is on the page's
+   color, so a neighbor's color dissolves into the page the same way, as it
+   does at the top and bottom of the list.
+   Every band sits in one layer under all the songs (.saved-songs), later
+   bands over earlier ones, so a band never covers the song above it. */
 @supports (color: oklch(from red l c h)) {
-  .track-row[data-tinted] {
-    position: relative;
+  .saved-songs {
     isolation: isolate;
+    /* How far the blend reaches across the line between two songs (half
+       above it, half below): the height of the --blend-in tile. */
+    --blend: 44px;
+    padding-block: calc(var(--blend) / 2);
+  }
+  .saved-songs > .track-row {
+    position: relative;
     margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
     padding: 16px var(--edge-right) 16px var(--edge-left);
     border-bottom: 0;
-    --band: oklch(from color-mix(in srgb, var(--tint-light) 22%, var(--paper)) var(--paper-l) c h);
+    /* A band reaches past its row, which a skipped off-screen row would clip. */
+    content-visibility: visible;
+    --band: var(--bg);
   }
-  :root[data-theme="dark"] .track-row[data-tinted] {
-    --band: oklch(from color-mix(in srgb, var(--tint-dark) 20%, var(--paper)) var(--paper-l) c h);
+  .saved-songs > .track-row[data-tinted] {
+    --band: oklch(from color-mix(in srgb, var(--tint-light) 32%, var(--paper)) var(--paper-l) c h);
   }
-  /* The band's own fade parts it from the row before; no hairline too. */
-  .track-row:has(+ .track-row[data-tinted]) {
-    border-bottom-color: transparent;
+  :root[data-theme="dark"] .saved-songs > .track-row[data-tinted] {
+    --band: oklch(from color-mix(in srgb, var(--tint-dark) 34%, var(--paper)) var(--paper-l) c h);
   }
-  .track-row[data-tinted]::before {
+  /* The band: from halfway across the line above the row to halfway across
+     the line below it, coming in over the band before through the dither,
+     then solid. Mask layers that never overlap, so no compositing is
+     needed (Safari composites masks its own way). */
+  .saved-songs > .track-row::before {
     content: "";
     position: absolute;
-    inset: 0;
+    inset: calc(var(--blend) / -2) 0;
     z-index: -1;
     background-color: var(--band);
-    /* Where grain can't shape the edge (styles/grain.css), a plain fade. */
-    -webkit-mask-image: var(--band-fade);
-    mask-image: var(--band-fade);
-    --band-fade: linear-gradient(transparent, #000 24%, #000 76%, transparent);
+    mask-image: var(--blend-in), linear-gradient(#000, #000);
+    mask-size:
+      160px var(--blend),
+      100% calc(100% - var(--blend));
+    mask-position:
+      0 0,
+      0 var(--blend);
+    mask-repeat: repeat-x, no-repeat;
+  }
+  /* The last song's color goes out into the page the same way. */
+  .saved-songs > .track-row:last-child::before {
+    mask-image: var(--blend-in), linear-gradient(#000, #000), var(--blend-out);
+    mask-size:
+      160px var(--blend),
+      100% calc(100% - 2 * var(--blend)),
+      160px var(--blend);
+    mask-position:
+      0 0,
+      0 var(--blend),
+      0 100%;
+    mask-repeat: repeat-x, no-repeat, repeat-x;
+  }
+  /* Two songs on the page's color in a row: a hairline between them, as in
+     every other list. */
+  .saved-songs > .track-row:not([data-tinted]):has(+ .track-row:not([data-tinted]))::after {
+    content: "";
+    position: absolute;
+    inset: auto var(--edge-right) 0 var(--edge-left);
+    border-bottom: 1px solid var(--border);
   }
 }
 .share-songs {

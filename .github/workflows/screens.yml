@@ -3,8 +3,8 @@ name: Screens
 # Retakes screenshots for the screens page (design/screens) from the built
 # app, with tools/capture-screens.mjs, and puts them on the screens-out
 # branch (and in the "screens" artifact); they go into design/screens/img as
-# WebP. Run it by hand (naming shots, or all of them), or it runs when the
-# script changes on a branch.
+# WebP. Run it by hand (naming shots, or all of them), or it runs on a
+# branch when the script or the app's look changes, to see the change.
 on:
   workflow_dispatch:
     inputs:
@@ -17,6 +17,9 @@ on:
     paths:
       - tools/capture-screens.mjs
       - .github/workflows/screens.yml
+      - styles/**
+      - screens/**
+      - components/**
 
 permissions:
   contents: write # the screens-out branch
@@ -37,8 +40,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
 
       # As the preview is built: the sample station updates, no reporting.
       - name: Build
@@ -54,6 +57,9 @@ jobs:
           npx vite preview --host 127.0.0.1 --port 4173 --strictPort &
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
           node tools/capture-screens.mjs $SHOTS
+          # Favorites in WebKit too, Safari's engine, to check the iPhone
+          # draws its bands as Chromium does (not for the screens page).
+          SCREENS_BROWSER=webkit SCREENS_OUT=screens-out/webkit node tools/capture-screens.mjs phone-favorites
 
       - name: Upload the screenshots
         uses: actions/upload-artifact@v4

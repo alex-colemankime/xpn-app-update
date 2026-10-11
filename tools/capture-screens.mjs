@@ -12,7 +12,7 @@
 // at SCREENS_BASE_URL, and Playwright's Chromium. Songs' artwork comes from
 // Apple's catalog and the concert calendar is xpn.org's own for that week,
 // both read live; everything else the app would fetch is answered here.
-import { chromium } from "@playwright/test";
+import { chromium, webkit } from "@playwright/test";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 
 const BASE = process.env.SCREENS_BASE_URL || "http://127.0.0.1:4173/";
@@ -39,8 +39,12 @@ const slug = (text) =>
 // Where the app is told each song's artwork is; answered from ART below.
 const artUrl = (song) => `https://i.scdn.co/image/screens-${slug(song.title)}`;
 
-// A song's album artwork, from Apple's catalog, or null.
+// A song's album artwork: from SCREENS_ART (a folder of <title slug>.jpg,
+// for working offline), else from Apple's catalog; or null.
 async function artwork(song) {
+  if (process.env.SCREENS_ART) {
+    return readFile(`${process.env.SCREENS_ART}/${slug(song.title)}.jpg`).catch(() => null);
+  }
   try {
     const term = encodeURIComponent(`${song.artist} ${song.title}`);
     const response = await fetch(
@@ -60,7 +64,7 @@ async function artwork(song) {
   }
 }
 
-// That week on xpn.org's concert calendar, every page.
+// That week on xpn.org's concert calendar, every page (none offline).
 async function concerts() {
   const events = [];
   for (let page = 1; page <= 10; page++) {
@@ -70,8 +74,10 @@ async function concerts() {
       end_date: `${WEEK.to} 23:59:59`,
       page: String(page),
     });
-    const response = await fetch(`https://xpn.org/wp-json/tribe/events/v1/events?${params}`);
-    if (!response.ok) break;
+    const response = await fetch(`https://xpn.org/wp-json/tribe/events/v1/events?${params}`).catch(
+      () => null,
+    );
+    if (!response?.ok) break;
     const data = await response.json();
     events.push(...(data.events || []));
     if (page >= Number(data.total_pages || 1)) break;
@@ -137,9 +143,15 @@ const scrollToEnd = async (page) => {
   await page.waitForTimeout(600);
 };
 // The station playing, as the mini player shows it ("Live").
+// Audio doesn't always start in a headless browser: then the shot shows the
+// station paused, and the notes say so.
 async function playStation(page) {
-  await page.locator(".player-bar .player-play").click();
-  await page.locator('.player-bar .live-badge[data-state="live"]').waitFor({ timeout: 10000 });
+  try {
+    await page.locator(".player-bar .player-play").click({ timeout: 5000 });
+    await page.locator('.player-bar .live-badge[data-state="live"]').waitFor({ timeout: 10000 });
+  } catch {
+    note("The station didn't start playing; that shot shows it paused.");
+  }
 }
 
 // Each shot: how to get there. Named as on the screens page (data-shot).
@@ -194,7 +206,16 @@ const note = (line) => {
 note(`Concerts that week: ${events.length}`);
 SONGS.forEach((song, i) => note(`Artwork for ${song.title}: ${arts[i]?.length || "none"}`));
 
-const browser = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required"] });
+// Chromium, or with SCREENS_BROWSER=webkit, WebKit (Safari's engine, to see
+// how the iPhone app draws what Chromium might draw differently).
+const browser =
+  process.env.SCREENS_BROWSER === "webkit"
+    ? await webkit.launch()
+    : await chromium.launch({
+        args: ["--autoplay-policy=no-user-gesture-required"],
+        // A browser already on the machine (PLAYWRIGHT_CHROMIUM), else Playwright's own.
+        executablePath: process.env.PLAYWRIGHT_CHROMIUM || undefined,
+      });
 for (const theme of ["light", "dark"]) {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
