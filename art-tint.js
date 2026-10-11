@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 // Backgrounds a heart can sit on, per theme (styles/base.css): page, surface,
 // alternate row and the player bar.
 export const GROUNDS = {
-  light: ["#faf8f3", "#f2efe7", "#eeeae1", "#fffdf8"],
+  light: ["#f7f3ea", "#efeadf", "#ebe5da", "#fcf9f2"],
   dark: ["#202224", "#292c2f", "#2b2e30", "#32363a"],
 };
 const MIN_CONTRAST = 3.2;

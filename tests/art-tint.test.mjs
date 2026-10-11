@@ -110,10 +110,10 @@ test("hearts keep 3:1 on a page, show sheet or player bar washed in any artwork'
   // bar (26% / 24%) and a saved song's row (22% / 20%), light / dark.
   const grounds = (w) => ({
     light: [
-      washed(w.light, "#faf8f3", 0.24),
-      washed(w.light, "#f2efe7", 0.12),
-      washed(w.light, "#f2efe7", 0.26),
-      washed(w.light, "#faf8f3", 0.22),
+      washed(w.light, "#f7f3ea", 0.24),
+      washed(w.light, "#efeadf", 0.12),
+      washed(w.light, "#efeadf", 0.26),
+      washed(w.light, "#f7f3ea", 0.22),
     ],
     dark: [
       washed(w.dark, "#202224", 0.22),

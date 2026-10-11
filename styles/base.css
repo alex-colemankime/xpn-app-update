@@ -10,16 +10,16 @@
   /* The theme's own page and surface, kept apart from --bg and --surface so
      a wash (below, and show sheets) can tint them and still start from
      the theme. */
-  --paper: #faf8f3;
-  --paper-raised: #f2efe7;
+  --paper: #f7f3ea;
+  --paper-raised: #efeadf;
   /* Their lightness in OKLCH, which a wash keeps. */
-  --paper-l: 0.9793;
-  --paper-raised-l: 0.9522;
+  --paper-l: 0.9648;
+  --paper-raised-l: 0.9379;
   --bg: var(--paper);
   --surface: var(--paper-raised);
   --text: #211f1c;
   --muted: #64605a;
-  --border: #ded9cf;
+  --border: #dad3c7;
   --control-border: #8e897f;
   --accent: #b83d1c;
   /* The accent as text on an accent-tinted fill (a chosen key, the LIVE
@@ -27,9 +27,9 @@
   --accent-strong: #983012;
   --action: #ef7149;
   --action-ink: #241710;
-  --row-alt: #eeeae1;
+  --row-alt: #ebe5da;
   /* A control raised above its track (the chosen station). */
-  --raised: #fffdf8;
+  --raised: #fcf9f2;
   /* Notices: the page's colors turned around. */
   --inverse-bg: #2a2724;
   --inverse-text: #f6f2ea;

@@ -2,7 +2,7 @@
   "appId": "org.xpn.wxpn",
   "appName": "WXPN",
   "webDir": "dist",
-  "backgroundColor": "#faf8f3",
+  "backgroundColor": "#f7f3ea",
   "ios": {
     "contentInset": "never"
   },
