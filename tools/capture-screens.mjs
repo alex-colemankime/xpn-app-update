@@ -147,10 +147,16 @@ const unknown = wanted.filter((name) => !SHOTS[name]);
 if (unknown.length) throw new Error(`No such shot: ${unknown.join(", ")}`);
 
 const [art, events] = await Promise.all([artwork(), concerts()]);
-console.log(
-  `Artwork: ${art ? `${art.length} bytes` : "none"}; concerts that week: ${events.length}`,
-);
 await mkdir(OUT, { recursive: true });
+// What went into the shots, beside them (CI logs aren't always to hand).
+const notes = [
+  `Artwork: ${art ? `${art.length} bytes` : "none"}; concerts that week: ${events.length}`,
+];
+const note = (line) => {
+  console.log(line);
+  notes.push(line);
+};
+console.log(notes[0]);
 const browser = await chromium.launch();
 for (const theme of ["light", "dark"]) {
   const context = await browser.newContext({
@@ -192,9 +198,10 @@ for (const theme of ["light", "dark"]) {
     await SHOTS[name](page);
     const file = `${OUT}/${name}-${theme}.png`;
     await writeFile(file, await page.screenshot({ animations: "disabled", caret: "hide" }));
-    console.log(`Wrote ${file}`);
+    note(`Wrote ${file}`);
     await page.close();
   }
   await context.close();
 }
 await browser.close();
+await writeFile(`${OUT}/notes.txt`, `${notes.join("\n")}\n`);

@@ -1,9 +1,10 @@
 name: Screens
 
 # Retakes screenshots for the screens page (design/screens) from the built
-# app, with tools/capture-screens.mjs, and uploads them as the "screens"
-# artifact; they go into design/screens/img as WebP. Run it by hand (naming
-# shots, or all of them), or it runs when the script changes on a branch.
+# app, with tools/capture-screens.mjs, and puts them on the screens-out
+# branch (and in the "screens" artifact); they go into design/screens/img as
+# WebP. Run it by hand (naming shots, or all of them), or it runs when the
+# script changes on a branch.
 on:
   workflow_dispatch:
     inputs:
@@ -18,7 +19,7 @@ on:
       - .github/workflows/screens.yml
 
 permissions:
-  contents: read
+  contents: write # the screens-out branch
 
 jobs:
   capture:
@@ -59,3 +60,14 @@ jobs:
         with:
           name: screens
           path: screens-out/
+
+      # Also on the screens-out branch, to look over and copy in with git.
+      - name: Publish them on the screens-out branch
+        run: |
+          cd screens-out
+          git init -q -b screens-out
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Screenshots from ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" screens-out
