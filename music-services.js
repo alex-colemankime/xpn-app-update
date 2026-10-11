@@ -127,6 +127,8 @@ const assertAuthorization = (attempt) => {
 export function forgetAuth() {
   cancelAuthorization();
   saveAuth(null);
+  // Disconnecting starts Apple Music afresh too (a new developer token).
+  musicKitLoader.reset();
 }
 
 async function tokenRequest(params) {
@@ -180,6 +182,17 @@ async function spotifyFetch(path, options = {}, retried = false) {
   if (response.status === 404) throw notFound();
   if (!response.ok) throw new Error(`Spotify: HTTP ${response.status}`);
   return response.status === 204 ? null : response.json();
+}
+
+// One batch of a multi-request change. If it fails, the error carries the
+// refs already sent (`done`), so what reached the playlist is still recorded.
+async function sendBatch(done, path, options) {
+  try {
+    await spotifyFetch(path, options);
+  } catch (error) {
+    if (error && typeof error === "object") error.done = [...done];
+    throw error;
+  }
 }
 
 const spotify = {
@@ -269,25 +282,38 @@ const spotify = {
     }
     return null;
   },
-  async add(playlistId, refs) {
+  // Adding and removing go 100 at a time. Before each batch `shouldContinue`
+  // is asked (playlist sync switched off stops between batches); each
+  // resolves to the refs it actually sent, so what was done is recorded.
+  async add(playlistId, refs, { shouldContinue = () => true } = {}) {
     // Every request inserts at the front. Send the oldest chunk first so
     // a multi-request addition retains the supplied newest-first order.
+    const done = [];
     for (let end = refs.length; end > 0;) {
+      if (!shouldContinue()) break;
       const start = Math.max(0, end - 100);
-      await spotifyFetch(`/playlists/${encodeURIComponent(playlistId)}/items`, {
+      const batch = refs.slice(start, end);
+      await sendBatch(done, `/playlists/${encodeURIComponent(playlistId)}/items`, {
         method: "POST",
-        body: JSON.stringify({ uris: refs.slice(start, end), position: 0 }),
+        body: JSON.stringify({ uris: batch, position: 0 }),
       });
+      done.push(...batch);
       end = start;
     }
+    return done;
   },
-  async remove(playlistId, refs) {
+  async remove(playlistId, refs, { shouldContinue = () => true } = {}) {
+    const done = [];
     for (let i = 0; i < refs.length; i += 100) {
-      await spotifyFetch(`/playlists/${encodeURIComponent(playlistId)}/items`, {
+      if (!shouldContinue()) break;
+      const batch = refs.slice(i, i + 100);
+      await sendBatch(done, `/playlists/${encodeURIComponent(playlistId)}/items`, {
         method: "DELETE",
-        body: JSON.stringify({ items: refs.slice(i, i + 100).map((uri) => ({ uri })) }),
+        body: JSON.stringify({ items: batch.map((uri) => ({ uri })) }),
       });
+      done.push(...batch);
     }
+    return done;
   },
 };
 
@@ -295,38 +321,70 @@ const spotify = {
 
 const APPLE_API = "https://api.music.apple.com";
 const MUSICKIT_SRC = "https://js-cdn.music.apple.com/musickit/v3/musickit.js";
-let musicKitReady = null;
+// MusicKit, configured with a developer token: loaded once and kept, until
+// Apple refuses the token or the listener disconnects, when it's let go so
+// the next sign-in fetches a fresh token and configures MusicKit again.
+// (`getToken`, `load` and `configure` are passed in so it can be tested.)
+export function createMusicKitLoader({ getToken, load, configure }) {
+  let ready = null;
+  // A load let go while still under way: the next one waits for it to
+  // settle, so two configurations never run at once.
+  let previous = Promise.resolve();
+  return {
+    get() {
+      ready ||= (async () => {
+        await previous.catch(() => {});
+        const token = await getToken();
+        await load();
+        const kit = await configure(token);
+        return { kit, token };
+      })().catch((error) => {
+        ready = null;
+        throw error;
+      });
+      return ready;
+    },
+    reset() {
+      if (ready) previous = ready;
+      ready = null;
+    },
+  };
+}
 
 async function developerToken() {
   if (APPLE_MUSIC_TOKEN_URL) {
-    const response = await fetch(APPLE_MUSIC_TOKEN_URL, { signal: withTimeout() });
+    // Never a cached copy: after a refusal, the endpoint's current token.
+    const response = await fetch(APPLE_MUSIC_TOKEN_URL, {
+      cache: "no-store",
+      signal: withTimeout(),
+    });
     if (!response.ok) throw new Error("Apple Music token unavailable");
     return (await response.json()).token;
   }
   return APPLE_MUSIC_DEVELOPER_TOKEN;
 }
 
-function musicKit() {
-  musicKitReady ||= (async () => {
-    const token = await developerToken();
-    if (!window.MusicKit) {
-      await new Promise((resolve, reject) => {
-        document.addEventListener("musickitloaded", resolve, { once: true });
-        const script = document.createElement("script");
-        script.src = MUSICKIT_SRC;
-        script.async = true;
-        script.onerror = reject;
-        document.head.append(script);
-      });
-    }
+const musicKitLoader = createMusicKitLoader({
+  getToken: developerToken,
+  load: async () => {
+    if (window.MusicKit) return;
+    await new Promise((resolve, reject) => {
+      document.addEventListener("musickitloaded", resolve, { once: true });
+      const script = document.createElement("script");
+      script.src = MUSICKIT_SRC;
+      script.async = true;
+      script.onerror = reject;
+      document.head.append(script);
+    });
+  },
+  configure: async (token) => {
     await window.MusicKit.configure({ developerToken: token, app: { name: "WXPN", build: "1" } });
-    return { kit: window.MusicKit.getInstance(), token };
-  })().catch((error) => {
-    musicKitReady = null;
-    throw error;
-  });
-  return musicKitReady;
-}
+    return window.MusicKit.getInstance();
+  },
+});
+const musicKit = () => musicKitLoader.get();
+// For the tests: the app's own loader, to see refusals and Disconnect reset it.
+export const appleMusicKit = musicKitLoader;
 
 async function appleFetch(path, options = {}) {
   const a = auth();
@@ -341,7 +399,11 @@ async function appleFetch(path, options = {}) {
       "Content-Type": "application/json",
     },
   });
-  if (response.status === 401) throw new AuthError("Apple Music refused");
+  if (response.status === 401) {
+    // The developer token may be what was refused: fetch it afresh next time.
+    musicKitLoader.reset();
+    throw new AuthError("Apple Music refused");
+  }
   if (response.status === 403) throw new NotAllowedError("Apple Music does not allow this");
   if (response.status === 404) throw notFound();
   if (!response.ok) throw new Error(`Apple Music: HTTP ${response.status}`);
@@ -411,10 +473,12 @@ const appleMusic = {
     return best?.id || null;
   },
   async add(playlistId, refs) {
+    // One request for all of them: nothing to stop between.
     await appleFetch(`/v1/me/library/playlists/${encodeURIComponent(playlistId)}/tracks`, {
       method: "POST",
       body: JSON.stringify({ data: refs.map((id) => ({ id, type: "songs" })) }),
     });
+    return refs;
   },
   // Apple Music's API cannot take songs out of a library playlist.
   remove: null,

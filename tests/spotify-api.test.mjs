@@ -175,3 +175,43 @@ test("a multi-request addition preserves the caller's order", async () => {
   await spotify.add("pl1", refs);
   assert.deepEqual(remote, refs);
 });
+
+test("removing stops between batches when told to, and says what it removed", async () => {
+  reply = () => new Response(JSON.stringify({ snapshot_id: "s" }), { status: 200 });
+  requests.length = 0;
+  const refs = Array.from({ length: 150 }, (_, i) => `spotify:track:${i}`);
+  let on = true;
+  const removing = spotify.remove("pl1", refs, {
+    // Switched off while the first 100-track request is under way.
+    shouldContinue: () => {
+      const answer = on;
+      on = false;
+      return answer;
+    },
+  });
+  const removed = await removing;
+  assert.equal(requests.length, 1, "the second batch never starts");
+  assert.deepEqual(removed, refs.slice(0, 100));
+});
+
+test("adding reports the batches it sent, oldest first", async () => {
+  requests.length = 0;
+  const refs = Array.from({ length: 150 }, (_, i) => `spotify:track:${i}`);
+  let calls = 0;
+  const added = await spotify.add("pl1", refs, { shouldContinue: () => calls++ === 0 });
+  assert.equal(requests.length, 1);
+  assert.deepEqual(added, refs.slice(50), "the oldest batch went first");
+});
+
+test("a batch that fails carries the batches already sent", async () => {
+  requests.length = 0;
+  let n = 0;
+  reply = () =>
+    ++n === 2
+      ? new Response("{}", { status: 500 })
+      : new Response(JSON.stringify({ snapshot_id: "s" }), { status: 200 });
+  const refs = Array.from({ length: 250 }, (_, i) => `spotify:track:${i}`);
+  const error = await spotify.remove("pl1", refs).catch((e) => e);
+  assert.ok(error instanceof Error);
+  assert.deepEqual(error.done, refs.slice(0, 100));
+});

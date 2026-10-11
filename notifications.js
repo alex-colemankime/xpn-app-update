@@ -91,6 +91,8 @@ export const useNotificationTrouble = () =>
 // A notification due this soon is left out: the phone would deliver it at
 // once rather than at its time.
 const TOO_SOON_MS = 5000;
+// A held notification this long past its time has fired; it's let go.
+const FIRED_MS = 60000;
 
 // The scheduler itself, with the phone's notification API passed in, so it
 // can be tested with a stand-in. `api` is LocalNotifications' shape.
@@ -102,6 +104,11 @@ export function createScheduler({
   now = () => Date.now(),
 }) {
   const plans = {};
+  // Notifications about to fire, by kind (id → time): out of the plans, but
+  // left on the phone through every pass, whichever kind's sync started it,
+  // until they've fired. Only a new plan of their own kind (the alarm turned
+  // off) can take one away.
+  const held = {};
   let queue = Promise.resolve();
 
   async function reconcile() {
@@ -110,18 +117,21 @@ export function createScheduler({
     // plans for good: delivered already (the phone shows it once), or missed
     // while the app was closed. Scheduled again, a past date would make the
     // phone deliver it now, a second time.
-    // One about to fire that is still planned stays on the phone as it is:
-    // cancelled now, it could not be scheduled again in time (an alarm
-    // would never ring because some other plan changed a moment before).
-    const soonest = now() + TOO_SOON_MS;
-    const imminent = new Set();
+    // One about to fire stays on the phone as it is (held, below): cancelled
+    // now, it could not be scheduled again in time (an alarm would never ring
+    // because some other plan changed a moment before).
+    const moment = now();
+    const soonest = moment + TOO_SOON_MS;
     for (const kind of Object.keys(plans)) {
-      for (const n of plans[kind]) if (n.at <= soonest) imminent.add(n.id);
+      held[kind] ||= new Map();
+      for (const n of plans[kind]) if (n.at <= soonest) held[kind].set(n.id, n.at);
       plans[kind] = plans[kind].filter((n) => n.at > soonest);
+      // Fired a while ago: delivered, so nothing to keep.
+      for (const [id, at] of held[kind]) if (at < moment - FIRED_MS) held[kind].delete(id);
     }
     const { notifications: pending = [] } = await api.getPending();
     const ours = (n) => Object.hasOwn(plans, n.extra?.kind ?? "");
-    const kept = (n) => ours(n) && imminent.has(n.id);
+    const kept = (n) => ours(n) && Boolean(held[n.extra.kind]?.has(n.id));
     // Notifications of a kind whose plan hasn't arrived yet this session stay
     // as they are, and count against the budget, as do the imminent ones.
     const room = NOTIFICATION_BUDGET - pending.filter((n) => !ours(n) || kept(n)).length;
@@ -157,6 +167,9 @@ export function createScheduler({
   // ([{ id, at, title, body, extra }]), within the shared budget.
   function sync(kind, plan) {
     plans[kind] = plan;
+    // This kind's own new plan decides about its imminent ones: kept if it
+    // still has them (re-held in the pass), cancelled if not.
+    held[kind] = new Map();
     const run = () =>
       reconcile().catch((error) => {
         onTrouble(true);

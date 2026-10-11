@@ -183,13 +183,34 @@ async function run(retried = false) {
     // Keep both local identities, but only one copy in the remote playlist.
     const knownRefs = new Set(Object.values(syncStore.getSnapshot().matched));
     const refs = [...new Set(Object.values(found))].filter((ref) => !knownRefs.has(ref));
+    // What the service took: all of them, or (switched off between
+    // batches) the batches it got. A service that doesn't say took all.
+    let added = new Set(refs);
     if (refs.length) {
-      await service.add(playlist.playlistId, refs);
+      let sent;
+      try {
+        sent = await service.add(playlist.playlistId, refs, { shouldContinue: current });
+      } catch (error) {
+        // Some batches went before one failed: record those, then fail.
+        if (Array.isArray(error?.done) && connected()) {
+          const went = new Set(error.done);
+          const recorded = Object.fromEntries(
+            Object.entries(found).filter(([, ref]) => knownRefs.has(ref) || went.has(ref)),
+          );
+          record({ matched: { ...syncStore.getSnapshot().matched, ...recorded } });
+        }
+        throw error;
+      }
       if (!connected()) return;
+      if (Array.isArray(sent)) added = new Set(sent);
     }
     // Record the additions now, so a failed removal below can't make the
-    // next run add the same songs again.
-    record({ matched: { ...syncStore.getSnapshot().matched, ...found }, missing });
+    // next run add the same songs again. Songs whose batch never went are
+    // left for the next run.
+    const recorded = Object.fromEntries(
+      Object.entries(found).filter(([, ref]) => knownRefs.has(ref) || added.has(ref)),
+    );
+    record({ matched: { ...syncStore.getSnapshot().matched, ...recorded }, missing });
     if (!current()) return;
     if (plan.toRemove.length) {
       const matched = syncStore.getSnapshot().matched;
@@ -202,10 +223,32 @@ async function run(retried = false) {
       const refs = [...new Set(plan.toRemove.map((id) => matched[id]))].filter(
         (ref) => !retained.has(ref),
       );
-      if (refs.length) await service.remove(playlist.playlistId, refs);
-      if (!connected()) return;
+      let removed = new Set(refs);
+      if (refs.length) {
+        let sent;
+        try {
+          sent = await service.remove(playlist.playlistId, refs, { shouldContinue: current });
+        } catch (error) {
+          // Some batches went before one failed: forget those songs, then fail.
+          if (Array.isArray(error?.done) && connected()) {
+            const went = new Set(error.done);
+            const after = { ...syncStore.getSnapshot().matched };
+            for (const id of plan.toRemove) if (went.has(matched[id])) delete after[id];
+            record({ matched: after });
+          }
+          throw error;
+        }
+        if (!connected()) return;
+        if (Array.isArray(sent)) removed = new Set(sent);
+      }
+      // Forgotten: songs whose track is gone from the playlist, and those
+      // whose track stays for another save. Any whose batch never went
+      // stay recorded, to be removed next time.
+      const toRemove = new Set(refs);
       const after = { ...syncStore.getSnapshot().matched };
-      plan.toRemove.forEach((id) => delete after[id]);
+      for (const id of plan.toRemove) {
+        if (!toRemove.has(matched[id]) || removed.has(matched[id])) delete after[id];
+      }
       record({ matched: after });
       if (!current()) return;
     }

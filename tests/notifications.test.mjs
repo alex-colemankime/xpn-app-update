@@ -121,3 +121,29 @@ test("an alarm about to ring stays on the phone when another plan changes", asyn
   await scheduler.sync("radio-alarm", []);
   assert.ok(!device.pending.has(7));
 });
+
+test("an alarm about to ring survives a second, unrelated sync too", async () => {
+  let clock = Date.UTC(2026, 9, 8, 6, 50);
+  const device = phone();
+  const scheduler = createScheduler({ api: device.api, now: () => clock });
+  const ring = Date.UTC(2026, 9, 8, 7, 0);
+  await scheduler.sync("radio-alarm", [{ id: 7, at: ring, title: "Good morning" }]);
+  clock = ring - 3000;
+  await scheduler.sync("show-reminder", [{ id: 1, at: ring + 3600000, title: "Later" }]);
+  clock = ring - 2000;
+  await scheduler.sync("station-alert", [{ id: 2, at: ring + 7200000, title: "Drive" }]);
+  assert.ok(device.pending.has(7), "still pending after the second sync");
+  // It rings, and is gone; a later sync doesn't bring it back.
+  clock = ring + 1000;
+  device.deliverUntil(ring);
+  await scheduler.sync("show-reminder", []);
+  assert.equal(device.scheduled.filter((n) => n.id === 7).length, 1);
+  // And turning the alarm off still cancels one that's imminent.
+  const next = clock + 60000;
+  await scheduler.sync("radio-alarm", [{ id: 8, at: next, title: "Soon" }]);
+  clock = next - 3000;
+  await scheduler.sync("show-reminder", []);
+  assert.ok(device.pending.has(8));
+  await scheduler.sync("radio-alarm", []);
+  assert.ok(!device.pending.has(8));
+});

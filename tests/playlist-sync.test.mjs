@@ -452,3 +452,61 @@ test("switched off while a song is being added, it's still recorded: no second c
   await syncNow();
   assert.equal(added.filter((r) => r === "uri:In Flight").length, 1, "added once");
 });
+
+test("songs whose batch never went are added next time; those that went aren't", async () => {
+  const { applySwitches } = await import("../features.js");
+  applySwitches([]);
+  const added = [];
+  let partial = true;
+  Object.assign(SERVICES.spotify, {
+    available: () => true,
+    account: async () => "listener-1",
+    owns: async () => true,
+    ensurePlaylist: async (s) => (s.playlistId ? s : { playlistId: "pl9" }),
+    find: async (song) => `uri:${song.title}`,
+    // The first run's add stops after one batch (switched off between).
+    add: async (id, refs) => {
+      const sent = partial ? refs.slice(0, 1) : refs;
+      added.push(...sent);
+      return sent;
+    },
+    remove: async () => {},
+  });
+  toggleFavorite("songs", { title: "Batch A", artist: "One" });
+  toggleFavorite("songs", { title: "Batch B", artist: "Two" });
+  await syncNow();
+  partial = false;
+  await syncNow();
+  const count = (t) => added.filter((r) => r === `uri:${t}`).length;
+  assert.equal(count("Batch A") + count("Batch B"), 2, "each added exactly once");
+});
+
+test("a failure partway through adding still records what went: no second copy", async () => {
+  const { applySwitches } = await import("../features.js");
+  applySwitches([]);
+  const added = [];
+  let failOnce = true;
+  Object.assign(SERVICES.spotify, {
+    available: () => true,
+    account: async () => "listener-1",
+    owns: async () => true,
+    ensurePlaylist: async (s) => (s.playlistId ? s : { playlistId: "pl9" }),
+    find: async (song) => `uri:${song.title}`,
+    add: async (id, refs) => {
+      if (failOnce) {
+        failOnce = false;
+        added.push(refs[0]);
+        throw Object.assign(new Error("429"), { done: [refs[0]] });
+      }
+      added.push(...refs);
+      return refs;
+    },
+    remove: async () => {},
+  });
+  toggleFavorite("songs", { title: "Fail C", artist: "Three" });
+  toggleFavorite("songs", { title: "Fail D", artist: "Four" });
+  await syncNow();
+  await syncNow();
+  const count = (t) => added.filter((r) => r === `uri:${t}`).length;
+  assert.equal(count("Fail C") + count("Fail D"), 2, "each added exactly once");
+});
