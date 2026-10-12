@@ -125,6 +125,9 @@ body {
 html {
   /* No layout jump when a screen gains or loses a scrollbar. */
   scrollbar-gutter: stable;
+  /* The app's own pull to refresh, not the browser's reload; the bounce
+     at the ends stays. */
+  overscroll-behavior-y: contain;
   scroll-padding-block: 24px
     calc(var(--player-h) + 24px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
   /* Stop iOS enlarging text on rotation. */
