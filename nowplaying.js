@@ -222,9 +222,12 @@ export function useNowPlaying(streamId) {
     const listening = new AbortController();
     document.addEventListener("visibilitychange", update, { signal: listening.signal });
     // A refresh asked for by the listener (refreshPlaylist) waits on this read.
-    window.addEventListener("wxpn:refresh-playlist", (e) => e.detail?.push?.(update()), {
-      signal: listening.signal,
-    });
+    // Pressing play asks too, without waiting on it.
+    const asked = (e) => {
+      const read = update();
+      e.detail?.push?.(read);
+    };
+    window.addEventListener("wxpn:refresh-playlist", asked, { signal: listening.signal });
     return () => {
       active = false;
       controller?.abort();

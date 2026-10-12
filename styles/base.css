@@ -12,9 +12,6 @@
      the theme. */
   --paper: #f7f3ea;
   --paper-raised: #efeadf;
-  /* Their lightness in OKLCH, which a wash keeps. */
-  --paper-l: 0.9648;
-  --paper-raised-l: 0.9379;
   --bg: var(--paper);
   --surface: var(--paper-raised);
   --text: #211f1c;
@@ -46,8 +43,6 @@
   color-scheme: dark;
   --paper: #202224;
   --paper-raised: #292c2f;
-  --paper-l: 0.2507;
-  --paper-raised-l: 0.2913;
   --bg: var(--paper);
   --surface: var(--paper-raised);
   --text: #eeede8;
@@ -73,14 +68,14 @@
    The wash takes the artwork's hue but keeps the page's own lightness, so
    it never darkens (or, in dark mode, lightens) the page: text and every
    heart keep their contrast whatever the artwork (tests/art-tint.test.mjs).
-   Browsers without relative colors keep the plain page. */
-@supports (color: oklch(from red l c h)) {
-  :root[data-art-wash] {
-    --bg: oklch(from color-mix(in srgb, var(--wash-light) 24%, var(--paper)) var(--paper-l) c h);
-  }
-  :root[data-art-wash][data-theme="dark"] {
-    --bg: oklch(from color-mix(in srgb, var(--wash-dark) 22%, var(--paper)) var(--paper-l) c h);
-  }
+   The color is worked out in script (art-tint.js, washed): some web views
+   don't recompute a relative color when the artwork changes, and the page
+   kept the last song's wash. */
+:root[data-art-wash] {
+  --bg: var(--wash-bg-light, var(--paper));
+}
+:root[data-art-wash][data-theme="dark"] {
+  --bg: var(--wash-bg-dark, var(--paper));
 }
 html,
 body {

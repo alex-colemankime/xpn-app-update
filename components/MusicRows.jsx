@@ -16,7 +16,7 @@ import { readJson, writeJson } from "../storage.js";
 import { PLAYLIST_URL } from "../links.js";
 import { SHOWS, shortName } from "../catalog.js";
 import { playedAt } from "../nowplaying.js";
-import { useArtTint } from "../art-tint.js";
+import { useArtTint, washVars } from "../art-tint.js";
 import { useSheetDrag } from "../hooks/useSheetDrag.js";
 import { holdable, openHoldMenu } from "../hold.js";
 
@@ -358,7 +358,7 @@ export function TrackRow({ track, showTime = false, stationLabel, wash = false }
       ref={songHold(track, stationLabel)}
       className="track-row"
       data-tinted={tint ? "" : undefined}
-      style={tint ? { "--tint-light": tint.light, "--tint-dark": tint.dark } : undefined}
+      style={tint ? washVars("band", tint, 0, [0.32, 0.34]) : undefined}
     >
       <Art src={track.img} loading="lazy" />
       <span>

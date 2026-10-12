@@ -267,15 +267,13 @@ h1 {
     margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
     padding: 16px var(--edge-right) 16px var(--edge-left);
     border-bottom: 0;
-    /* A band reaches past its row, which a skipped off-screen row would clip. */
-    content-visibility: visible;
     --band: var(--bg);
   }
   .saved-songs > .track-row[data-tinted] {
-    --band: oklch(from color-mix(in srgb, var(--tint-light) 32%, var(--paper)) var(--paper-l) c h);
+    --band: var(--band-light);
   }
   :root[data-theme="dark"] .saved-songs > .track-row[data-tinted] {
-    --band: oklch(from color-mix(in srgb, var(--tint-dark) 34%, var(--paper)) var(--paper-l) c h);
+    --band: var(--band-dark);
   }
   /* The band: from halfway across the line above the row to halfway across
      the line below it, coming in over the band before through the dither,
@@ -417,18 +415,12 @@ h1 {
 /* The bar takes a light wash of what's playing: the song's artwork, or the
    episode's. Like the Listen page's, it keeps its lightness (here the
    raised paper's), so text and hearts keep their contrast. */
-@supports (color: oklch(from red l c h)) {
-  .player-bar[data-tinted] {
-    background-color: oklch(
-      from color-mix(in srgb, var(--tint-light) 26%, var(--paper-raised)) var(--paper-raised-l) c h
-    );
-    transition: background-color 0.8s ease;
-  }
-  :root[data-theme="dark"] .player-bar[data-tinted] {
-    background-color: oklch(
-      from color-mix(in srgb, var(--tint-dark) 24%, var(--paper-raised)) var(--paper-raised-l) c h
-    );
-  }
+.player-bar[data-tinted] {
+  background-color: var(--bar-light);
+  transition: background-color 0.8s ease;
+}
+:root[data-theme="dark"] .player-bar[data-tinted] {
+  background-color: var(--bar-dark);
 }
 /* The song, and its heart right beside it. */
 .player-now {

@@ -19,7 +19,7 @@ import {
   useEpisodePlayer,
 } from "../episode-player.js";
 import { EpisodeScrubber } from "./Archive.jsx";
-import { useArtTint } from "../art-tint.js";
+import { useArtTint, washVars } from "../art-tint.js";
 import { useSwipe } from "../hooks/useSwipe.js";
 
 // A flick up on the mini player opens what it plays, as music apps do; the
@@ -30,9 +30,7 @@ const useSwipeUpToOpen = (open) =>
 // The bar's wash, from the artwork playing (styles/layout.css).
 function useBarTint(art) {
   const tint = useArtTint(art || null);
-  return tint
-    ? { "data-tinted": "", style: { "--tint-light": tint.light, "--tint-dark": tint.dark } }
-    : {};
+  return tint ? { "data-tinted": "", style: washVars("bar", tint, 1, [0.26, 0.24]) } : {};
 }
 
 // The volume slider, where the device lets the app set it (not on iPhone,

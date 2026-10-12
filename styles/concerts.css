@@ -225,14 +225,6 @@
   gap: 4px 12px;
   margin: 8px 0;
 }
-/* Rows of long lists skip layout and paint while off screen. */
-.concert-row,
-.schedule-row,
-.track-row {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 72px;
-}
-
 /* A concert: the date, then who and where, with Tickets and (once saved)
    Add to calendar as quiet text actions under it; the heart at the end. */
 .concert-row {

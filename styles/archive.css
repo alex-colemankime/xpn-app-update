@@ -118,8 +118,6 @@
   background-position: 50% 100%;
   background-repeat: no-repeat;
   transition: background-color 0.15s;
-  content-visibility: auto;
-  contain-intrinsic-size: auto 64px;
 }
 .archive-row[data-active] {
   background-color: color-mix(in srgb, var(--accent) 7%, var(--bg));

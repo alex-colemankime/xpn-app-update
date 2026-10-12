@@ -1,6 +1,6 @@
 // The main journeys, in the built app: listen, change station, save a song
 // and find it again, open a show, change a setting, follow a link.
-import { test, expect, SONGS } from "./fixtures.mjs";
+import { test, expect, SONGS, eastern } from "./fixtures.mjs";
 
 test("Listen plays the station and shows what played", async ({ page }) => {
   await page.goto("/");
@@ -247,4 +247,72 @@ test("concerts switched off by the station fetch no listings", async ({ page, co
   await page.waitForTimeout(1500);
   expect(listings).toBe(0);
   await expect(page.getByRole("button", { name: /^Concerts$/ })).toHaveCount(0);
+});
+
+test("Listen's page takes each song's color, and lets it go on leaving", async ({ page }) => {
+  let color = "#c82828";
+  const cors = { "access-control-allow-origin": "*" };
+  await page.route(/playlist\/json\/\d{4}/, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: cors,
+      body: JSON.stringify([
+        {
+          song: `Song ${color}`,
+          artist: "Artist",
+          album: "",
+          image: `https://art.example/${color.slice(1)}.svg`,
+          timeslice: eastern(Date.now() - 30000),
+        },
+      ]),
+    }),
+  );
+  await page.route(/art\.example/, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "image/svg+xml",
+      headers: cors,
+      body: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="#${
+        route
+          .request()
+          .url()
+          .match(/(\w{6})\.svg/)[1]
+      }"/></svg>`,
+    }),
+  );
+  const page_ = () =>
+    page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--bg").trim());
+  await page.goto("/#/listen");
+  await expect(page.locator(".now-info h2")).toHaveText("Song #c82828");
+  await expect.poll(page_).not.toBe("#f7f3ea");
+  const red = await page_();
+  // A new song (as pressing play asks for one) brings its own color.
+  color = "#1e5ac8";
+  await page.evaluate(() => window.dispatchEvent(new Event("wxpn:refresh-playlist")));
+  await expect(page.locator(".now-info h2")).toHaveText("Song #1e5ac8");
+  await expect.poll(page_).not.toBe(red);
+  await page.evaluate(() => {
+    location.hash = "#/favorites";
+  });
+  await expect.poll(page_).toBe("#f7f3ea");
+});
+
+test("Favorites changes in place, without leaving the tab", async ({ page }) => {
+  await page.goto("/#/listen");
+  const main = page.locator("main");
+  await main
+    .getByRole("button", { name: `Save ${SONGS[1][0]}` })
+    .first()
+    .click();
+  await page.evaluate(() => {
+    location.hash = "#/favorites";
+  });
+  const favorites = page.getByRole("region", { name: "Favorites" });
+  const row = favorites.locator(".track-row", { hasText: SONGS[1][0] });
+  await expect(row).toBeVisible();
+  await row.getByRole("button", { name: `Save ${SONGS[1][0]}` }).click();
+  await expect(row).toHaveCount(0);
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(row).toBeVisible();
 });

@@ -13,7 +13,7 @@ import { episodesOf, hasLeftArchive, useArchive } from "../archive.js";
 import { EpisodeDetail, EpisodeRow } from "./Archive.jsx";
 import { useVideos } from "../videos.js";
 import { VideoCard } from "./VideoCard.jsx";
-import { useArtTint } from "../art-tint.js";
+import { useArtTint, washVars } from "../art-tint.js";
 import { useFeatures } from "../features.js";
 
 // A show's sheet, washed in the show's own color: who hosts it and when,
@@ -131,7 +131,7 @@ export function ShowDetail({
       title={show.name}
       onClose={onClose}
       className={tint ? "show-dialog" : ""}
-      style={tint ? { "--show-light": tint.light, "--show-dark": tint.dark } : undefined}
+      style={tint ? washVars("show", tint, 1, [0.12, 0.14]) : undefined}
     >
       <div className="detail-body">
         {episode ? (

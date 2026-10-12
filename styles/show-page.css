@@ -118,17 +118,11 @@
 
 /* A show's sheet, washed lightly in the show's color (ShowDetail.jsx), at
    the sheet's own lightness, like the page on Listen (styles/base.css). */
-@supports (color: oklch(from red l c h)) {
-  .show-dialog {
-    --surface: oklch(
-      from color-mix(in srgb, var(--show-light) 12%, var(--paper-raised)) var(--paper-raised-l) c h
-    );
-  }
-  :root[data-theme="dark"] .show-dialog {
-    --surface: oklch(
-      from color-mix(in srgb, var(--show-dark) 14%, var(--paper-raised)) var(--paper-raised-l) c h
-    );
-  }
+.show-dialog {
+  --surface: var(--show-light);
+}
+:root[data-theme="dark"] .show-dialog {
+  --surface: var(--show-dark);
 }
 
 /* Share sits beside Follow: the show's xpn.org page, which opens the show

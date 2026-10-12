@@ -13,7 +13,7 @@ export const SONGS = [
 ];
 
 // Eastern date and time, as the station's playlist files write them.
-function eastern(ms) {
+export function eastern(ms) {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat("en-CA", {
       timeZone: "America/New_York",
