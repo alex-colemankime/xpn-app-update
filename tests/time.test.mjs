@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { easternParts, reportedMinutes, clockLabel } from "../time.js";
+import { easternParts, reportedAt, clockLabel } from "../time.js";
 
 test("Eastern date keys survive UTC midnight and daylight saving transitions", () => {
   assert.equal(easternParts(new Date("2026-09-08T01:00:00Z")).date, "2026-09-07");
@@ -9,14 +9,19 @@ test("Eastern date keys survive UTC midnight and daylight saving transitions", (
   assert.equal(easternParts(new Date("2026-09-28T16:00:00Z")).day, "Monday");
 });
 
-test("a song reported before midnight is still current just after it", () => {
-  const age = (nowD, nowT, songD, songT) =>
-    reportedMinutes(nowD, nowT) - reportedMinutes(songD, songT);
+test("a reported time is a real moment, across midnight and the fall-back hour", () => {
+  const minutes = (now, date, time) => (now - reportedAt(date, time, now)) / 60000;
   // The original bug: 23:58 yesterday vs 00:01 today read as -1437 minutes.
-  assert.equal(age("2026-09-08", "00:01", "2026-09-07", "23:58"), 3);
-  assert.equal(age("2026-09-08", "10:05", "2026-09-08", "10:00"), 5);
-  assert.equal(reportedMinutes("", "10:00"), null);
-  assert.equal(reportedMinutes("2026-09-08", "nope"), null);
+  assert.equal(minutes(Date.parse("2026-09-08T00:01:00-04:00"), "2026-09-07", "23:58"), 3);
+  assert.equal(minutes(Date.parse("2026-09-08T10:05:00-04:00"), "2026-09-08", "10:00"), 5);
+  // Clocks fall back on Nov. 1, 2026: at 1:01am EST, 1:58am was EDT's.
+  const fallBack = Date.parse("2026-11-01T01:01:00-05:00");
+  assert.equal(minutes(fallBack, "2026-11-01", "01:58"), 3);
+  assert.equal(minutes(fallBack, "2026-11-01", "01:01"), 0, "and 1:01 is now, not an hour ago");
+  // Spring forward: 2:30am doesn't exist.
+  assert.equal(reportedAt("2026-03-08", "02:30"), null);
+  assert.equal(reportedAt("", "10:00"), null);
+  assert.equal(reportedAt("2026-09-08", "nope"), null);
 });
 
 test("clock labels read naturally", () => {

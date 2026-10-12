@@ -28,10 +28,15 @@ export function easternParts(date = new Date()) {
   };
 }
 
-// Minutes for a reported Eastern wall-clock date+time, comparable across
-// midnight. Both sides of a comparison are Eastern wall clock, so a fixed
-// zone is used purely to get a monotonic number.
-export function reportedMinutes(date, time) {
+// The real moment (epoch ms) of something the station reported at an
+// Eastern wall-clock date and time, as of `now`. When the clocks fall back,
+// 1:00–1:59am happens twice; of the moments a time can name, it's the latest
+// not after now (give or take a clock a couple of minutes ahead), so a song
+// at 1:58am EDT is three minutes old at 1:01am EST, and older than a song
+// at 1:01am EST. Null when the date or time can't be read, or doesn't exist
+// (the hour skipped in spring).
+const CLOCK_AHEAD_MS = 2 * 60000;
+export function reportedAt(date, time, now = Date.now()) {
   const [y, mo, d] = String(date || "")
     .split("-")
     .map(Number);
@@ -39,7 +44,15 @@ export function reportedMinutes(date, time) {
     .split(":")
     .map(Number);
   if ([y, mo, d, h, mi].some((n) => !Number.isFinite(n))) return null;
-  return Date.UTC(y, mo - 1, d, h, mi) / 60000;
+  const fits = [4, 5]
+    .map((offset) => Date.UTC(y, mo - 1, d, h + offset, mi))
+    .filter((t) => {
+      const back = easternParts(new Date(t));
+      return back.date === date && back.time === time;
+    });
+  if (!fits.length) return null;
+  const past = fits.filter((t) => t <= now + CLOCK_AHEAD_MS);
+  return past.length ? Math.max(...past) : Math.min(...fits);
 }
 
 // "16:00" -> "4pm", "07:30" -> "7:30am", "12:00" -> "noon", "00:00" -> "midnight".

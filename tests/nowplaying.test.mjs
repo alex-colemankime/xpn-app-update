@@ -77,6 +77,18 @@ test("freshness holds across midnight and expires after 15 minutes", () => {
   assert.equal(isFresh({ date: "", time: "" }), false);
 });
 
+test("the hour repeated when clocks fall back keeps its order and freshness", () => {
+  // Nov. 1, 2026: 1:58am EDT, then the clocks go back, then 1:01am EST.
+  const now = new Date("2026-11-01T01:02:00-05:00");
+  const earlier = { title: "Before", artist: "A", date: "2026-11-01", time: "01:58" };
+  const later = { title: "After", artist: "B", date: "2026-11-01", time: "01:01" };
+  assert.equal(isFresh(earlier, now), true, "four minutes ago, not an hour ahead");
+  assert.deepEqual(
+    mergeTracks([[earlier, later]], now.getTime()).map((t) => t.title),
+    ["After", "Before"],
+  );
+});
+
 test("a song's play time reads in the listener's own zone", () => {
   const track = { date: "2026-09-28", time: "14:00" };
   assert.equal(playedAt(track, "America/New_York"), "2pm");

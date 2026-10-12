@@ -5,32 +5,30 @@ import { useNow } from "./hooks/useNow.js";
 import { decodeEntities } from "./text.js";
 import { withTimeout } from "./net.js";
 import { showSegment } from "./catalog.js";
-import {
-  clockLabel,
-  easternParts,
-  easternToEpoch,
-  localClock,
-  reportedMinutes,
-  shiftDate,
-} from "./time.js";
+import { clockLabel, easternParts, localClock, reportedAt, shiftDate } from "./time.js";
 
 // The station publishes one file per Eastern calendar day. Just after
 // midnight ET that file is nearly empty, so the previous day is merged in
 // until the new day has built up its own history.
 const EARLY_HOUR = 5;
 const reportedKey = (track) => `${track.date} ${track.time} ${track.title} ${track.artist}`;
-const newestFirst = (a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`);
-export function mergeTracks(lists) {
+// Songs newest first by when they really played (time.js reportedAt), so
+// the hour repeated when clocks fall back sorts in the order it happened.
+function newestFirst(tracks, now = Date.now()) {
+  const at = new Map(tracks.map((t) => [t, reportedAt(t.date, t.time, now) ?? 0]));
+  return tracks.sort((a, b) => at.get(b) - at.get(a));
+}
+export function mergeTracks(lists, now = Date.now()) {
   const seen = new Set();
-  return lists
-    .flat()
-    .filter((track) => {
+  return newestFirst(
+    lists.flat().filter((track) => {
       const key = reportedKey(track);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
-    })
-    .sort(newestFirst);
+    }),
+    now,
+  );
 }
 // A song is presented as playing until it should have ended, plus a little
 // slack, when the station says how long it runs (so a 20-minute jam stays
@@ -39,12 +37,14 @@ export function mergeTracks(lists) {
 const FRESH_MINUTES = 15;
 const SLACK_MINUTES = 3;
 
-// Minutes since a song was reported, compared in absolute minutes so a song
-// reported at 23:58 is 3 minutes old at 00:01. Null when unknown.
+// Whole minutes since a song was reported, in real time (so 23:58 is three
+// minutes before 00:01, and the repeated hour in the fall counts once). A
+// report a minute or two ahead of this clock is new; one further ahead is
+// unknown. Null when unknown.
 function reportAge(track, now) {
-  const { date, time } = easternParts(now);
-  const age = reportedMinutes(date, time) - reportedMinutes(track.date, track.time);
-  return Number.isFinite(age) && age >= 0 ? age : null;
+  const at = reportedAt(track.date, track.time, now.getTime());
+  const ms = at === null ? NaN : now.getTime() - at;
+  return ms >= -2 * 60000 ? Math.max(0, Math.floor(ms / 60000)) : null;
 }
 
 // Is the reported song plausibly still on air?
@@ -93,7 +93,7 @@ export function withNowPlaying(tracks, nowFile) {
 
 // When a song played, in the listener's time: "2:32pm".
 export function playedAt(track, timeZone) {
-  const at = track?.date && track?.time ? easternToEpoch(track.date, track.time) : null;
+  const at = track?.date && track?.time ? reportedAt(track.date, track.time) : null;
   return at === null ? (track?.time ? clockLabel(track.time) : "") : localClock(at, timeZone);
 }
 
@@ -106,9 +106,9 @@ export function useLiveSong(playlist) {
   return latest && isFresh(latest, new Date(now)) ? latest : null;
 }
 
-export function normalizePlaylist(data) {
+export function normalizePlaylist(data, now = Date.now()) {
   if (!Array.isArray(data)) return [];
-  return data
+  const tracks = data
     .filter(
       (t) =>
         t &&
@@ -126,8 +126,8 @@ export function normalizePlaylist(data) {
       img: /^https?:\/\//.test(t.image || "") ? t.image : "",
       time: String(t.timeslice || "").slice(11, 16),
       date: String(t.timeslice || "").slice(0, 10),
-    }))
-    .sort(newestFirst);
+    }));
+  return newestFirst(tracks, now);
 }
 const LOADING = { tracks: [], status: "loading" };
 const UNAVAILABLE = { tracks: [], status: "unavailable" };

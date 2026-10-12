@@ -3,9 +3,9 @@ import { Icon } from "../ui.jsx";
 import { shiftDate } from "../time.js";
 import { pickDay } from "../concerts.js";
 
-// One month at a time, to pick a range of days in: the first tap is the
-// start, the second the end (a day before the start begins again from it),
-// a third starts a new range. Days before `min` can't be picked. Dates are
+// One month at a time, to pick days in (concerts.js, pickDay): a tap picks a
+// day, a later one makes a range to it, and a picked day tapped again lets
+// the dates go. Only days from `min` to `max` can be picked. Dates are
 // "YYYY-MM-DD", as the concert calendar has them.
 const MONTH = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
 const DAY_NAME = new Intl.DateTimeFormat("en-US", {
@@ -23,12 +23,13 @@ const addMonths = (first, n) => {
   return d.toISOString().slice(0, 10);
 };
 
-export function RangeCalendar({ from, to, min, onChange }) {
+export function RangeCalendar({ from, to, min, max, onChange }) {
   const [month, setMonth] = useState(() => monthOf(from || min));
   const lead = at(month).getUTCDay();
   const days = [];
   for (let d = month; d.slice(0, 7) === month.slice(0, 7); d = shiftDate(d, 1)) days.push(d);
   const atStart = month <= monthOf(min);
+  const atEnd = Boolean(max) && month >= monthOf(max);
   const end = to || from;
   return (
     <div className="range-calendar">
@@ -45,6 +46,7 @@ export function RangeCalendar({ from, to, min, onChange }) {
         <button
           className="icon-button range-next"
           aria-label="Next month"
+          disabled={atEnd}
           onClick={() => setMonth(addMonths(month, 1))}
         >
           <Icon name="back" size={16} />
@@ -64,7 +66,7 @@ export function RangeCalendar({ from, to, min, onChange }) {
               key={day}
               className="range-day"
               style={i === 0 ? { gridColumnStart: lead + 1 } : undefined}
-              disabled={day < min}
+              disabled={day < min || Boolean(max && day > max)}
               data-in={inRange || undefined}
               data-edge={edge || undefined}
               data-start={(from && day === from && to && to !== from) || undefined}

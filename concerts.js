@@ -1,7 +1,7 @@
 import { CONCERTS_ENDPOINT } from "./config.js";
 import { withTimeout } from "./net.js";
 import { plainText, webUrl } from "./text.js";
-import { easternParts, shiftDate } from "./time.js";
+import { apMonths, easternParts, shiftDate } from "./time.js";
 
 // Feeds report local Eastern datetimes ("2026-06-12 20:00:00"). Parsing
 // those into a Date and taking toISOString() pushes evening events onto the
@@ -106,14 +106,20 @@ async function getJson(url, signal) {
 
 const eventsOf = (data) => (Array.isArray(data) ? data : data?.events || data?.items || []);
 
-// The calendar's request for a page of the next year of events.
-export function calendarPageUrl(endpoint, page, today = easternToday()) {
+// The last day the app asks the calendar for: a year from today. Dates past
+// it can't be picked (the Filter's calendar), since nothing there is loaded.
+export function calendarEnd(today = easternToday()) {
   const end = new Date(`${today}T12:00:00Z`);
   end.setUTCMonth(end.getUTCMonth() + MONTHS_AHEAD);
+  return end.toISOString().slice(0, 10);
+}
+
+// The calendar's request for a page of the next year of events.
+export function calendarPageUrl(endpoint, page, today = easternToday()) {
   const params = new URLSearchParams({
     per_page: String(PER_PAGE),
     start_date: today,
-    end_date: `${end.toISOString().slice(0, 10)} 23:59:59`,
+    end_date: `${calendarEnd(today)} 23:59:59`,
     page: String(page),
   });
   return `${endpoint}${endpoint.includes("?") ? "&" : "?"}${params}`;
@@ -244,16 +250,19 @@ function inRange(date, when, today, range) {
 }
 
 // A range picked on one calendar (RangeCalendar.jsx): the range after a tap
-// on `day`. The first tap is the start, the second the end; a day before the
-// start, or a tap once both are set, begins again from that day.
+// on `day`. A first tap picks that one day; a later day then makes it a
+// range to there. Tapping a picked day (the one day, or either end) lets the
+// dates go, back to every date; any other day starts again from it.
 export function pickDay({ from, to }, day) {
-  if (!from || to || day < from) return { from: day, to: "" };
-  return { from, to: day };
+  if (day === from || day === to) return { from: "", to: "" };
+  if (from && from === to && day > from) return { from, to: day };
+  return { from: day, to: day };
 }
 
-// "Oct 14–20", "Oct 30 – Nov 2", "From Oct 14": a chosen range, short.
-const RANGE_DAY = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
-const rangeDay = (iso) => RANGE_DAY.format(new Date(`${iso}T12:00:00`));
+// "Oct. 14–20", "Oct. 30 – Nov. 2", "From Oct. 14": a chosen range, short,
+// its months AP style like every date in the app.
+const RANGE_DAY = new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric" });
+const rangeDay = (iso) => apMonths(RANGE_DAY.format(new Date(`${iso}T12:00:00`)));
 export function rangeLabel({ from, to }) {
   if (from && to) {
     if (from === to) return rangeDay(from);

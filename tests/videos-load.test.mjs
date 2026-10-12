@@ -81,10 +81,12 @@ test("a refresh while a further page loads leaves no gap and keeps the list", as
   waits[`${WXPN}@96`] = new Promise((resolve) => (release = resolve));
   replies[`${WXPN}@96`] = page(97, 4);
   const last = loadMoreVideos(WXPN);
-  await loadVideos({ force: true });
-  assert.equal(section(WXPN).videos.length, 96, "the refresh doesn't shrink the list");
+  // The refresh waits its turn, then reads as far as the page reached.
+  const refresh = loadVideos({ force: true });
   release();
   await last;
+  await refresh;
+  assert.equal(section(WXPN).videos.length, 100, "the refresh doesn't shrink the list");
   const ids = section(WXPN).videos.map((v) => Number(v.id));
   assert.deepEqual(
     ids,

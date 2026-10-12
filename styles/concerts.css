@@ -33,6 +33,13 @@
 .filter-button[aria-expanded="true"] > .icon:last-child {
   rotate: 180deg;
 }
+.filter-when {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--accent-strong);
+  font-weight: 600;
+}
 .filter-count {
   min-width: 20px;
   padding: 0 6px;

@@ -139,4 +139,11 @@ test("the collections are one feed: newest first, each video once", async () => 
   const empty = (status) => ({ videos: [], status, more: false });
   assert.equal(oneFeed([empty("error"), empty("loading")]).status, "loading");
   assert.equal(oneFeed([empty("error"), empty("error")]).status, "error");
+  const live = { videos: [v("1", "2026-10-01")], status: "live", more: false };
+  assert.equal(
+    oneFeed([live, empty("error")]).status,
+    "cache",
+    "a collection that failed beside one that loaded still says so",
+  );
+  assert.equal(oneFeed([live, { ...live, videos: [v("2", "")] }]).status, "live");
 });

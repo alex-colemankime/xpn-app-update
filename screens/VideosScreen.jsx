@@ -80,7 +80,7 @@ export function VideosScreen({ onWatch }) {
       <>
         {section.status === "cache" && state.loadedAt > 0 && (
           <p className="data-note">
-            These may not be the newest videos: the collection couldn’t be refreshed.{" "}
+            Some videos couldn’t be loaded, so these may not be all of them.{" "}
             <button className="text-button" onClick={retry}>
               Try again
             </button>

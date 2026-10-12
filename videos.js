@@ -203,8 +203,6 @@ export function findVideo(sections, id) {
 //   offset      where the next page starts in Brightcove's list (counted
 //               as asked for, apart from the videos shown, which drop
 //               repeats)
-//   generation  counts the times a refresh changed the list; a further page
-//               asked for before then belongs to the old list
 // A load that failed anywhere is tried again soon rather than after the
 // usual wait.
 const CACHE_KEY = "xpn.videos.cache";
@@ -224,7 +222,6 @@ const videoStore = createStore({
       more: true,
       moreFailed: false,
       offset: videos.length,
-      generation: 0,
       status: videos.length ? "cache" : "loading",
     };
   }),
@@ -232,6 +229,16 @@ const videoStore = createStore({
   complete: false,
 });
 let inflight = null;
+// Refreshes and further pages run one at a time, in the order asked for, so
+// each starts from the list as the one before it left it: a page never
+// lands on a list a refresh has since replaced, and a refresh never drops a
+// page that loaded while it ran.
+let work = Promise.resolve();
+const oneAtATime = (job) => {
+  const run = work.then(job, job);
+  work = run.catch(() => {});
+  return run;
+};
 
 const updateSection = (playlist, change) =>
   videoStore.set((s) => ({
@@ -255,7 +262,7 @@ export function loadVideos({ force = false } = {}) {
       sections: state.sections.map((s) => (s.videos.length ? s : { ...s, status: "loading" })),
     });
   }
-  inflight = (async () => {
+  inflight = oneAtATime(async () => {
     const results = await Promise.allSettled(VIDEO_SECTIONS.map((s) => fetchPlaylist(s.playlist)));
     // Each section's fresh list, or null where it couldn't be read. Where
     // the listener had opened further pages, those are read again too, so
@@ -278,13 +285,7 @@ export function loadVideos({ force = false } = {}) {
       ...s,
       sections: s.sections.map((old) => {
         const got = fresh.get(old.playlist);
-        if (got) {
-          const same =
-            got.offset === old.offset &&
-            got.videos.length === old.videos.length &&
-            got.videos.every((v, i) => v.id === old.videos[i].id);
-          return { ...old, ...got, status: "live", generation: old.generation + (same ? 0 : 1) };
-        }
+        if (got) return { ...old, ...got, status: "live" };
         return { ...old, status: old.videos.length ? "cache" : "error" };
       }),
       loadedAt: Date.now(),
@@ -294,7 +295,7 @@ export function loadVideos({ force = false } = {}) {
       const { sections } = videoStore.getSnapshot();
       writeJson(CACHE_KEY, Object.fromEntries(sections.map((s) => [s.playlist, s.videos])));
     }
-  })().finally(() => {
+  }).finally(() => {
     inflight = null;
   });
   return inflight;
@@ -323,33 +324,34 @@ async function readOn(playlist, first, through) {
   return { videos, offset, more, moreFailed: false };
 }
 
-// The next page of one section. A page that fails is marked, so the screen
-// can say so and offer it again. A page that arrives after a refresh changed
-// the list is let go: Brightcove's list moved under it, even if the new list
-// happens to end at the same place, and appending it would skip videos.
+// The next page of one section, in turn with refreshes (oneAtATime), from
+// wherever the list ends when its turn comes. A page that fails is marked,
+// so the screen can say so and offer it again.
 const loadingMore = new Set();
+const sectionOf = (playlist) =>
+  videoStore.getSnapshot().sections.find((s) => s.playlist === playlist);
 export function loadMoreVideos(playlist) {
-  const section = videoStore.getSnapshot().sections.find((s) => s.playlist === playlist);
-  if (!section?.more || loadingMore.has(playlist)) return null;
+  if (!sectionOf(playlist)?.more || loadingMore.has(playlist)) return null;
   loadingMore.add(playlist);
   updateSection(playlist, () => ({ moreFailed: false }));
-  const { offset: from, generation } = section;
-  const current = (old) => old.generation === generation && old.offset === from;
-  return fetchPlaylist(playlist, from)
-    .then(
-      (page) =>
-        updateSection(playlist, (old) => {
-          if (!current(old)) return {};
-          const ids = new Set(old.videos.map((v) => v.id));
-          return {
-            videos: [...old.videos, ...page.videos.filter((v) => !ids.has(v.id))],
-            more: page.count === PAGE_SIZE,
-            offset: from + page.count,
-          };
-        }),
-      () => updateSection(playlist, (old) => (current(old) ? { moreFailed: true } : {})),
-    )
-    .finally(() => loadingMore.delete(playlist));
+  return oneAtATime(async () => {
+    const section = sectionOf(playlist);
+    if (!section?.more) return;
+    const from = section.offset;
+    try {
+      const page = await fetchPlaylist(playlist, from);
+      updateSection(playlist, (old) => {
+        const ids = new Set(old.videos.map((v) => v.id));
+        return {
+          videos: [...old.videos, ...page.videos.filter((v) => !ids.has(v.id))],
+          more: page.count === PAGE_SIZE,
+          offset: from + page.count,
+        };
+      });
+    } catch {
+      updateSection(playlist, () => ({ moreFailed: true }));
+    }
+  }).finally(() => loadingMore.delete(playlist));
 }
 
 // Every collection as one feed, newest first, each video once (one can be
@@ -364,8 +366,10 @@ export function oneFeed(sections) {
     .filter((v) => !seen.has(v.id) && seen.add(v.id))
     .sort((a, b) => (b.published || "").localeCompare(a.published || ""));
   const has = (status) => sections.some((s) => s.status === status);
+  // A collection that failed or couldn't be refreshed, beside others that
+  // loaded, still says so (and offers Try again).
   const status = videos.length
-    ? has("cache")
+    ? has("cache") || has("error")
       ? "cache"
       : "live"
     : has("loading") || !sections.length

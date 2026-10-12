@@ -45,7 +45,7 @@ test("a full page with a duplicate still leads to the next page, from the right 
   assert.equal(section(WORLD_CAFE).more, false);
 });
 
-test("a page asked for before a refresh is let go, even when the new list ends at the same place", async () => {
+test("a page and a refresh take turns: neither undoes the other", async () => {
   // 96 videos open: two full pages.
   replies[WORLD_CAFE] = page(1, 48);
   replies[`${WORLD_CAFE}@48`] = page(49, 48);
@@ -53,22 +53,28 @@ test("a page asked for before a refresh is let go, even when the new list ends a
   await loadMoreVideos(WORLD_CAFE);
   assert.equal(section(WORLD_CAFE).videos.length, 96);
 
-  // "Show more" is slow to answer, with the old list's third page.
+  // "Show more" is slow to answer, with the list's third page.
   let release;
   waits[`${WORLD_CAFE}@96`] = new Promise((resolve) => (release = resolve));
   replies[`${WORLD_CAFE}@96`] = page(97, 48);
   const more = loadMoreVideos(WORLD_CAFE);
 
-  // Meanwhile two videos go in at the top, and the list is read again.
-  replies[WORLD_CAFE] = [video(1001), video(1002), ...page(1, 46)];
-  replies[`${WORLD_CAFE}@48`] = page(47, 48);
-  await loadVideos({ force: true });
-  assert.equal(section(WORLD_CAFE).offset, 96, "the new list ends at the same place");
-  assert.equal(section(WORLD_CAFE).videos.at(-1).id, "94");
-
+  // Meanwhile a refresh is asked for; it waits for the page. By its turn a
+  // video has gone in just past the first 96.
+  // (The held page already has its answer; the refresh will read these.)
+  const refresh = loadVideos({ force: true });
+  replies[`${WORLD_CAFE}@96`] = [video(5000), ...page(97, 47)];
+  replies[`${WORLD_CAFE}@144`] = page(144, 2);
+  delete waits[`${WORLD_CAFE}@96`];
   release();
   await more;
-  delete waits[`${WORLD_CAFE}@96`];
-  assert.equal(section(WORLD_CAFE).videos.at(-1).id, "94", "the old page isn't added");
-  assert.equal(section(WORLD_CAFE).more, true, "95 and 96 are still to come");
+  assert.equal(section(WORLD_CAFE).videos.length, 144, "the page landed");
+  await refresh;
+  const ids = section(WORLD_CAFE).videos.map((v) => v.id);
+  assert.equal(ids.length, 144, "the refresh read as far as the listener had gone");
+  assert.ok(ids.includes("5000"), "the new video is in the list");
+  assert.equal(section(WORLD_CAFE).offset, 144);
+  assert.equal(section(WORLD_CAFE).more, true, "143 and on are still to come");
+  await loadMoreVideos(WORLD_CAFE);
+  assert.equal(section(WORLD_CAFE).videos.at(-1).id, "145", "nothing skipped");
 });

@@ -3,7 +3,7 @@ import { Icon, Empty, PromptLink, SearchField, SkeletonList } from "../ui.jsx";
 import { useFavoriteItems } from "../favorites.js";
 import { ConcertRow } from "../components/ConcertRow.jsx";
 import { RangeCalendar } from "../components/RangeCalendar.jsx";
-import { easternToday, filterConcerts, rangeLabel } from "../concerts.js";
+import { calendarEnd, easternToday, filterConcerts, rangeLabel } from "../concerts.js";
 import { CALENDAR_URL, SUBMIT_CONCERT_URL } from "../links.js";
 import { mediumDay } from "../time.js";
 import { NewsletterPrompt } from "../components/Newsletter.jsx";
@@ -239,6 +239,12 @@ export function ConcertsScreen({ result }) {
             <Icon name="filter" size={18} />
             Filter
             {active > 0 && <span className="filter-count">{active}</span>}
+            {/* The dates in use, so they're known with the panel closed. */}
+            {when !== "all" && (
+              <span className="filter-when">
+                {when === "range" ? rangeLabel(range) : WHEN.find((o) => o.id === when)?.label}
+              </span>
+            )}
             <Icon name="chevD" size={16} />
           </button>
           {filtersOpen && (
@@ -262,9 +268,10 @@ export function ConcertsScreen({ result }) {
                   from={range.from}
                   to={range.to}
                   min={today}
+                  max={calendarEnd(today)}
                   onChange={(next) => {
                     change(setRange)(next);
-                    setWhen("range");
+                    setWhen(next.from ? "range" : "all");
                   }}
                 />
               </div>
