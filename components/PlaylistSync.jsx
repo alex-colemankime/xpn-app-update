@@ -129,7 +129,7 @@ export function PlaylistSyncPrompt({ onSetUp }) {
 
 // The song menu's part: until a service is connected, the way to connect
 // one; after, where this song stands in the playlist (or a way to add it).
-export function PlaylistMenuItems({ track, close }) {
+export function PlaylistMenuItems({ track, close, saveShown = false }) {
   const sync = usePlaylistSync();
   const item = { ...track, id: songId(track) };
   const saved = useIsFavorite("songs", item);
@@ -158,6 +158,8 @@ export function PlaylistMenuItems({ track, close }) {
     );
   }
   if (!saved) {
+    // Save, beside it, adds the song to the playlist as well.
+    if (saveShown) return null;
     return (
       <button
         onClick={() => {

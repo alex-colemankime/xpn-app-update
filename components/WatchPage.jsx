@@ -16,6 +16,7 @@ import {
 } from "../videos.js";
 import { youTubeEmbed } from "../updates.js";
 import { useFeatures } from "../features.js";
+import { useSheetDrag } from "../hooks/useSheetDrag.js";
 
 // Watching a video, the way video apps do it: the picture full width at the
 // top (pinned there on phones while the rest scrolls), then the title, who
@@ -147,6 +148,7 @@ function UpNext({ heading, videos, onPick }) {
 
 export function WatchPage({ videoId, live, onPick, onClose }) {
   const ref = useRef(null);
+  const drag = useSheetDrag();
   const titleId = useId();
   const { sections } = useVideos();
   const videosOn = useFeatures().videos;
@@ -225,7 +227,10 @@ export function WatchPage({ videoId, live, onPick, onClose }) {
 
   return (
     <dialog
-      ref={ref}
+      ref={(el) => {
+        ref.current = el;
+        return drag(el);
+      }}
       className="watch-page"
       aria-labelledby={titleId}
       onCancel={(e) => {

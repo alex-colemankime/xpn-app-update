@@ -3,6 +3,7 @@ import { STATION_ART } from "./assets.js";
 import { Icon } from "./icons.jsx";
 import { Toast, modalClosed, modalOpened } from "./components/Toast.jsx";
 import { track } from "./analytics.js";
+import { useSheetDrag } from "./hooks/useSheetDrag.js";
 
 export { Icon };
 
@@ -91,6 +92,7 @@ export function Art({ src, alt = "", className = "", ...props }) {
 // Without `onClose` it can't be dismissed (no Close key, Escape or backdrop).
 export function Modal({ title, children, onClose, className = "", style }) {
   const ref = useRef(null);
+  const drag = useSheetDrag();
   const id = useId();
   useEffect(() => {
     const el = ref.current;
@@ -111,7 +113,10 @@ export function Modal({ title, children, onClose, className = "", style }) {
   }, []);
   return (
     <dialog
-      ref={ref}
+      ref={(el) => {
+        ref.current = el;
+        return drag(el);
+      }}
       className={`detail-dialog ${className}`}
       style={style}
       aria-labelledby={id}

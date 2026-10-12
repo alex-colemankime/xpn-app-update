@@ -84,6 +84,23 @@ what you did, what happened, and a screen recording if you can.
       play and pause work. Start it from the car with the phone app closed.
 - [ ] Android Auto (the Desktop Head Unit, or a car): the same.
 
+## Gestures
+
+- [ ] Press and hold a song, a show (schedule, All shows, Archive), an
+      episode, a concert and a video: a menu rises with a light buzz, no
+      callout or text selection appears, and lifting the finger doesn't
+      also open the row. Scrolling over rows never opens one.
+- [ ] Pull a show's sheet, the video page and a menu down from the top:
+      it follows the finger, closes when let go far enough, and settles
+      back from a nudge. Scrolling a long sheet still scrolls.
+- [ ] Flick up on the mini player (station and an episode): Listen, or the
+      episode, opens.
+- [ ] Shows › Schedule: swipe the list left and right to turn the day;
+      past Sunday it goes on to Archive, before Monday to All shows.
+- [ ] Pull down at the top of Listen, Concerts, Videos and Shows › Archive:
+      a spinner comes down, turns while the list loads, and goes. Scrolling
+      stays smooth, and in a browser the page itself doesn't reload.
+
 ## The system
 
 - [ ] Light and dark: switch the phone's appearance while the app is open;

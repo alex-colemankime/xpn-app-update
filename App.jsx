@@ -29,6 +29,7 @@ import { ShowDetail } from "./components/ShowDetail.jsx";
 import { StationBanner } from "./components/StationUpdates.jsx";
 import { OfflineNotice } from "./components/OfflineNotice.jsx";
 import { Toast } from "./components/Toast.jsx";
+import { HoldMenu } from "./components/HoldMenu.jsx";
 import { readJson, writeJson } from "./storage.js";
 import { ListenScreen } from "./screens/ListenScreen.jsx";
 import { ShowsScreen } from "./screens/ShowsScreen.jsx";
@@ -68,7 +69,7 @@ function Screen({ id, label, current, children }) {
   const shown = current === id;
   return (
     <Activity mode={shown ? "visible" : "hidden"}>
-      <section hidden={!shown} aria-label={label}>
+      <section hidden={!shown} aria-label={label} data-screen>
         {/* A screen that can't load says so, and the rest of the app carries on. */}
         <ScreenErrorBoundary>
           <Suspense fallback={null}>{children}</Suspense>
@@ -274,6 +275,7 @@ export default function App() {
         </Suspense>
       </OverlayErrorBoundary>
       <Toast />
+      <HoldMenu />
     </div>
   );
 }

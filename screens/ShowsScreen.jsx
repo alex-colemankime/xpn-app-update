@@ -2,11 +2,14 @@ import { useState } from "react";
 import { Icon, Art, Segmented, Empty, SearchField } from "../ui.jsx";
 import { SHOW_DIRECTORY, scheduleForDay, onAirAt } from "../catalog.js";
 import { DAYS, easternParts, clockLabel } from "../time.js";
-import { ShowCard } from "../components/MusicRows.jsx";
+import { ShowCard, showHold } from "../components/MusicRows.jsx";
 import { useNow } from "../hooks/useNow.js";
 import { ArchiveList } from "../components/Archive.jsx";
 import { useFeatures } from "../features.js";
-import { useSwipeTabs } from "../hooks/useSwipeTabs.js";
+import { stepper, useSwipeTabs } from "../hooks/useSwipeTabs.js";
+import { useSwipe } from "../hooks/useSwipe.js";
+import { PullToRefresh } from "../components/PullToRefresh.jsx";
+import { loadArchive } from "../archive.js";
 
 const matchesQuery = (query) => {
   const q = query.trim().toLowerCase();
@@ -40,6 +43,14 @@ export function ShowsScreen({ onOpen }) {
     setMode(next);
   };
   const swipe = useSwipeTabs(modes, mode, choose);
+  // On the schedule, a swipe across the list turns the day, as the days
+  // above it do; past Sunday (or before Monday) it goes on to the next tab.
+  const [dayEnter, setDayEnter] = useState(0);
+  const chooseDay = (next, direction = 0) => {
+    setDayEnter(direction);
+    setDay(next);
+  };
+  const daySwipe = useSwipe(stepper(DAYS, day, chooseDay));
   // Today's slot, not one that began yesterday and runs past midnight (whose
   // start is before today's): the same show's slot later today isn't on yet.
   const isOnAir = (slot) =>
@@ -74,6 +85,7 @@ export function ShowsScreen({ onOpen }) {
               {mode === "All shows" ? shows.length : slots.length} matching shows
             </p>
           )}
+          {mode === "Archive" && <PullToRefresh onRefresh={() => loadArchive({ force: true })} />}
           {mode === "Archive" ? (
             <ArchiveList
               query={query}
@@ -106,50 +118,55 @@ export function ShowsScreen({ onOpen }) {
                     aria-pressed={d === day}
                     aria-label={d === today ? `${d}, today` : d}
                     key={d}
-                    onClick={() => setDay(d)}
+                    onClick={() => chooseDay(d)}
                   >
                     {d.slice(0, 3)}
                     {d === today && <i />}
                   </button>
                 ))}
               </div>
-              <div className="section-heading schedule-heading">
-                <h2>{day}</h2>
-                <span className="subtle">All times Eastern</span>
-              </div>
-              {slots.length ? (
-                <div>
-                  {slots.map((slot) => (
-                    <button
-                      className={`schedule-row ${isOnAir(slot) ? "on-air-row" : ""}`}
-                      key={`${slot.show.id}-${slot.start}`}
-                      onClick={() => onOpen(slot.show.id)}
+              <div ref={daySwipe}>
+                <div key={day} className="tab-pane" data-enter={dayEnter || undefined}>
+                  <div className="section-heading schedule-heading">
+                    <h2>{day}</h2>
+                    <span className="subtle">All times Eastern</span>
+                  </div>
+                  {slots.length ? (
+                    <div>
+                      {slots.map((slot) => (
+                        <button
+                          ref={showHold(slot.show, onOpen)}
+                          className={`schedule-row ${isOnAir(slot) ? "on-air-row" : ""}`}
+                          key={`${slot.show.id}-${slot.start}`}
+                          onClick={() => onOpen(slot.show.id)}
+                        >
+                          <time>
+                            {clockLabel(slot.start)}
+                            <small>{clockLabel(slot.end)}</small>
+                          </time>
+                          <Art src={slot.show.img} alt="" loading="lazy" />
+                          <span className="schedule-info">
+                            {isOnAir(slot) && <span className="on-air-chip">On air now</span>}
+                            <strong>{slot.show.name}</strong>
+                            {slot.show.host && <span>{slot.show.host}</span>}
+                            <small className="schedule-desc">{slot.show.desc}</small>
+                          </span>
+                          <Icon name="chev" size={20} />
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <Empty
+                      icon="search"
+                      title="No matching shows"
+                      action="Clear search"
+                      onAction={() => setQuery("")}
                     >
-                      <time>
-                        {clockLabel(slot.start)}
-                        <small>{clockLabel(slot.end)}</small>
-                      </time>
-                      <Art src={slot.show.img} alt="" loading="lazy" />
-                      <span className="schedule-info">
-                        {isOnAir(slot) && <span className="on-air-chip">On air now</span>}
-                        <strong>{slot.show.name}</strong>
-                        {slot.show.host && <span>{slot.show.host}</span>}
-                        <small className="schedule-desc">{slot.show.desc}</small>
-                      </span>
-                      <Icon name="chev" size={20} />
-                    </button>
-                  ))}
+                      Try a different day or clear your search.
+                    </Empty>
+                  )}
                 </div>
-              ) : (
-                <Empty
-                  icon="search"
-                  title="No matching shows"
-                  action="Clear search"
-                  onAction={() => setQuery("")}
-                >
-                  Try a different day or clear your search.
-                </Empty>
-              )}
+              </div>
             </>
           )}
         </div>

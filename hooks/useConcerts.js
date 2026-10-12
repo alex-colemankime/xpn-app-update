@@ -7,7 +7,7 @@ import { adoptLegacyConcerts } from "../favorites.js";
 const STALE_MS = 3 * 3600000;
 
 // Concert listings: loaded once, again on retry (showing "loading"), and
-// refreshed in place when stale (keeping the list on screen meanwhile).
+// refreshed in place when stale or pulled down (keeping the list on screen meanwhile).
 // Only one load runs at a time, however often the app comes to the front.
 // `enabled` false (the build has no Concerts tab, or the station switched it
 // off) loads nothing, and switching off stops a load under way.
@@ -16,12 +16,13 @@ export function useConcerts(enabled = true) {
   const [result, setResult] = useState(null);
   const loadedAt = useRef(0);
   const last = useRef(null);
+  const reload = useRef(null);
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
     let pending = null;
     const load = (quiet) => {
-      if (pending) return;
+      if (pending) return pending;
       pending = fetchConcertResult(controller.signal)
         .then((data) => {
           if (controller.signal.aborted) return;
@@ -36,7 +37,9 @@ export function useConcerts(enabled = true) {
         .finally(() => {
           pending = null;
         });
+      return pending;
     };
+    reload.current = () => load(true);
     load(false);
     const onVisible = () => {
       if (document.visibilityState === "visible" && Date.now() - loadedAt.current > STALE_MS)
@@ -52,5 +55,7 @@ export function useConcerts(enabled = true) {
     partial: loaded && Boolean(result.partial),
     through: (loaded && result.through) || "",
     retry: () => setAttempt((n) => n + 1),
+    // Quietly, keeping the list on screen (a pull down on Concerts).
+    refresh: () => reload.current?.() || Promise.resolve(),
   };
 }

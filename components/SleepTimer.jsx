@@ -5,6 +5,7 @@ import { showToast } from "../toast.js";
 import { Art, Icon, focusFirstItem } from "../ui.jsx";
 import { usePlayer, useSleepTimer } from "../hooks/usePlayer.js";
 import { useNow } from "../hooks/useNow.js";
+import { useSheetDrag } from "../hooks/useSheetDrag.js";
 
 // Each choice as the menu shows it (a large number over its unit), as a
 // screen reader names its key, and as the confirmation says it.
@@ -21,6 +22,7 @@ export function SleepTimer({ onAirNow }) {
   const endsAt = useSleepTimer();
   const now = useNow();
   const { playing, connecting } = usePlayer();
+  const drag = useSheetDrag();
   if (!endsAt && !playing && !connecting) return null;
   const left = endsAt ? Math.max(1, Math.ceil((endsAt - now) / 60000)) : 0;
   const close = () => document.getElementById("sleep-menu")?.hidePopover?.();
@@ -55,6 +57,7 @@ export function SleepTimer({ onAirNow }) {
       </button>
       <div
         id="sleep-menu"
+        ref={drag}
         onToggle={focusFirstItem}
         className="popover-menu sleep-menu"
         popover="auto"

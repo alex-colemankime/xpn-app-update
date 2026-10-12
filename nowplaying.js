@@ -221,7 +221,10 @@ export function useNowPlaying(streamId) {
     const timer = setInterval(update, 30000);
     const listening = new AbortController();
     document.addEventListener("visibilitychange", update, { signal: listening.signal });
-    window.addEventListener("wxpn:refresh-playlist", update, { signal: listening.signal });
+    // A refresh asked for by the listener (refreshPlaylist) waits on this read.
+    window.addEventListener("wxpn:refresh-playlist", (e) => e.detail?.push?.(update()), {
+      signal: listening.signal,
+    });
     return () => {
       active = false;
       controller?.abort();
@@ -231,4 +234,12 @@ export function useNowPlaying(streamId) {
   }, [streamId]);
   if (!STREAMS[streamId]?.songFeed) return UNAVAILABLE; // Homegrown has no song feed
   return byStream[streamId] || LOADING;
+}
+
+// Reads the song list again now (a pull down on Listen), settling when the
+// read has.
+export function refreshPlaylist() {
+  const reads = [];
+  window.dispatchEvent(new CustomEvent("wxpn:refresh-playlist", { detail: reads }));
+  return Promise.all(reads);
 }

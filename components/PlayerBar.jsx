@@ -20,6 +20,12 @@ import {
 } from "../episode-player.js";
 import { EpisodeScrubber } from "./Archive.jsx";
 import { useArtTint } from "../art-tint.js";
+import { useSwipe } from "../hooks/useSwipe.js";
+
+// A flick up on the mini player opens what it plays, as music apps do; the
+// song in it (a tap) does the same.
+const useSwipeUpToOpen = (open) =>
+  useSwipe((direction) => direction === "up" && (open(), true), { min: 32 });
 
 // The bar's wash, from the artwork playing (styles/layout.css).
 function useBarTint(art) {
@@ -74,8 +80,10 @@ function EpisodeBar({ onOpenEpisode }) {
   const playing = status === "playing" || busy;
   const left = duration ? Math.max(0, duration - position) : 0;
   const tint = useBarTint(episode.image);
+  const swipe = useSwipeUpToOpen(() => onOpenEpisode(episode));
   return (
     <footer
+      ref={swipe}
       {...tint}
       className="player-bar"
       data-source="episode"
@@ -154,8 +162,9 @@ function LiveBar({ playlist, onOpen }) {
   // needs none, the play button already says it.
   const badge = playing || connecting || status === "error" ? text.badge : "";
   const tint = useBarTint(current?.img);
+  const swipe = useSwipeUpToOpen(onOpen);
   return (
-    <footer {...tint} className="player-bar" aria-label="Radio player">
+    <footer ref={swipe} {...tint} className="player-bar" aria-label="Radio player">
       <button
         className="player-play"
         onClick={togglePlayback}

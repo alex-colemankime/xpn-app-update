@@ -7,6 +7,7 @@ import { calendarEnd, easternToday, filterConcerts, rangeLabel } from "../concer
 import { CALENDAR_URL, SUBMIT_CONCERT_URL } from "../links.js";
 import { mediumDay } from "../time.js";
 import { NewsletterPrompt } from "../components/Newsletter.jsx";
+import { PullToRefresh } from "../components/PullToRefresh.jsx";
 
 // Three days of listings at first, three more with each "Show more".
 const DAYS_STEP = 3;
@@ -231,6 +232,7 @@ export function ConcertsScreen({ result }) {
     <>
       {/* The tab bar (or sidebar) already says where this is. */}
       <h1 className="sr-only">Concerts</h1>
+      <PullToRefresh onRefresh={result.refresh} />
       {concerts.length > 0 && (
         <div className="concert-filters">
           <SearchField value={query} onChange={change(setQuery)} placeholder="Artist or venue" />

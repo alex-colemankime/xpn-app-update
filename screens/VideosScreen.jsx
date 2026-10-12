@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Empty, Icon, SearchField } from "../ui.jsx";
 import { loadMoreFeed, loadVideos, matchVideos, oneFeed, useVideos } from "../videos.js";
 import { VideoCard } from "../components/VideoCard.jsx";
+import { PullToRefresh } from "../components/PullToRefresh.jsx";
 
 // Under the newest video, the next four; each "Show more" adds a page.
 const FIRST = 4;
@@ -116,6 +117,7 @@ export function VideosScreen({ onWatch }) {
     <>
       {/* The tab bar (or sidebar) already says where this is. */}
       <h1 className="sr-only">Videos</h1>
+      <PullToRefresh onRefresh={retry} />
       <div className="toolbar">
         <SearchField value={query} onChange={setQuery} placeholder="Search videos" />
       </div>

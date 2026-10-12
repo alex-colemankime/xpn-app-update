@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Art, Empty, Icon, SkeletonList } from "../ui.jsx";
-import { SaveButton } from "./MusicRows.jsx";
+import { MenuHead, MenuItem, MenuSave, SaveButton, shareFrom, showHold } from "./MusicRows.jsx";
+import { holdable, openHoldMenu } from "../hold.js";
 import { SHOWS } from "../catalog.js";
 import { loadArchive, slotLength, useArchive } from "../archive.js";
 import { apMonths, clockTime, compactLength, lengthLabel, shortDay } from "../time.js";
@@ -78,8 +79,53 @@ export function EpisodeRow({ episode, gone = false }) {
     : [episode.feature, !episode.aired && shortDay(episode.date)].filter(Boolean).join(" · ");
   const verb = on ? "Pause" : inProgress ? "Resume" : "Play";
   const Body = gone ? "div" : "button";
+  // Press and hold: play (or pause), save, share.
+  const hold = holdable(() =>
+    openHoldMenu({
+      label: `${showName(episode)}, ${episode.title}`,
+      render: (close) => (
+        <>
+          <MenuHead
+            art={showArt(episode)}
+            title={apMonths(episode.title)}
+            line={showName(episode)}
+          />
+          {!gone && (
+            <MenuItem
+              icon={on ? "pause" : "play"}
+              onClick={() => {
+                close();
+                toggleEpisode(episode);
+              }}
+            >
+              {verb}
+            </MenuItem>
+          )}
+          <MenuSave
+            type="episodes"
+            item={savedEpisodeItem(episode)}
+            name={`${showName(episode)}, ${episode.title}`}
+            close={close}
+          />
+          {episode.page && (
+            <MenuItem
+              icon="shareAlt"
+              onClick={shareFrom(
+                close,
+                episode.title,
+                `${showName(episode)}: ${episode.title}`,
+                episode.page,
+              )}
+            >
+              Share episode
+            </MenuItem>
+          )}
+        </>
+      ),
+    }),
+  );
   return (
-    <div className="archive-row" data-active={s.active || undefined}>
+    <div ref={hold} className="archive-row" data-active={s.active || undefined}>
       <Body
         className="archive-open"
         {...(!gone && {
@@ -121,7 +167,11 @@ export function EpisodeRow({ episode, gone = false }) {
 export function ShowHead({ id, show, headId, line, onOpen }) {
   return (
     <div className="archive-show-head">
-      <button className="show-head-open" onClick={() => onOpen(id)}>
+      <button
+        ref={showHold({ ...show, id }, onOpen)}
+        className="show-head-open"
+        onClick={() => onOpen(id)}
+      >
         <Art src={show.img} alt="" loading="lazy" />
         <span>
           <strong id={headId}>{show.name}</strong>

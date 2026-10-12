@@ -17,6 +17,8 @@ import { PLAYLIST_URL } from "../links.js";
 import { SHOWS, shortName } from "../catalog.js";
 import { playedAt } from "../nowplaying.js";
 import { useArtTint } from "../art-tint.js";
+import { useSheetDrag } from "../hooks/useSheetDrag.js";
+import { holdable, openHoldMenu } from "../hold.js";
 
 // The artwork a saved heart takes its color from, and a precomputed tint
 // when the item is one of the station's shows. A show's segment in the
@@ -148,21 +150,12 @@ export function SongMenu({ track, stationLabel = "WXPN" }) {
   // opening, so focus can move to the first of them.
   const [open, setOpen] = useState(false);
   const menu = useRef(null);
+  const drag = useSheetDrag();
   const onToggle = (e) => {
     flushSync(() => setOpen(e.newState === "open"));
     focusFirstItem(e);
   };
   const close = () => menu.current?.hidePopover();
-  const share = async () => {
-    close();
-    showToast(
-      await shareText(
-        track.title,
-        `${track.title} — ${track.artist}, heard on ${stationLabel}`,
-        PLAYLIST_URL,
-      ),
-    );
-  };
   return (
     <>
       <button
@@ -175,7 +168,10 @@ export function SongMenu({ track, stationLabel = "WXPN" }) {
       </button>
       <div
         id={menuId}
-        ref={menu}
+        ref={(el) => {
+          menu.current = el;
+          return drag(el);
+        }}
         onToggle={onToggle}
         className="popover-menu"
         popover="auto"
@@ -185,24 +181,142 @@ export function SongMenu({ track, stationLabel = "WXPN" }) {
       >
         {open && (
           <>
-            <div className="popover-menu-head">
-              <Art src={track.img} alt="" />
-              <span>
-                <strong>{track.title}</strong>
-                <small>{track.artist}</small>
-              </span>
-            </div>
-            <PlaylistMenuItems track={track} close={close} />
-            <button onClick={share}>
-              Share song
-              <Icon name="shareAlt" size={16} />
-            </button>
+            <MenuHead art={track.img} title={track.title} line={track.artist} />
+            <SongMenuItems track={track} stationLabel={stationLabel} close={close} />
           </>
         )}
       </div>
     </>
   );
 }
+
+// What a menu is about, over its choices: artwork (if any), a title and a
+// muted line.
+export function MenuHead({ art, title, line }) {
+  return (
+    <div className="popover-menu-head">
+      {art && <Art src={art} alt="" />}
+      <span>
+        <strong>{title}</strong>
+        {line && <small>{line}</small>}
+      </span>
+    </div>
+  );
+}
+
+// Save (or un-save) as a choice in a menu, the words saying which.
+export function MenuSave({ type, item, name, close }) {
+  const follow = type === "shows";
+  return (
+    <SaveButton type={type} item={item} name={name} className="menu-save" onToggle={close}>
+      {(saved) =>
+        saved
+          ? follow
+            ? "Unfollow"
+            : "Remove from Favorites"
+          : follow
+            ? "Follow show"
+            : "Save to Favorites"
+      }
+    </SaveButton>
+  );
+}
+
+// A plain choice in a menu: words, then a small icon at the end.
+export function MenuItem({ icon, children, onClick }) {
+  return (
+    <button onClick={onClick}>
+      {children}
+      {icon && <Icon name={icon} size={16} />}
+    </button>
+  );
+}
+
+// Shares something from a menu, saying how it went.
+export const shareFrom =
+  (close, ...what) =>
+  async () => {
+    close();
+    showToast(await shareText(...what));
+  };
+
+// A song's choices, in its "…" menu and its press-and-hold menu: its place
+// in the listener's playlist, and Share. The hold menu (`withSave`) leads
+// with Save, which also adds the song to a connected playlist.
+export function SongMenuItems({ track, stationLabel = "WXPN", close, withSave = false }) {
+  const share = async () => {
+    close();
+    showToast(
+      await shareText(
+        track.title,
+        `${track.title} — ${track.artist}, heard on ${stationLabel}`,
+        PLAYLIST_URL,
+      ),
+    );
+  };
+  return (
+    <>
+      {withSave && (
+        <MenuSave
+          type="songs"
+          item={{ ...track, id: songId(track) }}
+          name={track.title}
+          close={close}
+        />
+      )}
+      <PlaylistMenuItems track={track} close={close} saveShown={withSave} />
+      <button onClick={share}>
+        Share song
+        <Icon name="shareAlt" size={16} />
+      </button>
+    </>
+  );
+}
+
+// A song's press-and-hold menu (hold.js).
+export const songHold = (track, stationLabel) =>
+  holdable(() =>
+    openHoldMenu({
+      label: `${track.title} by ${track.artist}`,
+      render: (close) => (
+        <>
+          <MenuHead art={track.img} title={track.title} line={track.artist} />
+          <SongMenuItems track={track} stationLabel={stationLabel} close={close} withSave />
+        </>
+      ),
+    }),
+  );
+
+// A show's press-and-hold menu: open it, follow it, share it.
+export const showHold = (show, onOpen) =>
+  holdable(() =>
+    openHoldMenu({
+      label: show.name,
+      render: (close) => (
+        <>
+          <MenuHead art={show.img} title={show.name} line={show.host} />
+          <MenuItem
+            icon="chev"
+            onClick={() => {
+              close();
+              onOpen(show.id);
+            }}
+          >
+            View show
+          </MenuItem>
+          <MenuSave type="shows" item={show} name={show.name} close={close} />
+          {show.page && (
+            <MenuItem
+              icon="shareAlt"
+              onClick={shareFrom(close, show.name, `${show.name} on WXPN`, show.page)}
+            >
+              Share show
+            </MenuItem>
+          )}
+        </>
+      ),
+    }),
+  );
 
 export const SaveSong = ({ track }) => (
   <SaveButton type="songs" item={{ ...track, id: songId(track) }} name={track.title} />
@@ -222,7 +336,7 @@ export function heartSong(track) {
 // in a button: no headings or paragraphs inside it).
 export function ShowCard({ show, onOpen }) {
   return (
-    <button className="show-card" onClick={() => onOpen(show.id)}>
+    <button ref={showHold(show, onOpen)} className="show-card" onClick={() => onOpen(show.id)}>
       <span className="show-cover">
         <Art src={show.img} alt="" loading="lazy" />
       </span>
@@ -241,6 +355,7 @@ export function TrackRow({ track, showTime = false, stationLabel, wash = false }
   const tint = useArtTint(wash ? track.img : null);
   return (
     <div
+      ref={songHold(track, stationLabel)}
       className="track-row"
       data-tinted={tint ? "" : undefined}
       style={tint ? { "--tint-light": tint.light, "--tint-dark": tint.dark } : undefined}

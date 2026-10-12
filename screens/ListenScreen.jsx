@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useArtTint } from "../art-tint.js";
 import { selectStream, togglePlayback } from "../player.js";
 import { STATION_OPTIONS } from "../streams.js";
-import { useLiveSong } from "../nowplaying.js";
+import { refreshPlaylist, useLiveSong } from "../nowplaying.js";
 import { onAirAt } from "../catalog.js";
 import { playbackText, statusLine } from "../playback-text.js";
 import { Icon, Art, EqBars, Wordmark, Segmented, SkeletonList } from "../ui.jsx";
@@ -15,6 +15,7 @@ import { usePlayer, chooseAudioOutput } from "../hooks/usePlayer.js";
 import { useHeroVisibility } from "../hooks/useHeroVisibility.js";
 import { useNow } from "../hooks/useNow.js";
 import { PLAYLIST_URL } from "../links.js";
+import { PullToRefresh } from "../components/PullToRefresh.jsx";
 
 const RECENT_PREVIEW = 6;
 const RECENT_MAX = 50;
@@ -263,6 +264,7 @@ export function ListenScreen({ playlist, live, onWatch, onOpenShow }) {
   const merged = streamId === "xpn" && videoOfShow(live, onAirAt(new Date(now)));
   return (
     <>
+      {station.songFeed && <PullToRefresh onRefresh={refreshPlaylist} />}
       <div className="listen-heading">
         <h1>Listen live</h1>
         <Segmented
