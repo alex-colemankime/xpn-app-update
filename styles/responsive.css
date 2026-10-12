@@ -265,12 +265,6 @@
         var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
     );
   }
-  /* With the mini player stepped aside, no room is kept for it. */
-  :root[data-hero-visible] .main-shell[data-screen="listen"] {
-    padding-bottom: calc(
-      var(--tabbar-h) + 4px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
-    );
-  }
   :root[data-hero-visible] .toast {
     bottom: calc(
       var(--tabbar-h) + 10px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))

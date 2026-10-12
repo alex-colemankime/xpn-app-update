@@ -12,7 +12,7 @@ import { getPlayerSnapshot, subscribePlayer } from "./player.js";
 import { useNowPlaying } from "./nowplaying.js";
 import { SHOWS } from "./catalog.js";
 import { useFavoriteItems } from "./favorites.js";
-import { useRoute } from "./hooks/useRoute.js";
+import { placeOf, useRoute } from "./hooks/useRoute.js";
 import { useAppearance } from "./hooks/useAppearance.js";
 import { useConcerts } from "./hooks/useConcerts.js";
 import { useRadioAlarm } from "./hooks/useRadioAlarm.js";
@@ -128,32 +128,16 @@ export default function App() {
     [route.screen],
   );
   // Each screen keeps its place, as a phone's tabs do: how far down it was
-  // is noted as the listener scrolls, and coming back to it returns there
-  // (its tab, pressed again, goes to the top: useRoute). Focus moves to main,
-  // so screen readers announce the new content. (Not on first load.) Before
-  // paint, so the screen never shows at the wrong place first, and before
-  // the browser reports the scroll the switch caused, so that is noted for
-  // the screen now in front.
+  // is noted as the listener leaves it (useRoute.js), and coming back to it
+  // returns there (its tab, pressed again, goes to the top). Nothing runs
+  // while scrolling. Focus moves to main, so screen readers announce the new
+  // content. (Not on first load.) Before paint, so the screen never shows at
+  // the wrong place first.
   const shownScreen = useRef(route.screen);
-  const places = useRef({});
-  useEffect(() => {
-    let frame = 0;
-    const note = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        places.current[shownScreen.current] = window.scrollY;
-      });
-    };
-    window.addEventListener("scroll", note, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", note);
-      cancelAnimationFrame(frame);
-    };
-  }, []);
   useLayoutEffect(() => {
     if (shownScreen.current === route.screen) return;
     shownScreen.current = route.screen;
-    window.scrollTo({ top: places.current[route.screen] || 0 });
+    window.scrollTo({ top: placeOf(route.screen) });
     main.current?.focus({ preventScroll: true });
   }, [route.screen]);
 

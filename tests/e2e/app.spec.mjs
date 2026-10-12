@@ -60,6 +60,13 @@ test("each screen keeps its place, and its tab again goes to the top", async ({ 
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(400);
   await nav.getByRole("button", { name: "Shows", exact: true }).click();
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  // Back (the browser's, or Android's) returns to where the screen was too.
+  await page.evaluate(() => window.scrollTo(0, 300));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(300);
+  await nav.getByRole("button", { name: "Favorites", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await page.goBack();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(300);
 });
 
 test("a show opens, can be followed, and closes", async ({ page }) => {

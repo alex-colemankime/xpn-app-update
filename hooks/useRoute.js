@@ -50,6 +50,25 @@ export function routeHash({ screen, showId, episodeId, videoId, live }) {
   return hash;
 }
 
+// How far down each screen was when the listener left it, so coming back
+// returns there (App.jsx). Noted at the moment of leaving: before the app's
+// own navigation changes the address, and, for Back and Forward, from the
+// browser's own event, which reaches this listener (added first, as the app
+// loads) before the screen changes. Nothing is noted while scrolling.
+const places = new Map();
+let shownScreen = typeof window === "undefined" ? "" : parseRoute(window.location.hash).screen;
+const leaving = (next) => {
+  if (next === shownScreen) return;
+  places.set(shownScreen, window.scrollY);
+  shownScreen = next;
+};
+export const placeOf = (screen) => places.get(screen) || 0;
+if (typeof window !== "undefined") {
+  const followAddress = () => leaving(parseRoute(window.location.hash).screen);
+  window.addEventListener("popstate", followAddress);
+  window.addEventListener("hashchange", followAddress);
+}
+
 const subscribe = (listener) => {
   window.addEventListener("hashchange", listener);
   window.addEventListener("popstate", listener);
@@ -70,10 +89,12 @@ const entryState = () => window.history.state ?? { depth: depth() };
 // pushState and replaceState fire no event of their own.
 const announce = () => window.dispatchEvent(new PopStateEvent("popstate"));
 const push = (route, state) => {
+  leaving(route.screen);
   window.history.pushState(state, "", routeHash(route));
   announce();
 };
 const replace = (route, state = { depth: depth() }) => {
+  leaving(route.screen);
   window.history.replaceState(state, "", routeHash(route));
   announce();
 };
