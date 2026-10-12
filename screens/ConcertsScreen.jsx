@@ -158,7 +158,11 @@ export function ConcertsScreen({ result }) {
         action="Try again"
         onAction={result.retry}
       >
-        Check your connection and try again.
+        Check your connection and try again, or see the calendar on{" "}
+        <a href={CALENDAR_URL} target="_blank" rel="noreferrer">
+          xpn.org
+        </a>
+        .
       </Empty>
     );
   } else if (!concerts.length) {

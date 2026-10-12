@@ -16,7 +16,7 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
 }
 .segmented {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   border-bottom: 1px solid var(--border);
 }
 .segmented button {

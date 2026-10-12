@@ -52,16 +52,18 @@
   display: grid;
   gap: 8px;
   align-content: start;
-  padding: 8px 8px 12px;
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
   text-align: left;
 }
+/* No box around a show: its artwork, and once followed, a ring in the
+   accent around it and a filled check. */
 .welcome-show > img {
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  border-radius: 7px;
+  border-radius: 10px;
+  outline: 2.5px solid transparent;
+  outline-offset: 2px;
+  transition: outline-color 0.15s;
 }
 .welcome-show-text {
   display: grid;
@@ -78,8 +80,8 @@
 }
 .welcome-check {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 8px;
+  right: 8px;
   display: grid;
   place-items: center;
   width: 28px;
@@ -89,8 +91,8 @@
   color: var(--text);
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
 }
-.welcome-show.followed {
-  border-color: var(--accent);
+.welcome-show.followed > img {
+  outline-color: var(--accent);
 }
 .welcome-show.followed .welcome-check {
   background: var(--action);

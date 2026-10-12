@@ -351,8 +351,72 @@ async function playStation(page) {
   }
 }
 
+// Listen with the station playing, from its own Listen live key (the mini
+// player steps aside on Listen).
+async function playFromListen(page) {
+  try {
+    await page.locator(".hero-play").click({ timeout: 5000 });
+    await page.locator('.player-bar .live-badge[data-state="live"]').waitFor({
+      state: "attached",
+      timeout: 10000,
+    });
+  } catch {
+    note("The station didn't start playing; that shot shows it paused.");
+  }
+}
+
 // Each shot: how to get there. Named as on the screens page (data-shot).
+// "store-" and "ipad-" shots are the raw screens for the store listings
+// (tools/store-shots.mjs frames them), light only.
 const SHOTS = {
+  "store-listen": async (page) => {
+    await page.goto(`${BASE}#/listen`);
+    await page.locator(".now-art img").first().waitFor({ timeout: 10000 });
+    await playFromListen(page);
+    await settle(page);
+  },
+  "store-sheet": async (page) => {
+    needVideos();
+    await page.goto(`${BASE}#/shows/show/worldcafe`);
+    await page
+      .getByRole("dialog", { name: "World Cafe" })
+      .locator(".video-card img")
+      .first()
+      .waitFor();
+    await settle(page);
+  },
+  "store-favorites": async (page) => {
+    await page.goto(`${BASE}#/favorites`);
+    await page.locator(".track-row").first().waitFor();
+    await settle(page);
+    await playStation(page);
+    await page.waitForTimeout(400);
+  },
+  "store-videos": async (page) => {
+    await openVideos(page);
+    await settle(page);
+  },
+  "store-concerts": async (page) => {
+    await page.goto(`${BASE}#/concerts`);
+    await page.locator(".concert-row").first().waitFor({ timeout: 20000 });
+    await settle(page);
+  },
+  // The radio alarm ringing: set for this minute today, so the app's own
+  // check (every 15 seconds in a browser) rings it.
+  "store-alarm": async (page) => {
+    await page.addInitScript((alarm) => {
+      globalThis.localStorage.setItem("xpn.alarm.v1", JSON.stringify(alarm));
+    }, ALARM_NOW);
+    await page.goto(`${BASE}#/listen`);
+    await page.locator(".alarm-banner").waitFor({ timeout: 25000 });
+    await settle(page);
+  },
+  "ipad-listen": async (page) => {
+    await page.goto(`${BASE}#/listen`);
+    await page.locator(".now-art img").first().waitFor({ timeout: 10000 });
+    await playFromListen(page);
+    await settle(page);
+  },
   // Favorites › Songs, with the station playing.
   "phone-favorites": async (page) => {
     await page.goto(`${BASE}#/favorites`);
@@ -466,6 +530,16 @@ const SHOTS = {
   },
 };
 
+// The alarm at the shots' moment (a Tuesday, 3:02pm Eastern).
+const ALARM_NOW = {
+  enabled: true,
+  time: "15:02",
+  streamId: "xpn",
+  repeatDays: [1, 2, 3, 4, 5],
+  volume: 70,
+  snoozeMinutes: 10,
+};
+
 const wanted = process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(SHOTS);
 const unknown = wanted.filter((name) => !SHOTS[name]);
 if (unknown.length) throw new Error(`No such shot: ${unknown.join(", ")}`);
@@ -493,7 +567,8 @@ const browser =
         // A browser already on the machine (PLAYWRIGHT_CHROMIUM), else Playwright's own.
         executablePath: process.env.PLAYWRIGHT_CHROMIUM || undefined,
       });
-// Phone shots at an iPhone's size; "desk-" shots in a laptop's window.
+// Phone shots at an iPhone's size; "desk-" shots in a laptop's window;
+// store shots at the store's iPhone (6.9") and iPad (13") sizes.
 const DEVICES = {
   phone: {
     viewport: { width: 390, height: 844 },
@@ -502,12 +577,28 @@ const DEVICES = {
     hasTouch: true,
   },
   desk: { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1.25 },
+  store: {
+    viewport: { width: 440, height: 956 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  },
+  ipad: {
+    viewport: { width: 1032, height: 1376 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  },
 };
-const deviceOf = (name) => (name.startsWith("desk-") ? "desk" : "phone");
+const deviceOf = (name) => (name.split("-")[0] in DEVICES ? name.split("-")[0] : "phone");
+// Store shots are light only, as the listings show them.
+const LIGHT_ONLY = ["store", "ipad"];
 for (const [theme, device] of ["light", "dark"].flatMap((t) =>
   Object.keys(DEVICES).map((d) => [t, d]),
 )) {
-  const shots = wanted.filter((name) => deviceOf(name) === device);
+  const shots = wanted.filter(
+    (name) => deviceOf(name) === device && !(theme === "dark" && LIGHT_ONLY.includes(device)),
+  );
   if (!shots.length) continue;
   const context = await browser.newContext({
     ...DEVICES[device],

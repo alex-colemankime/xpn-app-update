@@ -721,7 +721,6 @@ h1 {
   .mobile-nav button {
     display: flex;
     min-width: 0;
-    overflow-wrap: anywhere;
     flex: 1;
     height: var(--tabbar-h);
     flex-direction: column;
@@ -733,6 +732,15 @@ h1 {
   }
   .mobile-nav button.active {
     color: var(--accent);
+  }
+  /* Tab names stay whole and on one line, as a phone's own tab bars keep
+     them, however large the text: capped to the width of the screen. */
+  .mobile-nav button > span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: min(1em, 3.6vw);
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -269,3 +269,11 @@
   color: var(--accent-strong);
   font-weight: 650;
 }
+
+/* A link in an empty state's line (the calendar on xpn.org). */
+.empty-state p a {
+  color: var(--accent-strong);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
