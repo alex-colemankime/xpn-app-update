@@ -107,6 +107,13 @@ export default function App() {
   // came for the show.
   const [welcome, setWelcome] = useState(() => !readJson(ONBOARDED_KEY, false) && !route.showId);
   const [WatchPage, setWatchPage] = useState(makeWatchPage);
+  // Each time Favorites comes to the front, a new visit (LibraryScreen).
+  const [favoritesVisit, setFavoritesVisit] = useState(0);
+  const [lastScreen, setLastScreen] = useState(route.screen);
+  if (lastScreen !== route.screen) {
+    setLastScreen(route.screen);
+    if (route.screen === "favorites") setFavoritesVisit((n) => n + 1);
+  }
   const finishWelcome = () => {
     writeJson(ONBOARDED_KEY, true);
     setWelcome(false);
@@ -209,6 +216,7 @@ export default function App() {
           )}
           <Screen id="favorites" label="Favorites" current={route.screen}>
             <LibraryScreen
+              visit={favoritesVisit}
               onOpenShow={route.openShow}
               onOpenVideo={watching.watchVideo}
               onNavigate={route.navigate}

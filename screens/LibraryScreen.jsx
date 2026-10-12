@@ -47,7 +47,7 @@ const EMPTY = {
 const searchText = (item) =>
   `${item.title || ""} ${item.artist || ""} ${item.name || ""} ${item.showName || ""}`.toLowerCase();
 
-export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
+export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }) {
   const [type, setType] = useState("songs");
   const [query, setQuery] = useState("");
   const songs = useFavoriteItems("songs");
@@ -96,6 +96,15 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
     setQuery("");
   };
   const swipe = useSwipeTabs(Object.keys(items), category, choose);
+  // The app keeps Favorites alive behind the other tabs. Each time it comes
+  // back to the front (`visit`, from App) its list is drawn afresh from what
+  // is saved now, so a song hearted on Listen is there at once: iPhone's web
+  // view could keep showing the list as it was until the tab was switched.
+  const [seenVisit, setSeenVisit] = useState(visit);
+  if (seenVisit !== visit) {
+    setSeenVisit(visit);
+    setEnter(0);
+  }
 
   const shareSongs = async () =>
     showToast(
@@ -124,7 +133,7 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
             <SearchField value={query} onChange={setQuery} placeholder="Search your favorites" />
           )}
         </div>
-        <div key={category} className="tab-pane" data-enter={enter || undefined}>
+        <div key={`${category}-${visit}`} className="tab-pane" data-enter={enter || undefined}>
           <p className="sr-only" role="status">
             {filtered.length} saved {category}
             {q ? " match your search" : ""}

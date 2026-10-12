@@ -316,3 +316,22 @@ test("Favorites changes in place, without leaving the tab", async ({ page }) => 
   await page.getByRole("button", { name: "Undo" }).click();
   await expect(row).toBeVisible();
 });
+
+test("a song hearted in Recently played is in Favorites at once, after a visit there", async ({
+  page,
+}) => {
+  await page.goto("/#/listen");
+  const nav = page.getByRole("navigation").first();
+  const tab = (name) =>
+    nav.getByRole("link", { name }).or(nav.getByRole("button", { name })).first();
+  const recent = page.locator(".recent-panel");
+  await expect(recent.getByText(SONGS[1][0])).toBeVisible();
+  // Favorites seen once, so it is kept behind the other tabs.
+  await tab("Favorites").click();
+  await tab(/Listen/).click();
+  await recent.getByRole("button", { name: `Save ${SONGS[1][0]}` }).click();
+  await tab("Favorites").click();
+  await expect(
+    page.getByRole("region", { name: "Favorites" }).locator(".track-row", { hasText: SONGS[1][0] }),
+  ).toBeVisible();
+});
