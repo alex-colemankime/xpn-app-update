@@ -102,18 +102,13 @@
   font-weight: 800;
   letter-spacing: -0.08em;
 }
+/* The song, with its heart and menu beside the title. */
 .now-meta {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    "label actions"
-    "info info";
-  align-items: center;
-}
-.now-eyebrow {
-  grid-area: label;
-  font-size: 0.875rem;
-  color: var(--muted);
+  grid-template-areas: "info actions";
+  align-items: start;
+  column-gap: 8px;
 }
 .now-info {
   grid-area: info;
@@ -146,12 +141,12 @@
 .now-album {
   color: var(--muted);
 }
-/* Heart and menu on the label's line, their glyphs lined up with the
+/* Heart and menu level with the title, their glyphs lined up with the
    artwork's right edge. */
 .now-song-actions {
   grid-area: actions;
   display: flex;
-  margin: -6px -12px -6px 0;
+  margin: -6px -12px 0 0;
 }
 .now-controls {
   display: flex;
@@ -165,6 +160,8 @@
   min-height: 50px;
   padding: 0 24px;
   border-radius: 14px;
+  /* A touch of the page through it, so it sits in the page rather than on it. */
+  background: color-mix(in oklab, var(--action) 90%, transparent);
   font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: 0.005em;

@@ -5,7 +5,7 @@ import { STATION_OPTIONS } from "../streams.js";
 import { refreshPlaylist, useLiveSong } from "../nowplaying.js";
 import { onAirAt } from "../catalog.js";
 import { playbackText, statusLine } from "../playback-text.js";
-import { Icon, Art, EqBars, Wordmark, Segmented, SkeletonList } from "../ui.jsx";
+import { Icon, Art, Wordmark, Segmented, SkeletonList } from "../ui.jsx";
 import { heartSong, SaveSong, SongMenu, TrackRow } from "../components/MusicRows.jsx";
 import { OnAir, videoOfShow } from "../components/OnAir.jsx";
 import { SleepTimer } from "../components/SleepTimer.jsx";
@@ -79,11 +79,6 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
   useHeroVisibility(controls);
   // The FM schedule only describes WXPN; XPN2 and Homegrown have none.
   const onAirNow = streamId === "xpn" ? onAirAt(new Date(now)) : null;
-  const eyebrow = current
-    ? "Now playing"
-    : playlist.status === "loading" && station.songFeed
-      ? "Loading song info"
-      : "Live radio";
   // Keyed on the song, so a new song fades in rather than snapping.
   const songKey = current ? `${current.date}-${current.time}-${current.title}` : streamId;
 
@@ -128,14 +123,8 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
             </span>
           )}
         </div>
-        {/* The label and the song's own actions (heart, menu) share the top
-            line, so the title below has the full width of the stage and
-            never wraps around them. */}
+        {/* The song, its heart and menu beside the title. */}
         <div className="now-meta">
-          <span className="eyebrow now-eyebrow">
-            {playing && current && <EqBars />}
-            {eyebrow}
-          </span>
           <div className="now-info" key={`info-${songKey}`}>
             <h2>{current?.title || station.label}</h2>
             {/* Artist, then the album after it on the same line, quieter. */}
