@@ -6,6 +6,7 @@ import { ShowCard } from "../components/MusicRows.jsx";
 import { useNow } from "../hooks/useNow.js";
 import { ArchiveList } from "../components/Archive.jsx";
 import { useFeatures } from "../features.js";
+import { useSwipeTabs } from "../hooks/useSwipeTabs.js";
 
 const matchesQuery = (query) => {
   const q = query.trim().toLowerCase();
@@ -31,6 +32,14 @@ export function ShowsScreen({ onOpen }) {
     setDay(today);
   }
   const [query, setQuery] = useState("");
+  // A view chosen by tab or by a swipe across the screen; a swipe also says
+  // which way the new one slides in.
+  const [enter, setEnter] = useState(0);
+  const choose = (next, direction = 0) => {
+    setEnter(direction);
+    setMode(next);
+  };
+  const swipe = useSwipeTabs(modes, mode, choose);
   // Today's slot, not one that began yesterday and runs past midnight (whose
   // start is before today's): the same show's slot later today isn't on yet.
   const isOnAir = (slot) =>
@@ -45,97 +54,106 @@ export function ShowsScreen({ onOpen }) {
     <>
       {/* The tab bar (or sidebar) already says where this is. */}
       <h1 className="sr-only">Shows</h1>
-      <div className="toolbar">
-        <Segmented label="Browse shows" value={mode} onChange={setMode} options={modes} />
-        <SearchField
-          value={query}
-          onChange={setQuery}
-          placeholder={mode === "Archive" ? "Search episodes" : "Find a show or host"}
-        />
-      </div>
-      {mode !== "Archive" && (
-        <p className="sr-only" role="status">
-          {mode === "All shows" ? shows.length : slots.length} matching shows
-        </p>
-      )}
-      {mode === "Archive" ? (
-        <ArchiveList
-          query={query}
-          onOpenShow={(id) => onOpen(id)}
-          onClearQuery={() => setQuery("")}
-        />
-      ) : mode === "All shows" ? (
-        shows.length ? (
-          <div className="show-grid all-shows">
-            {shows.map((show) => (
-              <ShowCard key={show.id} show={show} onOpen={onOpen} />
-            ))}
-          </div>
-        ) : (
-          <Empty
-            icon="search"
-            title="No shows found"
-            action="Clear search"
-            onAction={() => setQuery("")}
-          >
-            Try a different show or host name.
-          </Empty>
-        )
-      ) : (
-        <>
-          <div className="day-picker" role="group" aria-label="Schedule day">
-            {DAYS.map((d) => (
-              <button
-                className={d === day ? "active" : ""}
-                aria-pressed={d === day}
-                aria-label={d === today ? `${d}, today` : d}
-                key={d}
-                onClick={() => setDay(d)}
-              >
-                {d.slice(0, 3)}
-                {d === today && <i />}
-              </button>
-            ))}
-          </div>
-          <div className="section-heading schedule-heading">
-            <h2>{day}</h2>
-            <span className="subtle">All times Eastern</span>
-          </div>
-          {slots.length ? (
-            <div>
-              {slots.map((slot) => (
-                <button
-                  className={`schedule-row ${isOnAir(slot) ? "on-air-row" : ""}`}
-                  key={`${slot.show.id}-${slot.start}`}
-                  onClick={() => onOpen(slot.show.id)}
-                >
-                  <time>
-                    {clockLabel(slot.start)}
-                    <small>{clockLabel(slot.end)}</small>
-                  </time>
-                  <Art src={slot.show.img} alt="" loading="lazy" />
-                  <span className="schedule-info">
-                    {isOnAir(slot) && <span className="on-air-chip">On air now</span>}
-                    <strong>{slot.show.name}</strong>
-                    {slot.show.host && <span>{slot.show.host}</span>}
-                    <small className="schedule-desc">{slot.show.desc}</small>
-                  </span>
-                  <Icon name="chev" size={20} />
-                </button>
-              ))}
-            </div>
-          ) : (
-            <Empty
-              icon="search"
-              title="No matching shows"
-              action="Clear search"
-              onAction={() => setQuery("")}
-            >
-              Try a different day or clear your search.
-            </Empty>
+      <div ref={swipe} className="swipe-tabs">
+        <div className="toolbar">
+          <Segmented
+            label="Browse shows"
+            value={mode}
+            onChange={(next) => choose(next)}
+            options={modes}
+          />
+          <SearchField
+            value={query}
+            onChange={setQuery}
+            placeholder={mode === "Archive" ? "Search episodes" : "Find a show or host"}
+          />
+        </div>
+        <div key={mode} className="tab-pane" data-enter={enter || undefined}>
+          {mode !== "Archive" && (
+            <p className="sr-only" role="status">
+              {mode === "All shows" ? shows.length : slots.length} matching shows
+            </p>
           )}
-        </>
-      )}
+          {mode === "Archive" ? (
+            <ArchiveList
+              query={query}
+              onOpenShow={(id) => onOpen(id)}
+              onClearQuery={() => setQuery("")}
+            />
+          ) : mode === "All shows" ? (
+            shows.length ? (
+              <div className="show-grid all-shows">
+                {shows.map((show) => (
+                  <ShowCard key={show.id} show={show} onOpen={onOpen} />
+                ))}
+              </div>
+            ) : (
+              <Empty
+                icon="search"
+                title="No shows found"
+                action="Clear search"
+                onAction={() => setQuery("")}
+              >
+                Try a different show or host name.
+              </Empty>
+            )
+          ) : (
+            <>
+              <div className="day-picker" role="group" aria-label="Schedule day">
+                {DAYS.map((d) => (
+                  <button
+                    className={d === day ? "active" : ""}
+                    aria-pressed={d === day}
+                    aria-label={d === today ? `${d}, today` : d}
+                    key={d}
+                    onClick={() => setDay(d)}
+                  >
+                    {d.slice(0, 3)}
+                    {d === today && <i />}
+                  </button>
+                ))}
+              </div>
+              <div className="section-heading schedule-heading">
+                <h2>{day}</h2>
+                <span className="subtle">All times Eastern</span>
+              </div>
+              {slots.length ? (
+                <div>
+                  {slots.map((slot) => (
+                    <button
+                      className={`schedule-row ${isOnAir(slot) ? "on-air-row" : ""}`}
+                      key={`${slot.show.id}-${slot.start}`}
+                      onClick={() => onOpen(slot.show.id)}
+                    >
+                      <time>
+                        {clockLabel(slot.start)}
+                        <small>{clockLabel(slot.end)}</small>
+                      </time>
+                      <Art src={slot.show.img} alt="" loading="lazy" />
+                      <span className="schedule-info">
+                        {isOnAir(slot) && <span className="on-air-chip">On air now</span>}
+                        <strong>{slot.show.name}</strong>
+                        {slot.show.host && <span>{slot.show.host}</span>}
+                        <small className="schedule-desc">{slot.show.desc}</small>
+                      </span>
+                      <Icon name="chev" size={20} />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <Empty
+                  icon="search"
+                  title="No matching shows"
+                  action="Clear search"
+                  onAction={() => setQuery("")}
+                >
+                  Try a different day or clear your search.
+                </Empty>
+              )}
+            </>
+          )}
+        </div>
+      </div>
     </>
   );
 }

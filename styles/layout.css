@@ -91,6 +91,8 @@
 .main-shell {
   margin-left: var(--sidebar-w);
   min-width: 0;
+  /* A tab sliding in (states.css) never makes the page scroll sideways. */
+  overflow-x: clip;
   padding-bottom: calc(
     var(--player-h) + 30px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
   );

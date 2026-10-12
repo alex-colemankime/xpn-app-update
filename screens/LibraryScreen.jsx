@@ -14,6 +14,7 @@ import { calendarIsNative, downloadIcs } from "../calendar.js";
 import { useFeatures } from "../features.js";
 import { savedShowGroups } from "../saved-shows.js";
 import { YouTubeSubscribe } from "../components/SocialLinks.jsx";
+import { useSwipeTabs } from "../hooks/useSwipeTabs.js";
 
 // Empty-state copy and the screen each category's call to action opens.
 const EMPTY = {
@@ -86,6 +87,16 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
   // Until something is saved, search has nothing to work on.
   const anything = Boolean(q) || Object.values(items).some((list) => list.length);
 
+  // A category chosen by tab or by a swipe across the screen; a swipe also
+  // says which way the new one slides in.
+  const [enter, setEnter] = useState(0);
+  const choose = (next, direction = 0) => {
+    setEnter(direction);
+    setType(next);
+    setQuery("");
+  };
+  const swipe = useSwipeTabs(Object.keys(items), category, choose);
+
   const shareSongs = async () =>
     showToast(
       await shareText(
@@ -98,85 +109,86 @@ export function LibraryScreen({ onOpenShow, onOpenVideo, onNavigate }) {
     <>
       {/* The tab bar (or sidebar) already says where this is. */}
       <h1 className="sr-only">Favorites</h1>
-      <div className="toolbar">
-        <Segmented
-          label="Favorites category"
-          value={category}
-          onChange={(next) => {
-            setType(next);
-            setQuery("");
-          }}
-          options={Object.keys(items).map((key) => ({
-            value: key,
-            label: key[0].toUpperCase() + key.slice(1),
-          }))}
-        />
-        {anything && (
-          <SearchField value={query} onChange={setQuery} placeholder="Search your favorites" />
-        )}
-      </div>
-      <p className="sr-only" role="status">
-        {filtered.length} saved {category}
-        {q ? " match your search" : ""}
-      </p>
-      {category === "songs" && songs.length > 0 ? (
-        <PlaylistSyncPrompt onSetUp={() => onNavigate("settings")} />
-      ) : category === "concerts" && items.concerts?.length > 1 && !calendarIsNative() ? (
-        <button className="playlist-prompt" onClick={() => downloadIcs(items.concerts)}>
-          <Icon name="calendarAdd" size={18} />
-          <span>Add all {items.concerts.length} concerts to your calendar</span>
-          <Icon name="chev" size={16} />
-        </button>
-      ) : (
-        anything && <p className="data-note">Saved on this device.</p>
-      )}
-      {!filtered.length ? (
-        <Empty
-          icon={empty.icon}
-          title={q ? "No matching favorites" : `No saved ${category} yet`}
-          action={q ? "Clear search" : empty.action}
-          onAction={() => (q ? setQuery("") : onNavigate(empty.target))}
-          link={!q}
-        >
-          {q ? "Try a different name." : empty.text}
-        </Empty>
-      ) : category === "songs" ? (
-        <>
-          {/* One layer for every song's band (styles/layout.css). */}
-          <div className="saved-songs">
-            {filtered.map((t) => (
-              <TrackRow key={t.id} track={t} wash />
-            ))}
-          </div>
-          <button className="text-button share-songs" onClick={shareSongs}>
-            <Icon name="shareAlt" size={17} />
-            Share your saved songs
-          </button>
-        </>
-      ) : category === "shows" ? (
-        <div className="archive-list saved-shows">
-          {filtered.map((group) => (
-            <SavedShow
-              key={group.id}
-              group={group}
-              gone={(ep) => hasLeftArchive(archive, ep)}
-              onOpenShow={onOpenShow}
-            />
-          ))}
+      <div ref={swipe} className="swipe-tabs">
+        <div className="toolbar">
+          <Segmented
+            label="Favorites category"
+            value={category}
+            onChange={(next) => choose(next)}
+            options={Object.keys(items).map((key) => ({
+              value: key,
+              label: key[0].toUpperCase() + key.slice(1),
+            }))}
+          />
+          {anything && (
+            <SearchField value={query} onChange={setQuery} placeholder="Search your favorites" />
+          )}
         </div>
-      ) : category === "concerts" ? (
-        filtered.map((c) => <ConcertRow key={c.id} concert={c} />)
-      ) : category === "videos" ? (
-        <div className="video-grid saved-videos">
-          {filtered.map((v) => (
-            <div className="saved-video" key={v.id}>
-              <VideoCard video={v} onWatch={onOpenVideo} />
-              <SaveButton type="videos" item={v} name={v.artist || v.name} />
+        <div key={category} className="tab-pane" data-enter={enter || undefined}>
+          <p className="sr-only" role="status">
+            {filtered.length} saved {category}
+            {q ? " match your search" : ""}
+          </p>
+          {category === "songs" && songs.length > 0 ? (
+            <PlaylistSyncPrompt onSetUp={() => onNavigate("settings")} />
+          ) : category === "concerts" && items.concerts?.length > 1 && !calendarIsNative() ? (
+            <button className="playlist-prompt" onClick={() => downloadIcs(items.concerts)}>
+              <Icon name="calendarAdd" size={18} />
+              <span>Add all {items.concerts.length} concerts to your calendar</span>
+              <Icon name="chev" size={16} />
+            </button>
+          ) : (
+            anything && <p className="data-note">Saved on this device.</p>
+          )}
+          {!filtered.length ? (
+            <Empty
+              icon={empty.icon}
+              title={q ? "No matching favorites" : `No saved ${category} yet`}
+              action={q ? "Clear search" : empty.action}
+              onAction={() => (q ? setQuery("") : onNavigate(empty.target))}
+              link={!q}
+            >
+              {q ? "Try a different name." : empty.text}
+            </Empty>
+          ) : category === "songs" ? (
+            <>
+              {/* One layer for every song's band (styles/layout.css). */}
+              <div className="saved-songs">
+                {filtered.map((t) => (
+                  <TrackRow key={t.id} track={t} wash />
+                ))}
+              </div>
+              <button className="text-button share-songs" onClick={shareSongs}>
+                <Icon name="shareAlt" size={17} />
+                Share your saved songs
+              </button>
+            </>
+          ) : category === "shows" ? (
+            <div className="archive-list saved-shows">
+              {filtered.map((group) => (
+                <SavedShow
+                  key={group.id}
+                  group={group}
+                  gone={(ep) => hasLeftArchive(archive, ep)}
+                  onOpenShow={onOpenShow}
+                />
+              ))}
             </div>
-          ))}
+          ) : category === "concerts" ? (
+            filtered.map((c) => <ConcertRow key={c.id} concert={c} />)
+          ) : category === "videos" ? (
+            <div className="video-grid saved-videos">
+              {filtered.map((v) => (
+                <div className="saved-video" key={v.id}>
+                  <VideoCard video={v} onWatch={onOpenVideo} />
+                  <SaveButton type="videos" item={v} name={v.artist || v.name} />
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {category === "videos" && !q && <YouTubeSubscribe />}
         </div>
-      ) : null}
-      {category === "videos" && !q && <YouTubeSubscribe />}
+      </div>
     </>
   );
 }
