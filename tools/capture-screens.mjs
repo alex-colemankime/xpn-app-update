@@ -1,3 +1,4 @@
+// (Store shots retaken October 2026.)
 // Retakes screenshots for the screens page (design/screens) from the built
 // app: phone size, light and dark, at the moment the page shows (a Tuesday
 // afternoon in October, World Cafe on the air), with the same song on the
