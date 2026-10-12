@@ -256,8 +256,8 @@ test("a replaced token that can't be reported marks push as failing, until it is
   assert.deepEqual(changes.slice(-2), [true, false]);
 });
 
-test("push switched off by the station sends the sender an empty list", () => {
-  const settings = { live: true, drives: false };
-  assert.deepEqual(topicsToSend(settings, true), ["live"]);
-  assert.deepEqual(topicsToSend(settings, false), []);
+test("one subscription covers every notice; off, or push switched off, sends an empty list", () => {
+  assert.deepEqual(topicsToSend(true, true), ["station"]);
+  assert.deepEqual(topicsToSend(false, true), []);
+  assert.deepEqual(topicsToSend(true, false), []);
 });

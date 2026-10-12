@@ -47,7 +47,7 @@ WXPN is a public media service of the University of Pennsylvania, supported by i
 
 **What's new (1.0):** The new WXPN app.
 
-**App Review notes:** No sign-in is needed. Listen live: the Listen tab's Listen live button. Notifications are off until turned on in Settings (show reminders, radio alarm, From WXPN). The radio alarm schedules a notification; tapping it starts the station (a notification can't start audio on its own). Donate opens xpn.org/donate in the browser view, as App Review 3.2.2 allows for nonprofits. Playlist sync signs in with Spotify or Apple Music only if the listener chooses to.
+**App Review notes:** No sign-in is needed. Listen live: the Listen tab's Listen live button. Notifications are off until turned on in Settings (show reminders, radio alarm, Notifications from WXPN). The radio alarm schedules a notification; tapping it starts the station (a notification can't start audio on its own). Donate opens xpn.org/donate in the browser view, as App Review 3.2.2 allows for nonprofits. Playlist sync signs in with Spotify or Apple Music only if the listener chooses to.
 
 **Age rating:** no objectionable content. The browser view only opens xpn.org, ticket and streaming-service pages from the app's own links; if App Review counts that as unrestricted web access, the rating becomes 17+, so answer that question carefully.
 

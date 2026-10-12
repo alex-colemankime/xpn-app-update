@@ -1,15 +1,16 @@
-// Push notifications from the station (iOS and Android apps): live video and
-// member drives, sent from WordPress to phones whether or not the app has
+// Push notifications from the station (iOS and Android apps): live video,
+// member drives and whatever else the station sends, from WordPress to phones whether or not the app has
 // been opened lately. Only when VITE_PUSH_REGISTER_URL is set; without it,
 // those notifications are planned on the phone from the station updates
 // (useStationAlerts), which needs nothing on a server.
 //
-// The listener's two switches in Settings › From WXPN are their
-// subscriptions ("live", "drives"). Whenever the set changes, or the phone's
-// push token does, the app sends one small request:
+// The listener's one switch in Settings › Notifications from WXPN is their
+// subscription: the topic "station", for every kind of notice the station
+// sends, so a new kind needs nothing new in the app. Whenever it changes, or
+// the phone's push token does, the app sends one small request:
 //
 //   POST VITE_PUSH_REGISTER_URL
-//   { "token": "…", "platform": "ios" | "android", "topics": ["live", "drives"],
+//   { "token": "…", "platform": "ios" | "android", "topics": ["station"],
 //     "app": "org.xpn.wxpn", "version": "1.0.0" }
 //
 // An empty `topics` list means "send me nothing" (keep the token, or delete
@@ -226,28 +227,31 @@ const setStatus = (next) => {
   }
 };
 
-// What the sender should have for this phone: the topics switched on, or
-// none once the station switches push off. Pure, so it can be tested.
-export const topicsToSend = (settings, pushOn) =>
-  pushOn ? Object.keys(settings).filter((topic) => settings[topic]) : [];
+// Every notice from the station, under one subscription.
+export const STATION_TOPIC = "station";
 
-// The topics a listener has switched on, sent to the server. With push
+// What the sender should have for this phone: the station's topic while the
+// listener has notifications on, nothing once they turn them off or the
+// station switches push off. Pure, so it can be tested.
+export const topicsToSend = (on, pushOn) => (on && pushOn ? [STATION_TOPIC] : []);
+
+// The listener's choice (on or off), sent to the server. With push
 // switched off by the station, the server is told to send nothing (when it
 // had anything). False when the phone refused notifications; rejects when
 // registration or the server failed (the phone then schedules the notices
 // itself, and tries again when the app comes back to the foreground or the
 // connection returns).
-export async function syncPushTopics(settings) {
+export async function syncPushTopics(on) {
   if (!Capacitor.isNativePlatform() || !PUSH_REGISTER_URL) {
     setStatus(NO_PUSH);
     return true;
   }
-  const on = featureOn("push");
-  if (!on && !client && !topicsIn(readJson(SENT_KEY, null)).length) {
+  const pushOn = featureOn("push");
+  if (!pushOn && !client && !topicsIn(readJson(SENT_KEY, null)).length) {
     setStatus(NO_PUSH);
     return true;
   }
-  return realClient().setTopics(topicsToSend(settings, on));
+  return realClient().setTopics(topicsToSend(on, pushOn));
 }
 
 // Call `handler(target)` when the listener taps a pushed notification

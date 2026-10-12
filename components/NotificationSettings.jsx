@@ -10,7 +10,7 @@ import {
   setReminderLead,
   useReminderSettings,
 } from "../hooks/useShowReminders.js";
-import { setAlert, useAlertSettings } from "../hooks/useStationAlerts.js";
+import { setAlerts, useAlertSettings } from "../hooks/useStationAlerts.js";
 
 const LEAD_CHOICES = LEAD_OPTIONS.map((m) => ({
   value: m,
@@ -65,41 +65,24 @@ export function ShowReminders({ onNavigate }) {
   );
 }
 
-// One kind of notification from the station, with what it is and when it
-// comes beside its switch: the consent the App Store asks for (4.5.4).
-function AlertSwitch({ topic, on, title, children }) {
-  const id = `alert-${topic}`;
-  return (
-    <div className="alert-row">
-      <span>
-        <strong id={`${id}-label`}>{title}</strong>
-        <small id={`${id}-note`}>{children}</small>
-      </span>
-      <Switch
-        on={on}
-        onChange={(next) => setAlert(topic, next)}
-        labelledBy={`${id}-label`}
-        describedBy={`${id}-note`}
-      />
-    </div>
-  );
-}
-
-// Live video and member drive notifications: off until turned on here.
+// Everything the station sends, under one switch, with what it covers
+// beside it: the consent the App Store asks for (4.5.4). Off until turned
+// on here.
 export function StationAlerts() {
-  const alerts = useAlertSettings();
+  const { on } = useAlertSettings();
   return (
     <section className="settings-panel">
-      <h2>
-        <Icon name="navLive" />
-        From WXPN
-      </h2>
-      <AlertSwitch topic="live" on={alerts.live} title="Live video">
-        A notification {LIVE_ALERT_MINUTES} minutes before Free at Noon and other live sessions.
-      </AlertSwitch>
-      <AlertSwitch topic="drives" on={alerts.drives} title="Member drives">
-        A notification when a member drive begins, a few times a year.
-      </AlertSwitch>
+      <div className="section-heading">
+        <h2 id="alerts-label">
+          <Icon name="navLive" />
+          Notifications from WXPN
+        </h2>
+        <Switch on={on} onChange={setAlerts} labelledBy="alerts-label" describedBy="alerts-note" />
+      </div>
+      <p className="data-note" id="alerts-note">
+        Live video {LIVE_ALERT_MINUTES} minutes before it starts, member drives and other news from
+        the station.
+      </p>
     </section>
   );
 }

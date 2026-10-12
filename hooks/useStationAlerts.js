@@ -16,47 +16,49 @@ import {
   getPushStatus,
   onPushTap,
   pushIsOn,
+  STATION_TOPIC,
   subscribePushStatus,
   syncPushTopics,
+  topicsToSend,
 } from "../push.js";
 import { useFeatures } from "../features.js";
 import { playStation } from "../player.js";
 import { useEveryShow } from "./useEveryShow.js";
 import { track } from "../analytics.js";
 
-// Notifications from the station that a listener has asked for in Settings:
-// live video (Free at Noon and other sessions) and member drives. Both are
-// off until turned on there, with the consent wording beside the switch, as
-// the App Store requires for anything promotional (App Review 4.5.4).
+// Notifications from the station, for a listener who turned them on in
+// Settings: live video (Free at Noon and other sessions), member drives and
+// whatever else the station sends, under one switch. Off until turned on
+// there, with the consent wording beside the switch, as the App Store
+// requires for anything promotional (App Review 4.5.4).
 //
 // Without push (push.js), they are planned from the station's updates file
 // (updates.js, alertPlan) and scheduled on the phone like show reminders. The trade-off: a phone learns of a notice when the app opens, so
 // the station posts them ahead (a drive's dates are known weeks out). A push
-// service would reach phones that haven't opened the app; these switches are
+// service would reach phones that haven't opened the app; this switch is
 // the consent it would use too.
 
-const alertsStore = createLocalStore("xpn.alerts", { live: false, drives: false }, (v) => ({
-  live: Boolean(v?.live),
-  drives: Boolean(v?.drives),
+// On or off. Earlier versions had a switch per kind; either one on carries
+// over as on.
+const alertsStore = createLocalStore("xpn.alerts", { on: false }, (v) => ({
+  on: Boolean(v?.on || v?.live || v?.drives),
 }));
 
 export const useAlertSettings = () => useLocalStore(alertsStore);
 const NONE = [];
+const OFF = { on: false };
 
-const TURNED_ON = {
-  live: "Live video notifications are on.",
-  drives: "Member drive notifications are on.",
-};
-
-// A tap on a switch: turning one on asks for notification permission first.
-export async function setAlert(topic, on) {
+// A tap on the switch: turning it on asks for notification permission first.
+export async function setAlerts(on) {
   if (on && !(await requestNotifications())) {
     showToast(OFF_IN_SETTINGS);
     return false;
   }
-  alertsStore.set((c) => ({ ...c, [topic]: on }));
-  if (on) track("turn_on", { feature: topic });
-  if (on) showToast(TURNED_ON[topic]);
+  alertsStore.set({ on });
+  if (on) {
+    track("turn_on", { feature: "station_notifications" });
+    showToast("Notifications from WXPN are on.");
+  }
   return true;
 }
 
@@ -84,13 +86,13 @@ export function useStationAlerts(updates, { onWatch }) {
   const pushed = status.failing ? NONE : status.topics;
   // What the sender should have: the listener's topics while push is on,
   // nothing once the station switches it off.
-  const wanted = pushIsOn() ? Object.keys(settings).filter((topic) => settings[topic]) : NONE;
+  const wanted = topicsToSend(settings.on, pushIsOn());
   const behind = status.failing || [...wanted].sort().join(",") !== status.topics.join(",");
   const syncPush = useEffectEvent(() => {
-    syncPushTopics(settings)
+    syncPushTopics(settings.on)
       .then((ok) => {
         if (!ok) {
-          alertsStore.set({ live: false, drives: false });
+          alertsStore.set(OFF);
           showToast(OFF_IN_SETTINGS);
         }
       })
@@ -115,10 +117,7 @@ export function useStationAlerts(updates, { onWatch }) {
     const plan = alertPlan(
       updates,
       // What the sender already delivers isn't scheduled here as well.
-      {
-        live: settings.live && !(pushIsOn() && pushed.includes("live")),
-        drives: settings.drives && !(pushIsOn() && pushed.includes("drives")),
-      },
+      settings.on && !(pushIsOn() && pushed.includes(STATION_TOPIC)),
       {
         remindedShows: reminded ? reminded.split(",") : [],
       },
@@ -131,8 +130,8 @@ export function useStationAlerts(updates, { onWatch }) {
     }));
     syncNotifications("station-alert", plan)
       .then((permission) => {
-        if ((settings.live || settings.drives) && permission === "denied") {
-          alertsStore.set({ live: false, drives: false });
+        if (settings.on && permission === "denied") {
+          alertsStore.set(OFF);
           showToast(OFF_IN_SETTINGS);
         }
       })

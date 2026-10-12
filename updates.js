@@ -183,8 +183,8 @@ export function activeUpdates(updates, now = Date.now()) {
   return { banner, live };
 }
 
-// Notifications a listener has asked for in Settings ({ live, drives }),
-// planned from the updates file and scheduled on the phone, so they arrive
+// Notifications from the station, for a listener who turned them on in
+// Settings (`on`), planned from the updates file and scheduled on the phone, so they arrive
 // with the app closed and need no push service:
 //   - a live video, LIVE_ALERT_MINUTES before it starts, unless the file
 //     says "notify": false or the show is one the listener already gets a
@@ -195,14 +195,15 @@ export function activeUpdates(updates, now = Date.now()) {
 const MAX_ALERTS = 12;
 export function alertPlan(
   updates,
-  { live = false, drives = false } = {},
+  on = false,
   { now = Date.now(), days = 14, remindedShows = [] } = {},
 ) {
   const horizon = now + days * 86400000;
   const ahead = (at) => at > now && at <= horizon;
+  if (!on) return [];
   const plan = [];
   for (const u of updates) {
-    if (u.kind === "live" && live && u.notify && !remindedShows.includes(u.show)) {
+    if (u.kind === "live" && u.notify && !remindedShows.includes(u.show)) {
       const at = u.starts - LIVE_ALERT_MINUTES * 60000;
       if (ahead(at))
         plan.push({
@@ -213,7 +214,7 @@ export function alertPlan(
           extra: { action: "watch", live: u },
         });
     }
-    if (u.kind === "banner" && drives) {
+    if (u.kind === "banner") {
       for (const n of u.notify || []) {
         if (!ahead(n.at) || (u.ends != null && n.at >= u.ends)) continue;
         plan.push({

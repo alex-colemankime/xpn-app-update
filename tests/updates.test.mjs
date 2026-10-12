@@ -103,9 +103,9 @@ test("notifications a listener asked for: live video just before, drive notices 
     ],
   });
   const now = at("2026-10-06T09:00:00-04:00");
-  assert.deepEqual(alertPlan(list, {}, { now }), [], "nothing unless the listener asked");
+  assert.deepEqual(alertPlan(list, false, { now }), [], "nothing unless the listener asked");
 
-  const both = alertPlan(list, { live: true, drives: true }, { now });
+  const both = alertPlan(list, true, { now });
   assert.deepEqual(
     both.map((a) => [a.title, new Date(a.at).toISOString()]),
     [
@@ -125,12 +125,8 @@ test("notifications a listener asked for: live video just before, drive notices 
   assert.equal(new Set(both.map((a) => a.key)).size, both.length);
 
   assert.deepEqual(
-    alertPlan(list, { drives: true }, { now }).map((a) => a.title),
+    alertPlan(list, true, { now, remindedShows: ["freeatnoon"] }).map((a) => a.title),
     ["Last day"],
-  );
-  assert.deepEqual(
-    alertPlan(list, { live: true }, { now, remindedShows: ["freeatnoon"] }),
-    [],
     "a show the listener is already reminded about gets no second notification",
   );
 });
