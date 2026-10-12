@@ -480,16 +480,14 @@ const SHOTS = {
     await settle(page);
     await scrollToTop(page, sheet.getByRole("heading", { name: "Videos" }));
   },
-  // Videos, World Cafe: the newest large, then the rest.
+  // Videos: the newest large, then the rest.
   "phone-videos": async (page) => {
     await openVideos(page);
     await settle(page);
   },
-  // Videos, WXPN, scrolled to the list.
+  // Videos, scrolled to the list under the newest.
   "phone-videos-list": async (page) => {
     await openVideos(page);
-    await page.getByRole("button", { name: "WXPN", exact: true }).click();
-    await page.waitForTimeout(600);
     await settle(page);
     await scrollToTop(page, page.locator(".video-hero .video-text"), 120);
   },

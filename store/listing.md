@@ -51,14 +51,24 @@ WXPN is a public media service of the University of Pennsylvania, supported by i
 
 **Age rating:** no objectionable content. The browser view only opens xpn.org, ticket and streaming-service pages from the app's own links; if App Review counts that as unrestricted web access, the rating becomes 17+, so answer that question carefully.
 
-**App Privacy** (with usage reporting and push on):
+**App Privacy** (App Store Connect › App Privacy). Worked out from what the code sends (`analytics.js`, `push.js`, `playlist-sync.js`, the video players); have it checked against the privacy policy before submitting.
 
-- Data used to track you: none.
-- Data not linked to you:
-  - Usage Data, Product Interaction: analytics.
-  - Diagnostics, Crash Data and Other Diagnostic Data: app functionality and analytics.
-  - Identifiers, Device ID (the push token): app functionality, only with push set up.
-- Favorites, settings and listening history stay on the phone.
+- **Do you or your partners collect data?** Yes, with usage reporting on (it is by default; Settings › Privacy turns it off).
+- **Tracking:** No. No advertising ids, no Google signals or ad personalization, no data broker, no linking with other companies' data.
+- **Data collected, none of it linked to the user's identity:**
+
+| Apple's data type                   | What it is in the app                                                                                                   | Purposes                     |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| Usage Data › Product Interaction    | Screens opened, plays, hearts, shares, notification switches (GA4 events)                                               | Analytics                    |
+| Diagnostics › Crash Data            | Uncaught errors, as an anonymous line                                                                                   | App Functionality, Analytics |
+| Diagnostics › Other Diagnostic Data | Caught errors (a screen that couldn't load)                                                                             | App Functionality, Analytics |
+| Location › Coarse Location          | Google Analytics works out a country and city from the connection's address; the app never asks for location            | Analytics                    |
+| Identifiers › Device ID             | Only once push is set up (`VITE_PUSH_REGISTER_URL`): the phone's push token, to send live video and drive notifications | App Functionality            |
+
+- **Not collected** (stays on the phone, or goes only where the listener sends it): favorites, saved episodes and places, the alarm, reminders and settings; the Spotify or Apple Music sign-in and the songs added to the listener's own playlist (sent from the phone straight to that service, at the listener's request, never to WXPN); calendar events (written by the system's own New Event sheet).
+- **Embedded players:** World Cafe and WXPN videos play in Brightcove's player (NPR's Music Video Network account), which counts plays in its own analytics; live videos play in YouTube's privacy-enhanced (nocookie) player. Those are their services, under their policies; the privacy policy should name them.
+- **Required-reason APIs:** none in the app or its plugins (Capacitor's own privacy manifest declares none), so no app privacy manifest entries are needed today. Add one if a native SDK (Crashlytics, Firebase Messaging) goes in later.
+- **Encryption:** `ITSAppUsesNonExemptEncryption` is false in Info.plist (HTTPS only), so no export compliance questions per build.
 
 ## Google Play
 
@@ -66,14 +76,23 @@ WXPN is a public media service of the University of Pennsylvania, supported by i
 
 **Full description:** as the App Store description.
 
-**Data safety:**
+**Data safety** (Play Console › App content › Data safety), from the same facts:
 
-- Collected:
-  - App activity (app interactions): analytics, not shared.
-  - App info and performance (crash logs, diagnostics): analytics, not shared.
-  - Device or other IDs (push token, with push): app functionality.
-- All of it is encrypted in transit, and none of it is required to use the app.
-- Users can't request deletion because nothing is linked to them. Turning off Settings › Privacy › Share app usage stops reporting and forgets the install's id.
+- **Does the app collect or share user data?** Collects, yes; shares, no (Google Analytics processes it for WXPN as a service provider, which Play doesn't count as sharing).
+- **Collected, optional (reporting can be turned off), not linked to an account, encrypted in transit:**
+  - App activity › App interactions: analytics.
+  - App info and performance › Crash logs, and Diagnostics: analytics, app functionality.
+  - Location › Approximate location: analytics (derived by Google Analytics from the connection's address).
+  - Device or other IDs: app functionality, only once push is set up (the FCM token).
+- **Processed only on the device** (not "collected"): favorites, settings, the alarm and reminders.
+- **Deletion:** nothing is tied to a person or an account. Turning off Settings › Privacy › Share app usage stops reporting and forgets the install's id; say so in the deletion answer, and that there are no accounts.
+
+**Other Play Console declarations:**
+
+- **Foreground service permissions:** Media playback (`FOREGROUND_SERVICE_MEDIA_PLAYBACK`), for the station and episodes playing with the screen off and the media notification. Play asks for a short video of it: start the station, lock the phone, show the notification's controls.
+- **Exact alarms:** the app uses `SCHEDULE_EXACT_ALARM` (from the notifications plugin) for the radio alarm, and asks the listener to allow it when the alarm is turned on; no Play declaration is needed for that permission (only `USE_EXACT_ALARM` needs one).
+- **Notifications:** asked for only when a listener turns on reminders, the alarm or station notifications.
+- **Ads:** no ads.
 
 **Content rating questionnaire:** reference app, no user-generated content, no ads.
 

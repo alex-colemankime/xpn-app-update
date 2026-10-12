@@ -94,6 +94,7 @@ what you did, what happened, and a screen recording if you can.
 - [ ] VoiceOver / TalkBack: play, a song's heart and menu, a show's page,
       and Settings can be reached and say what they do.
 - [ ] iPad, and the phone turned sideways.
-- [ ] Android back button: steps back through screens and closes sheets,
-      then leaves the app.
+- [ ] Android back button: closes an open menu (a song's, the sleep timer)
+      or sheet first, then steps back through screens, and at the start puts
+      the app in the background with the station still playing.
 - [ ] First launch (delete and reinstall): the welcome appears once.

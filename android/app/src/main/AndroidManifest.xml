@@ -69,4 +69,11 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- The station keeps playing in the background through the media
+         session plugin's foreground service, which it starts as "media
+         playback". From Android 14 (the app targets 36) that type needs its
+         own permission as well as FOREGROUND_SERVICE, or starting the
+         service throws and audio stops. Play Console › App content ›
+         Foreground service permissions: declare Media playback. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 </manifest>

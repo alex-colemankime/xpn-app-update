@@ -10,6 +10,7 @@ import "./global.css";
 import { reportError, startAnalytics, track } from "./analytics.js";
 import { startListeningMeter } from "./listening.js";
 import { startDeepLinks } from "./deep-links.js";
+import { startBackButton } from "./back-button.js";
 import { startReviewPrompts } from "./review.js";
 import { getSavedSongs, subscribeFavorites } from "./favorites.js";
 import { episodeControls, getEpisodeSnapshot, subscribeEpisode } from "./episode-player.js";
@@ -54,6 +55,7 @@ if (devicePreview) {
   startAnalytics();
   followTextSize();
   startDeepLinks();
+  startBackButton();
   // A store rating is asked for after a heart, once the listener knows the app.
   let songs = getSavedSongs().length;
   const reviews = startReviewPrompts({
