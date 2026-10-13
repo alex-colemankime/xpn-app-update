@@ -176,11 +176,15 @@ const episodeId = (slug, index) =>
 // Four hours of silence as an MP3: one silent frame (MPEG-2.5 layer III,
 // 8 kHz mono at 8 kbps: 72 bytes, 72 ms) over and over, 3 hr 52 min long,
 // so an episode plays and tells its length as a broadcast's file would.
-const EPISODE_AUDIO = (() => {
+const silentMp3 = (frames) => {
   const frame = Buffer.alloc(72);
   frame.set([0xff, 0xe3, 0x18, 0xc0]);
-  return Buffer.concat(Array(193330).fill(frame));
-})();
+  return Buffer.concat(Array(frames).fill(frame));
+};
+const EPISODE_AUDIO = silentMp3(193330);
+// A World Cafe session: 52 minutes, as the app reads it from the file's
+// header before it plays (episode-length.js).
+const SESSION_AUDIO = silentMp3(43334);
 
 // The video collections, and each video's thumbnail, from SCREENS_FIXTURES
 // (null without them: the video shots are then skipped).
@@ -654,7 +658,8 @@ for (const [theme, device] of ["light", "dark"].flatMap((t) =>
       });
     }
     if (url.hostname === "xpn.org" && url.pathname.startsWith("/wp-content/uploads/archive/")) {
-      return route.fulfill({ status: 200, contentType: "audio/mpeg", body: EPISODE_AUDIO });
+      const body = url.pathname.endsWith("_world-cafe.mp3") ? SESSION_AUDIO : EPISODE_AUDIO;
+      return route.fulfill({ status: 200, contentType: "audio/mpeg", body });
     }
     if (url.hostname === "players.brightcove.net" && url.pathname.endsWith("/config.json")) {
       return json(route, { video_cloud: { policy_key: "screens" } });
