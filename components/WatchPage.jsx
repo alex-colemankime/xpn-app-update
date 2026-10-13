@@ -190,7 +190,9 @@ export function WatchPage({ videoId, live, onPick, onClose }) {
     const previous = document.activeElement;
     el.showModal();
     modalOpened();
-    el.querySelector(".watch-close")?.focus();
+    // Focus starts at the title (read first by a screen reader), so the
+    // close key doesn't open ringed as if reached by keyboard.
+    el.querySelector(".watch-title")?.focus({ preventScroll: true });
     return () => {
       modalClosed();
       el.close();
@@ -279,7 +281,7 @@ export function WatchPage({ videoId, live, onPick, onClose }) {
             {/* The heart beside the title saves the video, as it saves a
                 song beside its title on Listen. */}
             <div className="watch-head">
-              <h2 id={titleId} className="watch-title">
+              <h2 id={titleId} className="watch-title" tabIndex={-1}>
                 {title}
                 {kind && (
                   <span className="watch-kind">

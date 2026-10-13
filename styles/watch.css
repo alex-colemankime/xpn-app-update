@@ -55,20 +55,51 @@
   }
 }
 .watch-bar {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   height: 46px;
   padding: 0 6px;
   color: #fff;
+}
+/* On phones the watch page is a sheet like the others: a grabber says it
+   can be pulled down to close. */
+@media (max-width: 767px) {
+  .watch-bar::before {
+    content: "";
+    position: absolute;
+    top: 6px;
+    inset-inline: 0;
+    width: 40px;
+    height: 5px;
+    margin-inline: auto;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.35);
+  }
+}
+.watch-title:focus {
+  outline: none;
 }
 .watch-bar > span {
   font-size: 0.875rem;
   font-weight: 600;
   opacity: 0.8;
 }
+/* The close key is just its chevron on the black bar: no ring or disc. A
+   keyboard still gets a ring of its own, in white. */
 .watch-close {
   color: inherit;
+  background: none;
+  width: 40px;
+  height: 40px;
+}
+.watch-close:focus:not(:focus-visible) {
+  outline: none;
+}
+.watch-close:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -4px;
 }
 .watch-close-wide {
   display: none;

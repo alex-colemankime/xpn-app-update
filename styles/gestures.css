@@ -32,11 +32,11 @@
   position: absolute;
   top: 8px;
   inset-inline: 0;
-  width: 36px;
-  height: 4px;
+  width: 40px;
+  height: 5px;
   margin-inline: auto;
-  border-radius: 2px;
-  background: var(--border);
+  border-radius: 999px;
+  background: var(--grabber);
 }
 .popover-menu.hold-menu:focus {
   outline: none;
@@ -62,17 +62,19 @@
 
 /* A show's sheet on a phone says it can be pulled down, as the menus do. */
 @media (max-width: 767px) {
-  .detail-dialog:has(> .dialog-header .icon-button)::before {
+  /* In the sticky header, so it stays at the top however far the sheet
+     scrolls. */
+  .detail-dialog > .dialog-header:has(.icon-button)::before {
     content: "";
     position: absolute;
-    z-index: 2; /* over the sticky header */
+    z-index: 2;
     top: 8px;
     inset-inline: 0;
-    width: 36px;
-    height: 4px;
+    width: 40px;
+    height: 5px;
     margin-inline: auto;
-    border-radius: 2px;
-    background: var(--border);
+    border-radius: 999px;
+    background: var(--grabber);
   }
 }
 

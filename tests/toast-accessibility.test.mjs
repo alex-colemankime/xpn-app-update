@@ -7,7 +7,7 @@ test("Undo is a small pill that goes quickly, and waits while it's in use", (t) 
   t.mock.method(globalThis, "clearTimeout", () => {});
   showToast("Removed from Favorites", { label: "Undo", onClick() {} });
   assert.equal(timer.mock.callCount(), 1);
-  assert.equal(timer.mock.calls[0].arguments[1], 3500);
+  assert.equal(timer.mock.calls[0].arguments[1], 3000);
   holdToast(true);
   assert.equal(timer.mock.callCount(), 1);
   holdToast(false);
@@ -22,12 +22,12 @@ test("a longer notice with an action is a bar, given longer", (t) => {
     { title: "Concert saved", text: "Wed, Oct 14 · Union Transfer", icon: "calendarAdd" },
     { label: "Add to calendar", onClick() {} },
   );
-  assert.equal(timer.mock.calls.at(-1).arguments[1], 8000);
+  assert.equal(timer.mock.calls.at(-1).arguments[1], 4500);
   showToast("To ring on time, WXPN needs Alarms & reminders turned on.", {
     label: "Turn on",
     onClick() {},
   });
-  assert.equal(timer.mock.calls.at(-1).arguments[1], 8000);
+  assert.equal(timer.mock.calls.at(-1).arguments[1], 4500);
   showToast("");
 });
 
@@ -36,13 +36,13 @@ test("informational notices still expire, with a pause while focused", (t) => {
   t.mock.method(globalThis, "clearTimeout", () => {});
   showToast("Copied to clipboard.");
   assert.equal(timer.mock.callCount(), 1);
-  assert.equal(timer.mock.calls[0].arguments[1], 2500);
+  assert.equal(timer.mock.calls[0].arguments[1], 2000);
   holdToast(true);
   assert.equal(timer.mock.callCount(), 1);
   holdToast(false);
   assert.equal(timer.mock.callCount(), 2);
   showToast("Couldn’t connect to Spotify. Please try again in a moment or two.");
-  assert.equal(timer.mock.calls.at(-1).arguments[1], 5000);
+  assert.equal(timer.mock.calls.at(-1).arguments[1], 3000);
   showToast("");
 });
 
@@ -53,7 +53,7 @@ test("a toast closed under the pointer doesn't stop the next one expiring", (t) 
   holdToast(true); // pointer on it; Undo clears it, with no pointer leave
   showToast("");
   showToast("Copied to clipboard.");
-  assert.equal(timer.mock.calls.at(-1).arguments[1], 2500);
+  assert.equal(timer.mock.calls.at(-1).arguments[1], 2000);
   showToast("");
 });
 

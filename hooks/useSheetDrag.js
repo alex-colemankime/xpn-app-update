@@ -24,8 +24,13 @@ export function dragCloses({ dy, ms, height }) {
 }
 
 // Something between the touch and the sheet that is scrolled down, or a
-// control the finger is using (a slider), keeps the touch for itself.
-function startsDrag(target, sheet) {
+// control the finger is using (a slider), keeps the touch for itself. The
+// sheet's header (and its grabber above it) always pulls the sheet, however
+// far down it is scrolled.
+const HANDLE = ".dialog-header, .watch-bar, .popover-menu-head";
+const GRAB_PX = 28; // the top of the sheet, where the grabber sits
+function startsDrag(target, sheet, y) {
+  if (target.closest?.(HANDLE) || y - sheet.getBoundingClientRect().top < GRAB_PX) return true;
   for (let el = target; el && el !== sheet.parentElement; el = el.parentElement) {
     if (el.matches?.("input, textarea, select, iframe, [data-no-swipe]")) return false;
     if (el.scrollTop > 0) return false;
@@ -81,8 +86,8 @@ export function useSheetDrag({ anyWidth = false } = {}) {
         drag = null;
         if (e.touches.length !== 1) return;
         if (!anyWidth && !window.matchMedia?.(PHONE).matches) return;
-        if (!startsDrag(e.target, sheet)) return;
         const t = e.touches[0];
+        if (!startsDrag(e.target, sheet, t.clientY)) return;
         drag = { x: t.clientX, y: t.clientY, at: e.timeStamp, on: false, dy: 0 };
       };
       const move = (e) => {
@@ -116,11 +121,46 @@ export function useSheetDrag({ anyWidth = false } = {}) {
         if (closes) slideAway();
         else settleBack();
       };
+      // With a mouse (the shared design preview on a computer), a press and
+      // drag down pulls the sheet the same way.
+      const mouseDown = (e) => {
+        if (e.pointerType !== "mouse" || e.button !== 0) return;
+        start({ touches: [e], target: e.target, timeStamp: e.timeStamp });
+        if (drag) drag.pointer = e.pointerId;
+      };
+      const mouseMove = (e) => {
+        if (!drag || drag.pointer !== e.pointerId) return;
+        const was = drag.on;
+        move({ touches: [e], cancelable: true, preventDefault: () => e.preventDefault() });
+        if (!was && drag?.on) sheet.setPointerCapture?.(e.pointerId);
+      };
+      const mouseUp = (e) => {
+        if (drag?.pointer !== e.pointerId) return;
+        const dragged = drag.on;
+        end(e);
+        // A drag isn't also a click on whatever it started over.
+        if (dragged) {
+          const swallow = (c) => {
+            c.stopPropagation();
+            c.preventDefault();
+          };
+          sheet.addEventListener("click", swallow, { capture: true, once: true });
+          setTimeout(() => sheet.removeEventListener("click", swallow, { capture: true }), 0);
+        }
+      };
+      sheet.addEventListener("pointerdown", mouseDown);
+      sheet.addEventListener("pointermove", mouseMove);
+      sheet.addEventListener("pointerup", mouseUp);
+      sheet.addEventListener("pointercancel", mouseUp);
       sheet.addEventListener("touchstart", start, { passive: true });
       sheet.addEventListener("touchmove", move, { passive: false });
       sheet.addEventListener("touchend", end, { passive: true });
       sheet.addEventListener("touchcancel", end, { passive: true });
       return () => {
+        sheet.removeEventListener("pointerdown", mouseDown);
+        sheet.removeEventListener("pointermove", mouseMove);
+        sheet.removeEventListener("pointerup", mouseUp);
+        sheet.removeEventListener("pointercancel", mouseUp);
         sheet.removeEventListener("touchstart", start);
         sheet.removeEventListener("touchmove", move);
         sheet.removeEventListener("touchend", end);

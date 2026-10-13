@@ -3,16 +3,17 @@ import { createStore } from "./storage.js";
 
 // One transient message at a time ("Copied to clipboard."), readable from
 // anywhere without threading a callback through every screen. Every message
-// clears itself. A short line ("Removed from Favorites", with Undo) is a
-// small pill that goes quickly; a longer notice is a bar that stays a few
-// seconds, a little longer with an action so there's time to use it. Never
-// while the pointer or keyboard focus is on it, so no one races the timer
+// clears itself, and can be swiped away sooner (components/Toast.jsx). A
+// short line ("Removed from Favorites", with Undo) is a small pill that goes
+// quickly; a longer notice is a compact bar that stays a few seconds, a
+// little longer with an action so there's time to use it. Never while a
+// finger is on it or keyboard focus is in it, so no one races the timer
 // mid-action.
 const EMPTY = { text: "", title: "", image: "", icon: "", action: null, brief: false };
 const toastStore = createStore(EMPTY);
 // Up to this many characters, a line without a title or picture is a pill.
 const BRIEF_CHARS = 40;
-const HIDE_AFTER_MS = { brief: 2500, briefAction: 3500, plain: 5000, action: 8000 };
+const HIDE_AFTER_MS = { brief: 2000, briefAction: 3000, plain: 3000, action: 4500 };
 let timer = null;
 let held = false;
 
@@ -49,7 +50,7 @@ export function showToast(message, action = null) {
   schedule();
 }
 
-// Called while the listener is pointing at or focused on the toast.
+// Called while the listener's finger or keyboard focus is on the toast.
 export function holdToast(hold) {
   held = hold;
   schedule();

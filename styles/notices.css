@@ -17,10 +17,13 @@
   width: min(440px, calc(100% - 32px));
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 6px 10px 16px;
-  min-height: 52px;
-  border-radius: 14px;
+  gap: 10px;
+  padding: 12px 8px 10px 10px;
+  border-radius: 16px;
+  /* It follows a finger pulled down or aside (Toast.jsx), never the page. */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
   color: var(--inverse-text);
   background: var(--inverse-bg);
   box-shadow:
@@ -42,7 +45,22 @@
   transition-timing-function: ease-in;
 }
 .toast:not(.has-action) {
-  padding-right: 16px;
+  padding-right: 14px;
+}
+/* A short grabber along the top of a bar: it can be swiped away. */
+.toast:not(.brief)::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  width: 28px;
+  height: 4px;
+  margin-left: -14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--inverse-text) 28%, transparent);
+}
+.toast:not(.brief):not(:has(.toast-media)) {
+  padding-left: 14px;
 }
 /* The pill: as wide as its words, a little glass over the page. */
 .toast.brief {
@@ -87,12 +105,11 @@
   }
 }
 .toast-media {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   border-radius: 8px;
   object-fit: cover;
-  margin-left: -6px;
 }
 .toast-icon {
   display: grid;
@@ -108,62 +125,55 @@
 .toast-text strong {
   font-weight: 650;
 }
+/* With a title, each line keeps to one line; a notice without one may
+   take two. */
 .toast-text strong,
 .toast-text strong + span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.toast-text > span:only-child {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
+  font-size: 0.9375rem;
 }
 .toast-text strong + span {
   font-size: 0.875rem;
   opacity: 0.78;
 }
+/* The action, a small key in the accent at the end of the row. */
 .toast-action {
+  position: relative;
   flex-shrink: 0;
-  min-height: 40px;
-  padding: 0 10px;
-  border-radius: 8px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
   color: var(--inverse-accent);
+  background: color-mix(in srgb, var(--inverse-accent) 16%, transparent);
+  font-size: 0.875rem;
   font-weight: 700;
   white-space: nowrap;
 }
-.toast-close {
-  width: 40px;
-  height: 40px;
+/* A full-size target around it. */
+.toast-action::after {
+  content: "";
+  position: absolute;
+  inset: -6px -4px;
+}
+/* Dismiss is for a keyboard or screen reader; it shows once focused. */
+.toast .toast-close:focus-visible {
+  position: static;
+  width: auto;
+  height: 32px;
+  margin: 0;
+  padding: 0 10px;
+  clip-path: none;
+  border-radius: 999px;
   color: inherit;
-  opacity: 0.7;
-}
-/* A notice with a title, a line and an action (a show reminder, a saved
-   concert, Undo) sets the action under the words, so neither is cut short:
-   like a phone's own notification. */
-.toast.stacked {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas:
-    "media text close"
-    "media action close";
-  align-items: start;
-  gap: 0;
-  padding: 12px 6px 6px 16px;
-}
-.toast.stacked .toast-media {
-  grid-area: media;
-  margin-right: 12px;
-}
-.toast.stacked .toast-text {
-  grid-area: text;
-  padding-top: 1px;
-}
-.toast.stacked .toast-action {
-  grid-area: action;
-  justify-self: start;
-  min-height: 36px;
-  margin: 2px 0 0 -8px;
-  padding: 0 8px;
-}
-.toast.stacked .toast-close {
-  grid-area: close;
-  margin-top: -6px;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
