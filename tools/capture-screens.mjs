@@ -67,8 +67,12 @@ async function artwork(song) {
   }
 }
 
-// That week on xpn.org's concert calendar, every page (none offline).
+// That week on xpn.org's concert calendar, every page (none offline), or
+// the events in SCREENS_CONCERTS (a JSON file, for working offline).
 async function concerts() {
+  if (process.env.SCREENS_CONCERTS) {
+    return JSON.parse(await readFile(process.env.SCREENS_CONCERTS, "utf8"));
+  }
   const events = [];
   for (let page = 1; page <= 10; page++) {
     const params = new URLSearchParams({
@@ -369,6 +373,66 @@ async function playFromListen(page) {
   }
 }
 
+// Another moment than the shots' own, for the page about to load.
+const at = (page, when) => page.clock.setFixedTime(new Date(when));
+// Something stored on the device before the page loads (after the shots'
+// own favorites and theme).
+const stored = (page, key, value) =>
+  page.addInitScript(
+    ([key, value]) => globalThis.localStorage.setItem(key, JSON.stringify(value)),
+    [key, value],
+  );
+// Listen, its song and artwork shown.
+const openListen = async (page) => {
+  await page.goto(`${BASE}#/listen`);
+  await page.locator(".now-art").first().waitFor({ timeout: 10000 });
+};
+const openConcerts = async (page) => {
+  await page.goto(`${BASE}#/concerts`);
+  await page.locator(".concert-row").first().waitFor({ timeout: 20000 });
+};
+// Settings, at one panel's heading.
+const settingsAt = async (page, heading) => {
+  await page.goto(`${BASE}#/settings`);
+  const h = page.getByRole("heading", { name: heading });
+  await h.waitFor();
+  await settle(page);
+  await scrollToTop(page, h, 24);
+};
+// A notice gone by the time a shot is taken would leave it out: the shot is
+// taken while one shows.
+const waitForToast = (page) => page.locator(".toast").first().waitFor({ timeout: 10000 });
+// The first-launch welcome, at step `n` (1–4).
+const welcomeAt = async (page, n) => {
+  await page.addInitScript(() => globalThis.localStorage.removeItem("xpn.onboarded"));
+  await stored(page, "xpn.favorites.v1", {});
+  await page.goto(`${BASE}#/listen`);
+  const dialog = page.locator(".welcome");
+  await dialog.waitFor({ timeout: 10000 });
+  for (const name of ["World Cafe", "Funky Friday"]) {
+    await dialog
+      .getByRole("button", { name: new RegExp(name) })
+      .first()
+      .click();
+  }
+  for (let step = 1; step < n; step++) {
+    const next = dialog.getByRole("button", { name: /^(Next|Not now|Skip for now|Maybe later)$/ });
+    await next.first().click();
+    await page.waitForTimeout(400);
+  }
+  await settle(page);
+};
+// A video's watch page, its player in the app's frame.
+const WIGGLES = "6406083303112";
+const openWatch = async (page) => {
+  await openVideos(page);
+  await page.evaluate((id) => (globalThis.location.hash = `#/videos/video/${id}`), WIGGLES);
+  await page.locator(".watch-title").waitFor({ timeout: 10000 });
+  await page.waitForTimeout(4000);
+};
+// Free at Noon: Dawes, live (the sample station update, a Friday noon).
+const LIVE_NOW = "2026-10-09T12:20:00-04:00";
+
 // Each shot: how to get there. Named as on the screens page (data-shot).
 // "store-" and "ipad-" shots are the raw screens for the store listings
 // (tools/store-shots.mjs frames them), light only.
@@ -508,6 +572,197 @@ const SHOTS = {
     await page.locator(".saved-videos .video-card img").first().waitFor();
     await settle(page);
   },
+  // First launch: the four steps of the welcome.
+  "phone-welcome": (page) => welcomeAt(page, 1),
+  "phone-welcome2": (page) => welcomeAt(page, 2),
+  "phone-welcome3": (page) => welcomeAt(page, 3),
+  "phone-welcome4": (page) => welcomeAt(page, 4),
+  // Listen, ready to play.
+  "phone-listen": async (page) => {
+    await openListen(page);
+    await settle(page);
+  },
+  // Listen while Free at Noon is on: its On air band.
+  "phone-live": async (page) => {
+    await at(page, LIVE_NOW);
+    await openListen(page);
+    await settle(page);
+  },
+  // The song's "…" menu on Listen.
+  "phone-songmenu": async (page) => {
+    await openListen(page);
+    await settle(page);
+    await page
+      .getByRole("button", { name: `More for ${ON_AIR.title}` })
+      .first()
+      .click();
+    await page.locator(".popover-menu:popover-open").waitFor();
+    await page.waitForTimeout(500);
+  },
+  // A show reminder, in the app: World Cafe in five minutes.
+  "phone-reminder": async (page) => {
+    await at(page, "2026-10-06T13:55:20-04:00");
+    await stored(page, "xpn.reminders", { enabled: true, lead: 5 });
+    await openListen(page);
+    await waitForToast(page);
+    await page.waitForTimeout(600);
+  },
+  // The sleep timer's choices, the station playing.
+  "phone-sleep": async (page) => {
+    await openListen(page);
+    await playFromListen(page);
+    await settle(page);
+    await page.locator(".sleep-button").click({ timeout: 5000 });
+    await page.locator(".sleep-menu:popover-open").waitFor();
+    await page.waitForTimeout(500);
+  },
+  // Listen, at Recently played.
+  "phone-recent": async (page) => {
+    await openListen(page);
+    await settle(page);
+    await scrollToTop(page, page.locator("#recent-heading"), 24);
+  },
+  // Shows › All shows.
+  "phone-shows": async (page) => {
+    await page.goto(`${BASE}#/shows`);
+    await page.getByLabel("Browse shows").getByRole("button", { name: "All shows" }).click();
+    await page.locator(".show-card img").first().waitFor();
+    await settle(page);
+  },
+  // Shows, as it opens: today's schedule.
+  "phone-schedule": async (page) => {
+    await page.goto(`${BASE}#/shows`);
+    await settle(page);
+  },
+  // A Sleepy Hollow broadcast playing, its page open from the mini player.
+  "phone-episode": async (page) => {
+    await openArchive(page);
+    await page
+      .getByRole("region", { name: "Sleepy Hollow" })
+      .locator("button.archive-open")
+      .first()
+      .click();
+    await page
+      .locator('.player-bar[data-source="episode"][data-playing]')
+      .waitFor({ timeout: 10000 });
+    await page.locator(".player-bar .player-track").click();
+    await page.locator(".episode-scrubber:visible").first().waitFor({ timeout: 10000 });
+    await page.waitForTimeout(2500);
+    await settle(page);
+  },
+  // A video's watch page, and the same scrolled to its end.
+  "phone-video-playing": async (page) => {
+    await openWatch(page);
+    await settle(page);
+  },
+  "phone-video-more": async (page) => {
+    await openWatch(page);
+    await settle(page);
+    await page
+      .locator("dialog.watch, .watch-page, dialog")
+      .last()
+      .evaluate((el) => el.scrollTo(0, el.scrollHeight));
+    await page.waitForTimeout(600);
+  },
+  // Favorites during the member drive, its banner up.
+  "phone-drive": async (page) => {
+    await stored(page, "xpn.updates.dismissed", []);
+    await page.goto(`${BASE}#/favorites`);
+    await page.locator(".station-banner").first().waitFor({ timeout: 10000 });
+    await settle(page);
+  },
+  // Concerts, from the top.
+  "phone-concerts": async (page) => {
+    await openConcerts(page);
+    await settle(page);
+  },
+  // A concert's Add to calendar choices (in a browser).
+  "phone-concert-calendar": async (page) => {
+    await openConcerts(page);
+    await settle(page);
+    await page
+      .locator(".concert-row .concert-action", { hasText: "Add to calendar" })
+      .first()
+      .click();
+    await page.locator(".popover-menu:popover-open").waitFor();
+    await page.waitForTimeout(500);
+  },
+  // The notice after saving a concert.
+  "phone-toast-concert": async (page) => {
+    await openConcerts(page);
+    await settle(page);
+    await page.locator(".concert-row .concert-side button[aria-pressed]").first().click();
+    await waitForToast(page);
+    await page.waitForTimeout(600);
+  },
+  // Favorites › Concerts, two saved.
+  "phone-fav-concerts": async (page) => {
+    await openConcerts(page);
+    const hearts = page.locator(".concert-row .concert-side button[aria-pressed]");
+    await hearts.nth(0).click();
+    await hearts.nth(2).click();
+    await favoritesTab(page, "Concerts");
+    await page.locator(".concert-row:visible").first().waitFor();
+    await page
+      .locator(".toast button[aria-label]")
+      .first()
+      .click({ timeout: 2000 })
+      .catch(() => {});
+    await settle(page);
+  },
+  // Concerts while Free at Noon is live: the Live band across the top.
+  "phone-livebanner": async (page) => {
+    await at(page, LIVE_NOW);
+    await openConcerts(page);
+    await settle(page);
+  },
+  // Settings: the radio alarm, set for weekdays at 7.
+  "phone-settings": async (page) => {
+    await stored(page, "xpn.alarm.v1", { ...ALARM_NOW, time: "07:00" });
+    await settingsAt(page, "Radio alarm");
+  },
+  "phone-reminders": async (page) => {
+    await stored(page, "xpn.reminders", { enabled: true, lead: 5 });
+    await settingsAt(page, "Show reminders");
+  },
+  "phone-alerts": async (page) => {
+    await stored(page, "xpn.alerts", { on: true });
+    await settingsAt(page, "Notifications from WXPN");
+  },
+  "phone-newsletter": (page) => settingsAt(page, "Newsletter"),
+  "phone-playlist": (page) => settingsAt(page, "Your playlist"),
+  // The radio alarm ringing.
+  "phone-alarm": async (page) => {
+    await stored(page, "xpn.alarm.v1", ALARM_NOW);
+    await page.goto(`${BASE}#/listen`);
+    await page.locator(".alarm-banner").waitFor({ timeout: 25000 });
+    await settle(page);
+  },
+  // Listen while the playlist is still loading.
+  "phone-loading": async (page) => {
+    await page.route(/\/json\/\d{4}-\d\d-\d\d\.json$/, () => {});
+    await page.goto(`${BASE}#/listen`);
+    await page.locator(".skeleton-row").first().waitFor({ timeout: 10000 });
+    await page.waitForTimeout(800);
+  },
+  // Tablet, portrait: Listen. Tablet, landscape: Concerts.
+  "tablet-listen": async (page) => {
+    await openListen(page);
+    await settle(page);
+  },
+  "tabletwide-concerts": async (page) => {
+    await openConcerts(page);
+    await settle(page);
+  },
+  // Desktop: Listen, and a video's watch page.
+  "desk-listen": async (page) => {
+    await openListen(page);
+    await settle(page);
+  },
+  "desk-video-playing": async (page) => {
+    await openWatch(page);
+    await settle(page);
+  },
   // Desktop: the archive with the second broadcast playing.
   "desk-archive": async (page) => {
     await openArchive(page);
@@ -582,6 +837,18 @@ const DEVICES = {
   store: {
     viewport: { width: 440, height: 956 },
     deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  },
+  tablet: {
+    viewport: { width: 820, height: 1180 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  },
+  tabletwide: {
+    viewport: { width: 1180, height: 820 },
+    deviceScaleFactor: 2,
     isMobile: true,
     hasTouch: true,
   },
@@ -663,6 +930,16 @@ for (const [theme, device] of ["light", "dark"].flatMap((t) =>
     }
     if (url.hostname === "players.brightcove.net" && url.pathname.endsWith("/config.json")) {
       return json(route, { video_cloud: { policy_key: "screens" } });
+    }
+    // The player itself, in the watch page's frame: Brightcove's own, live.
+    if (url.hostname === "players.brightcove.net") return route.continue();
+    if (url.hostname === "edge.api.brightcove.com" && /\/videos\/\d+$/.test(url.pathname)) {
+      return route.continue();
+    }
+    if (/(^|\.)(brightcove|boltdns|akamaihd|brightcovecdn)\.(com|net)$/.test(url.hostname)) {
+      if (!url.href.startsWith(POSTERS) && url.hostname !== "edge.api.brightcove.com") {
+        return route.continue();
+      }
     }
     if (url.hostname === "edge.api.brightcove.com") {
       if (route.request().method() === "OPTIONS") {
