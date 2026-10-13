@@ -805,3 +805,38 @@ h1 {
 .sidebar-donate:hover {
   background: color-mix(in srgb, var(--action) 88%, black);
 }
+
+/* Under the phone's status bar once the page scrolls (StatusScrim.jsx): the
+   page's color over the content, blurred, fading out a little below the
+   status bar. Its height is the status bar's (the safe area at the top), so
+   in a browser, with none, there is nothing. */
+.status-scrim {
+  --inset: var(--safe-area-inset-top, env(safe-area-inset-top));
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: var(--z-bars);
+  height: calc(var(--inset) * 1.45);
+  pointer-events: none;
+  background: linear-gradient(
+    var(--bg) 0%,
+    color-mix(in srgb, var(--bg) 82%, transparent) 55%,
+    color-mix(in srgb, var(--bg) 0%, transparent) 100%
+  );
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  mask-image: linear-gradient(#000 60%, transparent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.status-scrim[data-on="true"] {
+  opacity: 1;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .status-scrim {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--bg);
+    mask-image: none;
+    height: var(--inset);
+  }
+}

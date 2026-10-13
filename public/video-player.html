@@ -6,7 +6,9 @@
   both under the video, so this page loads the same player into a frame the
   app styles, and hides that overlay. The frame is sandboxed without
   same-origin access, so the player can't reach the app or its storage, and
-  the page refuses to run anywhere else.
+  the page refuses to run anywhere else. Brightcove's player script uses
+  eval, so the policy allows it; inside this sandbox, with no origin of its
+  own, that reaches nothing of the app's.
   If the player can't start here, the page asks the app to show Brightcove's
   own player page instead. The script's hash in the policy below is checked
   by tests/video-player.test.mjs.
@@ -17,7 +19,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; script-src 'sha256-ryiG1oIbjU2DxIFM/HBdJxQNxXqfSFlkqp0JHkdz+JI=' https://players.brightcove.net; style-src 'unsafe-inline' https://players.brightcove.net; font-src https://players.brightcove.net data:; img-src https: data: blob:; media-src https: blob:; connect-src https:; worker-src blob:; frame-src https:"
+      content="default-src 'none'; script-src 'unsafe-eval' 'sha256-ryiG1oIbjU2DxIFM/HBdJxQNxXqfSFlkqp0JHkdz+JI=' https://players.brightcove.net; style-src 'unsafe-inline' https://players.brightcove.net; font-src https://players.brightcove.net data:; img-src https: data: blob:; media-src https: blob:; connect-src https:; worker-src blob:; frame-src https:"
     />
     <title>Video</title>
     <style>

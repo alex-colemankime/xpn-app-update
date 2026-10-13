@@ -36,6 +36,7 @@ import { ShowsScreen } from "./screens/ShowsScreen.jsx";
 import { LibraryScreen } from "./screens/LibraryScreen.jsx";
 import { trackScreen } from "./analytics.js";
 import { UpdatePrompt } from "./components/UpdatePrompt.jsx";
+import { StatusScrim } from "./components/StatusScrim.jsx";
 import { showToast } from "./toast.js";
 import { useFeatures } from "./features.js";
 import { retryImport } from "./retry-import.js";
@@ -156,6 +157,7 @@ export default function App() {
 
   return (
     <div className="app-layout">
+      <StatusScrim />
       <a
         href="#main-content"
         className="skip-link"
