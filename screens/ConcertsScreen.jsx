@@ -9,14 +9,13 @@ import { mediumDay } from "../time.js";
 import { NewsletterPrompt } from "../components/Newsletter.jsx";
 import { PullToRefresh } from "../components/PullToRefresh.jsx";
 
-// Three days of listings at first, three more with each "Show more".
-const DAYS_STEP = 3;
+// Ten concerts at first, ten more with each "Load more".
+const PAGE = 10;
 
-// The same quick ranges as the calendar on xpn.org. None chosen: every date.
+// Quick ranges, as on the calendar on xpn.org. None chosen: every date.
 const WHEN = [
   { id: "today", label: "Tonight" },
   { id: "weekend", label: "This weekend" },
-  { id: "week", label: "Next 7 days" },
 ];
 const NO_RANGE = { from: "", to: "" };
 
@@ -35,7 +34,7 @@ const CalendarEmpty = ({ title, children }) => (
 // When: the quick ranges, one at a time (the chosen one again lets it go).
 function WhenGroup({ value, onChange }) {
   return (
-    <div className="filter-checks" role="group" aria-label="When">
+    <div className="filter-checks when-checks" role="group" aria-label="When">
       {WHEN.map((o) => {
         const on = value === o.id;
         return (
@@ -87,7 +86,7 @@ export function ConcertsScreen({ result }) {
   const [range, setRange] = useState(NO_RANGE);
   const [regions, setRegions] = useState([]);
   const [tags, setTags] = useState([]);
-  const [days, setDays] = useState(DAYS_STEP);
+  const [shown, setShown] = useState(PAGE);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const saved = useFavoriteItems("concerts");
   const savedIds = new Set(saved.map((c) => c.id));
@@ -120,19 +119,16 @@ export function ConcertsScreen({ result }) {
     setRange(NO_RANGE);
     setRegions([]);
     setTags([]);
-    setDays(DAYS_STEP);
+    setShown(PAGE);
   };
   const narrowed = Boolean(words.length || when !== "all" || regions.length || tags.length);
   const active = (when !== "all" ? 1 : 0) + regions.length + tags.length;
   // A new filter starts the list from the top.
   const change = (setter) => (value) => {
     setter(value);
-    setDays(DAYS_STEP);
+    setShown(PAGE);
   };
-  // The first few days with listings, then a few more at a time.
-  const dates = [...new Set(filtered.map((c) => c.date))];
-  const lastShown = dates[Math.min(days, dates.length) - 1] || "";
-  const visible = filtered.filter((c) => c.date <= lastShown);
+  const visible = filtered.slice(0, shown);
 
   let body;
   if (source === "loading") {
@@ -202,13 +198,15 @@ export function ConcertsScreen({ result }) {
         {visible.map((c) => (
           <ConcertRow key={c.id} concert={c} />
         ))}
-        {dates.length > days && (
-          <button className="text-button show-more" onClick={() => setDays(days + DAYS_STEP)}>
-            Show more concerts
-            <span className="expand-chevron">
-              <Icon name="chevD" size={17} />
-            </span>
-          </button>
+        {filtered.length > shown && (
+          <div className="list-more">
+            <button className="text-button" onClick={() => setShown(shown + PAGE)}>
+              Load more concerts
+              <span className="expand-chevron">
+                <Icon name="chevD" size={17} />
+              </span>
+            </button>
+          </div>
         )}
         {/* xpn.org's own submission form (no account needed). */}
         <PromptLink

@@ -82,6 +82,11 @@
   flex-wrap: wrap;
   column-gap: 26px;
 }
+/* Tonight and This weekend, centered under When. */
+.filter-checks.when-checks {
+  justify-content: center;
+  column-gap: 40px;
+}
 .filter-check {
   display: flex;
   align-items: center;
@@ -214,9 +219,6 @@
 .concert-count .text-button {
   color: var(--accent);
 }
-.show-more {
-  margin-top: 10px;
-}
 .concert-partial {
   display: flex;
   flex-wrap: wrap;
@@ -228,12 +230,15 @@
 /* A concert: the date, then who and where, with Tickets and (once saved)
    Add to calendar as quiet text actions under it; the heart at the end. */
 .concert-row {
+  position: relative;
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr) auto;
   column-gap: 20px;
   align-items: start;
   padding: 16px 0;
   border-bottom: 1px solid var(--border);
+  /* A double tap saves the concert (ConcertRow.jsx); it never zooms. */
+  touch-action: manipulation;
 }
 .concert-date {
   font-variant-numeric: tabular-nums;
@@ -318,8 +323,15 @@
   font-weight: 600;
   color: var(--accent);
 }
-.concert-row > .icon-button {
+/* The heart, and Share under it. */
+.concert-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   margin-top: -6px;
+}
+.concert-share {
+  margin-top: -2px;
 }
 /* While the calendar loads: a date block and two lines per row. */
 .skeleton-row.concert-skeleton {

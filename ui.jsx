@@ -178,7 +178,7 @@ export function Empty({ icon, title, children, action, onAction, link = false })
     <div className="empty-state">
       <Icon name={icon} size={32} />
       <h2>{title}</h2>
-      <p>{children}</p>
+      {children && <p>{children}</p>}
       {action &&
         (link ? (
           <button className="text-button empty-link" onClick={onAction}>

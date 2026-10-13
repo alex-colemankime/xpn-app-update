@@ -206,6 +206,10 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+/* Just the play mark, while the episode's length is still unknown. */
+.episode-key[data-bare] {
+  padding: 0 10px;
+}
 .archive-row[data-active] .episode-key {
   background: var(--action);
   color: var(--action-ink);

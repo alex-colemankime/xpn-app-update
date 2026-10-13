@@ -6,7 +6,7 @@ import { refreshPlaylist, useLiveSong } from "../nowplaying.js";
 import { onAirAt } from "../catalog.js";
 import { playbackText, statusLine } from "../playback-text.js";
 import { Icon, Art, Wordmark, Segmented, SkeletonList } from "../ui.jsx";
-import { heartSong, SaveSong, SongMenu, TrackRow } from "../components/MusicRows.jsx";
+import { HeartBloom, heartSong, SaveSong, SongMenu, TrackRow } from "../components/MusicRows.jsx";
 import { OnAir, videoOfShow } from "../components/OnAir.jsx";
 import { SleepTimer } from "../components/SleepTimer.jsx";
 import { LiveCard } from "../components/StationUpdates.jsx";
@@ -14,37 +14,22 @@ import { CAST_KIND } from "../cast.js";
 import { usePlayer, chooseAudioOutput } from "../hooks/usePlayer.js";
 import { useHeroVisibility } from "../hooks/useHeroVisibility.js";
 import { useNow } from "../hooks/useNow.js";
+import { useDoubleTap } from "../hooks/useDoubleTap.js";
 import { PLAYLIST_URL } from "../links.js";
 import { PullToRefresh } from "../components/PullToRefresh.jsx";
 
 const RECENT_PREVIEW = 6;
 const RECENT_MAX = 50;
 
-// Two taps on the artwork in quick succession, close together, heart the
-// song, and a heart blooms over it. Each bloom has its own key, so a second
-// double tap plays it again. Pointer events, so it works the same for a
-// finger and a mouse; a tap that turns into a scroll is cancelled by the
-// browser and never counts.
-const DOUBLE_TAP_MS = 320;
-const DOUBLE_TAP_SLOP = 40;
+// A double tap on the artwork hearts the song, and a heart blooms over it
+// in the song's own heart color (MusicRows.jsx, HeartBloom).
 function useDoubleTapHeart(song) {
   const [bloom, setBloom] = useState(0);
-  const last = useRef(null);
-  const onPointerUp = (e) => {
-    if (!song || (e.pointerType === "mouse" && e.button !== 0)) return;
-    const prev = last.current;
-    const near =
-      prev &&
-      e.timeStamp - prev.at < DOUBLE_TAP_MS &&
-      Math.hypot(e.clientX - prev.x, e.clientY - prev.y) < DOUBLE_TAP_SLOP;
-    if (!near) {
-      last.current = { at: e.timeStamp, x: e.clientX, y: e.clientY };
-      return;
-    }
-    last.current = null;
+  const onPointerUp = useDoubleTap(() => {
+    if (!song) return;
     heartSong(song);
     setBloom((n) => n + 1);
-  };
+  });
   return { bloom, onPointerUp, onBloomEnd: () => setBloom(0) };
 }
 
@@ -115,16 +100,7 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
               </strong>
             </div>
           )}
-          {heart.bloom > 0 && (
-            <span
-              key={heart.bloom}
-              className="art-heart"
-              aria-hidden="true"
-              onAnimationEnd={heart.onBloomEnd}
-            >
-              <Icon name="heartF" size={88} />
-            </span>
-          )}
+          <HeartBloom type="songs" item={current} bloom={heart.bloom} onEnd={heart.onBloomEnd} />
         </div>
         {/* The song, its heart and menu beside the title. */}
         <div className="now-meta">

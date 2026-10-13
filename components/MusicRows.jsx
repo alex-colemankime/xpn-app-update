@@ -72,6 +72,36 @@ function firstSaveHint(type) {
   );
 }
 
+// The color a saved item's heart takes, from its artwork (null: none, so
+// the accent). `on` false asks for nothing yet.
+export function useHeartTint(type, item, on = true) {
+  const { art, preset } = tintSource(type, item || {});
+  return useArtTint(on ? art : null, on ? preset : null);
+}
+const tintVars = (tint) =>
+  tint ? { "--tint-light": tint.light, "--tint-dark": tint.dark } : undefined;
+
+// What follows a save: for a concert, a notice with Add to calendar; for
+// the first thing ever saved, where it went.
+function announceSave(type, item) {
+  if (type === "concerts") {
+    // A saved concert is one tap from the listener's calendar.
+    showToast(
+      { title: "Concert saved", text: concertWhen(item), icon: "calendarAdd" },
+      {
+        label: "Add to calendar",
+        onClick: async () => {
+          if (!(await addToCalendar(item)))
+            showToast("Couldn’t open your calendar. Allow calendar access for WXPN in Settings.");
+        },
+      },
+    );
+  } else if (type !== "shows") {
+    // Following a show offers reminders in place; no hint on top.
+    firstSaveHint(type);
+  }
+}
+
 // A heart toggle for any saveable item: a song, show, episode, concert or
 // video. Once saved, the heart takes a color from the item's artwork.
 export function SaveButton({
@@ -84,8 +114,7 @@ export function SaveButton({
   onToggle,
 }) {
   const saved = useIsFavorite(type, item);
-  const { art, preset } = tintSource(type, item);
-  const tint = useArtTint(saved ? art : null, saved ? preset : null);
+  const tint = useHeartTint(type, item, saved);
   // Pops only on the tap that saves, not on every render of a saved item.
   const [pop, setPop] = useState(false);
   return (
@@ -97,7 +126,7 @@ export function SaveButton({
       aria-label={children ? undefined : `${verb} ${name}`}
       data-pop={pop || undefined}
       data-tinted={tint ? "" : undefined}
-      style={tint ? { "--tint-light": tint.light, "--tint-dark": tint.dark } : undefined}
+      style={tintVars(tint)}
       onAnimationEnd={() => setPop(false)}
       onClick={() => {
         tap();
@@ -113,24 +142,7 @@ export function SaveButton({
           });
         } else {
           setPop(true);
-          if (type === "concerts") {
-            // A saved concert is one tap from the listener's calendar.
-            showToast(
-              { title: "Concert saved", text: concertWhen(item), icon: "calendarAdd" },
-              {
-                label: "Add to calendar",
-                onClick: async () => {
-                  if (!(await addToCalendar(item)))
-                    showToast(
-                      "Couldn’t open your calendar. Allow calendar access for WXPN in Settings.",
-                    );
-                },
-              },
-            );
-          } else if (type !== "shows") {
-            // Following a show offers reminders in place; no hint on top.
-            firstSaveHint(type);
-          }
+          announceSave(type, item);
         }
       }}
     >
@@ -322,14 +334,35 @@ export const SaveSong = ({ track }) => (
   <SaveButton type="songs" item={{ ...track, id: songId(track) }} name={track.title} />
 );
 
-// Hearts a song without its button (a double tap on Listen's artwork): saves
-// it, or leaves it saved, as photo apps' double tap only ever likes.
-export function heartSong(track) {
+// Saves an item without its button (a double tap on Listen's artwork or on
+// a concert): saves it, or leaves it saved, as photo apps' double tap only
+// ever likes.
+export function heartItem(type, item) {
   tap();
-  const item = { ...track, id: songId(track) };
-  if (getFavorite("songs", item)) return;
-  toggleFavorite("songs", item);
-  firstSaveHint("songs");
+  if (getFavorite(type, item)) return;
+  toggleFavorite(type, item);
+  announceSave(type, item);
+}
+export const heartSong = (track) => heartItem("songs", { ...track, id: songId(track) });
+
+// The heart that blooms over whatever a double tap just saved, in the
+// color that item's own heart takes, outlined in white so it shows on any
+// artwork. Each bloom has its own key, so a second double tap plays it again.
+export function HeartBloom({ type, item, bloom, onEnd, size = 88 }) {
+  const tint = useHeartTint(type, item);
+  if (!bloom) return null;
+  return (
+    <span
+      key={bloom}
+      className="art-heart"
+      data-tinted={tint ? "" : undefined}
+      style={tintVars(tint)}
+      aria-hidden="true"
+      onAnimationEnd={onEnd}
+    >
+      <Icon name="heartF" size={size} />
+    </span>
+  );
 }
 
 // A show's artwork, name and host as one button (so only words that may sit

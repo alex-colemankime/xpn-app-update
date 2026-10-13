@@ -186,15 +186,32 @@
   user-select: none;
   touch-action: manipulation;
 }
+/* The heart that blooms is in the color the song's own heart takes from its
+   artwork (as every saved heart is), the accent when the artwork has none,
+   with a white outline so it stands out against the artwork it sits on. */
 .art-heart {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--accent);
   pointer-events: none;
   filter: drop-shadow(0 6px 18px rgb(0 0 0 / 0.35));
   animation: art-heart 0.9s ease-out both;
+}
+.art-heart[data-tinted] {
+  color: var(--tint-light);
+}
+:root[data-theme="dark"] .art-heart[data-tinted] {
+  color: var(--tint-dark);
+}
+.art-heart svg {
+  overflow: visible;
+  stroke: #fff;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  /* The outline drawn under the fill, so all of it shows outside. */
+  paint-order: stroke fill;
 }
 @keyframes art-heart {
   0% {

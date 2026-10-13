@@ -17,6 +17,7 @@ import { YouTubeSubscribe } from "../components/SocialLinks.jsx";
 import { useSwipeTabs } from "../hooks/useSwipeTabs.js";
 
 // Empty-state copy and the screen each category's call to action opens.
+// Concerts and videos say no more than their title.
 const EMPTY = {
   songs: {
     icon: "music",
@@ -34,15 +35,16 @@ const EMPTY = {
     icon: "navConcerts",
     action: "Go to Concerts",
     target: "concerts",
-    text: "Save a concert to keep it here and add it to your calendar.",
   },
   videos: {
     icon: "video",
     action: "Go to Videos",
     target: "videos",
-    text: "Save a video to watch it later.",
   },
 };
+
+// Saved songs, five at a time: Load more under the last one adds five more.
+const SONGS_PAGE = 5;
 
 const searchText = (item) =>
   `${item.title || ""} ${item.artist || ""} ${item.name || ""} ${item.showName || ""}`.toLowerCase();
@@ -50,6 +52,7 @@ const searchText = (item) =>
 export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }) {
   const [type, setType] = useState("songs");
   const [query, setQuery] = useState("");
+  const [songsShown, setSongsShown] = useState(SONGS_PAGE);
   const songs = useFavoriteItems("songs");
   const shows = useFavoriteItems("shows");
   const episodes = useFavoriteItems("episodes");
@@ -94,6 +97,7 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
     setEnter(direction);
     setType(next);
     setQuery("");
+    setSongsShown(SONGS_PAGE);
   };
   const swipe = useSwipeTabs(Object.keys(items), category, choose);
   // The app keeps Favorites alive behind the other tabs. Each time it comes
@@ -104,7 +108,11 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
   if (seenVisit !== visit) {
     setSeenVisit(visit);
     setEnter(0);
+    setSongsShown(SONGS_PAGE);
   }
+  // A search shows every match.
+  const songsOnPage = q ? filtered : filtered.slice(0, songsShown);
+  const moreSongs = category === "songs" && songsOnPage.length < filtered.length;
 
   const shareSongs = async () =>
     showToast(
@@ -162,11 +170,24 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
           ) : category === "songs" ? (
             <>
               {/* One layer for every song's band (styles/layout.css). */}
-              <div className="saved-songs">
-                {filtered.map((t) => (
+              <div className="saved-songs" data-more={moreSongs || undefined}>
+                {songsOnPage.map((t) => (
                   <TrackRow key={t.id} track={t} wash />
                 ))}
               </div>
+              {moreSongs && (
+                <div className="list-more">
+                  <button
+                    className="text-button"
+                    onClick={() => setSongsShown(songsShown + SONGS_PAGE)}
+                  >
+                    Load more songs
+                    <span className="expand-chevron">
+                      <Icon name="chevD" size={17} />
+                    </span>
+                  </button>
+                </div>
+              )}
               <button className="text-button share-songs" onClick={shareSongs}>
                 <Icon name="shareAlt" size={17} />
                 Share your saved songs

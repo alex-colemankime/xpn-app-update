@@ -169,6 +169,50 @@ html.device-preview body {
 .dp[data-device="phone"] .dp-frame iframe {
   border-radius: 44px;
 }
+/* The phone's status bar over the top of its screen, as on an iPhone with
+   a Dynamic Island: the time, the island, then signal, Wi-Fi and battery,
+   in the app's text color. The app keeps this band clear (preview-shell.js,
+   PHONE_STATUS_H). Taps pass through to the app. */
+.dp-status {
+  display: none;
+}
+.dp[data-device="phone"] .dp-status {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  height: 59px;
+  display: grid;
+  grid-template-columns: 1fr 126px 1fr;
+  align-items: center;
+  color: var(--text);
+  pointer-events: none;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Helvetica Neue", sans-serif;
+}
+.dp-island {
+  height: 37px;
+  border-radius: 999px;
+  background: #000;
+}
+.dp-clock {
+  justify-self: center;
+  padding-left: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.dp-indicators {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 10px;
+}
+.dp-indicators svg {
+  display: block;
+}
+
 .dp[data-device="tablet"] .dp-frame {
   padding: 16px;
   border-radius: 36px;

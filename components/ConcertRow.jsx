@@ -1,11 +1,21 @@
-import { useEffect, useId, useSyncExternalStore } from "react";
-import { Icon, focusFirstItem } from "../ui.jsx";
+import { useEffect, useId, useState, useSyncExternalStore } from "react";
+import { Icon, focusFirstItem, shareText } from "../ui.jsx";
 import { concertAge, requestAge, subscribeAges } from "../concerts.js";
 import { addToCalendar, calendarIsNative, downloadIcs, googleCalendarUrl } from "../calendar.js";
 import { showToast } from "../toast.js";
-import { MenuHead, MenuItem, MenuSave, SaveButton, shareFrom } from "./MusicRows.jsx";
+import {
+  HeartBloom,
+  heartItem,
+  MenuHead,
+  MenuItem,
+  MenuSave,
+  SaveButton,
+  shareFrom,
+} from "./MusicRows.jsx";
 import { holdable, openHoldMenu } from "../hold.js";
 import { useSheetDrag } from "../hooks/useSheetDrag.js";
+import { noDoubleClickSelect, useDoubleTap } from "../hooks/useDoubleTap.js";
+import { CALENDAR_URL } from "../links.js";
 
 // Age limits arrive one by one; each row listens for its own, so one arriving
 // re-renders one row, not the list.
@@ -97,11 +107,27 @@ export function CalendarFileItems({ concert, close }) {
   );
 }
 
+// What sharing a concert sends: who, when and where, and its page on
+// xpn.org (its tickets, or the calendar, when it has none).
+const shareArgs = (c, date) => [
+  c.artist,
+  [`${c.artist}, ${FULL_DATE.format(date)}`, c.venue].filter(Boolean).join(" · "),
+  c.pageUrl || c.ticketUrl || CALENDAR_URL,
+];
+
+// A concert in a list. Nothing in it leaves the app but Tickets (and the
+// calendar choices): a tap on the concert itself does nothing, a double tap
+// saves it, as a double tap on Listen's artwork saves the song, and press
+// and hold opens its menu. The heart and Share sit at its end.
 export function ConcertRow({ concert: c }) {
   const age = useAge(c);
   // Midday avoids the date shifting across a timezone boundary when shown.
   const date = new Date(`${c.date}T12:00:00`);
-  const Info = c.pageUrl ? "a" : "div";
+  const [bloom, setBloom] = useState(0);
+  const onPointerUp = useDoubleTap(() => {
+    heartItem("concerts", c);
+    setBloom((n) => n + 1);
+  });
   // Where: the venue and its town (the region when the calendar names no
   // town). The dot stays with the word before it, so a line never starts
   // with one.
@@ -135,35 +161,27 @@ export function ConcertRow({ concert: c }) {
           ) : (
             <CalendarFileItems concert={c} close={close} />
           )}
-          {c.pageUrl && (
-            <MenuItem
-              icon="shareAlt"
-              onClick={shareFrom(
-                close,
-                c.artist,
-                `${c.artist}, ${FULL_DATE.format(date)}`,
-                c.pageUrl,
-              )}
-            >
-              Share concert
-            </MenuItem>
-          )}
+          <MenuItem icon="shareAlt" onClick={shareFrom(close, ...shareArgs(c, date))}>
+            Share concert
+          </MenuItem>
         </>
       ),
     }),
   );
   return (
-    <div ref={hold} className="concert-row">
+    <div
+      ref={hold}
+      className="concert-row"
+      onPointerUp={onPointerUp}
+      onMouseDown={noDoubleClickSelect}
+    >
       <div className="concert-date" aria-hidden="true">
         <span>{MONTH.format(date)}</span>
         <strong>{date.getDate()}</strong>
         <small>{WEEKDAY.format(date)}</small>
       </div>
       <div className="concert-body">
-        <Info
-          className="concert-info"
-          {...(c.pageUrl ? { href: c.pageUrl, target: "_blank", rel: "noreferrer" } : {})}
-        >
+        <div className="concert-info">
           <span className="sr-only">{FULL_DATE.format(date)}:</span>
           {/* The station's own shows: a starred line over the artist. */}
           {(c.xpnWelcomes || c.freeAtNoon) && (
@@ -185,7 +203,7 @@ export function ConcertRow({ concert: c }) {
               {age && <span className="concert-age">{age}</span>}
             </p>
           )}
-        </Info>
+        </div>
         <div className="concert-actions">
           {c.ticketUrl && (
             <a
@@ -201,7 +219,17 @@ export function ConcertRow({ concert: c }) {
           <AddToCalendar concert={c} />
         </div>
       </div>
-      <SaveButton type="concerts" item={c} name={`${c.artist} concert`} />
+      <div className="concert-side">
+        <SaveButton type="concerts" item={c} name={`${c.artist} concert`} />
+        <button
+          className="icon-button concert-share"
+          aria-label={`Share ${c.artist} concert`}
+          onClick={async () => showToast(await shareText(...shareArgs(c, date)))}
+        >
+          <Icon name="shareAlt" size={19} />
+        </button>
+      </div>
+      <HeartBloom type="concerts" item={c} bloom={bloom} onEnd={() => setBloom(0)} size={64} />
     </div>
   );
 }

@@ -98,7 +98,7 @@ The Videos tab shows the station's video collections as one feed, newest first, 
 
 ## Audio archive
 
-Shows › Archive lists recent broadcasts of the shows xpn.org archives, newest show first, each with its latest three (the rest in the show's sheet). Each row leads with a small play key that says how long the broadcast is (its slot in the schedule until the file reports its own length), or how much is left once started. They play in the app on their own player, with skip back 15 and ahead 30, lock-screen controls, and their place kept.
+Shows › Archive lists recent broadcasts of the shows xpn.org archives, newest show first, each with its latest three (the rest in the show's sheet). Each row leads with a small play key that says how long the broadcast is, or how much is left once started. A dated broadcast's length is its slot in the schedule until the file reports its own; a feature with no slot (World Cafe's sessions) has its length read from the file's header up front, one file at a time, and kept on the device (`episode-length.js`). They play in the app on their own player, with skip back 15 and ahead 30, lock-screen controls, and their place kept.
 
 - **Source:** each archived show's page on xpn.org already lists its last ten broadcasts (from StreamGuys); the app reads that list (`parseArchivePage` in `archive.js`), so the station publishes nothing new. A dated title ("Sleepy Hollow - 10.04.2026") becomes the day it aired, in the show's slot; a feature ("Friko on World Cafe") keeps its name.
 - **Signed links:** the audio links carry a key and run out after a few hours. Each episode notes when its link was read; one read more than 20 minutes ago is read again from its show's page just before it plays (resuming, or recovering mid-listen, included). Favorites keep no link at all. A saved broadcast that has left the archive says so in Favorites and on its page, and tapping one that has gone explains why it can't play.
@@ -194,6 +194,7 @@ nowplaying.js        playlist feed, freshness
 catalog.js           show directory and schedule, from shows.json
 schedule.js          what is on air, next airings, air-time wording
 archive.js           archived broadcasts, read from xpn.org's show pages
+episode-length.js    an archive episode's length, read from its file
 videos.js            Brightcove playlists, for Videos and show pages
 concerts.js          concert calendar (xpn.org)
 calendar.js          saved concerts into the listener's calendar

@@ -6,6 +6,7 @@ import { SHOWS } from "../catalog.js";
 import { loadArchive, slotLength, useArchive } from "../archive.js";
 import { apMonths, clockTime, compactLength, lengthLabel, shortDay } from "../time.js";
 import { SKIP_AHEAD_S, SKIP_BACK_S } from "../episode-core.js";
+import { useEpisodeLength } from "../episode-length.js";
 import {
   playEpisode,
   seekEpisode,
@@ -39,11 +40,16 @@ const savedEpisodeItem = (episode) => ({
 
 // This episode in the player: whether it is the one loaded, playing, and
 // where it is. Live position for the loaded one, the saved place otherwise.
+// Its length: as the player or a saved place last knew it; else, for one
+// with no slot in the schedule to go by (World Cafe's sessions), as its
+// file reports it (episode-length.js).
 function useEpisodeState(episode) {
   const player = useEpisodePlayer();
   const saved = useEpisodeProgress(episode.id);
   const active = player.episode?.id === episode.id;
-  const duration = (active && player.duration) || episode.duration || saved?.of || 0;
+  const known = (active && player.duration) || episode.duration || saved?.of || 0;
+  const file = useEpisodeLength(episode, !known && !slotLength(episode));
+  const duration = known || file;
   const position = active ? player.position : saved?.done ? duration : saved?.at || 0;
   return {
     active,
@@ -58,7 +64,7 @@ function useEpisodeState(episode) {
 
 // An episode in one show's list (its sheet, Shows › Archive, Favorites ›
 // Shows), as a podcast app lists them: a small play key saying how long it
-// is or how much is left, the day it aired (or who it features), and its
+// is or how much is left (just the play mark until its length is known), the day it aired (or who it features), and its
 // heart. The whole row plays it, and taps again to pause; the one in the
 // player is tinted, its key showing Pause while it plays, and the mini
 // player opens its page. Under the title: who a dated broadcast features,
@@ -73,7 +79,7 @@ export function EpisodeRow({ episode, gone = false }) {
     ? "Played"
     : inProgress
       ? `${compactLength(s.duration - s.position)} left`
-      : compactLength(s.duration || slotLength(episode)) || "Play";
+      : compactLength(s.duration || slotLength(episode));
   const meta = gone
     ? "No longer in the xpn.org archive"
     : [episode.feature, !episode.aired && shortDay(episode.date)].filter(Boolean).join(" · ");
@@ -131,13 +137,18 @@ export function EpisodeRow({ episode, gone = false }) {
         {...(!gone && {
           onClick: () => toggleEpisode(episode),
           "aria-label": [`${verb} ${showName(episode)}, ${episode.title}`, time, meta]
-            .filter((part) => part && part !== "Play")
+            .filter(Boolean)
             .join(", "),
         })}
       >
         <span className="archive-line">
           {!gone && (
-            <span className="episode-key" data-on={on || undefined} aria-hidden="true">
+            <span
+              className="episode-key"
+              data-on={on || undefined}
+              data-bare={!time || undefined}
+              aria-hidden="true"
+            >
               <Icon name={on ? "pause" : "play"} size={12} />
               {inProgress && (
                 <span className="episode-key-bar">

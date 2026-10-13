@@ -14,6 +14,12 @@ const DEVICES = {
   tablet: { label: "Tablet", width: 820, height: 1180 },
   laptop: { label: "Laptop", width: 1440, height: 900 },
 };
+// The phone is an iPhone with a Dynamic Island: a status bar across the top
+// of the screen, which the app keeps clear as it does under iOS's own. A
+// page in a frame isn't told of it (env(safe-area-inset-top) is 0 there),
+// so the preview tells the app (--safe-area-inset-top).
+const PHONE_STATUS_H = 59;
+
 // What each frame adds around the screen: bezel, or a browser window's bar.
 const CHROME = {
   phone: { x: 12, top: 12, bottom: 12 },
@@ -35,6 +41,12 @@ const ICONS = {
     '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>',
   ),
 };
+
+// The status bar's signal, Wi-Fi and battery, drawn in the text color.
+const STATUS_ICONS =
+  '<svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>' +
+  '<svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 2.6c2.3 0 4.4.9 6 2.4l1.3-1.4A10.6 10.6 0 0 0 8 .6 10.6 10.6 0 0 0 .7 3.6L2 5c1.6-1.5 3.7-2.4 6-2.4Zm0 3.8c1.3 0 2.5.5 3.4 1.3l1.3-1.4A6.8 6.8 0 0 0 8 4.4c-1.8 0-3.5.7-4.7 1.9l1.3 1.4C5.5 6.9 6.7 6.4 8 6.4Zm0 3.7L9.9 8a2.8 2.8 0 0 0-3.8 0L8 10.1Z"/></svg>' +
+  '<svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="0.5" y="0.5" width="23" height="12" rx="3.8" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="20" height="9" rx="2.5" fill="currentColor"/><path d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2Z" fill="currentColor" opacity=".45"/></svg>';
 
 function readChoice() {
   const asked = new URLSearchParams(window.location.search).get("device");
@@ -105,6 +117,11 @@ export function mountDevicePreview(root, { build = "" } = {}) {
             <div class="dp-frame">
               <div class="dp-window-bar" aria-hidden="true"><i></i><i></i><i></i><span>WXPN — Listen live</span></div>
               <iframe title="WXPN app" allow="autoplay; clipboard-write; web-share"></iframe>
+              <div class="dp-status" aria-hidden="true">
+                <span class="dp-clock">9:41</span>
+                <span class="dp-island"></span>
+                <span class="dp-indicators">${STATUS_ICONS}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -174,11 +191,15 @@ export function mountDevicePreview(root, { build = "" } = {}) {
     open.href = frameUrl(hash);
   }
 
-  // Phones and tablets draw no scrollbar; a laptop's browser does.
+  // Phones and tablets draw no scrollbar; a laptop's browser does. The
+  // phone keeps its status bar clear.
   function touchScrollbars() {
     try {
-      iframe.contentDocument.documentElement.style.scrollbarWidth =
-        device === "laptop" ? "" : "none";
+      const root = iframe.contentDocument.documentElement;
+      root.style.scrollbarWidth = device === "laptop" ? "" : "none";
+      if (device === "phone")
+        root.style.setProperty("--safe-area-inset-top", `${PHONE_STATUS_H}px`);
+      else root.style.removeProperty("--safe-area-inset-top");
     } catch {
       /* not loaded yet: done on load */
     }
