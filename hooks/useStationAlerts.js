@@ -10,13 +10,13 @@ import {
 import { reminderId } from "../reminders.js";
 import { createLocalStore, useLocalStore } from "../storage.js";
 import { showToast } from "../toast.js";
-import { alertPlan } from "../updates.js";
+import { alertPlan, normalizeAlertSettings } from "../updates.js";
 import { OFF_IN_SETTINGS, useReminderSettings } from "./useShowReminders.js";
 import {
   getPushStatus,
+  kindsPushed,
   onPushTap,
   pushIsOn,
-  STATION_TOPIC,
   subscribePushStatus,
   syncPushTopics,
   topicsToSend,
@@ -38,17 +38,17 @@ import { track } from "../analytics.js";
 // service would reach phones that haven't opened the app; this switch is
 // the consent it would use too.
 
-// On or off. Earlier versions had a switch per kind; either one on carries
-// over as on.
-const alertsStore = createLocalStore("xpn.alerts", { on: false }, (v) => ({
-  on: Boolean(v?.on || v?.live || v?.drives),
-}));
+// On or off, and a choice carried over from the version with a switch per
+// kind until the listener turns everything on (updates.js,
+// normalizeAlertSettings).
+const alertsStore = createLocalStore("xpn.alerts", { on: false }, normalizeAlertSettings);
 
 export const useAlertSettings = () => useLocalStore(alertsStore);
 const NONE = [];
 const OFF = { on: false };
 
 // A tap on the switch: turning it on asks for notification permission first.
+// Turned on here, it's for everything the station sends.
 export async function setAlerts(on) {
   if (on && !(await requestNotifications())) {
     showToast(OFF_IN_SETTINGS);
@@ -86,10 +86,10 @@ export function useStationAlerts(updates, { onWatch }) {
   const pushed = status.failing ? NONE : status.topics;
   // What the sender should have: the listener's topics while push is on,
   // nothing once the station switches it off.
-  const wanted = topicsToSend(settings.on, pushIsOn());
+  const wanted = topicsToSend(settings.on, pushIsOn(), settings.kinds);
   const behind = status.failing || [...wanted].sort().join(",") !== status.topics.join(",");
   const syncPush = useEffectEvent(() => {
-    syncPushTopics(settings.on)
+    syncPushTopics(settings.on, settings.kinds)
       .then((ok) => {
         if (!ok) {
           alertsStore.set(OFF);
@@ -114,14 +114,13 @@ export function useStationAlerts(updates, { onWatch }) {
 
   useEveryShow(() => {
     if (!notificationsAreNative()) return;
-    const plan = alertPlan(
-      updates,
-      // What the sender already delivers isn't scheduled here as well.
-      settings.on && !(pushIsOn() && pushed.includes(STATION_TOPIC)),
-      {
-        remindedShows: reminded ? reminded.split(",") : [],
-      },
-    ).map(({ key, at, title, body, extra }) => ({
+    // What the sender already delivers isn't scheduled here as well.
+    const covered = pushIsOn() ? kindsPushed(pushed) : [];
+    const kinds = (settings.kinds || ["live", "drives"]).filter((k) => !covered.includes(k));
+    const plan = alertPlan(updates, settings.on && kinds.length > 0, {
+      remindedShows: reminded ? reminded.split(",") : [],
+      kinds,
+    }).map(({ key, at, title, body, extra }) => ({
       id: reminderId(`alert:${key}`, at),
       at,
       title,

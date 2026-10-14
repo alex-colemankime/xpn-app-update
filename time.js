@@ -36,23 +36,68 @@ export function easternParts(date = new Date()) {
 // at 1:01am EST. Null when the date or time can't be read, or doesn't exist
 // (the hour skipped in spring).
 const CLOCK_AHEAD_MS = 2 * 60000;
-export function reportedAt(date, time, now = Date.now()) {
+// The moments an Eastern date and time can name, earliest first: one, two
+// in the hour repeated in the fall (EDT, then EST), none for a time that
+// can't be read or doesn't exist.
+function momentsOf(date, time) {
   const [y, mo, d] = String(date || "")
     .split("-")
     .map(Number);
   const [h, mi] = String(time || "")
     .split(":")
     .map(Number);
-  if ([y, mo, d, h, mi].some((n) => !Number.isFinite(n))) return null;
-  const fits = [4, 5]
+  if ([y, mo, d, h, mi].some((n) => !Number.isFinite(n))) return [];
+  return [4, 5]
     .map((offset) => Date.UTC(y, mo - 1, d, h + offset, mi))
     .filter((t) => {
       const back = easternParts(new Date(t));
       return back.date === date && back.time === time;
     });
-  if (!fits.length) return null;
+}
+const latestNotAfter = (fits, now) => {
   const past = fits.filter((t) => t <= now + CLOCK_AHEAD_MS);
   return past.length ? Math.max(...past) : Math.min(...fits);
+};
+export function reportedAt(date, time, now = Date.now()) {
+  const fits = momentsOf(date, time);
+  return fits.length ? latestNotAfter(fits, now) : null;
+}
+
+// The real moments of a station file's reports ({ date, time }, in the
+// file's own order, either way round), using the file's order to place the
+// hour repeated in the fall: the station logs as it plays, so in the order
+// things happened, a repeated-hour time that comes after a later one
+// (1:58am, then 1:02am) is the second 1:00–1:59am, EST, and so is every
+// repeated-hour time after it; before that, a time the file shows following
+// an earlier report is the first, EDT. So a song logged at 1:04am EDT is an
+// hour old at 1:05am EST, never one minute. Only a repeated-hour time with
+// nothing before it in the file falls back to the latest moment not after
+// `now`. Null for any that can't be read. Pure, so it can be tested.
+export function reportedMoments(reports, now = Date.now()) {
+  const stamp = (r) => `${r?.date || ""} ${r?.time || ""}`;
+  const fits = reports.map((r) => momentsOf(r?.date, r?.time));
+  // The file's direction: newest first when its first report reads later
+  // than its last.
+  const order = reports.map((_, i) => i);
+  if (reports.length > 1 && stamp(reports[0]) > stamp(reports[reports.length - 1])) order.reverse();
+  const at = new Array(reports.length).fill(null);
+  let fallen = false;
+  let prev = null; // the report before, in the order things happened
+  for (const i of order) {
+    const f = fits[i];
+    if (f.length === 1) at[i] = f[0];
+    else if (f.length === 2) {
+      const r = reports[i];
+      if (!fallen && prev && fits[prev].length === 2 && reports[prev].date === r.date) {
+        // Back to an earlier time within the repeated hour: the clocks fell.
+        if (reports[prev].time > r.time) fallen = true;
+      }
+      at[i] = fallen ? f[1] : prev !== null ? f[0] : latestNotAfter(f, now);
+      if (!fallen && at[i] === f[1]) fallen = true;
+    }
+    if (f.length) prev = i;
+  }
+  return at;
 }
 
 // "16:00" -> "4pm", "07:30" -> "7:30am", "12:00" -> "noon", "00:00" -> "midnight".

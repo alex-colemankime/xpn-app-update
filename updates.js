@@ -193,17 +193,37 @@ export function activeUpdates(updates, now = Date.now()) {
 // Only what is still ahead and within `days`, soonest first. A phone learns
 // of a new notice when the app next opens, so the station posts them ahead.
 const MAX_ALERTS = 12;
+// The listener's notification choice, as stored: on or off, and while a
+// choice from an earlier version stands, the kinds it named (`kinds`:
+// "live", "drives"). That version had a switch per kind; one carried over
+// keeps exactly what it covered (live video on and drives off stays so)
+// until the listener turns notifications on again for everything. Null
+// `kinds` is everything the station sends. Pure, so it can be tested.
+export const ALERT_KINDS = ["live", "drives"];
+export function normalizeAlertSettings(v) {
+  if (!v || typeof v !== "object") return { on: false, kinds: null };
+  const listed = Array.isArray(v.kinds) ? ALERT_KINDS.filter((k) => v.kinds.includes(k)) : null;
+  if (listed)
+    return listed.length ? { on: Boolean(v.on), kinds: listed } : { on: false, kinds: null };
+  if ("live" in v || "drives" in v) {
+    const kinds = ALERT_KINDS.filter((k) => v[k] === true);
+    return kinds.length ? { on: true, kinds } : { on: false, kinds: null };
+  }
+  return { on: Boolean(v.on), kinds: null };
+}
+
 export function alertPlan(
   updates,
   on = false,
-  { now = Date.now(), days = 14, remindedShows = [] } = {},
+  { now = Date.now(), days = 14, remindedShows = [], kinds = null } = {},
 ) {
   const horizon = now + days * 86400000;
   const ahead = (at) => at > now && at <= horizon;
   if (!on) return [];
+  const wants = (kind) => !kinds || kinds.includes(kind);
   const plan = [];
   for (const u of updates) {
-    if (u.kind === "live" && u.notify && !remindedShows.includes(u.show)) {
+    if (u.kind === "live" && wants("live") && u.notify && !remindedShows.includes(u.show)) {
       const at = u.starts - LIVE_ALERT_MINUTES * 60000;
       if (ahead(at))
         plan.push({
@@ -214,7 +234,7 @@ export function alertPlan(
           extra: { action: "watch", live: u },
         });
     }
-    if (u.kind === "banner") {
+    if (u.kind === "banner" && wants("drives")) {
       for (const n of u.notify || []) {
         if (!ahead(n.at) || (u.ends != null && n.at >= u.ends)) continue;
         plan.push({

@@ -5,17 +5,30 @@ import { useNow } from "./hooks/useNow.js";
 import { decodeEntities } from "./text.js";
 import { withTimeout } from "./net.js";
 import { showSegment } from "./catalog.js";
-import { clockLabel, easternParts, localClock, reportedAt, shiftDate } from "./time.js";
+import {
+  clockLabel,
+  easternParts,
+  localClock,
+  reportedAt,
+  reportedMoments,
+  shiftDate,
+} from "./time.js";
 
 // The station publishes one file per Eastern calendar day. Just after
 // midnight ET that file is nearly empty, so the previous day is merged in
 // until the new day has built up its own history.
 const EARLY_HOUR = 5;
 const reportedKey = (track) => `${track.date} ${track.time} ${track.title} ${track.artist}`;
-// Songs newest first by when they really played (time.js reportedAt), so
-// the hour repeated when clocks fall back sorts in the order it happened.
+// When a song really played (epoch ms): the moment worked out from its
+// file's order when it was read (`at`, time.js reportedMoments), else from
+// its date and time alone (a saved song). Null when unknown.
+const momentOf = (t, now = Date.now()) =>
+  Number.isFinite(t?.at) ? t.at : t?.date && t?.time ? reportedAt(t.date, t.time, now) : null;
+
+// Songs newest first by when they really played, so the hour repeated when
+// clocks fall back sorts in the order it happened.
 function newestFirst(tracks, now = Date.now()) {
-  const at = new Map(tracks.map((t) => [t, reportedAt(t.date, t.time, now) ?? 0]));
+  const at = new Map(tracks.map((t) => [t, momentOf(t, now) ?? 0]));
   return tracks.sort((a, b) => at.get(b) - at.get(a));
 }
 export function mergeTracks(lists, now = Date.now()) {
@@ -42,7 +55,7 @@ const SLACK_MINUTES = 3;
 // report a minute or two ahead of this clock is new; one further ahead is
 // unknown. Null when unknown.
 function reportAge(track, now) {
-  const at = reportedAt(track.date, track.time, now.getTime());
+  const at = momentOf(track, now.getTime());
   const ms = at === null ? NaN : now.getTime() - at;
   return ms >= -2 * 60000 ? Math.max(0, Math.floor(ms / 60000)) : null;
 }
@@ -93,7 +106,7 @@ export function withNowPlaying(tracks, nowFile) {
 
 // When a song played, in the listener's time: "2:32pm".
 export function playedAt(track, timeZone) {
-  const at = track?.date && track?.time ? reportedAt(track.date, track.time) : null;
+  const at = momentOf(track);
   return at === null ? (track?.time ? clockLabel(track.time) : "") : localClock(at, timeZone);
 }
 
@@ -127,11 +140,17 @@ export function normalizePlaylist(data, now = Date.now()) {
       time: String(t.timeslice || "").slice(11, 16),
       date: String(t.timeslice || "").slice(0, 10),
     }));
+  // Each song's real moment, placed by the file's own order (the repeated
+  // hour in the fall needs it).
+  const moments = reportedMoments(tracks, now);
+  tracks.forEach((t, i) => {
+    if (moments[i] !== null) t.at = moments[i];
+  });
   return newestFirst(tracks, now);
 }
 const LOADING = { tracks: [], status: "loading" };
 const UNAVAILABLE = { tracks: [], status: "unavailable" };
-const trackKey = (t) => `${reportedKey(t)} ${t.minutes || ""} ${t.img}`;
+const trackKey = (t) => `${reportedKey(t)} ${t.at || ""} ${t.minutes || ""} ${t.img}`;
 const sameTracks = (a, b) =>
   a.length === b.length && a.every((track, i) => trackKey(track) === trackKey(b[i]));
 

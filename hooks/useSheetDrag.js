@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { swallowNextClick } from "../click-guard.js";
 
 // A sheet that rises from the bottom of a phone (a show, a video, a song's
 // menu) follows a finger pulled down from its top, and goes when let go far
@@ -109,6 +110,13 @@ export function useSheetDrag({ anyWidth = false } = {}) {
         drag.dy = Math.max(0, dy);
         place(`0 ${drag.dy}px`, false);
       };
+      // Interrupted (the system took the touch): back in place, never closed,
+      // however far it had come.
+      const cancel = () => {
+        const was = drag;
+        drag = null;
+        if (was?.on) settleBack();
+      };
       const end = (e) => {
         const was = drag;
         drag = null;
@@ -132,39 +140,41 @@ export function useSheetDrag({ anyWidth = false } = {}) {
         if (!drag || drag.pointer !== e.pointerId) return;
         const was = drag.on;
         move({ touches: [e], cancelable: true, preventDefault: () => e.preventDefault() });
-        if (!was && drag?.on) sheet.setPointerCapture?.(e.pointerId);
+        if (!was && drag?.on) {
+          try {
+            sheet.setPointerCapture(e.pointerId);
+          } catch {
+            // a pointer the browser no longer tracks: the drag works without
+          }
+        }
       };
       const mouseUp = (e) => {
         if (drag?.pointer !== e.pointerId) return;
         const dragged = drag.on;
         end(e);
         // A drag isn't also a click on whatever it started over.
-        if (dragged) {
-          const swallow = (c) => {
-            c.stopPropagation();
-            c.preventDefault();
-          };
-          sheet.addEventListener("click", swallow, { capture: true, once: true });
-          setTimeout(() => sheet.removeEventListener("click", swallow, { capture: true }), 0);
-        }
+        if (dragged) swallowNextClick(sheet);
+      };
+      const mouseCancel = (e) => {
+        if (drag?.pointer === e.pointerId) cancel();
       };
       sheet.addEventListener("pointerdown", mouseDown);
       sheet.addEventListener("pointermove", mouseMove);
       sheet.addEventListener("pointerup", mouseUp);
-      sheet.addEventListener("pointercancel", mouseUp);
+      sheet.addEventListener("pointercancel", mouseCancel);
       sheet.addEventListener("touchstart", start, { passive: true });
       sheet.addEventListener("touchmove", move, { passive: false });
       sheet.addEventListener("touchend", end, { passive: true });
-      sheet.addEventListener("touchcancel", end, { passive: true });
+      sheet.addEventListener("touchcancel", cancel, { passive: true });
       return () => {
         sheet.removeEventListener("pointerdown", mouseDown);
         sheet.removeEventListener("pointermove", mouseMove);
         sheet.removeEventListener("pointerup", mouseUp);
-        sheet.removeEventListener("pointercancel", mouseUp);
+        sheet.removeEventListener("pointercancel", mouseCancel);
         sheet.removeEventListener("touchstart", start);
         sheet.removeEventListener("touchmove", move);
         sheet.removeEventListener("touchend", end);
-        sheet.removeEventListener("touchcancel", end);
+        sheet.removeEventListener("touchcancel", cancel);
       };
     },
     [anyWidth],

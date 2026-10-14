@@ -232,8 +232,17 @@ export const STATION_TOPIC = "station";
 
 // What the sender should have for this phone: the station's topic while the
 // listener has notifications on, nothing once they turn them off or the
-// station switches push off. Pure, so it can be tested.
-export const topicsToSend = (on, pushOn) => (on && pushOn ? [STATION_TOPIC] : []);
+// station switches push off. A choice carried over from the version with a
+// switch per kind (`kinds`) keeps the topics that version sent ("live",
+// "drives"), which the sender still honors, rather than the station's
+// topic, which would add what the listener turned off. Pure, so it can be
+// tested.
+export const topicsToSend = (on, pushOn, kinds = null) =>
+  on && pushOn ? (kinds ? [...kinds].sort() : [STATION_TOPIC]) : [];
+// The kinds of notice the sender delivers for these topics, so the phone
+// doesn't schedule them a second time.
+export const kindsPushed = (topics) =>
+  topics.includes(STATION_TOPIC) ? ["live", "drives"] : topics.filter((t) => t !== STATION_TOPIC);
 
 // The listener's choice (on or off), sent to the server. With push
 // switched off by the station, the server is told to send nothing (when it
@@ -241,7 +250,7 @@ export const topicsToSend = (on, pushOn) => (on && pushOn ? [STATION_TOPIC] : []
 // registration or the server failed (the phone then schedules the notices
 // itself, and tries again when the app comes back to the foreground or the
 // connection returns).
-export async function syncPushTopics(on) {
+export async function syncPushTopics(on, kinds = null) {
   if (!Capacitor.isNativePlatform() || !PUSH_REGISTER_URL) {
     setStatus(NO_PUSH);
     return true;
@@ -251,7 +260,7 @@ export async function syncPushTopics(on) {
     setStatus(NO_PUSH);
     return true;
   }
-  return realClient().setTopics(topicsToSend(on, pushOn));
+  return realClient().setTopics(topicsToSend(on, pushOn, kinds));
 }
 
 // Call `handler(target)` when the listener taps a pushed notification

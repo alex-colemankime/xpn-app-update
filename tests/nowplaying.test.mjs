@@ -199,3 +199,45 @@ test("just after midnight, a day file not made yet leaves yesterday's songs show
     globalThis.fetch = real;
   }
 });
+
+// The hour repeated when clocks fall back (Nov. 1, 2026: 1:00–1:59am twice).
+const fallFile = (times) =>
+  times.map((time, i) => ({
+    song: `Song ${i}`,
+    artist: "Artist",
+    timeslice: `2026-11-01 ${time}:00`,
+  }));
+
+test("a song logged at 1:04am EDT is an hour old at 1:05am EST, not a minute", () => {
+  const now = Date.parse("2026-11-01T06:05:00Z"); // 1:05am EST
+  for (const order of ["oldest first", "newest first"]) {
+    const times = ["00:58", "01:04"];
+    const rows = normalizePlaylist(
+      fallFile(order === "oldest first" ? times : [...times].reverse()),
+      now,
+    );
+    assert.equal(rows[0].time, "01:04", order);
+    assert.equal(new Date(rows[0].at).toISOString(), "2026-11-01T05:04:00.000Z", order);
+    assert.equal(isFresh(rows[0], new Date(now)), false, `${order}: not on the air now`);
+  }
+});
+
+test("after the clocks fall back, the file's order says which 1am a song is", () => {
+  const now = Date.parse("2026-11-01T06:05:00Z"); // 1:05am EST
+  const rows = normalizePlaylist(fallFile(["00:58", "01:04", "01:58", "01:02"]), now);
+  assert.deepEqual(
+    rows.map((r) => [r.time, new Date(r.at).toISOString().slice(11, 16)]),
+    [
+      ["01:02", "06:02"], // EST, the song on the air
+      ["01:58", "05:58"], // EDT
+      ["01:04", "05:04"], // EDT
+      ["00:58", "04:58"],
+    ],
+  );
+  assert.equal(isFresh(rows[0], new Date(now)), true);
+});
+
+test("a repeated-hour time with nothing before it in the file goes by the clock", () => {
+  const rows = normalizePlaylist(fallFile(["01:04"]), Date.parse("2026-11-01T06:05:00Z"));
+  assert.equal(new Date(rows[0].at).toISOString(), "2026-11-01T06:04:00.000Z");
+});

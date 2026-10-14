@@ -65,11 +65,14 @@ export function ShowReminders({ onNavigate }) {
   );
 }
 
+const KIND_LABEL = { live: "live video", drives: "member drive" };
+const kindsLabel = (kinds) => kinds.map((k) => KIND_LABEL[k]).join(" and ");
+
 // Everything the station sends, under one switch, with what it covers
 // beside it: the consent the App Store asks for (4.5.4). Off until turned
 // on here.
 export function StationAlerts() {
-  const { on } = useAlertSettings();
+  const { on, kinds } = useAlertSettings();
   return (
     <section className="settings-panel">
       <div className="section-heading">
@@ -83,6 +86,15 @@ export function StationAlerts() {
         Live video {LIVE_ALERT_MINUTES} minutes before it starts, member drives and other news from
         the station.
       </p>
+      {/* A choice kept from the version with a switch per kind. */}
+      {on && kinds && (
+        <p className="data-note alerts-kept">
+          You get only {kindsLabel(kinds)} notifications, as you chose before.{" "}
+          <button className="text-button" onClick={() => setAlerts(true)}>
+            Get all of them
+          </button>
+        </p>
+      )}
     </section>
   );
 }

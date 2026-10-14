@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Icon } from "../icons.jsx";
 import { holdToast, showToast, useToast } from "../toast.js";
 import { createStore } from "../storage.js";
+import { swallowNextClick } from "../click-guard.js";
 
 // A modal sheet makes everything outside it inert, so while one is open the
 // toast is drawn inside it instead (Modal renders <Toast inModal />); the
@@ -24,7 +25,7 @@ function useSwipeAway() {
   const [shift, setShift] = useState(null);
   const onPointerDown = (e) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
-    drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, axis: null };
+    drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, axis: null, dx: 0, dy: 0 };
     holdToast(true);
   };
   const onPointerMove = (e) => {
@@ -35,10 +36,18 @@ function useSwipeAway() {
     if (!d.axis) {
       if (Math.hypot(dx, dy) < SLOP) return;
       d.axis = Math.abs(dx) > Math.abs(dy) ? "x" : dy > 0 ? "y" : "none";
-      if (d.axis !== "none") e.currentTarget.setPointerCapture?.(e.pointerId);
+      if (d.axis !== "none") {
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {
+          // a pointer the browser no longer tracks: the drag works without
+        }
+      }
     }
-    if (d.axis === "x") setShift({ x: dx, y: 0 });
-    else if (d.axis === "y") setShift({ x: 0, y: Math.max(0, dy) });
+    if (d.axis === "x") d.dx = dx;
+    else if (d.axis === "y") d.dy = Math.max(0, dy);
+    else return;
+    setShift({ x: d.dx, y: d.dy });
   };
   const onPointerUp = (e) => {
     const d = drag.current;
@@ -46,25 +55,26 @@ function useSwipeAway() {
     drag.current = null;
     holdToast(false);
     if (!d.axis || d.axis === "none") return;
-    // A swipe isn't also a tap on the action under the finger.
-    e.currentTarget.addEventListener(
-      "click",
-      (c) => {
-        c.stopPropagation();
-        c.preventDefault();
-      },
-      { capture: true, once: true },
-    );
-    const away = d.axis === "x" ? Math.abs(shift?.x || 0) > AWAY_X : (shift?.y || 0) > AWAY_Y;
+    swallowNextClick(e.currentTarget);
+    const away = d.axis === "x" ? Math.abs(d.dx) > AWAY_X : d.dy > AWAY_Y;
     if (away) {
-      setShift((s) => (d.axis === "x" ? { x: Math.sign(s.x) * 480, y: 0 } : { x: 0, y: 160 }));
+      setShift(d.axis === "x" ? { x: Math.sign(d.dx) * 480, y: 0 } : { x: 0, y: 160 });
       showToast("");
     } else setShift(null);
+  };
+  // Interrupted (the system took the touch, a call came in): the notice
+  // settles back, and nothing waits to swallow a click that never comes.
+  const onPointerCancel = (e) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    drag.current = null;
+    holdToast(false);
+    setShift(null);
   };
   return {
     shift,
     reset: () => setShift(null),
-    handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel: onPointerUp },
+    handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel },
   };
 }
 

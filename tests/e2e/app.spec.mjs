@@ -335,3 +335,73 @@ test("a song hearted in Recently played is in Favorites at once, after a visit t
     page.getByRole("region", { name: "Favorites" }).locator(".track-row", { hasText: SONGS[1][0] }),
   ).toBeVisible();
 });
+
+test("a notice whose drag is cancelled still takes the first tap on Undo", async ({ page }) => {
+  await page.goto("/#/listen");
+  await page
+    .locator("main")
+    .getByRole("button", { name: `Save ${SONGS[1][0]}` })
+    .first()
+    .click();
+  await page.evaluate(() => {
+    location.hash = "#/favorites";
+  });
+  const favorites = page.getByRole("region", { name: "Favorites" });
+  const row = favorites.locator(".track-row", { hasText: SONGS[1][0] });
+  await row.getByRole("button", { name: `Save ${SONGS[1][0]}` }).click();
+  await expect(row).toHaveCount(0);
+  const toast = page.locator(".toast").first();
+  await expect(toast).toBeVisible();
+  // A drag down on the notice that the system cancels partway.
+  await toast.evaluate((el) => {
+    const box = el.getBoundingClientRect();
+    const at = (type, dy) =>
+      el.dispatchEvent(
+        new PointerEvent(type, {
+          pointerId: 7,
+          pointerType: "touch",
+          isPrimary: true,
+          clientX: box.left + 20,
+          clientY: box.top + 10 + dy,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    at("pointerdown", 0);
+    at("pointermove", 12);
+    at("pointermove", 20);
+    at("pointercancel", 20);
+  });
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(row).toBeVisible();
+});
+
+test("Favorites comes back with as many songs as were showing, where it was", async ({
+  page,
+  context,
+}) => {
+  // Twelve saved songs: five show, then Load more.
+  await context.addInitScript(() => {
+    const songs = {};
+    for (let i = 1; i <= 12; i++) {
+      const id = `artist-${i}--song-${i}`;
+      songs[id] = { id, title: `Song ${i}`, artist: `Artist ${i}`, savedAt: 1000 + i };
+    }
+    localStorage.setItem("xpn.favorites.v1", JSON.stringify({ songs }));
+  });
+  await page.goto("/#/favorites");
+  const nav = page.getByRole("navigation");
+  const tab = (name) => nav.getByRole("button", { name, exact: true });
+  const rows = page.getByRole("region", { name: "Favorites" }).locator(".saved-songs > .track-row");
+  await expect(rows).toHaveCount(5);
+  await page.getByRole("button", { name: "Load more songs" }).click();
+  await expect(rows).toHaveCount(10);
+  // Down to the tenth song, as far as the page goes on this screen.
+  await rows.nth(9).scrollIntoViewIfNeeded();
+  const place = await page.evaluate(() => Math.round(window.scrollY));
+  expect(place).toBeGreaterThan(0);
+  await tab("Shows").click();
+  await tab("Favorites").click();
+  await expect(rows).toHaveCount(10);
+  await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBe(place);
+});

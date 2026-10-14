@@ -4,6 +4,7 @@ import {
   activeUpdates,
   alertPlan,
   LIVE_ALERT_MINUTES,
+  normalizeAlertSettings,
   normalizeUpdates,
   youTubeEmbed,
   LIVE_ANNOUNCE_MINUTES,
@@ -253,5 +254,59 @@ test("an Advanced Ads group becomes station updates", () => {
   assert.equal(
     normalizeUpdates({ updates: [{ id: "drive", kind: "banner", text: "x" }] }).length,
     1,
+  );
+});
+
+test("a per-kind choice from the earlier version is kept, not widened", () => {
+  assert.deepEqual(normalizeAlertSettings({ live: true, drives: false }), {
+    on: true,
+    kinds: ["live"],
+  });
+  assert.deepEqual(normalizeAlertSettings({ live: false, drives: true }), {
+    on: true,
+    kinds: ["drives"],
+  });
+  assert.deepEqual(normalizeAlertSettings({ live: false, drives: false }), {
+    on: false,
+    kinds: null,
+  });
+  // Kept as stored once carried over, and everything once turned on anew.
+  assert.deepEqual(normalizeAlertSettings({ on: true, kinds: ["live"] }), {
+    on: true,
+    kinds: ["live"],
+  });
+  assert.deepEqual(normalizeAlertSettings({ on: true }), { on: true, kinds: null });
+  assert.deepEqual(normalizeAlertSettings(null), { on: false, kinds: null });
+});
+
+test("live-only listeners get no member drive notices", () => {
+  const list = normalizeUpdates({
+    updates: [
+      {
+        id: "fan",
+        kind: "live",
+        title: "Free at Noon",
+        watch: "https://www.youtube.com/watch?v=a",
+        starts: "2026-10-09T12:00:00-04:00",
+        ends: "2026-10-09T13:00:00-04:00",
+      },
+      {
+        id: "drive",
+        kind: "banner",
+        text: "Fall drive",
+        starts: "2026-10-01T06:00:00-04:00",
+        ends: "2026-10-17T00:00:00-04:00",
+        notify: [{ at: "2026-10-16T08:00:00-04:00", title: "Last day" }],
+      },
+    ],
+  });
+  const now = Date.parse("2026-10-06T09:00:00-04:00");
+  assert.deepEqual(
+    alertPlan(list, true, { now, kinds: ["live"] }).map((a) => a.title),
+    ["Free at Noon"],
+  );
+  assert.deepEqual(
+    alertPlan(list, true, { now, kinds: ["drives"] }).map((a) => a.title),
+    ["Last day"],
   );
 });

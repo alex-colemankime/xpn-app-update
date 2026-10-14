@@ -2,7 +2,7 @@
 // listener's topics with the station's sender, and what a tap opens.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createPushClient, pushTarget, topicsToSend } from "../push.js";
+import { createPushClient, kindsPushed, pushTarget, topicsToSend } from "../push.js";
 
 // A stand-in for the phone's push API: permission, and a token on register().
 function phone({ permission = "granted", grant = "granted", fail = false } = {}) {
@@ -260,4 +260,13 @@ test("one subscription covers every notice; off, or push switched off, sends an 
   assert.deepEqual(topicsToSend(true, true), ["station"]);
   assert.deepEqual(topicsToSend(false, true), []);
   assert.deepEqual(topicsToSend(true, false), []);
+});
+
+test("a kept per-kind choice sends that version's topics, never the station's", () => {
+  assert.deepEqual(topicsToSend(true, true, ["live"]), ["live"]);
+  assert.deepEqual(topicsToSend(true, true, ["live", "drives"]), ["drives", "live"]);
+  assert.deepEqual(topicsToSend(false, true, ["live"]), []);
+  assert.deepEqual(kindsPushed(["station"]), ["live", "drives"]);
+  assert.deepEqual(kindsPushed(["live"]), ["live"]);
+  assert.deepEqual(kindsPushed([]), []);
 });

@@ -7,16 +7,18 @@ test.skip(({ isMobile }) => !isMobile, "touch only");
 
 // A touch along `points` ([x, y] pairs) on the element `selector` finds,
 // `holdMs` after it lands before it moves, and `stepMs` between moves.
-const touch = (page, selector, points, { holdMs = 0, stepMs = 16 } = {}) =>
+// `end` is how the touch ends: "touchend", or "touchcancel" when the system
+// takes it away.
+const touch = (page, selector, points, { holdMs = 0, stepMs = 16, end = "touchend" } = {}) =>
   page.evaluate(
-    async ({ selector, points, holdMs, stepMs }) => {
+    async ({ selector, points, holdMs, stepMs, end }) => {
       const el = [...document.querySelectorAll(selector)].find((e) => e.checkVisibility());
       const at = ([x, y]) => new Touch({ identifier: 1, target: el, clientX: x, clientY: y });
       const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       const send = (type, p) =>
         el.dispatchEvent(
           new TouchEvent(type, {
-            touches: type === "touchend" ? [] : [at(p)],
+            touches: type === "touchend" || type === "touchcancel" ? [] : [at(p)],
             changedTouches: [at(p)],
             bubbles: true,
             cancelable: true,
@@ -28,9 +30,9 @@ const touch = (page, selector, points, { holdMs = 0, stepMs = 16 } = {}) =>
         await wait(stepMs);
         send("touchmove", p);
       }
-      send("touchend", points[points.length - 1]);
+      send(end, points[points.length - 1]);
     },
-    { selector, points, holdMs, stepMs },
+    { selector, points, holdMs, stepMs, end },
   );
 
 test("press and hold a show in the schedule for its menu", async ({ page }) => {
@@ -67,6 +69,24 @@ test("a show's sheet closes when pulled down, and stays for a nudge", async ({ p
   await down(320);
   await expect(sheet).toBeHidden();
   await expect(page).toHaveURL(/#\/shows$/);
+});
+
+test("a sheet pulled down whose touch is cancelled settles back open", async ({ page }) => {
+  await page.goto("/#/shows/show/worldcafe");
+  const sheet = page.getByRole("dialog", { name: "World Cafe" });
+  await expect(sheet).toBeVisible();
+  await page.waitForTimeout(400);
+  await touch(
+    page,
+    ".detail-dialog .dialog-header",
+    Array.from({ length: 8 }, (_, i) => [200, 300 + (320 * i) / 7]),
+    { stepMs: 40, end: "touchcancel" },
+  );
+  await page.waitForTimeout(600);
+  await expect(sheet).toBeVisible();
+  await expect(page).toHaveURL(/#\/shows\/show\/worldcafe$/);
+  // Back in place, not left hanging partway down.
+  expect(await sheet.evaluate((el) => el.style.translate)).toBe("");
 });
 
 test("a flick up on the mini player opens Listen", async ({ page }) => {

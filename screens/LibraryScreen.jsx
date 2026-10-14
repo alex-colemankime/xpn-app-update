@@ -105,10 +105,11 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
   // is saved now, so a song hearted on Listen is there at once: iPhone's web
   // view could keep showing the list as it was until the tab was switched.
   const [seenVisit, setSeenVisit] = useState(visit);
+  // How many songs are shown stays as it was, so the screen comes back the
+  // same length and the app can return it to where it was scrolled.
   if (seenVisit !== visit) {
     setSeenVisit(visit);
     setEnter(0);
-    setSongsShown(SONGS_PAGE);
   }
   // A search shows every match.
   const songsOnPage = q ? filtered : filtered.slice(0, songsShown);
