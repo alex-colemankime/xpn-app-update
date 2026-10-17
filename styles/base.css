@@ -38,6 +38,16 @@
   /* A second action's soft fill, and under the pointer. */
   --soft-fill: color-mix(in srgb, var(--text) 7%, transparent);
   --soft-fill-hover: color-mix(in srgb, var(--text) 11%, transparent);
+  /* Where the listener is (the tab, the station, the view, the day, a
+     filter) is marked in ink. The station's orange is kept for the things
+     to do: listen, give, the main action of a sheet, a switch that is on. */
+  --select-ink: var(--text);
+  --select-fill: color-mix(in srgb, var(--text) 9%, transparent);
+  /* Donate: always in the header, in the station's orange, but tonal, so it
+     never competes with Listen live as a second solid orange key. Its words
+     keep 5.5:1 on its fill. */
+  --donate-fill: color-mix(in srgb, var(--action) 22%, var(--bg));
+  --donate-ink: var(--accent-strong);
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -60,6 +70,8 @@
   --inverse-accent: #b83d1c;
   --brand-w: #bf917c;
   --key-lit: color-mix(in srgb, var(--accent) 20%, var(--bg));
+  --select-fill: color-mix(in srgb, var(--text) 12%, transparent);
+  --donate-fill: color-mix(in srgb, var(--action) 26%, var(--bg));
 }
 /* Listen, while a song with colorful artwork plays: the page takes a
    light wash of the artwork's color (art-tint.js picks it, already adjusted
@@ -100,6 +112,88 @@ body {
   --mini-h: 4.75rem;
   --page-gutter: clamp(28px, 3.5vw, 56px);
   --page-max: 1376px;
+  /* Type: six sizes, each with its own leading and tracking, so the same
+     kind of text is the same size on every screen. Large text is tracked
+     tighter and small text a touch looser, as the platform's own type is.
+     Lettering that is the station's logo (the wordmark, station marks) is
+     drawn, not set, and keeps its own sizes. */
+  --text-display: 2rem; /* a screen's title on wider screens */
+  --text-title: 1.5rem; /* the song on Listen, a sheet's title */
+  --text-heading: 1.25rem; /* a section within a screen */
+  --text-body: 1.0625rem; /* rows, reading text, buttons */
+  --text-secondary: 0.9375rem; /* the line under a row's title, details */
+  --text-caption: 0.8125rem; /* labels, badges, tab names, fine print */
+  --leading-display: 1.1;
+  --leading-title: 1.15;
+  --leading-heading: 1.25;
+  --leading-body: 1.4;
+  --leading-caption: 1.35;
+  --tracking-display: -0.025em;
+  --tracking-title: -0.02em;
+  --tracking-heading: -0.015em;
+  --tracking-caption: 0.01em;
+  /* Three weights: regular, semibold for names and labels, bold for titles
+     and the main action. */
+  --weight-regular: 400;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  /* Spacing on a 4px grid. 2px is kept only for the gap between two lines
+     of text that belong together (a title and the line under it). */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  /* Corners: covers and small marks, controls and cards, sheets, and pills.
+     A corner inside another is smaller by the space between them. */
+  --radius-s: 6px;
+  --radius-m: 12px;
+  --radius-l: 20px;
+  --radius-full: 999px;
+  /* Motion. Feedback under a finger is quick; a menu a touch slower; a song
+     and the room's color change at the pace of the music. Sheets settle on a
+     spring: critically damped (no overshoot), with a 0.35s response, drawn
+     here as an easing for the motion CSS runs on its own; gestures run the
+     same spring in script (motion.js). */
+  --dur-press: 100ms;
+  --dur-quick: 150ms;
+  --dur-menu: 180ms;
+  --dur-song: 450ms;
+  --dur-room: 800ms;
+  --dur-sheet: 500ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --spring-sheet: linear(
+    0,
+    0.0547,
+    0.1726,
+    0.309,
+    0.4408,
+    0.5577,
+    0.656,
+    0.7361,
+    0.7997,
+    0.8493,
+    0.8874,
+    0.9164,
+    0.9383,
+    0.9547,
+    0.9668,
+    0.9758,
+    0.9824,
+    0.9872,
+    0.9908,
+    0.9934,
+    0.9952,
+    0.9966,
+    0.9975,
+    0.9982,
+    1
+  );
   /* Safe areas: Capacitor 8 sets --safe-area-inset-* on Android, where apps
      now draw edge to edge (required from Android 15/16) and the web view's
      own env() values can be 0; iOS and browsers fall back to env().
