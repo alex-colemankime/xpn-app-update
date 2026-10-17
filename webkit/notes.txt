@@ -1,0 +1,8 @@
+Concerts that week: 36
+Artwork for First Day Of My Life: none
+Artwork for Billy Came Back: none
+Artwork for I Don't Have the Heart: none
+Artwork for Just One of the Guys: none
+Artwork for Cut Your Hair: none
+Couldn't take phone-favorites (light): locator.waitFor: Timeout 5000ms exceeded.
+Couldn't take phone-favorites (dark): locator.waitFor: Timeout 5000ms exceeded.
