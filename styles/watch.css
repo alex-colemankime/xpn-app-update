@@ -6,6 +6,9 @@
    ------------------------------------------------------------------------ */
 
 .watch-page {
+  /* The bar above the picture (close, and the section), which the list
+     beside the picture on wide screens starts below. */
+  --watch-bar-h: 46px;
   position: fixed;
   inset: 0;
   width: 100%;
@@ -54,27 +57,28 @@
     position: relative;
   }
 }
+/* No gap: the space around the close key's glyph sets the section's name
+   apart from it. */
 .watch-bar {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 2px;
-  height: 46px;
-  padding: 0 6px;
+  height: var(--watch-bar-h);
+  padding: 0 var(--space-1);
   color: #fff;
 }
-/* On phones the watch page is a sheet like the others: a grabber says it
-   can be pulled down to close. */
+/* On phones the watch page is a sheet like the others: a grabber, where
+   theirs is, says it can be pulled down to close. */
 @media (max-width: 767px) {
   .watch-bar::before {
     content: "";
     position: absolute;
-    top: 6px;
+    top: var(--space-2);
     inset-inline: 0;
     width: 40px;
     height: 5px;
     margin-inline: auto;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: rgb(255 255 255 / 0.35);
   }
 }
@@ -82,17 +86,15 @@
   outline: none;
 }
 .watch-bar > span {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
   opacity: 0.8;
 }
-/* The close key is just its chevron on the black bar: no ring or disc. A
-   keyboard still gets a ring of its own, in white. */
+/* The close key is just its chevron on the black bar: no ring or disc, but
+   a full touch target. A keyboard still gets a ring of its own, in white. */
 .watch-close {
   color: inherit;
   background: none;
-  width: 40px;
-  height: 40px;
 }
 .watch-close:focus:not(:focus-visible) {
   outline: none;
@@ -124,41 +126,48 @@
   margin: 0;
   color: rgb(255 255 255 / 0.7);
 }
+/* Title, channel and description are three groups, a group's space apart. */
 .watch-info {
   display: grid;
-  gap: 14px;
-  padding: 16px 16px 6px;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-4) var(--space-2);
 }
 /* The title, with the video's heart beside it. */
 .watch-head {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--space-2);
 }
+/* The page's title, at a sheet title's size on every width. */
 .watch-title {
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: 1.1875rem;
-  font-weight: 700;
-  line-height: 1.3;
+  font-size: var(--text-title);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
 }
-/* What kind of video it is ("Studio Session & Interview"), under the title. */
+/* What kind of video it is ("Studio Session & Interview"), under the title.
+   It sits inside the title, so it sets its own tracking back to none. */
 .watch-kind {
   display: block;
   margin-top: 2px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
   color: var(--muted);
 }
+/* Level with the title's first line, its glyph lined up with the edge, as
+   the song's heart is on Listen. */
 .watch-save {
   flex-shrink: 0;
-  margin: -6px -8px 0 0;
+  margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-3)) 0 0;
 }
 .watch-channel {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 .watch-channel img {
   width: 40px;
@@ -167,42 +176,39 @@
   border-radius: 50%;
   object-fit: cover;
 }
+/* The show and its hours, as compact as the on-air band's on a phone. */
 .watch-channel > span {
   flex: 1;
   min-width: 0;
   display: grid;
-  gap: 1px;
+  gap: 2px;
 }
 .watch-channel strong {
-  font-size: 0.9375rem;
-  font-weight: 650;
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
 }
 .watch-channel small {
   overflow: hidden;
-  font-size: 0.8125rem;
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-caption);
   color: var(--muted);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+/* A second action at its full touch height, its words compact beside the
+   show's name. */
 .watch-follow {
-  min-height: 38px;
-  padding: 6px 14px;
-  border-radius: 10px;
-  font-size: 0.875rem;
-  font-weight: 650;
-}
-.watch-about {
-  padding-top: 2px;
+  font-size: var(--text-secondary);
 }
 .watch-meta {
-  margin: 0 0 4px;
-  font-size: 0.875rem;
-  font-weight: 650;
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
 }
 .watch-description {
   margin: 0;
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
   white-space: pre-line;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -213,29 +219,28 @@
 .watch-about[data-open] .watch-description {
   display: block;
 }
-.watch-about .text-button {
-  margin-top: 2px;
-  font-weight: 650;
-}
+/* What's next is a section of the page, under a section's heading. */
 .watch-next {
   display: grid;
-  gap: 20px;
-  padding: 10px 16px calc(28px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-4)
+    calc(var(--space-8) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
 }
 .watch-next h3 {
-  margin: 8px 0 -4px;
-  font-size: 1.0625rem;
-  font-weight: 700;
+  margin: 0 0 calc(-1 * var(--space-1));
+  font-size: var(--text-heading);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-heading);
 }
 .next-card {
   display: grid;
-  gap: 10px;
+  gap: var(--space-3);
   width: 100%;
   text-align: left;
   color: var(--text);
 }
 .next-card .video-thumb {
-  border-radius: 12px;
+  border-radius: var(--radius-m);
 }
 /* Under the video, the first three lead (UP_NEXT_FIRST in WatchPage.jsx)
    until "Show more videos"; beside it (wide screens) the whole list shows. */
@@ -244,17 +249,18 @@
 }
 .next-more {
   justify-self: start;
-  margin-top: -8px;
+  margin-top: calc(-1 * var(--space-2));
 }
+/* A video's title and date, set as they are in the Videos tab. */
 .next-text {
   display: grid;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
 }
 .next-text strong {
-  font-size: 0.9375rem;
-  font-weight: 650;
-  line-height: 1.3;
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-body);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -262,7 +268,8 @@
   overflow: hidden;
 }
 .next-text small {
-  font-size: 0.8125rem;
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-caption);
   color: var(--muted);
 }
 @media (hover: hover) {
@@ -274,10 +281,10 @@
   .watch-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 380px;
-    gap: 32px;
+    gap: var(--space-8);
     max-width: 1640px;
     margin: 0 auto;
-    padding: 12px 32px 40px;
+    padding: var(--space-3) var(--space-8) var(--space-10);
   }
   .watch-main {
     display: block;
@@ -303,26 +310,24 @@
     display: inline-flex;
   }
   .watch-frame {
-    border-radius: 14px;
+    border-radius: var(--radius-m);
     overflow: hidden;
   }
   .watch-info {
-    padding: 18px 0 0;
+    padding: var(--space-4) 0 0;
   }
-  .watch-title {
-    font-size: 1.5rem;
-  }
+  /* Beside the picture, the list's heading starts level with its top. */
   .watch-next {
     align-content: start;
-    gap: 14px;
-    padding: 58px 0 0;
+    gap: var(--space-4);
+    padding: var(--watch-bar-h) 0 0;
   }
   .next-card {
     grid-template-columns: 168px minmax(0, 1fr);
     align-items: start;
   }
   .next-card .video-thumb {
-    border-radius: 8px;
+    border-radius: var(--radius-s);
   }
   .watch-next:not([data-all]) .next-card:nth-of-type(n + 4) {
     display: grid;
@@ -339,7 +344,7 @@
 .saved-video {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1);
 }
 .saved-video .video-card {
   flex: 1;

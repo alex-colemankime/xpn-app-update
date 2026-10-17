@@ -6,20 +6,20 @@
 .concert-filters {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
 }
 /* Filter: one key that opens every refinement (when, where, what) under it,
    with a count of those in use. */
 .filter-button {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2);
   width: 100%;
   min-height: 48px;
   border-bottom: 1px solid var(--border);
-  font-size: 0.9375rem;
-  font-weight: 650;
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
   text-align: left;
 }
 .filter-button > .icon:first-child {
@@ -33,46 +33,51 @@
 .filter-button[aria-expanded="true"] > .icon:last-child {
   rotate: 180deg;
 }
+/* The dates in use, in ink, as everything chosen is. */
 .filter-when {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--accent-strong);
-  font-weight: 600;
+  color: var(--select-ink);
+  font-weight: var(--weight-semibold);
 }
+/* A round badge for one figure, a pill for two; its height is its own, so
+   larger text grows it rather than spilling out of it. */
 .filter-count {
+  display: grid;
+  place-items: center;
   min-width: 20px;
-  padding: 0 6px;
-  border-radius: 10px;
+  min-height: 20px;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-full);
   background: var(--action);
   color: var(--action-ink);
-  font-size: 0.75rem;
-  font-weight: 750;
-  line-height: 20px;
-  text-align: center;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-caption);
 }
 .filter-options {
   display: grid;
-  gap: 14px;
-  padding: 12px 0 4px;
+  gap: var(--space-4);
+  padding: var(--space-3) 0 var(--space-1);
   border-bottom: 1px solid var(--border);
 }
 .filter-label span {
-  color: var(--accent-strong);
-  font-weight: 650;
+  color: var(--select-ink);
+  font-weight: var(--weight-semibold);
 }
 .filter-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 20px;
+  gap: var(--space-5);
 }
 .filter-done {
   color: var(--accent);
-  font-weight: 650;
 }
 .filter-label {
-  margin: 0 0 2px;
-  font-size: 0.875rem;
+  margin: 0;
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-caption);
   color: var(--muted);
 }
 /* Choices as text with a box to check, as many to a line as fit; the quick
@@ -80,21 +85,21 @@
 .filter-checks {
   display: flex;
   flex-wrap: wrap;
-  column-gap: 26px;
+  column-gap: var(--space-6);
 }
 /* Tonight and This weekend, centered under When. */
 .filter-checks.when-checks {
   justify-content: center;
-  column-gap: 40px;
+  column-gap: var(--space-10);
 }
 .filter-check {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   min-height: 46px;
   padding: 0;
-  font-size: 0.9375rem;
-  font-weight: 550;
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
   color: var(--text);
   text-align: start;
 }
@@ -105,16 +110,14 @@
   width: 22px;
   height: 22px;
   border: 1.5px solid var(--control-border);
-  border-radius: 6px;
+  border-radius: var(--radius-s);
   color: var(--action-ink);
 }
 .filter-box.round {
   border-radius: 50%;
 }
-.filter-check[aria-pressed="true"] {
-  color: var(--accent-strong);
-  font-weight: 650;
-}
+/* Checked: the box fills, and is "on" in the station's orange. The words
+   beside it stay as they are, so nothing shifts. */
 .filter-check[aria-pressed="true"] .filter-box {
   border-color: var(--action);
   background: var(--action);
@@ -134,15 +137,17 @@
 .range-calendar {
   max-width: 340px;
 }
+/* The month's arrows reach into the margin, so their glyphs sit near the
+   calendar's edges rather than a key's width in. */
 .range-month {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0 -10px 4px;
+  margin: 0 calc(-1 * var(--space-3)) var(--space-1);
 }
 .range-month strong {
-  font-size: 0.9375rem;
-  font-weight: 650;
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
 }
 .range-next .icon {
   rotate: 180deg;
@@ -153,12 +158,13 @@
 .range-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  row-gap: 2px;
+  row-gap: var(--space-1);
 }
 .range-weekday {
-  padding: 4px 0;
-  font-size: 0.75rem;
-  font-weight: 650;
+  padding: var(--space-1) 0;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caption);
   color: var(--muted);
   text-align: center;
 }
@@ -166,7 +172,7 @@
   display: grid;
   place-items: center;
   height: 40px;
-  font-size: 0.9375rem;
+  font-size: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
 .range-day > span {
@@ -179,23 +185,24 @@
 .range-day:disabled {
   opacity: 0.35;
 }
-/* The days between: a band; the first and last: filled circles. */
+/* The days chosen are marked in ink, as a chosen filter is: the days
+   between on a band, the first and last in filled circles. The numbers keep
+   their weight, so none shifts as it is picked. */
 .range-day[data-in] {
-  background: var(--key-lit);
+  background: var(--select-fill);
 }
 .range-day[data-start] {
-  border-radius: 20px 0 0 20px;
+  border-radius: var(--radius-full) 0 0 var(--radius-full);
 }
 .range-day[data-end] {
-  border-radius: 0 20px 20px 0;
+  border-radius: 0 var(--radius-full) var(--radius-full) 0;
 }
 .range-day[data-edge]:not([data-start], [data-end]) {
   background: none;
 }
 .range-day[data-edge] > span {
-  background: var(--action);
-  color: var(--action-ink);
-  font-weight: 700;
+  background: var(--select-ink);
+  color: var(--bg);
 }
 @media (hover: hover) {
   .range-day:not(:disabled, [data-edge]):hover > span {
@@ -211,9 +218,9 @@
 .concert-count {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin: 4px 0 0;
-  font-size: 0.875rem;
+  gap: var(--space-3);
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-secondary);
   color: var(--muted);
 }
 .concert-count .text-button {
@@ -224,8 +231,8 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 4px 12px;
-  margin: 8px 0;
+  gap: var(--space-1) var(--space-3);
+  margin: var(--space-2) 0;
 }
 /* A concert: the date, then who and where, with Tickets and (once saved)
    Add to calendar as quiet text actions under it; the heart at the end. */
@@ -233,31 +240,35 @@
   position: relative;
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr) auto;
-  column-gap: 20px;
+  column-gap: var(--space-5);
   align-items: start;
-  padding: 16px 0;
+  padding: var(--space-4) 0;
   border-bottom: 1px solid var(--border);
   /* A double tap saves the concert (ConcertRow.jsx); it never zooms. */
   touch-action: manipulation;
 }
+/* Its month lines up with the artist's name beside it. */
 .concert-date {
   font-variant-numeric: tabular-nums;
   text-align: center;
-  padding-top: 2px;
+  padding-top: var(--space-1);
 }
 .concert-date > span {
-  font-size: 0.875rem;
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-caption);
   display: block;
   color: var(--muted);
 }
 .concert-date strong {
-  font-size: 1.625rem;
+  font-size: var(--text-title);
   display: block;
-  font-weight: 600;
-  line-height: 1.15;
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
 }
 .concert-date small {
-  font-size: 0.875rem;
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-caption);
   color: var(--muted);
 }
 .concert-body {
@@ -267,80 +278,78 @@
   display: block;
 }
 /* WXPN Welcomes and Free at Noon: a line of small type over the artist, in
-   the accent, the station's own shows led by a star. */
+   the accent, the station's own shows led by a star. It and the artist are
+   one pair of lines (the artist's margin keeps them apart). */
 .concert-flags {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px 12px;
-  margin-bottom: 3px;
-  font-size: 0.8125rem;
-  font-weight: 700;
+  gap: 2px var(--space-3);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caption);
   color: var(--accent-strong);
 }
 .concert-welcomes {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-1);
 }
 .concert-info h2 {
-  font-size: 1.125rem;
-  font-weight: 600;
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
   margin: 2px 0;
-  letter-spacing: -0.015em;
   overflow-wrap: anywhere;
 }
 .concert-meta {
-  font-size: 0.875rem;
-  line-height: 1.45;
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
   color: var(--muted);
   margin: 0;
 }
 /* The age limit, a small tag at the end of the line. */
 .concert-age {
   display: inline-block;
-  margin-left: 8px;
-  padding: 0 5px;
+  margin-left: var(--space-2);
+  padding: 0 var(--space-1);
   border: 1px solid var(--control-border);
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 650;
-  line-height: 1.45;
+  border-radius: var(--radius-s);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-caption);
+  letter-spacing: var(--tracking-caption);
   white-space: nowrap;
   vertical-align: 1px;
 }
+/* Tickets and Add to calendar share one line, even on a 360px phone. */
 .concert-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 18px;
-  margin-top: 2px;
+  gap: 0 var(--space-4);
 }
 .concert-action {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1);
   min-height: 44px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
   color: var(--accent);
 }
-/* The heart, and Share under it. */
+/* The heart, and Share under it, the two keys edge to edge. Raised so the
+   heart sits level with the first line of the row. */
 .concert-side {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: -6px;
-}
-.concert-share {
-  margin-top: -2px;
+  margin-top: calc(-1 * var(--space-2));
 }
 /* While the calendar loads: a date block and two lines per row. */
 .skeleton-row.concert-skeleton {
-  gap: 20px;
-  padding: 18px 0;
+  gap: var(--space-5);
+  padding: var(--space-4) 0;
 }
 .skeleton-row .skeleton-date {
   flex: none;
   width: 42px;
   height: 56px;
-  border-radius: 8px;
 }

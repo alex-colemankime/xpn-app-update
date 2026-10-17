@@ -29,6 +29,10 @@ const opens = (id, screen, navigate) => ({
   onClick: () => navigate(id),
 });
 
+// A screen's glyph, and its filled twin (the same name and "F", icons.jsx)
+// while it is the screen shown.
+const glyph = (n, screen) => (screen === n.id ? `${n.icon}F` : n.icon);
+
 // Tablets and laptops: the wordmark, the screens, Settings and Donate.
 export function Sidebar({ screen, navigate }) {
   const nav = useNav();
@@ -45,15 +49,14 @@ export function Sidebar({ screen, navigate }) {
             className={`nav-button ${screen === n.id ? "active" : ""}`}
             {...opens(n.id, screen, navigate)}
           >
-            <Icon name={n.icon} />
+            <Icon name={glyph(n, screen)} />
             <span>{n.label}</span>
-            {screen === n.id && <i />}
           </button>
         ))}
       </nav>
       <div className="sidebar-bottom">
         <button className="settings-button" {...opens("settings", screen, navigate)}>
-          <Icon name="settings" size={18} />
+          <Icon name="settings" />
           Settings
         </button>
         <a
@@ -115,7 +118,7 @@ export function TabBar({ screen, navigate }) {
           className={screen === n.id ? "active" : ""}
           {...opens(n.id, screen, navigate)}
         >
-          <Icon name={n.icon} size={21} />
+          <Icon name={glyph(n, screen)} size={21} />
           <span>{n.short}</span>
         </button>
       ))}

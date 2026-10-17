@@ -2,11 +2,13 @@
    Settings: panels, the alarm time, choices, rows and switches.
    ------------------------------------------------------------------------ */
 
+/* Two columns on a wide screen, far enough apart that each reads as its
+   own. */
 .settings-grid {
   max-width: 1040px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0 28px;
+  gap: 0 var(--space-8);
   align-items: start;
 }
 /* Every panel has the same anatomy: a title line (with a switch, when the
@@ -14,52 +16,55 @@
    and an optional note at the end. Panels are flat on the page, divided by
    one rule, so nothing sits in a box inside another box. */
 .settings-panel {
-  padding: 12px 0 16px;
+  padding: var(--space-3) 0 var(--space-4);
   border-top: 1px solid var(--border);
 }
 .settings-panel .section-heading {
   margin: 0;
 }
+/* A panel's title is a section heading like any other screen's, with its
+   glyph beside it as the sleep timer's title has. */
 .settings-panel h2,
 .settings-panel .section-heading h2 {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2);
   min-height: 44px;
-  font-size: 1.0625rem;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  font-size: var(--text-heading);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
   margin: 0;
 }
-/* The station, under the cards. */
+/* The station, under the cards, at the page's edge like the panels. */
 .settings-footer {
   display: grid;
   gap: 2px;
   max-width: 1040px;
-  margin: 18px 0 0;
-  padding: 0 4px;
-  font-size: 0.875rem;
-  line-height: 1.5;
+  margin: var(--space-4) 0 0;
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
   color: var(--muted);
 }
 .settings-footer strong {
   color: var(--text);
-  font-weight: 650;
+  font-weight: var(--weight-semibold);
 }
 .settings-footer small {
-  margin-top: 6px;
-  font-size: 0.8125rem;
+  margin-top: var(--space-2);
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-caption);
   font-variant-numeric: tabular-nums;
 }
 .settings-panel > .data-note {
-  margin: 12px 0 0;
+  margin: var(--space-3) 0 0;
 }
 /* The line under the title. */
 .settings-panel > :is(h2, .section-heading) + .data-note {
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-1);
 }
 .settings-panel > :is(h2, .section-heading) + :is(.setting-row, .setting-choice, .alert-row) {
-  margin-top: 8px;
+  margin-top: var(--space-2);
 }
 .settings-panel h2 .icon {
   color: var(--accent);
@@ -71,12 +76,13 @@
 .alarm-time {
   display: flex;
   flex-direction: column;
-  margin: 10px 0 0;
+  margin: var(--space-2) 0 0;
 }
 .alarm-time-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
   /* The clock face lines up with the end of the days below. */
   max-width: 440px;
 }
@@ -90,7 +96,6 @@
   place-items: center;
   width: 52px;
   height: 52px;
-  margin-top: 7px;
   border-radius: 50%;
   color: var(--text);
 }
@@ -128,8 +133,10 @@
   position: relative;
   flex: 1;
   min-width: 0;
-  margin-top: 7px;
 }
+/* The time is read at a glance, in numerals as large as the sleep timer's,
+   in the regular weight: it is a reading, not a key. The field and the time
+   drawn over it share one setting, so they line up. */
 .alarm-time input {
   font-variant-numeric: tabular-nums;
   display: block;
@@ -138,9 +145,9 @@
   background: transparent;
   color: var(--text);
   border: 0;
-  font-size: 2.75rem;
-  font-weight: 500;
-  letter-spacing: -0.035em;
+  font-size: var(--text-numeral);
+  font-weight: var(--weight-regular);
+  letter-spacing: var(--tracking-numeral);
 }
 /* The time as the clock writes it ("7:00 AM", no leading zero), drawn over
    the field; the native field shows through only while being edited. */
@@ -149,16 +156,16 @@
   inset: 0;
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--space-2);
   pointer-events: none;
-  font-size: 2.75rem;
-  font-weight: 500;
-  letter-spacing: -0.035em;
+  font-size: var(--text-numeral);
+  font-weight: var(--weight-regular);
+  letter-spacing: var(--tracking-numeral);
   font-variant-numeric: tabular-nums;
 }
 .alarm-time-display small {
-  font-size: 1.25rem;
-  font-weight: 650;
+  font-size: var(--text-heading);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.02em;
   color: var(--muted);
 }
@@ -169,25 +176,28 @@
 .alarm-time-field:focus-within .alarm-time-display {
   visibility: hidden;
 }
+/* Seven keys share the row, so a key's sides are as narrow as the
+   schedule's days (styles/controls.css): a three-letter day fits on a
+   360px phone. */
 .repeat-days {
   display: grid;
   width: 100%;
   max-width: 440px;
-  margin: 14px 0 16px;
+  margin: var(--space-3) 0 var(--space-4);
 }
 .repeat-days button {
-  padding: 0 2px;
-  font-size: 0.875rem;
+  padding: 0 var(--space-1);
 }
-/* A setting with a few choices: name above, choices in one row below. */
+/* A setting with a few choices: name above, choices in one row below. Its
+   name is a row's title, like every row's in Settings. */
 .setting-choice {
   display: grid;
-  gap: 8px;
-  padding: 12px 0 14px;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
   border-top: 1px solid var(--border);
 }
 .setting-choice-label {
-  font-size: 0.9375rem;
+  font-size: var(--text-body);
 }
 .setting-choice .segmented-pill {
   display: grid;
@@ -196,7 +206,7 @@
 }
 .service-list {
   list-style: none;
-  margin: 14px 0 0;
+  margin: var(--space-3) 0 0;
   padding: 0;
 }
 .service-row {
@@ -204,45 +214,48 @@
   text-align: left;
 }
 .service-name {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
   color: var(--text);
 }
 .service-connect {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   color: var(--accent);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 .service-row:hover .service-connect {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+/* A row: its name in the body size, as rows are everywhere, and any value
+   or detail under it a size down. */
 .setting-row {
   min-height: 52px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
   border-top: 1px solid var(--border);
-  font-size: 0.9375rem;
-  padding: 10px 0;
+  font-size: var(--text-body);
+  padding: var(--space-3) 0;
 }
 .setting-row > span > small {
   font-variant-numeric: tabular-nums;
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   display: block;
-  margin-top: 4px;
+  margin-top: 2px;
 }
+/* The slider's own height is a full touch target. */
 .setting-row input[type="range"] {
   width: 135px;
   accent-color: var(--action);
-  min-height: 36px;
+  min-height: 44px;
 }
 .settings-panel .secondary-button {
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 .full-width {
   width: 100%;
@@ -272,27 +285,29 @@ button.setting-row {
     background: var(--key-lit);
   }
 }
-/* A notification from the station, with what it is under its name. */
+/* A setting with what it does under its name: the name set as every
+   setting row's is (.setting-row), what it does at the size of the notes
+   under each panel's title. */
 .alert-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 12px 0;
+  gap: var(--space-5);
+  padding: var(--space-3) 0;
   border-top: 1px solid var(--border);
 }
 .alert-row > span {
   display: grid;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
 }
 .alert-row strong {
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
 }
 .alert-row small {
-  font-size: 0.8125rem;
-  line-height: 1.45;
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
   color: var(--muted);
 }
 .switch {
@@ -300,11 +315,12 @@ button.setting-row {
   width: 45px;
   height: 27px;
   padding: 3px;
-  border-radius: 20px;
+  border-radius: var(--radius-full);
   background: var(--muted);
   flex-shrink: 0;
 }
-/* A larger invisible hit area than the drawn switch. */
+/* A larger invisible hit area than the drawn switch: at least 44px tall
+   (27 + 2 × 9). */
 .switch::after {
   content: "";
   position: absolute;
@@ -316,42 +332,53 @@ button.setting-row {
   height: 21px;
   background: var(--bg);
   border-radius: 50%;
-  transition: transform 0.15s;
+  transition:
+    transform 0.15s,
+    background-color 0.15s;
 }
+/* On: the station's orange, as everything that is on or is the thing to
+   do, with its knob in the orange's own ink (as a checked box's tick and
+   Listen live's words are), so the knob stands clear of the orange in
+   either theme. */
 .switch.checked {
-  background: var(--accent);
+  background: var(--action);
 }
 .switch.checked > span {
+  background: var(--action-ink);
   transform: translateX(18px);
 }
 
 /* Your playlist: the panel in Settings, and the invitation in Favorites. */
 .setting-status {
   display: grid;
-  gap: 4px;
-  margin: 4px 0 14px;
-  font-size: 0.875rem;
+  gap: 2px;
+  margin: var(--space-1) 0 var(--space-4);
+  font-size: var(--text-secondary);
 }
 .setting-status span {
   color: var(--muted);
-  line-height: 1.5;
+  line-height: var(--leading-body);
 }
+/* A text action keeps a little more room from a key beside it, since its
+   words start right at its edge. */
 .button-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 18px;
+  gap: var(--space-3) var(--space-5);
 }
+/* A quiet invitation at the top or end of a list: smaller than the list's
+   own rows, so it never reads as one of them. */
 .playlist-prompt {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   width: 100%;
   min-height: 48px;
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-1);
   padding: 0;
   border-bottom: 1px solid var(--border);
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   text-align: left;
 }
 .playlist-prompt > span:not(.icon) {
@@ -369,22 +396,20 @@ button.setting-row {
 /* A soft key with the envelope in the station's color: an invitation,
    kept apart from orange Donate and Listen. */
 .newsletter-button {
-  margin-top: 4px;
-  gap: 10px;
-  font-weight: 650;
+  margin-top: var(--space-1);
 }
 .newsletter-button > .icon {
   color: var(--accent);
 }
+/* A long text action that wraps, so it takes running text's leading. */
 .newsletter-offer {
   display: flex;
-  margin-top: 10px;
-  font-size: 0.875rem;
-  line-height: 1.4;
+  margin-top: var(--space-2);
+  line-height: var(--leading-body);
 }
 .newsletter-prompt {
-  margin-top: 24px;
-  padding-block: 12px;
+  margin-top: var(--space-6);
+  padding-block: var(--space-3);
   color: var(--text);
 }
 .newsletter-prompt > span {
@@ -392,11 +417,11 @@ button.setting-row {
   gap: 2px;
 }
 .newsletter-prompt strong {
-  font-size: 0.9375rem;
-  font-weight: 650;
+  font-weight: var(--weight-semibold);
 }
 .newsletter-prompt small {
-  font-size: 0.875rem;
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-caption);
   color: var(--muted);
 }
 .newsletter-prompt > .icon:last-child {
@@ -411,24 +436,26 @@ button.setting-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
   min-height: 52px;
   border-bottom: 1px solid var(--border);
 }
 .social-owner {
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
+/* The last glyph's edge, not its key's, at the row's end, where the other
+   rows end their chevrons. */
 .social-icons {
   display: flex;
-  gap: 4px;
-  margin-right: -10px;
+  gap: var(--space-1);
+  margin-right: calc(-1 * var(--space-3));
 }
 .social-icon {
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: 10px;
+  border-radius: var(--radius-m);
   color: var(--text);
 }
 @media (hover: hover) {
@@ -443,30 +470,30 @@ button.setting-row {
   border-bottom: 0;
 }
 .welcome .social-links {
-  margin-top: 20px;
+  margin-top: var(--space-5);
   border-top: 1px solid var(--border);
 }
-/* Under saved videos: each channel, and Subscribe. */
+/* Under saved videos, set apart from them as a section of its own: each
+   channel, and Subscribe. */
 .youtube-subscribe {
   max-width: 560px;
-  margin-top: 28px;
+  margin-top: var(--space-8);
   border-top: 1px solid var(--border);
 }
 .youtube-channel {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 .youtube-channel > .icon {
   color: var(--muted);
 }
 .youtube-channel small {
   display: block;
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   color: var(--muted);
 }
 /* Subscribe: a text action in the accent, not a key. */
 .youtube-subscribe-link {
   color: var(--accent);
-  font-weight: 650;
 }
