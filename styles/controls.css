@@ -7,8 +7,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin: 24px 0;
+  gap: var(--space-4);
+  margin: var(--space-6) 0;
 }
 /* Screens named by the tab bar start straight with their controls. */
 h1.sr-only + :is(.toolbar, .concert-filters) {
@@ -23,22 +23,24 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   min-height: 44px;
-  padding: 0 17px;
-  font-size: 1rem;
+  padding: 0 var(--space-4);
+  font-size: var(--text-body);
   color: var(--muted);
   border-bottom: 2px solid transparent;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
+/* Where the listener is, in ink with an ink underline; orange is kept for
+   the things to do. */
 .segmented button.active {
-  color: var(--accent);
-  border-color: var(--accent);
+  color: var(--select-ink);
+  border-color: var(--select-ink);
 }
 /* A setting picked from a few options (the station, the snooze, the color
    theme), and the days of the week: one outlined control divided into keys,
-   like a row of buttons on a console. The chosen key lights up in the
-   accent, filled edge to edge; nothing floats on a track inside it. */
+   like a row of buttons on a console. The chosen key is filled edge to
+   edge; nothing floats on a track inside it. */
 .segmented-pill,
 .repeat-days,
 .day-picker {
@@ -48,7 +50,7 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
   gap: 0;
   padding: 0;
   border: 1px solid var(--control-border);
-  border-radius: 10px;
+  border-radius: var(--radius-m);
   background: var(--bg);
   overflow: hidden;
 }
@@ -61,12 +63,12 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
 .repeat-days button,
 .day-picker button {
   min-height: 44px;
-  padding: 0 10px;
+  padding: 0 var(--space-2);
   border: 0;
   border-radius: 0;
   color: var(--muted);
-  font-size: 0.9375rem;
-  font-weight: 550;
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
   white-space: nowrap;
   transition:
     background-color 0.15s,
@@ -75,7 +77,7 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
 .segmented-pill button {
   white-space: normal;
   overflow-wrap: break-word;
-  line-height: 1.2;
+  line-height: var(--leading-body);
 }
 /* Hairlines between the keys. */
 :is(.segmented-pill, .repeat-days, .day-picker) button + button {
@@ -87,22 +89,22 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
     background: var(--surface);
   }
 }
-/* Chosen: lit in the accent, and bolder, so it reads without color too. */
+/* Chosen: in ink on a fill, like the tab and the station, so it reads
+   without color too. The weight stays, so no label shifts as it is chosen. */
 :is(.segmented-pill, .repeat-days, .day-picker) button.active {
-  background: var(--key-lit);
-  color: var(--accent-strong);
-  font-weight: 700;
+  background: var(--select-fill);
+  color: var(--select-ink);
 }
 .search-field {
   display: flex;
   min-height: 44px;
   align-items: center;
-  gap: 11px;
+  gap: var(--space-3);
   border: 1px solid var(--control-border);
-  border-radius: 12px;
+  border-radius: var(--radius-m);
   background: var(--surface);
   min-width: 0;
-  padding: 0 14px;
+  padding: 0 var(--space-3);
   color: var(--muted);
 }
 .search-field input {
@@ -112,8 +114,8 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
   background: transparent;
   color: var(--text);
   outline: none;
-  padding: 10px 0;
-  font-size: 1rem;
+  padding: var(--space-2) 0;
+  font-size: var(--text-body);
 }
 .search-field:focus-within {
   outline: 2px solid var(--accent);
@@ -122,15 +124,16 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
 .search-field input::-webkit-search-cancel-button {
   appearance: none;
 }
+/* Its glyph as far in from the edge as the search glyph opposite. */
 .search-clear {
-  margin-right: -10px;
+  margin-right: calc(-1 * var(--space-3));
 }
 .search-field input::placeholder {
   color: var(--muted);
   opacity: 1;
 }
 .all-shows {
-  row-gap: 30px;
+  row-gap: var(--space-8);
 }
 .all-shows .show-cover {
   aspect-ratio: 1.25;
@@ -139,14 +142,14 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
   display: grid;
   width: 100%;
   max-width: 560px;
-  margin: 4px 0 22px;
+  margin: var(--space-1) 0 var(--space-6);
 }
 .day-picker button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 0 4px;
+  gap: var(--space-1);
+  padding: 0 var(--space-1);
 }
 /* Today, marked with a dot. */
 .day-picker i {
@@ -156,34 +159,37 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
   border-radius: 50%;
 }
 .schedule-heading {
-  margin: 16px 0;
+  margin: var(--space-4) 0;
 }
 .schedule-row {
   display: flex;
-  gap: 22px;
+  gap: var(--space-5);
   width: 100%;
   align-items: center;
   text-align: left;
   border-bottom: 1px solid var(--border);
-  padding: 20px 0;
+  padding: var(--space-5) 0;
 }
+/* The hours' column is as wide as "midnight" at its own size (in em), so
+   it widens with the reader's text size rather than spilling over the
+   show's art. */
 .schedule-row > time {
   font-variant-numeric: tabular-nums;
-  width: 64px;
+  width: 4.25em;
   flex-shrink: 0;
-  font-size: 0.9375rem;
+  font-size: var(--text-secondary);
 }
 .schedule-row time small {
   display: block;
   color: var(--muted);
-  font-size: 0.875rem;
-  margin-top: 6px;
+  font-size: var(--text-secondary);
+  margin-top: var(--space-1);
 }
 .schedule-row > img {
   width: 65px;
   height: 65px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: var(--radius-s);
 }
 .schedule-info {
   flex: 1;
@@ -191,29 +197,29 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
 }
 .schedule-info > strong {
   display: block;
-  font-size: 1.0625rem;
-  font-weight: 550;
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
 }
 .schedule-info > span {
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   color: var(--muted);
   display: block;
-  margin-top: 5px;
+  margin-top: var(--space-1);
 }
 .schedule-info > .schedule-desc {
   display: block;
   text-wrap: pretty;
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
   color: var(--muted);
-  margin-top: 10px;
+  margin-top: var(--space-2);
   max-width: 600px;
 }
 .data-note {
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   color: var(--muted);
-  line-height: 1.65;
-  margin: 18px 0;
+  line-height: var(--leading-body);
+  margin: var(--space-4) 0;
 }
 /* Links inside running text are underlined, not marked by color alone. */
 .data-note a {
@@ -222,38 +228,41 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
   text-underline-offset: 3px;
 }
 .empty-state {
-  padding: 70px 25px;
+  padding: var(--space-12) var(--space-6);
   text-align: center;
-  margin: 22px 0;
+  margin: var(--space-6) 0;
 }
 .empty-state > .icon {
   color: var(--accent);
 }
+/* It stands in for a list, so it is headed as the list's section would be,
+   at the same size on every width. */
 .empty-state h2 {
-  font-size: 1.4375rem;
-  font-weight: 550;
-  letter-spacing: -0.02em;
-  margin: 22px 0 12px;
+  font-size: var(--text-heading);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  margin: var(--space-5) 0 var(--space-3);
 }
 .empty-state p {
   color: var(--muted);
-  font-size: 1rem;
-  line-height: 1.65;
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
   max-width: 410px;
-  margin: 0 auto 25px;
+  margin: 0 auto var(--space-6);
 }
 /* A second action: a soft fill in the text color, no outline, so the one
-   filled color (Donate, Listen live) stays the only loud thing on screen. */
+   filled color (Listen live, play) stays the only loud thing on screen. */
 .secondary-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
+  gap: var(--space-2);
   border: 1px solid transparent;
-  border-radius: 10px;
-  padding: 12px 16px;
+  border-radius: var(--radius-m);
+  padding: var(--space-3) var(--space-4);
   min-height: 44px;
   background: var(--soft-fill);
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
 }

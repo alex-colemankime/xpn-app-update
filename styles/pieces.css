@@ -9,10 +9,10 @@
 }
 .show-times {
   list-style: none;
-  margin: 6px 0 0;
+  margin: var(--space-1) 0 0;
   padding: 0;
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
 }
 .expand-chevron {
   display: inline-flex;
@@ -21,7 +21,7 @@
   display: grid;
   width: 100%;
   max-width: 440px;
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 /* The status line keeps its height, so messages come and go without the
    page jumping. */
@@ -33,11 +33,11 @@
 .reminder-offer {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 14px 0 0;
-  padding: 2px 0;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  padding: var(--space-1) 0;
   border-bottom: 1px solid var(--border);
-  font-size: 0.9375rem;
+  font-size: var(--text-secondary);
 }
 .reminder-offer > span:not(.icon) {
   flex: 1;
@@ -46,7 +46,6 @@
 }
 .reminder-offer .text-button {
   color: var(--accent);
-  font-weight: 650;
   white-space: nowrap;
 }
 .reminder-offer .icon {

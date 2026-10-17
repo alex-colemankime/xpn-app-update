@@ -1,7 +1,7 @@
 // The app's single icon set. Every icon draws in currentColor, so it follows
 // the text color of whatever it sits in, in both themes. Each entry is
 // [svg attributes, shapes]; stroke weights are kept per icon because the
-// set mixes fine outline icons with heavier navigation glyphs.
+// set mixes fine outline icons with heavier small marks (chevrons, close).
 
 const outline = (strokeWidth, extra = {}) => ({
   fill: "none",
@@ -13,8 +13,22 @@ const rounded = { strokeLinecap: "round", strokeLinejoin: "round" };
 const roundCaps = { strokeLinecap: "round" };
 const solid = { fill: "currentColor" };
 
+// The five screens' glyphs (the tab bar and sidebar) share one stroke. Each
+// has a filled twin for the screen that is shown, as the platforms' own tab
+// bars do; a twin covers the same outline, so choosing a tab fills its glyph
+// without moving or resizing it.
+const NAV_STROKE = 1.75;
+
 const HEART =
   "M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z";
+const HEADBAND = "M3 14v-3a9 9 0 0 1 18 0v3";
+const BROADCAST = (
+  <>
+    <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+    <path d="M16.24 7.76a6 6 0 010 8.49M7.76 16.24a6 6 0 010-8.49" />
+    <path d="M19.07 4.93a10 10 0 010 14.14M4.93 19.07a10 10 0 010-14.14" />
+  </>
+);
 
 const ICONS = {
   // Social platforms, for the station's accounts (links.js SOCIAL).
@@ -104,14 +118,23 @@ const ICONS = {
   ],
   close: [outline(2, roundCaps), <path d="M6 6l12 12M18 6 6 18" />],
   headphones: [
-    outline(1.7, rounded),
+    outline(NAV_STROKE, rounded),
     <>
-      <path d="M3 14v-3a9 9 0 0 1 18 0v3" />
+      <path d={HEADBAND} />
       <rect x="3" y="12" width="4" height="8" rx="2" />
       <rect x="17" y="12" width="4" height="8" rx="2" />
     </>,
   ],
-  heart: [outline(1.8), <path d={HEART} />],
+  // Chosen: the cups filled, the band as it was.
+  headphonesF: [
+    outline(NAV_STROKE, rounded),
+    <>
+      <path d={HEADBAND} />
+      <rect x="3" y="12" width="4" height="8" rx="2" fill="currentColor" />
+      <rect x="17" y="12" width="4" height="8" rx="2" fill="currentColor" />
+    </>,
+  ],
+  heart: [outline(NAV_STROKE), <path d={HEART} />],
   mail: [
     outline(1.7, rounded),
     <>
@@ -119,7 +142,10 @@ const ICONS = {
       <path d="m3.5 6.5 8.5 6.5 8.5-6.5" />
     </>,
   ],
-  heartF: [solid, <path d={HEART} />],
+  // Saved, and Favorites while it is shown: filled out to the outline's
+  // outer edge (its stroke drawn in the fill's color), so a heart keeps its
+  // size as it is saved or chosen.
+  heartF: [{ ...outline(NAV_STROKE), fill: "currentColor" }, <path d={HEART} />],
   // Filter: three lines, each shorter, as a funnel.
   filter: [outline(2, roundCaps), <path d="M4 7h16M7 12h10M10 17h4" />],
   // Privacy: a shield with a check.
@@ -158,27 +184,41 @@ const ICONS = {
     </>,
   ],
   navConcerts: [
-    outline(2, roundCaps),
+    outline(NAV_STROKE, roundCaps),
     <>
       <rect x="3" y="4" width="18" height="17" rx="2" />
       <path d="M8 2v4M16 2v4M3 9h18" />
     </>,
   ],
+  // Chosen: the page filled out to the outline's outer edge, the line under
+  // its top left open, the rings standing up from it.
+  navConcertsF: [
+    outline(NAV_STROKE, roundCaps),
+    <>
+      <path
+        d="M5 3.125h14a2.875 2.875 0 0 1 2.875 2.875v2.125H2.125V6A2.875 2.875 0 0 1 5 3.125zM2.125 9.875h19.75V19a2.875 2.875 0 0 1-2.875 2.875H5A2.875 2.875 0 0 1 2.125 19z"
+        fill="currentColor"
+        stroke="none"
+      />
+      <path d="M8 2v4M16 2v4" />
+    </>,
+  ],
   video: [
-    outline(2, rounded),
+    outline(NAV_STROKE, rounded),
     <>
       <rect x="2.5" y="5" width="19" height="14" rx="3" />
       <path d="M10 9.3v5.4l4.6-2.7z" fill="currentColor" />
     </>,
   ],
-  navLive: [
-    outline(2, roundCaps),
-    <>
-      <circle cx="12" cy="12" r="2.5" fill="currentColor" />
-      <path d="M16.24 7.76a6 6 0 010 8.49M7.76 16.24a6 6 0 010-8.49" />
-      <path d="M19.07 4.93a10 10 0 010 14.14M4.93 19.07a10 10 0 010-14.14" />
-    </>,
+  // Chosen: the screen filled out to the outline's outer edge, the play mark
+  // cut out of it at the size it is drawn above.
+  videoF: [
+    { ...solid, fillRule: "evenodd" },
+    <path d="M5.5 4.125h13a3.875 3.875 0 0 1 3.875 3.875v8a3.875 3.875 0 0 1-3.875 3.875h-13A3.875 3.875 0 0 1 1.625 16V8A3.875 3.875 0 0 1 5.5 4.125zM9.125 9.3v5.4a.875.875 0 0 0 1.318.755l4.6-2.7a.875.875 0 0 0 0-1.51l-4.6-2.7A.875.875 0 0 0 9.125 9.3z" />,
   ],
+  navLive: [outline(NAV_STROKE, roundCaps), BROADCAST],
+  // Chosen: the same waves, heavier, around the filled center.
+  navLiveF: [outline(2.25, roundCaps), BROADCAST],
   pause: [
     solid,
     <>

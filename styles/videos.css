@@ -9,11 +9,11 @@
 .video-card {
   display: grid;
   grid-template-columns: 136px minmax(0, 1fr);
-  gap: 14px;
+  gap: var(--space-3);
   align-items: start;
   align-content: start;
   width: 100%;
-  padding: 10px 0;
+  padding: var(--space-3) 0;
   text-align: left;
   color: var(--text);
 }
@@ -21,7 +21,7 @@
   position: relative;
   display: block;
   aspect-ratio: 16 / 9;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   overflow: hidden;
   background: var(--row-alt);
 }
@@ -30,28 +30,33 @@
   height: 100%;
   object-fit: cover;
 }
-/* The length, on the picture, where every video service puts it. */
+/* The length, on the picture, where every video service puts it: the same
+   small badge, the same way in from the corner, on every size of picture.
+   Its leading gives it its height, so the numerals sit as far from its top
+   and bottom as from its ends. */
 .video-length {
   position: absolute;
-  right: 6px;
-  bottom: 6px;
-  padding: 1px 6px;
-  border-radius: 4px;
+  right: var(--space-2);
+  bottom: var(--space-2);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-s);
   background: rgb(0 0 0 / 0.72);
   color: #fff;
-  font-size: 0.75rem;
-  font-weight: 650;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-caption);
+  letter-spacing: var(--tracking-caption);
   font-variant-numeric: tabular-nums;
 }
 .video-text {
   display: grid;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
 }
 .video-text strong {
-  font-size: 1rem;
-  font-weight: 650;
-  line-height: 1.3;
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-body);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -59,8 +64,8 @@
   overflow: hidden;
 }
 .video-text small {
-  font-size: 0.875rem;
-  line-height: 1.35;
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
   color: var(--muted);
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -69,64 +74,70 @@
   overflow: hidden;
 }
 .video-text .video-date {
-  font-size: 0.8125rem;
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  letter-spacing: var(--tracking-caption);
 }
 .video-grid .video-card + .video-card {
   border-top: 1px solid var(--border);
 }
 
-/* The newest video: full width, the picture first. */
+/* The newest video: full width, the picture first; at that size its corners
+   are a card's, not a thumbnail's. The rule under it sits midway between its
+   words and the first row's picture. */
 .video-card.video-hero {
   grid-template-columns: minmax(0, 1fr);
-  margin-bottom: 18px;
-  padding: 0 0 22px;
+  margin-bottom: var(--space-4);
+  padding: 0 0 var(--space-6);
   border-bottom: 1px solid var(--border);
 }
 .video-hero .video-thumb {
-  border-radius: 14px;
-}
-.video-hero .video-length {
-  right: 10px;
-  bottom: 10px;
-  font-size: 0.8125rem;
+  border-radius: var(--radius-m);
 }
 .video-hero .video-text strong {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: var(--text-title);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
 }
 .video-hero .video-text small {
-  font-size: 1rem;
+  font-size: var(--text-body);
 }
 .video-more {
-  margin-top: 10px;
+  margin-top: var(--space-2);
 }
 .show-videos {
-  margin-bottom: 10px;
+  margin-bottom: var(--space-3);
 }
 
 @media (min-width: 640px) {
   .videos .video-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
-    gap: 30px 22px;
+    gap: var(--space-8) var(--space-6);
   }
   .videos .video-grid .video-card {
     grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
     padding: 0;
     border-top: 0;
+  }
+  /* The cards have no row padding here, so the hero's rule keeps its
+     space below. */
+  .video-card.video-hero {
+    margin-bottom: var(--space-6);
   }
 }
 @media (min-width: 900px) {
   .video-card.video-hero {
     grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
-    gap: 32px;
+    gap: var(--space-8);
     align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 30px;
+    margin-bottom: var(--space-8);
+    padding-bottom: var(--space-8);
   }
   .video-hero .video-text strong {
-    font-size: 2rem;
+    font-size: var(--text-display);
+    line-height: var(--leading-display);
+    letter-spacing: var(--tracking-display);
   }
 }

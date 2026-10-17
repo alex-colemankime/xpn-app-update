@@ -21,21 +21,23 @@
   margin: 0 auto;
   width: min(100%, 480px);
   max-width: 100%;
-  max-height: calc(100dvh - 48px);
+  max-height: calc(100dvh - var(--space-12));
   overflow-y: auto;
   overscroll-behavior: contain;
-  border-radius: 18px 18px 0 0;
-  padding: 22px 12px calc(16px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+  /* Corners and padding as a menu's sheet on a phone (styles/now-playing.css). */
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
+  padding: var(--space-5) var(--space-3)
+    calc(var(--space-4) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
 }
 .popover-menu.hold-menu::before {
   content: "";
   position: absolute;
-  top: 8px;
+  top: var(--space-2);
   inset-inline: 0;
   width: 40px;
   height: 5px;
   margin-inline: auto;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--grabber);
 }
 .popover-menu.hold-menu:focus {
@@ -68,12 +70,12 @@
     content: "";
     position: absolute;
     z-index: 2;
-    top: 8px;
+    top: var(--space-2);
     inset-inline: 0;
     width: 40px;
     height: 5px;
     margin-inline: auto;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: var(--grabber);
   }
 }
@@ -86,10 +88,10 @@
   position: fixed;
   z-index: var(--z-bars);
   top: calc(var(--safe-area-inset-top, env(safe-area-inset-top)) - 40px);
-  left: 50%;
+  inset-inline: 0;
   width: 34px;
   height: 34px;
-  margin-left: -17px;
+  margin-inline: auto;
   display: grid;
   place-items: center;
   border-radius: 50%;

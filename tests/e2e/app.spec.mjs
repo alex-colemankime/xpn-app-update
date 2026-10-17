@@ -51,7 +51,10 @@ test("a double tap on the artwork hearts the song, and never unhearts it", async
 test("each screen keeps its place, and its tab again goes to the top", async ({ page }) => {
   await page.goto("/#/shows");
   const nav = page.getByRole("navigation");
-  await expect(page.locator(".schedule-row").first()).toBeVisible();
+  // All shows, which is long every day of the week (today's schedule can be
+  // too short to scroll 400px on a weekend).
+  await page.getByLabel("Browse shows").getByRole("button", { name: "All shows" }).click();
+  await expect(page.locator(".show-card").first()).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 400));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(400);
   await nav.getByRole("button", { name: "Favorites", exact: true }).click();

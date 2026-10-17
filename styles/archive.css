@@ -3,35 +3,36 @@
    ------------------------------------------------------------------------ */
 
 .archive-list {
-  margin-top: 4px;
+  margin-top: var(--space-1);
   max-width: 900px;
 }
 /* A show in the archive: its art, name and slot leading its latest
    broadcasts, so the list reads as shows' episodes, never as songs. */
 .archive-show {
-  margin-bottom: 30px;
+  margin-bottom: var(--space-8);
 }
 .archive-show-head {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 0 8px;
+  gap: var(--space-1);
+  padding: var(--space-2) 0;
   border-bottom: 1px solid var(--border);
 }
-/* The show itself opens it; the heart beside it follows it. */
+/* The show itself opens it; the heart beside it follows it. Its artwork
+   sits as far from its words as a song row's does. */
 .show-head-open {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-3);
   text-align: left;
 }
 .show-head-open > img {
   width: 52px;
   height: 52px;
   flex-shrink: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   object-fit: cover;
 }
 .show-head-open > span {
@@ -40,27 +41,28 @@
   display: grid;
   gap: 2px;
 }
+/* The show's name heads its episodes as a section's heading does. */
 .archive-show-head strong {
-  font-size: 1.1875rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: var(--text-heading);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-heading);
 }
 .archive-show-head small {
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .saved-shows .archive-show:last-child {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 .archive-more {
-  margin-top: 6px;
+  margin-top: var(--space-2);
 }
 .episode-feature {
-  margin: 4px 0 0;
-  font-size: 1rem;
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-secondary);
   color: var(--muted);
 }
 
@@ -70,10 +72,10 @@
 .show-on-air {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-4);
   width: 100%;
-  margin: 20px 0 4px;
-  padding: 14px 0;
+  margin: var(--space-5) 0 var(--space-1);
+  padding: var(--space-3) 0;
   border-block: 1px solid var(--border);
   text-align: left;
   color: var(--text);
@@ -82,14 +84,14 @@
   flex: 1;
   min-width: 0;
   display: grid;
-  gap: 3px;
+  gap: 2px;
 }
 .show-on-air-text .on-air-label {
-  font-size: 0.8125rem;
+  font-size: var(--text-caption);
 }
 .show-on-air-text strong {
-  font-size: 1.0625rem;
-  font-weight: 700;
+  font-size: var(--text-body);
+  font-weight: var(--weight-bold);
 }
 .show-on-air-key {
   display: grid;
@@ -104,17 +106,18 @@
 
 /* An episode: a play key with its length or time left, its title, and its
    heart. The row plays it, so it answers the pointer as a whole; the
-   episode in the player is tinted, its title in the accent. Dividers inset
-   like the song rows. */
+   episode in the player is tinted, its title in the accent. The tint
+   reaches a little past the page's edge, as far as its corner's radius,
+   while the words and the divider stay at the edge like the song rows'. */
 .archive-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-inline: -10px;
-  padding: 12px 10px;
-  border-radius: 10px;
+  gap: var(--space-1);
+  margin-inline: calc(-1 * var(--space-3));
+  padding: var(--space-3);
+  border-radius: var(--radius-m);
   background-image: linear-gradient(var(--border), var(--border));
-  background-size: calc(100% - 20px) 1px;
+  background-size: calc(100% - 2 * var(--space-3)) 1px;
   background-position: 50% 100%;
   background-repeat: no-repeat;
   transition: background-color 0.15s;
@@ -147,21 +150,21 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
   align-self: stretch;
-  margin-block: -12px;
-  margin-inline-start: -10px;
-  padding-block: 12px;
-  padding-inline-start: 10px;
-  border-radius: 10px;
+  margin-block: calc(-1 * var(--space-3));
+  margin-inline-start: calc(-1 * var(--space-3));
+  padding-block: var(--space-3);
+  padding-inline-start: var(--space-3);
+  border-radius: var(--radius-m);
   text-align: left;
 }
 /* The key, then the title, on one line; a long title (a session's guest)
-   wraps beside the key. */
+   is cut short beside the key. */
 .archive-line {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   min-width: 0;
 }
 .archive-line strong {
@@ -170,9 +173,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 1.0625rem;
-  font-weight: 600;
-  line-height: 1.3;
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-body);
 }
 .archive-line .archive-meta {
   flex: none;
@@ -180,35 +183,39 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 .archive-gone {
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   color: var(--muted);
 }
 /* The play key, as a podcast app draws it: a small pill in the accent with
    a play (or pause) glyph and the length, or a progress bar and the time
-   left. */
+   left. Its glyph side is a step narrower than its text side, since the
+   glyph's own box already holds a little space; filled orange while its
+   episode is the one in the player. */
 .episode-key {
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1);
   min-height: 28px;
-  padding: 0 11px 0 9px;
-  border-radius: 999px;
+  padding: 0 var(--space-3) 0 var(--space-2);
+  border-radius: var(--radius-full);
   background: var(--key-lit);
   color: var(--accent-strong);
-  font-size: 0.8125rem;
-  font-weight: 700;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-caption);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-/* Just the play mark, while the episode's length is still unknown. */
+/* Just the play mark, while the episode's length is still unknown: a round
+   key. */
 .episode-key[data-bare] {
-  padding: 0 10px;
+  padding: 0 var(--space-2);
 }
 .archive-row[data-active] .episode-key {
   background: var(--action);
@@ -217,7 +224,7 @@
 .episode-key-bar {
   width: 20px;
   height: 3px;
-  border-radius: 2px;
+  border-radius: var(--radius-full);
   background: color-mix(in srgb, currentColor 28%, transparent);
   overflow: hidden;
 }
@@ -230,7 +237,7 @@
   flex: none;
   width: 72px;
   height: 28px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
 }
 @media (forced-colors: active) {
   .episode-key {
@@ -238,55 +245,55 @@
   }
 }
 
-/* The episode sheet. */
+/* The episode sheet. Under the sheet's own title (the show), the episode
+   is a section's heading, with its date and length over it and its feature
+   under it, close together. */
 .episode-hero {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: var(--space-4);
 }
 .episode-cover {
   width: 120px;
   height: 120px;
   flex-shrink: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-s);
   object-fit: cover;
 }
 .episode-title {
-  margin: 6px 0;
-  font-size: 1.375rem;
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.015em;
+  margin: var(--space-1) 0;
+  font-size: var(--text-heading);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
 }
 .episode-when {
   font-variant-numeric: tabular-nums;
 }
+/* Play and Save side by side, as Listen live and Cast are. */
 .episode-actions {
   display: flex;
-  gap: 10px;
-  margin: 22px 0 6px;
+  gap: var(--space-3);
+  margin: var(--space-5) 0 var(--space-2);
 }
 .episode-actions .primary-button {
   flex: 1;
   min-height: 52px;
-  border-radius: 14px;
-  font-size: 1rem;
 }
 .episode-actions .primary-button[data-busy] {
   animation: busy-pulse 0.9s ease-in-out infinite alternate;
 }
 .episode-actions .secondary-button {
   min-height: 52px;
-  border-radius: 14px;
-  padding: 0 18px;
 }
 
-/* Position: back 15, elapsed, the slider, time left, ahead 30. */
+/* Position: back 15, elapsed, the slider, time left, ahead 30. The times
+   are captions, as a player's are, so the slider keeps its length. */
 .episode-scrubber {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 8px 0 4px;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 var(--space-1);
 }
 .episode-scrubber .slim-range {
   flex: 1;
@@ -295,7 +302,8 @@
 }
 .scrub-time {
   min-width: 3.4em;
-  font-size: 0.875rem;
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-caption);
   font-variant-numeric: tabular-nums;
   color: var(--muted);
   text-align: center;
@@ -325,7 +333,7 @@
 }
 .player-bar[data-source="episode"] .player-utilities {
   margin-left: 0;
-  padding-left: 8px;
+  padding-left: var(--space-2);
 }
 .player-close {
   flex-shrink: 0;
@@ -340,15 +348,9 @@
   }
 }
 @media (max-width: 767px) {
-  .archive-line strong {
-    font-size: 1rem;
-  }
   .episode-cover {
     width: 96px;
     height: 96px;
-  }
-  .episode-title {
-    font-size: 1.25rem;
   }
   /* The mini player: a thin progress line along its top edge instead of the
      scrubber (which is in the episode's sheet, a tap away). */
