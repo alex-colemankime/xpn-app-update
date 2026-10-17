@@ -1,0 +1,7 @@
+187:Note: Some input files use unchecked or unsafe operations.
+188:Note: Recompile with -Xlint:unchecked for details.
+211:Note: /home/runner/work/xpn-app-update/xpn-app-update/node_modules/@capacitor/push-notifications/android/src/main/java/com/capacitorjs/plugins/pushnotifications/PushNotificationsPlugin.java uses or overrides a deprecated API.
+212:Note: Recompile with -Xlint:deprecation for details.
+224:Note: /home/runner/work/xpn-app-update/xpn-app-update/node_modules/@capgo/capacitor-media-session/android/src/main/java/com/capgo/mediasession/MediaSessionService.java uses or overrides a deprecated API.
+225:Note: Recompile with -Xlint:deprecation for details.
+357:Unable to strip the following libraries, packaging them as they are: libdatastore_shared_counter.so. Run with --info option to learn more.

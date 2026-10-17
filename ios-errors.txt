@@ -1,0 +1,10 @@
+45:note: Building targets in dependency order
+46:note: Target dependency graph (25 targets)
+165:Build description signature: 70b889494ba64a82f1ad694b71599d56
+198:/Users/runner/work/xpn-app-update/xpn-app-update/build/SourcePackages/artifacts/capacitor-swift-pm/Cordova/Cordova.xcframework:1:1: note: The identity of “Cordova.xcframework” is not recorded in your project.
+203:/Users/runner/work/xpn-app-update/xpn-app-update/build/SourcePackages/artifacts/capacitor-swift-pm/Capacitor/Capacitor.xcframework:1:1: note: The identity of “Capacitor.xcframework” is not recorded in your project.
+3462:note: Emplaced /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/Assets.car (in target 'App' from project 'App')
+3463:note: Emplaced /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/AppIcon60x60@2x.png (in target 'App' from project 'App')
+3464:note: Emplaced /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/AppIcon76x76@2x~ipad.png (in target 'App' from project 'App')
+3625:note: Using stub executor library with Swift entry point. (in target 'App' from project 'App')
+3648:note: Using stub executor library with Swift entry point. (in target 'App' from project 'App')
