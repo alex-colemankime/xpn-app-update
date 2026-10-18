@@ -16,6 +16,10 @@
   gap: var(--space-2);
   margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
   padding-inline: var(--edge-left) var(--edge-right);
+  /* Room above and below the chips for their 44px targets: a row that
+     scrolls sideways clips anything that spills out of it. */
+  margin-block: -4px;
+  padding-block: 4px;
   overflow-x: auto;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
@@ -50,22 +54,22 @@
 .chip {
   position: relative;
 }
-.chip[aria-pressed="true"] {
+.chip:is([aria-pressed="true"], [data-on]) {
   border-color: var(--select-ink);
   background: var(--select-ink);
   color: var(--bg);
 }
-.chip[aria-pressed="true"] .filter-count {
+.chip:is([aria-pressed="true"], [data-on]) .filter-count {
   background: var(--bg);
   color: var(--select-ink);
 }
 @media (hover: hover) {
-  .chip:not([aria-pressed="true"]):hover {
+  .chip:not([aria-pressed="true"], [data-on]):hover {
     background: var(--surface);
   }
 }
 @media (forced-colors: active) {
-  .chip[aria-pressed="true"] {
+  .chip:is([aria-pressed="true"], [data-on]) {
     background: Highlight;
     color: HighlightText;
   }
