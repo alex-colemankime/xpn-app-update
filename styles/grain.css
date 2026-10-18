@@ -1,8 +1,7 @@
 /* ---------------------------------------------------------------------------
    Grain: a fine, still film grain over every surface that carries a color
    (the page washed in the playing artwork's color, a show's sheet, the On
-   air band, station banners, the tinted player bar and saved songs), so a wash reads as
-   printed rather than as a flat block.
+   air band, station banners and the tinted player bar), so a wash reads as printed rather than as a flat block.
    The grain is a small noise tile drawn in SVG, here in the stylesheet (no
    download), blended in soft-light so it lightens and darkens around each
    color without graying it. Soft-light shows more on dark colors than on
@@ -22,23 +21,10 @@
 .show-dialog .dialog-header,
 .on-air,
 .station-banner,
-.player-bar[data-tinted],
-.saved-songs > .track-row[data-tinted]::before {
+.player-bar[data-tinted] {
   background-image: var(--grain);
   background-size: 160px 160px;
   background-blend-mode: soft-light;
-}
-
-/* Saved songs' bands (styles/layout.css) come in over the band before
-   through grain of the same size: --blend-in is a tile of noise held
-   against a ramp, clear at the top, solid at the bottom, and between,
-   solid wherever the noise is below the ramp, so the specks grow denser
-   down the tile until they close up. Its height is --blend (44px); it
-   repeats across. --blend-out is the same ramp turned over, for the last
-   song going out into the page. */
-:root {
-  --blend-in: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='44'%3E%3ClinearGradient id='g' x2='0' y2='1'%3E%3Cstop offset='0' stop-opacity='0'/%3E%3Cstop offset='1' stop-opacity='1'/%3E%3C/linearGradient%3E%3Cfilter id='d' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2.5 0 0 0 -0.75'/%3E%3CfeComposite in='SourceGraphic' operator='arithmetic' k2='5.6' k3='-4' k4='-0.3'/%3E%3C/filter%3E%3Crect width='100%' height='100%' fill='url(%23g)' filter='url(%23d)'/%3E%3C/svg%3E");
-  --blend-out: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='44'%3E%3ClinearGradient id='g' x2='0' y2='1'%3E%3Cstop offset='0' stop-opacity='1'/%3E%3Cstop offset='1' stop-opacity='0'/%3E%3C/linearGradient%3E%3Cfilter id='d' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2.5 0 0 0 -0.75'/%3E%3CfeComposite in='SourceGraphic' operator='arithmetic' k2='5.6' k3='-4' k4='-0.3'/%3E%3C/filter%3E%3Crect width='100%' height='100%' fill='url(%23g)' filter='url(%23d)'/%3E%3C/svg%3E");
 }
 
 /* Asked for more contrast, or forced colors: plain surfaces. */
@@ -46,10 +32,5 @@
   :root,
   :root[data-theme="dark"] {
     --grain: none;
-  }
-  /* Bands meet at the line between songs, with no dither. */
-  .saved-songs > .track-row::before {
-    inset: 0;
-    mask-image: none;
   }
 }

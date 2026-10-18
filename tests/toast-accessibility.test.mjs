@@ -19,8 +19,8 @@ test("a longer notice with an action is a bar, given longer", (t) => {
   const timer = t.mock.method(globalThis, "setTimeout", () => 1);
   t.mock.method(globalThis, "clearTimeout", () => {});
   showToast(
-    { title: "Concert saved", text: "Wed, Oct 14 · Union Transfer", icon: "calendarAdd" },
-    { label: "Add to calendar", onClick() {} },
+    { title: "World Cafe starts in 5 minutes", text: "Raina Douris" },
+    { label: "Listen", onClick() {} },
   );
   assert.equal(timer.mock.calls.at(-1).arguments[1], 4500);
   showToast("To ring on time, WXPN needs Alarms & reminders turned on.", {

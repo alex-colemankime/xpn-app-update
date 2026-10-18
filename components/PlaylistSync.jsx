@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Icon } from "../ui.jsx";
+import { readJson, writeJson } from "../storage.js";
 import { SHOW_SAMPLES } from "../config.js";
-import { songId, toggleFavorite, useFavoriteItems, useIsFavorite } from "../favorites.js";
+import { songId, useFavoriteItems, useIsFavorite } from "../favorites.js";
 import { PLAYLIST_NAME, SERVICES, availableServices } from "../music-services.js";
 import { connect, disconnect, syncNow, usePlaylistSync } from "../playlist-sync.js";
 
@@ -105,73 +107,62 @@ export function PlaylistSyncPanel() {
   );
 }
 
-// Favorites: a one-line invitation, until a service is connected.
-export function PlaylistSyncPrompt({ onSetUp }) {
+// Favorites, above the songs: where they go once a service is connected;
+// until then, `children`.
+export function PlaylistSyncStatus({ children = null }) {
   const sync = usePlaylistSync();
-  const services = offeredServices();
-  if (sync.service) {
-    return (
-      <p className="playlist-prompt connected">
-        <Icon name="check" size={16} />
-        Saving to “{PLAYLIST_NAME}” on {SERVICES[sync.service].name}
-      </p>
-    );
-  }
-  if (!services.length) return null;
+  if (!sync.service || !offeredServices().length) return children;
   return (
-    <button className="playlist-prompt" onClick={onSetUp}>
-      <Icon name="music" size={18} />
-      <span>Add every song you heart to a {services.map((s) => s.name).join(" or ")} playlist</span>
-      <Icon name="chev" size={16} />
-    </button>
+    <p className="playlist-prompt connected">
+      <Icon name="check" size={16} />
+      Saving to “{PLAYLIST_NAME}” on {SERVICES[sync.service].name}
+    </p>
   );
 }
 
-// The song menu's part: until a service is connected, the way to connect
-// one; after, where this song stands in the playlist (or a way to add it).
-export function PlaylistMenuItems({ track, close, saveShown = false }) {
+// Favorites, under the songs: the invitation to put them in a playlist,
+// once there are enough of them (five) for one to be worth having, and
+// until a service is connected or the listener says no thanks. Settings
+// keeps the way to connect for good.
+const PITCH_DISMISSED = "xpn.hint.playlistPitch";
+const PITCH_AFTER = 5;
+export function PlaylistSyncPrompt({ count, onSetUp }) {
+  const sync = usePlaylistSync();
+  const services = offeredServices();
+  const [dismissed, setDismissed] = useState(() => readJson(PITCH_DISMISSED, false));
+  if (sync.service || dismissed || count < PITCH_AFTER || !services.length) return null;
+  return (
+    <div className="playlist-pitch">
+      <button className="playlist-prompt" onClick={onSetUp}>
+        <Icon name="music" size={18} />
+        <span>
+          Add every song you heart to a {services.map((s) => s.name).join(" or ")} playlist
+        </span>
+        <Icon name="chev" size={16} />
+      </button>
+      <button
+        className="icon-button"
+        aria-label="No thanks"
+        onClick={() => {
+          writeJson(PITCH_DISMISSED, true);
+          setDismissed(true);
+        }}
+      >
+        <Icon name="close" size={18} />
+      </button>
+    </div>
+  );
+}
+
+// A song's sheet, once a service is connected and the song is saved: where
+// it stands in the playlist. Saving, in the same sheet, adds it; connecting
+// is offered only in Favorites and Settings, never over a song.
+export function PlaylistStatus({ track }) {
   const sync = usePlaylistSync();
   const item = { ...track, id: songId(track) };
   const saved = useIsFavorite("songs", item);
-  const services = offeredServices();
-  if (!services.length) return null;
   const service = SERVICES[sync.service];
-  if (!service) {
-    return (
-      <>
-        <p className="popover-menu-note">
-          Connect your music, and every song you heart goes into a “{PLAYLIST_NAME}” playlist.
-        </p>
-        {services.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => {
-              close();
-              connect(s.id);
-            }}
-          >
-            Connect {s.name}
-            <Icon name="music" size={16} />
-          </button>
-        ))}
-      </>
-    );
-  }
-  if (!saved) {
-    // Save, beside it, adds the song to the playlist as well.
-    if (saveShown) return null;
-    return (
-      <button
-        onClick={() => {
-          close();
-          toggleFavorite("songs", item);
-        }}
-      >
-        Add to “{PLAYLIST_NAME}” on {service.name}
-        <Icon name="heart" size={16} />
-      </button>
-    );
-  }
+  if (!service || !saved || !offeredServices().length) return null;
   const where = sync.matched[item.id]
     ? `In “${PLAYLIST_NAME}” on ${service.name}`
     : sync.missing.includes(item.id)

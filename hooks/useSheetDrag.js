@@ -119,6 +119,8 @@ export function useSheetDrag({ anyWidth = false } = {}) {
         drag = null;
         if (e.touches.length !== 1) return;
         if (!anyWidth && !window.matchMedia?.(PHONE).matches) return;
+        // A menu hanging from its button on a wide screen isn't a sheet.
+        if (sheet.hasAttribute("data-anchored")) return;
         const t = e.touches[0];
         if (!startsDrag(e.target, sheet, t.clientY)) return;
         // Catch a moving sheet where it is, never where it was going.

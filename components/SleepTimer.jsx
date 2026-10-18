@@ -1,19 +1,18 @@
 import { cancelSleepTimer, sleepUntil, startSleepTimer } from "../player.js";
 import { onAirAt } from "../catalog.js";
 import { localClock } from "../time.js";
-import { showToast } from "../toast.js";
 import { Art, Icon, focusFirstItem } from "../ui.jsx";
 import { usePlayer, useSleepTimer } from "../hooks/usePlayer.js";
 import { useNow } from "../hooks/useNow.js";
 import { useSheetDrag } from "../hooks/useSheetDrag.js";
 
 // Each choice as the menu shows it (a large number over its unit), as a
-// screen reader names its key, and as the confirmation says it.
+// screen reader names its key.
 const SLEEP_CHOICES = [
-  { minutes: 15, number: "15", unit: "min", label: "15 minutes", said: "15 minutes" },
-  { minutes: 30, number: "30", unit: "min", label: "30 minutes", said: "30 minutes" },
-  { minutes: 45, number: "45", unit: "min", label: "45 minutes", said: "45 minutes" },
-  { minutes: 60, number: "1", unit: "hour", label: "1 hour", said: "an hour" },
+  { minutes: 15, number: "15", unit: "min", label: "15 minutes" },
+  { minutes: 30, number: "30", unit: "min", label: "30 minutes" },
+  { minutes: 45, number: "45", unit: "min", label: "45 minutes" },
+  { minutes: 60, number: "1", unit: "hour", label: "1 hour" },
 ];
 
 // Stop playback after a while, fading out; lives in a popover so it needs no
@@ -26,10 +25,9 @@ export function SleepTimer({ onAirNow }) {
   if (!endsAt && !playing && !connecting) return null;
   const left = endsAt ? Math.max(1, Math.ceil((endsAt - now) / 60000)) : 0;
   const close = () => document.getElementById("sleep-menu")?.hidePopover?.();
-  const choose = (minutes, label) => {
+  const choose = (minutes) => {
     startSleepTimer(minutes);
     close();
-    showToast(`The radio will turn off ${label}.`);
   };
   // Worked out at the tap, from the clock and the show's real end time, so
   // a menu opened a moment ago can't stop a minute into the next show.
@@ -38,7 +36,6 @@ export function SleepTimer({ onAirNow }) {
     close();
     if (!live) return;
     sleepUntil(live.endsAt);
-    showToast(`The radio will turn off when ${live.show.name} ends.`);
   };
   return (
     <>
@@ -77,11 +74,7 @@ export function SleepTimer({ onAirNow }) {
         </div>
         <div className="sleep-grid">
           {SLEEP_CHOICES.map((c) => (
-            <button
-              key={c.minutes}
-              aria-label={c.label}
-              onClick={() => choose(c.minutes, `in ${c.said}`)}
-            >
+            <button key={c.minutes} aria-label={c.label} onClick={() => choose(c.minutes)}>
               <strong>{c.number}</strong>
               <small>{c.unit}</small>
             </button>

@@ -391,6 +391,20 @@ button.setting-row {
   min-height: 0;
   color: var(--muted);
 }
+/* Under saved songs, with a way to say no thanks at its end. */
+.playlist-pitch {
+  display: flex;
+  align-items: center;
+  margin-top: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+.playlist-pitch > .playlist-prompt {
+  margin: 0;
+  border-bottom: 0;
+}
+.playlist-pitch > .icon-button {
+  margin-right: calc(-1 * var(--space-3));
+}
 
 /* Newsletter: the panel in Settings, and the invitation after concerts. */
 /* A soft key with the envelope in the station's color: an invitation,

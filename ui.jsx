@@ -192,7 +192,7 @@ export function SkeletonList({ label, count = 4, rowClass, artClass }) {
       <span className="sr-only">{label}</span>
       {Array.from({ length: count }, (_, i) => (
         <div className={`${rowClass} skeleton-row`} aria-hidden="true" key={i}>
-          <span className={`skeleton-block ${artClass}`} />
+          {artClass && <span className={`skeleton-block ${artClass}`} />}
           <span className="skeleton-lines">
             <span className="skeleton-block skeleton-line" />
             <span className="skeleton-block skeleton-line" />

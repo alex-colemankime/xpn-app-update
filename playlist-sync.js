@@ -18,7 +18,6 @@ import {
   cancelAuthorization,
   forgetAuth,
   isSpotifyReturn,
-  PLAYLIST_NAME,
 } from "./music-services.js";
 import { createLocalStore } from "./storage.js";
 import { showToast } from "./toast.js";
@@ -341,7 +340,7 @@ export async function connect(serviceId) {
 
 function afterConnect(service) {
   track("music_connect", { service: service.id });
-  showToast(`Connected to ${service.name}. Adding your saved songs to “${PLAYLIST_NAME}”.`);
+  // The panel in Settings says it's connected and adding the songs.
   syncNow();
 }
 

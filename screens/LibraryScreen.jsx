@@ -8,8 +8,8 @@ import { EpisodeRow, ShowHead } from "../components/Archive.jsx";
 import { hasLeftArchive, useArchiveState } from "../archive.js";
 import { showToast } from "../toast.js";
 import { TrackRow, SaveButton } from "../components/MusicRows.jsx";
-import { ConcertRow } from "../components/ConcertRow.jsx";
-import { PlaylistSyncPrompt } from "../components/PlaylistSync.jsx";
+import { ConcertList } from "../components/ConcertRow.jsx";
+import { PlaylistSyncPrompt, PlaylistSyncStatus } from "../components/PlaylistSync.jsx";
 import { calendarIsNative, downloadIcs } from "../calendar.js";
 import { useFeatures } from "../features.js";
 import { savedShowGroups } from "../saved-shows.js";
@@ -43,16 +43,12 @@ const EMPTY = {
   },
 };
 
-// Saved songs, five at a time: Load more under the last one adds five more.
-const SONGS_PAGE = 5;
-
 const searchText = (item) =>
   `${item.title || ""} ${item.artist || ""} ${item.name || ""} ${item.showName || ""}`.toLowerCase();
 
 export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }) {
   const [type, setType] = useState("songs");
   const [query, setQuery] = useState("");
-  const [songsShown, setSongsShown] = useState(SONGS_PAGE);
   const songs = useFavoriteItems("songs");
   const shows = useFavoriteItems("shows");
   const episodes = useFavoriteItems("episodes");
@@ -95,21 +91,15 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
     tap("selection");
     setType(next);
     setQuery("");
-    setSongsShown(SONGS_PAGE);
   };
   // The app keeps Favorites alive behind the other tabs. Each time it comes
   // back to the front (`visit`, from App) its list is drawn afresh from what
   // is saved now, so a song hearted on Listen is there at once: iPhone's web
   // view could keep showing the list as it was until the tab was switched.
   const [seenVisit, setSeenVisit] = useState(visit);
-  // How many songs are shown stays as it was, so the screen comes back the
-  // same length and the app can return it to where it was scrolled.
   if (seenVisit !== visit) {
     setSeenVisit(visit);
   }
-  // A search shows every match.
-  const songsOnPage = q ? filtered : filtered.slice(0, songsShown);
-  const moreSongs = category === "songs" && songsOnPage.length < filtered.length;
 
   const shareSongs = async () =>
     showToast(
@@ -144,7 +134,9 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
             {q ? " match your search" : ""}
           </p>
           {category === "songs" && songs.length > 0 ? (
-            <PlaylistSyncPrompt onSetUp={() => onNavigate("settings")} />
+            <PlaylistSyncStatus>
+              <p className="data-note">Saved on this device.</p>
+            </PlaylistSyncStatus>
           ) : category === "concerts" && items.concerts?.length > 1 && !calendarIsNative() ? (
             <button className="playlist-prompt" onClick={() => downloadIcs(items.concerts)}>
               <Icon name="calendarAdd" size={18} />
@@ -166,29 +158,18 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
             </Empty>
           ) : category === "songs" ? (
             <>
-              {/* One layer for every song's band (styles/layout.css). */}
-              <div className="saved-songs" data-more={moreSongs || undefined}>
-                {songsOnPage.map((t) => (
-                  <TrackRow key={t.id} track={t} wash />
+              <div className="saved-songs">
+                {filtered.map((t) => (
+                  <TrackRow key={t.id} track={t} />
                 ))}
               </div>
-              {moreSongs && (
-                <div className="list-more">
-                  <button
-                    className="text-button"
-                    onClick={() => setSongsShown(songsShown + SONGS_PAGE)}
-                  >
-                    Load more songs
-                    <span className="expand-chevron">
-                      <Icon name="chevD" size={17} />
-                    </span>
-                  </button>
-                </div>
-              )}
               <button className="text-button share-songs" onClick={shareSongs}>
                 <Icon name="shareAlt" size={17} />
                 Share your saved songs
               </button>
+              {!q && (
+                <PlaylistSyncPrompt count={songs.length} onSetUp={() => onNavigate("settings")} />
+              )}
             </>
           ) : category === "shows" ? (
             <div className="archive-list saved-shows">
@@ -202,7 +183,7 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
               ))}
             </div>
           ) : category === "concerts" ? (
-            filtered.map((c) => <ConcertRow key={c.id} concert={c} />)
+            <ConcertList concerts={[...filtered].sort((a, b) => a.date.localeCompare(b.date))} />
           ) : category === "videos" ? (
             <div className="video-grid saved-videos">
               {filtered.map((v) => (

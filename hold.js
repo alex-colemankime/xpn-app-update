@@ -19,14 +19,18 @@ export const getHoldMenu = menu.getSnapshot;
 export const closeHoldMenu = () => menu.set(null);
 
 // Opens the menu over whatever is in front: a sheet that is open (a modal
-// sheet makes the rest of the page inert), or the page.
+// sheet makes the rest of the page inert), or the page. `from`, the element
+// that opened it, is where it hangs on wider screens (as a menu from its
+// button) and where focus goes back to when it closes.
 export function openHoldMenu(item) {
+  // The button that opened the menu, pressed again, closes it.
+  if (item.from && menu.getSnapshot()?.from === item.from) return closeHoldMenu();
   const sheets = document.querySelectorAll("dialog[open]");
   menu.set({ ...item, container: sheets[sheets.length - 1] || document.body });
 }
 
-// A ref for an element that opens a menu when held: `open()` says what the
-// menu shows (and calls openHoldMenu).
+// A ref for an element that opens a menu when held: `open(el)` says what
+// the menu shows (and calls openHoldMenu).
 export const holdable = (open) => (el) => {
   if (!el) return;
   handlers.set(el, open);
@@ -76,7 +80,7 @@ export function startHold() {
           if (!open || !el.isConnected) return;
           fired = true;
           tap("medium");
-          open();
+          open(el);
         }, HOLD_MS),
       };
     },

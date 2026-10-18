@@ -14,8 +14,10 @@
 }
 
 /* The hold menu is a sheet from the bottom on every screen: on a tablet it
-   keeps a phone's width, centred. */
-.popover-menu.hold-menu {
+   keeps a phone's width, centred. One that hangs from what opened it
+   (data-anchored, a song's sheet on a wide screen) is a menu like the
+   others (styles/now-playing.css). */
+.popover-menu.hold-menu:not([data-anchored]) {
   position-anchor: none;
   inset: auto 0 0 0;
   margin: 0 auto;
@@ -29,7 +31,7 @@
   padding: var(--space-5) var(--space-3)
     calc(var(--space-4) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
 }
-.popover-menu.hold-menu::before {
+.popover-menu.hold-menu:not([data-anchored])::before {
   content: "";
   position: absolute;
   top: var(--space-2);
@@ -43,29 +45,29 @@
 .popover-menu.hold-menu:focus {
   outline: none;
 }
-.popover-menu.hold-menu::backdrop {
+.popover-menu.hold-menu:not([data-anchored])::backdrop {
   background: #0008;
 }
 /* The hold menu is a sheet at every width: it rises and leaves as the
    phone's menus do (styles/now-playing.css). */
-.popover-menu.hold-menu {
+.popover-menu.hold-menu:not([data-anchored]) {
   scale: none;
   transition:
     translate 240ms var(--ease-out),
     display 240ms allow-discrete,
     overlay 240ms allow-discrete;
 }
-.popover-menu.hold-menu:popover-open {
+.popover-menu.hold-menu:not([data-anchored]):popover-open {
   transition-duration: var(--dur-sheet);
   transition-timing-function: var(--spring-sheet);
 }
-.popover-menu.hold-menu:not(:popover-open) {
+.popover-menu.hold-menu:not([data-anchored]):not(:popover-open) {
   opacity: 1;
   scale: none;
   translate: 0 100%;
 }
 @starting-style {
-  .popover-menu.hold-menu:popover-open {
+  .popover-menu.hold-menu:not([data-anchored]):popover-open {
     opacity: 1;
     scale: none;
     translate: 0 100%;

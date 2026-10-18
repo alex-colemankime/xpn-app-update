@@ -124,3 +124,23 @@ test("pulling down at the top of Listen reads the songs again", async ({ page })
   await expect.poll(() => reads).toBeGreaterThan(0);
   await expect(spinner).not.toHaveAttribute("data-state", /./);
 });
+
+test("a song's row opens its sheet, about the song and with no offer to connect", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const row = page.locator(".recent-panel .track-open").first();
+  await row.click();
+  const sheet = page.locator(".hold-menu");
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "Save to Favorites" })).toBeVisible();
+  await expect(sheet.getByRole("link", { name: "Open in Spotify" })).toHaveAttribute(
+    "href",
+    /^https:\/\/open\.spotify\.com\/search\//,
+  );
+  await expect(sheet.getByRole("link", { name: "Open in Apple Music" })).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "Share song" })).toBeVisible();
+  await expect(sheet.getByText(/Connect/)).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(sheet).toBeHidden();
+});

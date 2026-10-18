@@ -35,8 +35,8 @@ export const OFF_IN_SETTINGS =
 
 // Turning reminders on is the one moment the app asks for notification
 // permission, so the system prompt always arrives with its reason in view.
-// `quiet`: the caller shows the result itself (the welcome moves on a step),
-// so no notice covers it.
+// `quiet`: the caller shows the result itself (the welcome moves on a step,
+// the switch in Settings turns on), so no notice covers it.
 export async function enableReminders({ quiet = false } = {}) {
   if (!(await requestNotifications())) {
     showToast(OFF_IN_SETTINGS);

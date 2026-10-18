@@ -1,9 +1,7 @@
-import { useId, useRef, useState } from "react";
-import { flushSync } from "react-dom";
-import { Icon, Art, focusFirstItem, shareText } from "../ui.jsx";
+import { useState } from "react";
+import { Icon, Art, shareText } from "../ui.jsx";
 import { showToast } from "../toast.js";
-import { PlaylistMenuItems } from "./PlaylistSync.jsx";
-import { addToCalendar } from "../calendar.js";
+import { PlaylistStatus } from "./PlaylistSync.jsx";
 import { tap } from "../haptics.js";
 import {
   getFavorite,
@@ -13,11 +11,11 @@ import {
   useIsFavorite,
 } from "../favorites.js";
 import { readJson, writeJson } from "../storage.js";
-import { PLAYLIST_URL } from "../links.js";
+import { PLAYLIST_URL, appleMusicSearch, spotifySearch } from "../links.js";
 import { SHOWS, shortName } from "../catalog.js";
 import { playedAt } from "../nowplaying.js";
-import { useArtTint, washVars } from "../art-tint.js";
-import { useSheetDrag } from "../hooks/useSheetDrag.js";
+import { useArtTint } from "../art-tint.js";
+import { parseRoute, routeHash } from "../hooks/useRoute.js";
 import { holdable, openHoldMenu } from "../hold.js";
 
 // The artwork a saved heart takes its color from, and a precomputed tint
@@ -37,17 +35,6 @@ function tintSource(type, item) {
     type === "concerts" ? null : type === "songs" && show ? show.img : item.img || item.poster;
   return { art, preset: show?.tint || null };
 }
-
-// "Wed, Oct 7 · Union Transfer", for the notice after saving a concert.
-const CONCERT_DAY = new Intl.DateTimeFormat("en-US", {
-  weekday: "short",
-  month: "short",
-  day: "numeric",
-});
-const concertWhen = (c) =>
-  [c.date && CONCERT_DAY.format(new Date(`${c.date}T12:00:00`)), c.artist]
-    .filter(Boolean)
-    .join(" · ");
 
 // The first time a listener saves anything, say where it went.
 const HINT_KEY = "xpn.hint.saved";
@@ -81,25 +68,10 @@ export function useHeartTint(type, item, on = true) {
 const tintVars = (tint) =>
   tint ? { "--tint-light": tint.light, "--tint-dark": tint.dark } : undefined;
 
-// What follows a save: for a concert, a notice with Add to calendar; for
-// the first thing ever saved, where it went.
-function announceSave(type, item) {
-  if (type === "concerts") {
-    // A saved concert is one tap from the listener's calendar.
-    showToast(
-      { title: "Concert saved", text: concertWhen(item), icon: "calendarAdd" },
-      {
-        label: "Add to calendar",
-        onClick: async () => {
-          if (!(await addToCalendar(item)))
-            showToast("Couldn’t open your calendar. Allow calendar access for WXPN in Settings.");
-        },
-      },
-    );
-  } else if (type !== "shows") {
-    // Following a show offers reminders in place; no hint on top.
-    firstSaveHint(type);
-  }
+// What follows the first thing ever saved: where it went. Following a show
+// offers reminders in place, so no hint on top of that.
+function announceSave(type) {
+  if (type !== "shows") firstSaveHint(type);
 }
 
 // A heart toggle for any saveable item: a song, show, episode, concert or
@@ -142,7 +114,7 @@ export function SaveButton({
           });
         } else {
           setPop(true);
-          announceSave(type, item);
+          announceSave(type);
         }
       }}
     >
@@ -152,53 +124,34 @@ export function SaveButton({
   );
 }
 
-// The "…" for a song: its place in the listener's connected playlist (or a
-// way to connect one), and Share. A popover anchored to its button (a bottom
-// sheet on phones).
+// A song's sheet: about the song, its Save, the song on Spotify and Apple
+// Music, Share, and (with a playlist connected) where it stands there. A
+// sheet from the bottom on phones; on wider screens it hangs from `from`,
+// the row or button that opened it.
+export function openSongSheet(track, stationLabel, from) {
+  openHoldMenu({
+    label: `${track.title} by ${track.artist}`,
+    from,
+    render: (close) => (
+      <>
+        <MenuHead art={track.img} title={track.title} line={track.artist} />
+        <SongSheetItems track={track} stationLabel={stationLabel} close={close} />
+      </>
+    ),
+  });
+}
+
+// The "…" beside Listen's song: its sheet, hanging from the button.
 export function SongMenu({ track, stationLabel = "WXPN" }) {
-  const menuId = `song-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
-  // The menu's contents exist only while it is open: a list of 50 songs
-  // then carries 50 buttons, not 50 menus. They are drawn at once on
-  // opening, so focus can move to the first of them.
-  const [open, setOpen] = useState(false);
-  const menu = useRef(null);
-  const drag = useSheetDrag();
-  const onToggle = (e) => {
-    flushSync(() => setOpen(e.newState === "open"));
-    focusFirstItem(e);
-  };
-  const close = () => menu.current?.hidePopover();
   return (
-    <>
-      <button
-        className="icon-button"
-        popoverTarget={menuId}
-        aria-label={`More for ${track.title}`}
-        style={{ anchorName: `--${menuId}` }}
-      >
-        <Icon name="more" />
-      </button>
-      <div
-        id={menuId}
-        ref={(el) => {
-          menu.current = el;
-          return drag(el);
-        }}
-        onToggle={onToggle}
-        className="popover-menu"
-        popover="auto"
-        role="dialog"
-        aria-label={`${track.title} by ${track.artist}`}
-        style={{ positionAnchor: `--${menuId}` }}
-      >
-        {open && (
-          <>
-            <MenuHead art={track.img} title={track.title} line={track.artist} />
-            <SongMenuItems track={track} stationLabel={stationLabel} close={close} />
-          </>
-        )}
-      </div>
-    </>
+    <button
+      className="icon-button"
+      aria-label={`More for ${track.title}`}
+      aria-haspopup="dialog"
+      onClick={(e) => openSongSheet(track, stationLabel, e.currentTarget)}
+    >
+      <Icon name="more" />
+    </button>
   );
 }
 
@@ -252,10 +205,18 @@ export const shareFrom =
     showToast(await shareText(...what));
   };
 
-// A song's choices, in its "…" menu and its press-and-hold menu: its place
-// in the listener's playlist, and Share. The hold menu (`withSave`) leads
-// with Save, which also adds the song to a connected playlist.
-export function SongMenuItems({ track, stationLabel = "WXPN", close, withSave = false }) {
+// The song on the services listeners play it on: their search for it,
+// which a phone hands to the app where it is installed (links.js).
+const ELSEWHERE = [
+  ["Spotify", spotifySearch],
+  ["Apple Music", appleMusicSearch],
+];
+
+// A song's sheet, in order: Save, the song elsewhere, Share, and its place
+// in a connected playlist. A show's own segment in the playlist (a World
+// Cafe session hour) isn't a song on those services: it offers the show.
+export function SongSheetItems({ track, stationLabel = "WXPN", close }) {
+  const show = track.show && SHOWS[track.show];
   const share = async () => {
     close();
     showToast(
@@ -266,38 +227,43 @@ export function SongMenuItems({ track, stationLabel = "WXPN", close, withSave = 
       ),
     );
   };
+  const query = `${track.title} ${track.artist || ""}`.trim();
   return (
     <>
-      {withSave && (
-        <MenuSave
-          type="songs"
-          item={{ ...track, id: songId(track) }}
-          name={track.title}
-          close={close}
-        />
+      <MenuSave
+        type="songs"
+        item={{ ...track, id: songId(track) }}
+        name={track.title}
+        close={close}
+      />
+      {show ? (
+        <a
+          href={routeHash({ screen: parseRoute(window.location.hash).screen, showId: track.show })}
+          onClick={close}
+        >
+          View {shortName(show)}
+          <Icon name="chev" size={16} />
+        </a>
+      ) : (
+        ELSEWHERE.map(([name, url]) => (
+          <a key={name} href={url(query)} target="_blank" rel="noreferrer" onClick={close}>
+            Open in {name}
+            <Icon name="out" size={16} />
+          </a>
+        ))
       )}
-      <PlaylistMenuItems track={track} close={close} saveShown={withSave} />
       <button onClick={share}>
         Share song
         <Icon name="shareAlt" size={16} />
       </button>
+      <PlaylistStatus track={track} />
     </>
   );
 }
 
-// A song's press-and-hold menu (hold.js).
+// A song's press-and-hold: the same sheet a tap on its row opens.
 export const songHold = (track, stationLabel) =>
-  holdable(() =>
-    openHoldMenu({
-      label: `${track.title} by ${track.artist}`,
-      render: (close) => (
-        <>
-          <MenuHead art={track.img} title={track.title} line={track.artist} />
-          <SongMenuItems track={track} stationLabel={stationLabel} close={close} withSave />
-        </>
-      ),
-    }),
-  );
+  holdable((el) => openSongSheet(track, stationLabel, el));
 
 // A show's press-and-hold menu: open it, follow it, share it.
 export const showHold = (show, onOpen) =>
@@ -334,16 +300,15 @@ export const SaveSong = ({ track }) => (
   <SaveButton type="songs" item={{ ...track, id: songId(track) }} name={track.title} />
 );
 
-// Saves an item without its button (a double tap on Listen's artwork or on
-// a concert): saves it, or leaves it saved, as photo apps' double tap only
-// ever likes.
-export function heartItem(type, item) {
+// Saves a song without its button (a double tap on Listen's artwork): saves
+// it, or leaves it saved, as photo apps' double tap only ever likes.
+export function heartSong(track) {
+  const item = { ...track, id: songId(track) };
   tap();
-  if (getFavorite(type, item)) return;
-  toggleFavorite(type, item);
-  announceSave(type, item);
+  if (getFavorite("songs", item)) return;
+  toggleFavorite("songs", item);
+  announceSave("songs");
 }
-export const heartSong = (track) => heartItem("songs", { ...track, id: songId(track) });
 
 // The heart that blooms over whatever a double tap just saved, in the
 // color that item's own heart takes, outlined in white so it shows on any
@@ -379,30 +344,29 @@ export function ShowCard({ show, onOpen }) {
   );
 }
 
-// A song in a list. `showTime` adds when it played, for the station's
-// playlist; saved songs leave it out. A saved song's heart carries its color,
-// and in Favorites (`wash`) so does its row.
+// A song in a list: the row itself opens the song's sheet (so does a
+// press and hold), and its heart, at the end, saves it. `showTime` adds
+// when it played, for the station's playlist; saved songs leave it out.
 // `stationLabel` names the station it played on, for sharing.
-export function TrackRow({ track, showTime = false, stationLabel, wash = false }) {
-  // Saved songs (wash) sit on a light wash of their own artwork's color.
-  const tint = useArtTint(wash ? track.img : null);
+export function TrackRow({ track, showTime = false, stationLabel }) {
   return (
-    <div
-      ref={songHold(track, stationLabel)}
-      className="track-row"
-      data-tinted={tint ? "" : undefined}
-      style={tint ? washVars("band", tint, 0, [0.32, 0.34]) : undefined}
-    >
-      <Art src={track.img} loading="lazy" />
-      <span>
-        <strong>{track.title}</strong>
-        <small className="track-meta">
-          <span>{track.artist}</span>
-          {showTime && track.time && <time className="track-time">{playedAt(track)}</time>}
-        </small>
-      </span>
+    <div className="track-row">
+      <button
+        ref={songHold(track, stationLabel)}
+        className="track-open"
+        aria-haspopup="dialog"
+        onClick={(e) => openSongSheet(track, stationLabel, e.currentTarget)}
+      >
+        <Art src={track.img} loading="lazy" />
+        <span>
+          <strong>{track.title}</strong>
+          <small className="track-meta">
+            <span>{track.artist}</span>
+            {showTime && track.time && <time className="track-time">{playedAt(track)}</time>}
+          </small>
+        </span>
+      </button>
       <SaveSong track={track} />
-      <SongMenu track={track} stationLabel={stationLabel} />
     </div>
   );
 }

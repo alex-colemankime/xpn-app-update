@@ -150,6 +150,9 @@
 .skeleton-row {
   pointer-events: none;
 }
+.track-row.skeleton-row {
+  padding: var(--space-3) 0;
+}
 .skeleton-block {
   display: block;
   border-radius: var(--radius-s);

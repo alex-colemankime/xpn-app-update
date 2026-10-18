@@ -74,8 +74,11 @@ what you did, what happened, and a screen recording if you can.
       pauses and is offered back afterwards.
 - [ ] iPhone: a live YouTube video (Free at Noon) opens in the in-app
       browser.
-- [ ] Save a concert, Add to calendar: the system's New Event sheet opens,
+- [ ] Open a concert, Add to calendar: the system's New Event sheet opens,
       filled in; it saves to the calendar.
+- [ ] Open a song's sheet, Open in Spotify and Open in Apple Music: with
+      the app installed, it opens on the search for the song (not the web
+      page); without it, the browser does.
 
 ## The car
 

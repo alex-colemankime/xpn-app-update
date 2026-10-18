@@ -490,17 +490,16 @@ const SHOTS = {
     await page.goto(`${BASE}#/favorites`);
     await page.locator(".track-row").first().waitFor();
     await settle(page);
-    await page.locator(".track-row[data-tinted]").first().waitFor({ timeout: 5000 });
     await playStation(page);
     await page.waitForTimeout(400);
   },
-  // Concerts with Filter open, two filters chosen.
+  // Concerts' Filters sheet, a region chosen (and WXPN Welcomes, a chip).
   "phone-concert-filters": async (page) => {
     await page.goto(`${BASE}#/concerts`);
     await page.locator(".concert-row").first().waitFor({ timeout: 20000 });
-    await page.locator(".filter-button").click();
-    await page.getByRole("button", { name: "Philadelphia Area", exact: true }).click();
     await page.getByRole("button", { name: "WXPN Welcomes", exact: true }).click();
+    await page.getByRole("button", { name: /^Filters/ }).click();
+    await page.getByRole("button", { name: "Philadelphia Area", exact: true }).click();
     await settle(page);
   },
   // Settings, scrolled to the end: the social accounts and the links under them.
@@ -588,7 +587,7 @@ const SHOTS = {
     await openListen(page);
     await settle(page);
   },
-  // The song's "…" menu on Listen.
+  // The song's sheet, from the "…" on Listen.
   "phone-songmenu": async (page) => {
     await openListen(page);
     await settle(page);
@@ -596,7 +595,7 @@ const SHOTS = {
       .getByRole("button", { name: `More for ${ON_AIR.title}` })
       .first()
       .click();
-    await page.locator(".popover-menu:popover-open").waitFor();
+    await page.locator(".hold-menu:popover-open").waitFor();
     await page.waitForTimeout(500);
   },
   // A show reminder, in the app: World Cafe in five minutes.
@@ -676,29 +675,28 @@ const SHOTS = {
     await openConcerts(page);
     await settle(page);
   },
-  // A concert's Add to calendar choices (in a browser).
+  // A concert's Add to calendar choices (in a browser), from its sheet.
   "phone-concert-calendar": async (page) => {
     await openConcerts(page);
     await settle(page);
-    await page
-      .locator(".concert-row .concert-action", { hasText: "Add to calendar" })
-      .first()
-      .click();
+    await page.locator(".concert-open").first().click();
+    await page.locator(".concert-sheet").getByRole("button", { name: "Add to calendar" }).click();
     await page.locator(".popover-menu:popover-open").waitFor();
     await page.waitForTimeout(500);
   },
-  // The notice after saving a concert.
+  // A concert's sheet (saving one no longer brings a notice; the calendar
+  // is here). The file keeps its name.
   "phone-toast-concert": async (page) => {
     await openConcerts(page);
     await settle(page);
-    await page.locator(".concert-row .concert-side button[aria-pressed]").first().click();
-    await waitForToast(page);
+    await page.locator(".concert-open").first().click();
+    await page.locator(".concert-sheet").waitFor();
     await page.waitForTimeout(600);
   },
   // Favorites › Concerts, two saved.
   "phone-fav-concerts": async (page) => {
     await openConcerts(page);
-    const hearts = page.locator(".concert-row .concert-side button[aria-pressed]");
+    const hearts = page.locator(".concert-row > button[aria-pressed]");
     await hearts.nth(0).click();
     await hearts.nth(2).click();
     await favoritesTab(page, "Concerts");

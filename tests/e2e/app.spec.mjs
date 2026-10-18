@@ -351,11 +351,8 @@ test("a notice whose drag is cancelled still takes the first tap on Undo", async
   await expect(row).toBeVisible();
 });
 
-test("Favorites comes back with as many songs as were showing, where it was", async ({
-  page,
-  context,
-}) => {
-  // Twelve saved songs: five show, then Load more.
+test("Favorites shows every saved song, and comes back where it was", async ({ page, context }) => {
+  // Twelve saved songs, every one shown.
   await context.addInitScript(() => {
     const songs = {};
     for (let i = 1; i <= 12; i++) {
@@ -368,15 +365,13 @@ test("Favorites comes back with as many songs as were showing, where it was", as
   const nav = page.getByRole("navigation");
   const tab = (name) => nav.getByRole("button", { name, exact: true });
   const rows = page.getByRole("region", { name: "Favorites" }).locator(".saved-songs > .track-row");
-  await expect(rows).toHaveCount(5);
-  await page.getByRole("button", { name: "Load more songs" }).click();
-  await expect(rows).toHaveCount(10);
+  await expect(rows).toHaveCount(12);
   // Down to the tenth song, as far as the page goes on this screen.
   await rows.nth(9).scrollIntoViewIfNeeded();
   const place = await page.evaluate(() => Math.round(window.scrollY));
   expect(place).toBeGreaterThan(0);
   await tab("Shows").click();
   await tab("Favorites").click();
-  await expect(rows).toHaveCount(10);
+  await expect(rows).toHaveCount(12);
   await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBe(place);
 });

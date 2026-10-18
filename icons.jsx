@@ -156,6 +156,8 @@ const ICONS = {
       <path d="m9 12 2.2 2.2L15.5 10" />
     </>,
   ],
+  // Opens elsewhere (another app, the web): an arrow out of the corner.
+  out: [outline(1.8, rounded), <path d="M7 17L17 7M9 7h8v8" />],
   more: [
     solid,
     <>
