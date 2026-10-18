@@ -67,6 +67,34 @@ export function normalizeEvent(event) {
   };
 }
 
+// A bill as the calendar writes it, "Headliner / Support / Support", as
+// its headliner and the acts supporting it. Only a slash between spaces
+// splits it, and never one inside parentheses ("Electrospective (feat.
+// Adam Deitch / Oteil Burbridge)" is one act). Empty parts are dropped.
+export function splitBill(title) {
+  const parts = [];
+  let depth = 0;
+  let from = 0;
+  const text = String(title || "");
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === "(") depth++;
+    else if (ch === ")") depth = Math.max(0, depth - 1);
+    else if (ch === "/" && !depth && /\s/.test(text[i - 1] || "") && /\s/.test(text[i + 1] || "")) {
+      parts.push(text.slice(from, i));
+      from = i + 1;
+    }
+  }
+  parts.push(text.slice(from));
+  const [headliner = "", ...support] = parts.map((p) => p.trim()).filter(Boolean);
+  return { headliner, support };
+}
+
+// The region nearly every concert is in: a row leaves it unsaid, and names
+// any other (Lehigh Valley, Central PA) or the town when the calendar has one.
+export const HOME_REGION = "Philadelphia Area";
+export const concertPlace = (c) => c.city || (c.region !== HOME_REGION ? c.region : "") || "";
+
 // The calendar's age field: "AA", "18+", "21+".
 export function ageLabel(value) {
   const text = plainText(value);

@@ -2,6 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   ageLabel,
+  concertPlace,
+  splitBill,
   calendarPageUrl,
   easternToday,
   fetchConcertResult,
@@ -281,4 +283,37 @@ test("a chosen range reads short", () => {
   assert.equal(rangeLabel({ from: "2026-10-14", to: "2026-10-14" }), "Oct. 14");
   assert.equal(rangeLabel({ from: "2026-10-14", to: "" }), "From Oct. 14");
   assert.equal(rangeLabel({ from: "", to: "2026-10-20" }), "Through Oct. 20");
+});
+
+test("a bill splits into its headliner and the acts supporting it", () => {
+  assert.deepEqual(splitBill("Beck / Ioanna Gika / Wayne Faler"), {
+    headliner: "Beck",
+    support: ["Ioanna Gika", "Wayne Faler"],
+  });
+  assert.deepEqual(splitBill("Phantom Planet"), { headliner: "Phantom Planet", support: [] });
+  // Empty parts, and doubled spaces, from the feed.
+  assert.deepEqual(splitBill("Disaster Artist /  Nysa / "), {
+    headliner: "Disaster Artist",
+    support: ["Nysa"],
+  });
+  // A slash inside parentheses, or without spaces, is part of a name.
+  assert.deepEqual(
+    splitBill("John Scofield's Electrospective (feat. Adam Deitch / Oteil Burbridge)"),
+    {
+      headliner: "John Scofield's Electrospective (feat. Adam Deitch / Oteil Burbridge)",
+      support: [],
+    },
+  );
+  assert.deepEqual(splitBill("AC/DC Tribute / Back in Black"), {
+    headliner: "AC/DC Tribute",
+    support: ["Back in Black"],
+  });
+  assert.deepEqual(splitBill(""), { headliner: "", support: [] });
+});
+
+test("a row names the town, or a region other than the one nearly every concert is in", () => {
+  assert.equal(concertPlace({ city: "Glenside", region: "Philadelphia Area" }), "Glenside");
+  assert.equal(concertPlace({ city: "", region: "Philadelphia Area" }), "");
+  assert.equal(concertPlace({ city: "", region: "Lehigh Valley" }), "Lehigh Valley");
+  assert.equal(concertPlace({}), "");
 });

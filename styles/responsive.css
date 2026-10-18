@@ -173,10 +173,6 @@
   .all-shows .show-cover {
     aspect-ratio: 1;
   }
-  .concert-row {
-    grid-template-columns: 42px minmax(0, 1fr) auto;
-    column-gap: var(--space-3);
-  }
   .settings-grid {
     display: block;
   }

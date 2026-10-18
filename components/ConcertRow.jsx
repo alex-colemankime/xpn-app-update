@@ -1,7 +1,14 @@
 import { useEffect, useId, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { Icon, Modal, focusFirstItem, shareText } from "../ui.jsx";
-import { concertAge, easternToday, requestAge, subscribeAges } from "../concerts.js";
+import {
+  concertAge,
+  concertPlace,
+  easternToday,
+  requestAge,
+  splitBill,
+  subscribeAges,
+} from "../concerts.js";
 import { addToCalendar, calendarIsNative, downloadIcs, googleCalendarUrl } from "../calendar.js";
 import { showToast } from "../toast.js";
 import { MenuHead, MenuItem, MenuSave, SaveButton, shareFrom } from "./MusicRows.jsx";
@@ -18,7 +25,13 @@ function useAge(concert) {
 }
 
 // Built once: formatting dates is the costly part of drawing a list.
-const DAY = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric" });
+const WEEKDAY = new Intl.DateTimeFormat("en-US", { weekday: "long" });
+const MONTH_DAY = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
+const MONTH_DAY_YEAR = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
 const FULL_DATE = new Intl.DateTimeFormat("en-US", {
   weekday: "long",
   month: "long",
@@ -27,12 +40,15 @@ const FULL_DATE = new Intl.DateTimeFormat("en-US", {
 // Midday, so the date never shifts across a timezone boundary when shown.
 const dateOf = (c) => new Date(`${c.date}T12:00:00`);
 
-// A day's heading: "Tonight", "Tomorrow", then "Wed, Oct 7" (Eastern dates,
-// as the calendar's are).
+// A day's heading, in two parts: the day as a word ("Tonight", "Tomorrow",
+// then the weekday, "Wednesday") and its date ("Oct 21", with the year only
+// when it isn't this one). Eastern dates, as the calendar's are.
 export function dayHeading(date, today = easternToday()) {
-  if (date === today) return "Tonight";
-  if (date === shiftDate(today, 1)) return "Tomorrow";
-  return DAY.format(new Date(`${date}T12:00:00`));
+  const day = new Date(`${date}T12:00:00`);
+  const word =
+    date === today ? "Tonight" : date === shiftDate(today, 1) ? "Tomorrow" : WEEKDAY.format(day);
+  const sameYear = date.slice(0, 4) === today.slice(0, 4);
+  return { word, date: (sameYear ? MONTH_DAY : MONTH_DAY_YEAR).format(day) };
 }
 
 // The phone's own calendar sheet.
@@ -111,10 +127,22 @@ const shareArgs = (c) => [
   c.pageUrl || c.ticketUrl || CALENDAR_URL,
 ];
 
-// Where: the venue and its town (the region when the calendar names no
-// town). The dot stays with the word before it, so a line never starts
-// with one.
-const whereOf = (c) => [c.venue, c.city || c.region].filter(Boolean).join(" · ");
+// Where, and who may come: the venue, its town (or a region other than the
+// Philadelphia area) and the age limit, as one plain muted line. The dot
+// stays with the word before it, so a line never starts with one.
+const whereOf = (c, age) => [c.venue, concertPlace(c), age].filter(Boolean).join("\u00a0\u00b7 ");
+
+// The acts supporting the headliner, as a line under it: "with Ioanna Gika,
+// Wayne Faler".
+function Support({ acts }) {
+  if (!acts.length) return null;
+  return (
+    <span className="concert-support">
+      <span className="concert-with">with </span>
+      {acts.join(", ")}
+    </span>
+  );
+}
 
 // WXPN Welcomes and Free at Noon, the station's own shows.
 function Flags({ concert: c }) {
@@ -135,22 +163,19 @@ function Flags({ concert: c }) {
 // A concert's sheet: its photo, who, when and where, then Tickets, the
 // calendar, Share and Save. Escape, Back, a tap outside and a pull down
 // close it, as they close a show's.
-function ConcertSheet({ concert: c, age, onClose }) {
+function ConcertSheet({ concert: c, bill, age, onClose }) {
   const [photo, setPhoto] = useState(Boolean(c.image));
+  const where = whereOf(c, age);
   return createPortal(
-    <Modal title={c.artist} onClose={onClose} className="concert-sheet">
+    <Modal title={bill.headliner || c.artist} onClose={onClose} className="concert-sheet">
       <div className="detail-body concert-sheet-body">
         {photo && (
           <img className="concert-photo" src={c.image} alt="" onError={() => setPhoto(false)} />
         )}
         <Flags concert={c} />
+        <Support acts={bill.support} />
         <p className="concert-sheet-when">{FULL_DATE.format(dateOf(c))}</p>
-        {(whereOf(c) || age) && (
-          <p className="concert-meta">
-            {whereOf(c)}
-            {age && <span className="concert-age">{age}</span>}
-          </p>
-        )}
+        {where && <p className="concert-meta">{where}</p>}
         <div className="concert-sheet-actions">
           {c.ticketUrl && (
             <a className="primary-button" href={c.ticketUrl} target="_blank" rel="noreferrer">
@@ -180,13 +205,15 @@ function ConcertSheet({ concert: c, age, onClose }) {
   );
 }
 
-// A concert in a list: who (and the station's own shows over it), where and
-// the age limit. The row opens its sheet; press and hold opens its menu; the
-// heart, at its end, saves it.
+// A concert in a list: the station's own shows credited over the
+// headliner, the acts supporting it, then where and who may come. The row
+// opens its sheet; press and hold opens its menu; the heart, at its end,
+// saves it.
 export function ConcertRow({ concert: c }) {
   const age = useAge(c);
   const [open, setOpen] = useState(false);
-  const where = whereOf(c);
+  const bill = splitBill(c.artist);
+  const where = whereOf(c, age);
   const when = FULL_DATE.format(dateOf(c));
   const hold = holdable(() =>
     openHoldMenu({
@@ -229,24 +256,26 @@ export function ConcertRow({ concert: c }) {
         onClick={() => setOpen(true)}
       >
         <Flags concert={c} />
-        {/* "Artist / Artist": a line never starts with the slash. */}
-        <strong>{c.artist.replace(/ \/ /g, " / ")}</strong>
-        {(where || age) && (
-          <span className="concert-meta">
-            {where}
-            {age && <span className="concert-age">{age}</span>}
-          </span>
-        )}
+        <strong>{bill.headliner || c.artist}</strong>
+        <Support acts={bill.support} />
+        {where && <span className="concert-meta">{where}</span>}
         <span className="sr-only">, {when}</span>
       </button>
       <SaveButton type="concerts" item={c} name={`${c.artist} concert`} />
-      {open && <ConcertSheet concert={c} age={age} onClose={() => setOpen(false)} />}
+      {open && <ConcertSheet concert={c} bill={bill} age={age} onClose={() => setOpen(false)} />}
     </div>
   );
 }
 
-// Concerts under a heading for each day, which stays at the top while its
-// day's concerts scroll under it.
+// Within a day, the station's own shows first (Free at Noon, at noon, then
+// WXPN Welcomes), then the rest in the calendar's order.
+const rank = (c) => (c.freeAtNoon ? 0 : c.xpnWelcomes ? 1 : 2);
+
+// Concerts under a heading for each day: the day as a word in ink and its
+// date muted, larger than anything in the rows, and set off from the day
+// before by space and the list's only rule. It stays at the top while its
+// day's concerts scroll under it; on wide screens it sits in a column of
+// its own beside them.
 export function ConcertList({ concerts }) {
   const today = easternToday();
   // Favorites and Concerts both draw a list, and both stay in the page:
@@ -258,14 +287,23 @@ export function ConcertList({ concerts }) {
     if (day?.date !== c.date) days.push((day = { date: c.date, concerts: [] }));
     day.concerts.push(c);
   }
-  return days.map((day) => (
-    <section key={day.date} className="concert-day" aria-labelledby={`${list}-${day.date}`}>
-      <h2 id={`${list}-${day.date}`} className="concert-day-head">
-        <span>{dayHeading(day.date, today)}</span>
-      </h2>
-      {day.concerts.map((c) => (
-        <ConcertRow key={c.id} concert={c} />
-      ))}
-    </section>
-  ));
+  return days.map((day) => {
+    const head = dayHeading(day.date, today);
+    const shows = [...day.concerts].sort((a, b) => rank(a) - rank(b));
+    return (
+      <section key={day.date} className="concert-day" aria-labelledby={`${list}-${day.date}`}>
+        <h2 id={`${list}-${day.date}`} className="concert-day-head">
+          <span className="day-bar">
+            <span className="day-word">{head.word}</span>{" "}
+            <span className="day-date">{head.date}</span>
+          </span>
+        </h2>
+        <div className="concert-day-rows">
+          {shows.map((c) => (
+            <ConcertRow key={c.id} concert={c} />
+          ))}
+        </div>
+      </section>
+    );
+  });
 }
