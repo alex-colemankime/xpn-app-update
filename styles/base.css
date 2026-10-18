@@ -266,11 +266,12 @@ button,
 a {
   -webkit-tap-highlight-color: transparent;
   transition:
-    background 0.18s,
-    color 0.18s,
-    border-color 0.18s,
-    opacity 0.18s,
-    transform 0.12s;
+    background var(--dur-quick),
+    color var(--dur-quick),
+    border-color var(--dur-quick),
+    opacity var(--dur-quick),
+    transform var(--dur-press),
+    scale var(--dur-quick) var(--ease-out);
   touch-action: manipulation;
 }
 button:disabled {

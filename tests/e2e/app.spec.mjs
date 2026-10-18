@@ -72,34 +72,6 @@ test("each screen keeps its place, and its tab again goes to the top", async ({ 
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(300);
 });
 
-test("a swipe sideways moves between Favorites' tabs", async ({ page }, info) => {
-  test.skip(info.project.name !== "phone", "touch only");
-  await page.goto("/#/favorites");
-  const tabs = page.getByLabel("Favorites category");
-  const swipe = (from, to) =>
-    page.evaluate(
-      ([from, to]) => {
-        const el = document.querySelector('section[aria-label="Favorites"] .tab-pane');
-        const touch = (x) => new Touch({ identifier: 1, target: el, clientX: x, clientY: 500 });
-        el.dispatchEvent(new TouchEvent("touchstart", { touches: [touch(from)], bubbles: true }));
-        el.dispatchEvent(
-          new TouchEvent("touchend", { changedTouches: [touch(to)], bubbles: true }),
-        );
-      },
-      [from, to],
-    );
-  await expect(tabs.getByRole("button", { name: "Songs" })).toHaveAttribute("aria-pressed", "true");
-  await swipe(300, 120);
-  await expect(tabs.getByRole("button", { name: "Shows" })).toHaveAttribute("aria-pressed", "true");
-  await swipe(300, 120);
-  await expect(tabs.getByRole("button", { name: "Videos" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await swipe(120, 300);
-  await expect(tabs.getByRole("button", { name: "Shows" })).toHaveAttribute("aria-pressed", "true");
-});
-
 test("a show opens, can be followed, and closes", async ({ page }) => {
   await page.goto("/#/shows");
   // Shows opens on today's schedule; every show is under All shows.

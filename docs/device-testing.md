@@ -87,19 +87,25 @@ what you did, what happened, and a screen recording if you can.
 ## Gestures
 
 - [ ] Press and hold a song, a show (schedule, All shows, Archive), an
-      episode, a concert and a video: a menu rises with a light buzz, no
-      callout or text selection appears, and lifting the finger doesn't
-      also open the row. Scrolling over rows never opens one.
+      episode, a concert and a video: the row sinks a little as the hold
+      builds, a menu rises with a light buzz, no callout or text selection
+      appears, and lifting the finger doesn't also open the row. Scrolling
+      over rows never opens one.
 - [ ] Pull a show's sheet, the video page and a menu down from the top:
-      it follows the finger, closes when let go far enough, and settles
-      back from a nudge. Scrolling a long sheet still scrolls.
-- [ ] Flick up on the mini player (station and an episode): Listen, or the
-      episode, opens.
-- [ ] Shows › Schedule: swipe the list left and right to turn the day;
-      past Sunday it goes on to Archive, before Monday to All shows.
+      it follows the finger one to one and the backdrop lightens with it; a
+      tick marks the point where letting go closes it. A quick flick closes
+      it from anywhere; a nudge, or letting go while moving back up, springs
+      it back without a bounce. Catch it mid-flight and it stops under the
+      finger. Pulled up, it resists. Scrolling a long sheet still scrolls.
+- [ ] Haptics: choosing a station, a day or a view ticks (selection); play
+      and pause tap lightly; a hold buzzes once. Nothing buzzes in a browser.
+- [ ] Sideways drags do nothing but scroll: the schedule keeps its day and
+      view, the mini player opens only on a tap.
 - [ ] Pull down at the top of Listen, Concerts, Videos and Shows › Archive:
-      a spinner comes down, turns while the list loads, and goes. Scrolling
-      stays smooth, and in a browser the page itself doesn't reload.
+      the pull resists more as it goes, ticks once when far enough, and a
+      spinner turns while the list loads. Scrolling stays smooth, and in a
+      browser the page itself doesn't reload. (On iOS the native overscroll
+      bounce still shows under the pull; that gap is known.)
 
 ## The system
 

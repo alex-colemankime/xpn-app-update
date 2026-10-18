@@ -324,24 +324,3 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-
-/* A tab reached by a swipe (useSwipeTabs) slides in from the side the
-   finger came from; one chosen by its tab just appears. */
-.tab-pane[data-enter="1"] {
-  animation: pane-from-right 0.22s ease-out;
-}
-.tab-pane[data-enter="-1"] {
-  animation: pane-from-left 0.22s ease-out;
-}
-@keyframes pane-from-right {
-  from {
-    opacity: 0.4;
-    translate: 28px 0;
-  }
-}
-@keyframes pane-from-left {
-  from {
-    opacity: 0.4;
-    translate: -28px 0;
-  }
-}

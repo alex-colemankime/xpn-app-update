@@ -13,8 +13,8 @@ import { PlaylistSyncPrompt } from "../components/PlaylistSync.jsx";
 import { calendarIsNative, downloadIcs } from "../calendar.js";
 import { useFeatures } from "../features.js";
 import { savedShowGroups } from "../saved-shows.js";
+import { tap } from "../haptics.js";
 import { YouTubeSubscribe } from "../components/SocialLinks.jsx";
-import { useSwipeTabs } from "../hooks/useSwipeTabs.js";
 
 // Empty-state copy and the screen each category's call to action opens.
 // Concerts and videos say no more than their title.
@@ -90,16 +90,13 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
   // Until something is saved, search has nothing to work on.
   const anything = Boolean(q) || Object.values(items).some((list) => list.length);
 
-  // A category chosen by tab or by a swipe across the screen; a swipe also
-  // says which way the new one slides in.
-  const [enter, setEnter] = useState(0);
-  const choose = (next, direction = 0) => {
-    setEnter(direction);
+  // A category is chosen by its tab, and appears at once.
+  const choose = (next) => {
+    tap("selection");
     setType(next);
     setQuery("");
     setSongsShown(SONGS_PAGE);
   };
-  const swipe = useSwipeTabs(Object.keys(items), category, choose);
   // The app keeps Favorites alive behind the other tabs. Each time it comes
   // back to the front (`visit`, from App) its list is drawn afresh from what
   // is saved now, so a song hearted on Listen is there at once: iPhone's web
@@ -109,7 +106,6 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
   // same length and the app can return it to where it was scrolled.
   if (seenVisit !== visit) {
     setSeenVisit(visit);
-    setEnter(0);
   }
   // A search shows every match.
   const songsOnPage = q ? filtered : filtered.slice(0, songsShown);
@@ -127,7 +123,7 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
     <>
       {/* The tab bar (or sidebar) already says where this is. */}
       <h1 className="sr-only">Favorites</h1>
-      <div ref={swipe} className="swipe-tabs">
+      <div>
         <div className="toolbar">
           <Segmented
             label="Favorites category"
@@ -142,7 +138,7 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
             <SearchField value={query} onChange={setQuery} placeholder="Search your favorites" />
           )}
         </div>
-        <div key={`${category}-${visit}`} className="tab-pane" data-enter={enter || undefined}>
+        <div key={`${category}-${visit}`} className="tab-pane">
           <p className="sr-only" role="status">
             {filtered.length} saved {category}
             {q ? " match your search" : ""}

@@ -1,46 +1,64 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { swipeDirection } from "../hooks/useSwipe.js";
-import { stepper } from "../hooks/useSwipeTabs.js";
-import { dragCloses } from "../hooks/useSheetDrag.js";
+import { closeLine, releaseCloses } from "../hooks/useSheetDrag.js";
+import { createVelocityTracker, project, rubberband, springStep } from "../motion.js";
 
-test("a flick reads as the way it went, and only a clear one counts", () => {
-  assert.equal(swipeDirection({ dx: -120, dy: 10, ms: 200 }), "left");
-  assert.equal(swipeDirection({ dx: 120, dy: 0, ms: 200 }), "right");
-  assert.equal(
-    swipeDirection({ dx: 4, dy: -40, ms: 150 }, 32),
-    "up",
-    "the mini player's short flick",
-  );
-  assert.equal(swipeDirection({ dx: 4, dy: -40, ms: 150 }), "", "too short by default");
-  assert.equal(swipeDirection({ dx: 0, dy: 90, ms: 200 }), "down");
-  assert.equal(swipeDirection({ dx: -100, dy: 90, ms: 200 }), "", "a diagonal");
-  assert.equal(swipeDirection({ dx: -150, dy: 0, ms: 1200 }), "", "a slow drag");
+test("a throw comes to rest where a scroll view's would", () => {
+  assert.equal(project(0), 0);
+  // 1000 px/s at 0.998 per ms travels about 499px.
+  assert.ok(Math.abs(project(1000) - 499) < 1);
+  assert.ok(project(-1000) < 0, "upward throws go up");
 });
 
-test("a swipe steps through days or tabs, and says when there is nowhere to go", () => {
-  const days = ["Mon", "Tue", "Wed"];
-  const moves = [];
-  const onChange = (next, step) => moves.push([next, step]);
-  assert.equal(stepper(days, "Tue", onChange)("left"), true);
-  assert.equal(stepper(days, "Tue", onChange)("right"), true);
-  assert.equal(stepper(days, "Wed", onChange)("left"), false, "past the end: the tabs may use it");
-  assert.equal(stepper(days, "Mon", onChange)("right"), false);
-  assert.equal(stepper(days, "Mon", onChange)("up"), false, "not sideways");
-  assert.deepEqual(moves, [
-    ["Wed", 1],
-    ["Mon", -1],
-  ]);
+test("a pull past an edge resists more the further it goes, and never passes the size", () => {
+  assert.equal(rubberband(0, 600), 0);
+  const a = rubberband(50, 600);
+  const b = rubberband(200, 600);
+  assert.ok(a > 0 && a < 50, "it follows less than the finger");
+  assert.ok(b > a && b - a < 150, "and less again further out");
+  assert.ok(rubberband(100000, 600) < 600);
+  assert.equal(rubberband(-50, 600), -a, "the same either way");
 });
 
-test("a sheet closes when pulled far enough or flicked, and settles back otherwise", () => {
-  assert.equal(dragCloses({ dy: 200, ms: 600, height: 600 }), true, "a long pull");
-  assert.equal(dragCloses({ dy: 120, ms: 600, height: 600 }), false, "short of a quarter");
+test("the speed at let-go comes from the last moments only", () => {
+  const v = createVelocityTracker();
+  // A slow pull for half a second, then a quick flick.
+  for (let t = 0; t <= 500; t += 16) v.add(t, t * 0.1);
+  for (let t = 516; t <= 580; t += 16) v.add(t, 50 + (t - 500) * 2);
+  assert.ok(v.velocity() > 1500, "a slow pull that ends in a flick is a flick");
+  const w = createVelocityTracker();
+  // A fast start that then stops.
+  for (let t = 0; t <= 100; t += 16) w.add(t, t * 3);
+  for (let t = 116; t <= 400; t += 16) w.add(t, 300);
+  assert.equal(w.velocity(), 0, "a fast start that stopped is not");
+});
+
+test("a sheet closes when thrown or let go past the line, and settles back otherwise", () => {
+  const height = 600;
+  assert.ok(Math.abs(closeLine(height) - 168) < 1e-9);
+  assert.equal(closeLine(300), 96, "never less than the minimum");
+  assert.equal(releaseCloses({ y: 30, velocity: 0, height }), false, "a nudge");
+  assert.equal(releaseCloses({ y: 200, velocity: 0, height }), true, "a slow pull past the line");
+  assert.equal(releaseCloses({ y: 60, velocity: 900, height }), true, "a flick");
   assert.equal(
-    dragCloses({ dy: 100, ms: 300, height: 300 }),
-    true,
-    "past the minimum on a short sheet",
+    releaseCloses({ y: 250, velocity: -600, height }),
+    false,
+    "moving back up when let go",
   );
-  assert.equal(dragCloses({ dy: 60, ms: 80, height: 600 }), true, "a quick flick");
-  assert.equal(dragCloses({ dy: 20, ms: 10, height: 600 }), false, "a nudge");
+  assert.equal(releaseCloses({ y: 120, velocity: 120, height }), false, "short and slow");
+});
+
+test("the spring settles on its target, without overshoot when critically damped", () => {
+  let state = { value: 0, velocity: 0 };
+  let max = 0;
+  for (let i = 0; i < 240; i++) {
+    state = springStep({ ...state, to: 100, damping: 1, response: 0.35 }, 1 / 240);
+    max = Math.max(max, state.value);
+  }
+  for (let i = 0; i < 480; i++) {
+    state = springStep({ ...state, to: 100, damping: 1, response: 0.35 }, 1 / 240);
+    max = Math.max(max, state.value);
+  }
+  assert.ok(Math.abs(state.value - 100) < 0.5, "it arrives");
+  assert.ok(max <= 100.01, "and never passes it");
 });

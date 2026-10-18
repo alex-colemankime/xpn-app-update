@@ -154,3 +154,40 @@
     animation: none;
   }
 }
+
+/* A sheet being pulled down (hooks/useSheetDrag.js sets --sheet-pull, 0 at
+   rest to 1 off the screen) lets the page behind come back into view as it
+   goes, its backdrop following the finger with no easing of its own. */
+:is(.detail-dialog, .watch-page, .popover-menu)::backdrop {
+  opacity: calc(1 - var(--sheet-pull, 0));
+}
+:is(.detail-dialog, .watch-page, .popover-menu)[style*="--sheet-pull"]::backdrop {
+  transition: none;
+}
+
+/* Press and hold (hold.js): the row sinks a touch into a raised fill over
+   the 450ms the hold takes, deliberately, and the menu arrives with the
+   haptic as it completes. Let go early and it comes back at once. */
+@media (hover: none) {
+  [data-hold] {
+    transition:
+      background var(--dur-quick),
+      color var(--dur-quick),
+      border-color var(--dur-quick),
+      opacity var(--dur-quick),
+      transform var(--dur-press),
+      scale var(--dur-quick) var(--ease-out);
+  }
+  [data-hold][data-holding] {
+    scale: 0.98;
+    background: var(--soft-fill);
+    transition:
+      background 450ms var(--ease-in-out),
+      scale 450ms var(--ease-in-out);
+  }
+}
+@media (hover: none) and (prefers-reduced-motion: reduce) {
+  [data-hold][data-holding] {
+    scale: none;
+  }
+}

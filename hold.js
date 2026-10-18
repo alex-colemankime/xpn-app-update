@@ -44,8 +44,14 @@ export function startHold() {
   let press = null; // { el, x, y, timer }
   let fired = false;
   let lastTouch = 0;
+  // The row eases down into a raised fill while held (data-holding,
+  // styles/gestures.css), so the menu is the end of something visible; let
+  // go early and it springs back at once.
   const clear = () => {
-    if (press) clearTimeout(press.timer);
+    if (press) {
+      clearTimeout(press.timer);
+      delete press.el.dataset.holding;
+    }
     press = null;
   };
   document.addEventListener(
@@ -58,12 +64,14 @@ export function startHold() {
       const el = e.target.closest?.("[data-hold]");
       if (!el || !handlers.has(el) || e.target.closest("input, textarea, select")) return;
       const t = e.touches[0];
+      el.dataset.holding = "";
       press = {
         el,
         x: t.clientX,
         y: t.clientY,
         timer: setTimeout(() => {
           const open = handlers.get(el);
+          delete el.dataset.holding;
           press = null;
           if (!open || !el.isConnected) return;
           fired = true;

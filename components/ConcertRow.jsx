@@ -1,20 +1,11 @@
-import { useEffect, useId, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useSyncExternalStore } from "react";
 import { Icon, focusFirstItem, shareText } from "../ui.jsx";
 import { concertAge, requestAge, subscribeAges } from "../concerts.js";
 import { addToCalendar, calendarIsNative, downloadIcs, googleCalendarUrl } from "../calendar.js";
 import { showToast } from "../toast.js";
-import {
-  HeartBloom,
-  heartItem,
-  MenuHead,
-  MenuItem,
-  MenuSave,
-  SaveButton,
-  shareFrom,
-} from "./MusicRows.jsx";
+import { MenuHead, MenuItem, MenuSave, SaveButton, shareFrom } from "./MusicRows.jsx";
 import { holdable, openHoldMenu } from "../hold.js";
 import { useSheetDrag } from "../hooks/useSheetDrag.js";
-import { noDoubleClickSelect, useDoubleTap } from "../hooks/useDoubleTap.js";
 import { CALENDAR_URL } from "../links.js";
 
 // Age limits arrive one by one; each row listens for its own, so one arriving
@@ -116,18 +107,12 @@ const shareArgs = (c, date) => [
 ];
 
 // A concert in a list. Nothing in it leaves the app but Tickets (and the
-// calendar choices): a tap on the concert itself does nothing, a double tap
-// saves it, as a double tap on Listen's artwork saves the song, and press
-// and hold opens its menu. The heart and Share sit at its end.
+// calendar choices); press and hold opens its menu. The heart and Share sit
+// at its end.
 export function ConcertRow({ concert: c }) {
   const age = useAge(c);
   // Midday avoids the date shifting across a timezone boundary when shown.
   const date = new Date(`${c.date}T12:00:00`);
-  const [bloom, setBloom] = useState(0);
-  const onPointerUp = useDoubleTap(() => {
-    heartItem("concerts", c);
-    setBloom((n) => n + 1);
-  });
   // Where: the venue and its town (the region when the calendar names no
   // town). The dot stays with the word before it, so a line never starts
   // with one.
@@ -169,12 +154,7 @@ export function ConcertRow({ concert: c }) {
     }),
   );
   return (
-    <div
-      ref={hold}
-      className="concert-row"
-      onPointerUp={onPointerUp}
-      onMouseDown={noDoubleClickSelect}
-    >
+    <div ref={hold} className="concert-row">
       <div className="concert-date" aria-hidden="true">
         <span>{MONTH.format(date)}</span>
         <strong>{date.getDate()}</strong>
@@ -229,7 +209,6 @@ export function ConcertRow({ concert: c }) {
           <Icon name="shareAlt" size={19} />
         </button>
       </div>
-      <HeartBloom type="concerts" item={c} bloom={bloom} onEnd={() => setBloom(0)} size={64} />
     </div>
   );
 }
