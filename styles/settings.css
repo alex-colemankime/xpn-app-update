@@ -116,7 +116,7 @@
 .clock-hour,
 .clock-minute {
   transform-origin: 20px 20px;
-  transition: rotate 0.4s ease;
+  transition: rotate var(--dur-song) var(--ease-out);
 }
 .clock-hour {
   stroke-width: 3;
@@ -333,8 +333,8 @@ button.setting-row {
   background: var(--bg);
   border-radius: 50%;
   transition:
-    transform 0.15s,
-    background-color 0.15s;
+    transform var(--dur-quick),
+    background-color var(--dur-quick);
 }
 /* On: the station's orange, as everything that is on or is the thing to
    do, with its knob in the orange's own ink (as a checked box's tick and

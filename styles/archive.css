@@ -120,7 +120,7 @@
   background-size: calc(100% - 2 * var(--space-3)) 1px;
   background-position: 50% 100%;
   background-repeat: no-repeat;
-  transition: background-color 0.15s;
+  transition: background-color var(--dur-quick);
 }
 .archive-row[data-active] {
   background-color: color-mix(in srgb, var(--accent) 7%, var(--bg));
@@ -279,9 +279,6 @@
 .episode-actions .primary-button {
   flex: 1;
   min-height: 52px;
-}
-.episode-actions .primary-button[data-busy] {
-  animation: busy-pulse 0.9s ease-in-out infinite alternate;
 }
 .episode-actions .secondary-button {
   min-height: 52px;

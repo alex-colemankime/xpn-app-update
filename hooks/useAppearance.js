@@ -16,7 +16,14 @@ export function useAppearance() {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => {
       const theme = appearance === "system" ? (media.matches ? "dark" : "light") : appearance;
-      document.documentElement.dataset.theme = theme;
+      const root = document.documentElement;
+      if (root.dataset.theme !== theme) {
+        // A theme changes at once: nothing eases across it for the frame it
+        // takes (styles/base.css, data-theme-switch).
+        root.dataset.themeSwitch = "";
+        root.dataset.theme = theme;
+        requestAnimationFrame(() => requestAnimationFrame(() => delete root.dataset.themeSwitch));
+      }
       document
         .querySelector('meta[name="theme-color"]')
         ?.setAttribute("content", BACKGROUND[theme]);

@@ -244,9 +244,9 @@
   .player-bar {
     background-color: var(--surface);
     transition:
-      translate 0.25s ease-out,
-      opacity 0.2s ease-out,
-      visibility 0.25s;
+      translate var(--dur-menu) var(--ease-out),
+      opacity var(--dur-menu) var(--ease-out),
+      visibility var(--dur-menu);
   }
   :root[data-hero-visible] .player-bar:not([data-source="episode"]) {
     translate: 0 30%;

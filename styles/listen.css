@@ -166,9 +166,6 @@
   font-size: var(--text-body);
   font-weight: var(--weight-bold);
 }
-.hero-play[data-busy] {
-  animation: busy-pulse 0.9s ease-in-out infinite alternate;
-}
 /* Cast / AirPlay, one tap from the main action, as on a station's own app. */
 .hero-cast {
   display: grid;
@@ -179,7 +176,7 @@
   border-radius: var(--radius-m);
   background: var(--soft-fill);
   color: var(--text);
-  transition: background-color 0.15s;
+  transition: background-color var(--dur-quick);
 }
 .hero-cast:hover {
   background: var(--soft-fill-hover);

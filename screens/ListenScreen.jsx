@@ -71,7 +71,7 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
   const songKey = current ? `${current.date}-${current.time}-${current.title}` : streamId;
 
   return (
-    <section className="now-card" aria-label="Current song">
+    <section className="now-card" aria-label="Current song" data-playing={playing || undefined}>
       <OnAir
         onAirNow={onAirNow}
         playing={playing}

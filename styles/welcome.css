@@ -65,7 +65,7 @@
   border-radius: var(--radius-s);
   outline: 2.5px solid transparent;
   outline-offset: 2px;
-  transition: outline-color 0.15s;
+  transition: outline-color var(--dur-quick);
 }
 .welcome-show-text {
   display: grid;
@@ -215,7 +215,7 @@
   height: 4px;
   border-radius: var(--radius-full);
   background: var(--border);
-  transition: background-color 0.25s;
+  transition: background-color var(--dur-menu);
 }
 .welcome-bars i[data-on] {
   background: var(--select-ink);

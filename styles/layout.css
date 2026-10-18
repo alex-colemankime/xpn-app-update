@@ -136,7 +136,7 @@
   color: var(--donate-ink);
   font-size: var(--text-secondary);
   font-weight: var(--weight-bold);
-  transition: background-color 0.15s ease;
+  transition: background-color var(--dur-quick);
 }
 .topbar-donate:active span {
   transform: scale(0.97);
@@ -155,7 +155,7 @@
   color: var(--donate-ink);
   font-size: var(--text-secondary);
   font-weight: var(--weight-bold);
-  transition: background-color 0.15s ease;
+  transition: background-color var(--dur-quick);
 }
 /* Pressed, and under a pointer: the fill takes a little of its own ink (a
    touch deeper in light, lighter in dark), and the words keep 4.5:1. */
@@ -256,7 +256,7 @@ h1 {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.25s;
+  transition: transform var(--dur-menu) var(--ease-out);
 }
 .show-card-name {
   display: block;
@@ -474,7 +474,7 @@ h1 {
    raised paper's), so text and hearts keep their contrast. */
 .player-bar[data-tinted] {
   background-color: var(--bar-light);
-  transition: background-color 0.8s ease;
+  transition: background-color var(--dur-room) var(--ease-in-out);
 }
 :root[data-theme="dark"] .player-bar[data-tinted] {
   background-color: var(--bar-dark);
@@ -544,9 +544,6 @@ h1 {
   height: 6px;
   border-radius: 50%;
   background: currentColor;
-}
-.live-badge[data-state="live"] i {
-  animation: live-pulse 2s ease-in-out infinite;
 }
 .live-badge[data-state="error"] {
   background: color-mix(in srgb, var(--muted) 16%, transparent);
@@ -843,7 +840,7 @@ h1 {
   backdrop-filter: blur(12px);
   mask-image: linear-gradient(#000 60%, transparent);
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--dur-quick);
 }
 .status-scrim[data-on="true"] {
   opacity: 1;

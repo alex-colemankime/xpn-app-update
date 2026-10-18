@@ -90,9 +90,15 @@
 :root[data-art-wash][data-theme="dark"] {
   --bg: var(--wash-bg-dark, var(--paper));
 }
-html,
-body {
-  transition: background-color 0.8s ease;
+/* Only Listen's wash eases from one song's color to the next. A theme change
+   and leaving Listen are instant, as a tab change is. */
+:root[data-art-wash],
+:root[data-art-wash] body {
+  transition: background-color var(--dur-room) var(--ease-in-out);
+}
+:root[data-theme-switch],
+:root[data-theme-switch] * {
+  transition: none !important;
 }
 
 :root {

@@ -71,8 +71,8 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
   font-weight: var(--weight-semibold);
   white-space: nowrap;
   transition:
-    background-color 0.15s,
-    color 0.15s;
+    background-color var(--dur-quick),
+    color var(--dur-quick);
 }
 .segmented-pill button {
   white-space: normal;
