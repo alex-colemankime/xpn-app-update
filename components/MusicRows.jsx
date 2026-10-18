@@ -147,10 +147,10 @@ export function openSongSheet(track, stationLabel, from) {
 }
 
 // The "…" beside Listen's song: its sheet, hanging from the button.
-export function SongMenu({ track, stationLabel = "WXPN" }) {
+export function SongMenu({ track, stationLabel = "WXPN", className = "icon-button" }) {
   return (
     <button
-      className="icon-button"
+      className={className}
       aria-label={`More for ${track.title}`}
       aria-haspopup="dialog"
       onClick={(e) => openSongSheet(track, stationLabel, e.currentTarget)}
@@ -307,8 +307,13 @@ export const showHold = (show, onOpen) =>
     }),
   );
 
-export const SaveSong = ({ track }) => (
-  <SaveButton type="songs" item={{ ...track, id: songId(track) }} name={track.title} />
+export const SaveSong = ({ track, className }) => (
+  <SaveButton
+    type="songs"
+    item={{ ...track, id: songId(track) }}
+    name={track.title}
+    className={className}
+  />
 );
 
 // Saves a song without its button (a double tap on Listen's artwork): saves

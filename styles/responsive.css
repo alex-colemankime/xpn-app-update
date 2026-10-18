@@ -107,10 +107,10 @@
     margin: 0 auto var(--space-4);
   }
   .now-controls .hero-play,
-  .hero-cast {
+  .hero-key {
     min-height: 46px;
   }
-  .hero-cast {
+  .hero-key {
     width: 46px;
   }
   .station-switcher.segmented button {
