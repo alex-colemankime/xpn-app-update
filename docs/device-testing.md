@@ -100,8 +100,10 @@ what you did, what happened, and a screen recording if you can.
       it from anywhere; a nudge, or letting go while moving back up, springs
       it back without a bounce. Catch it mid-flight and it stops under the
       finger. Pulled up, it resists. Scrolling a long sheet still scrolls.
-- [ ] Haptics: choosing a station, a day or a view ticks (selection); play
-      and pause tap lightly; a hold buzzes once. Nothing buzzes in a browser.
+- [ ] Haptics: choosing a station, a day or a view ticks (selection); play,
+      pause and a heart tap lightly; a hold buzzes once; skipping in an
+      episode doesn't. In a browser, ticks never buzz (Chrome on Android
+      gives a very short vibration for the taps).
 - [ ] Sideways drags do nothing but scroll: the schedule keeps its day and
       view, the mini player opens only on a tap.
 - [ ] Pull down at the top of Listen, Concerts, Videos and Shows › Archive:

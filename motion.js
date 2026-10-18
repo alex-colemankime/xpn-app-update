@@ -24,9 +24,11 @@ export function rubberband(overshoot, dimension, constant = 0.55) {
   );
 }
 
-// The finger's speed (px/s) when it lets go, from its last 80ms of movement
-// only: a slow pull that ends in a flick is a flick, and a fast start that
-// stopped is not.
+// The finger's speed (px/s) when it lets go, from its last 80ms only: a slow
+// pull that ends in a flick is a flick, and a fast start that stopped is
+// not. A finger held still sends no moves, so `velocity(now)` takes the
+// moment it let go: the finger is where it last moved to, and any time it
+// rested there counts.
 export function createVelocityTracker(windowMs = 80) {
   let samples = [];
   return {
@@ -34,12 +36,15 @@ export function createVelocityTracker(windowMs = 80) {
       samples.push({ time, position });
       while (samples.length > 2 && time - samples[0].time > windowMs) samples.shift();
     },
-    velocity() {
-      if (samples.length < 2) return 0;
-      const first = samples[0];
+    velocity(now) {
+      if (!samples.length) return 0;
       const last = samples[samples.length - 1];
-      const ms = last.time - first.time;
-      return ms > 0 ? ((last.position - first.position) / ms) * 1000 : 0;
+      const end = now > last.time ? { time: now, position: last.position } : last;
+      const recent = samples.filter((s) => end.time - s.time <= windowMs && s !== end);
+      if (!recent.length) return 0;
+      const first = recent[0];
+      const ms = end.time - first.time;
+      return ms > 0 ? ((end.position - first.position) / ms) * 1000 : 0;
     },
     reset() {
       samples = [];

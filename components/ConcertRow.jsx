@@ -249,6 +249,9 @@ export function ConcertRow({ concert: c }) {
 // day's concerts scroll under it.
 export function ConcertList({ concerts }) {
   const today = easternToday();
+  // Favorites and Concerts both draw a list, and both stay in the page:
+  // each list's headings get ids of their own.
+  const list = useId();
   const days = [];
   for (const c of concerts) {
     let day = days[days.length - 1];
@@ -256,8 +259,8 @@ export function ConcertList({ concerts }) {
     day.concerts.push(c);
   }
   return days.map((day) => (
-    <section key={day.date} className="concert-day" aria-labelledby={`day-${day.date}`}>
-      <h2 id={`day-${day.date}`} className="concert-day-head">
+    <section key={day.date} className="concert-day" aria-labelledby={`${list}-${day.date}`}>
+      <h2 id={`${list}-${day.date}`} className="concert-day-head">
         <span>{dayHeading(day.date, today)}</span>
       </h2>
       {day.concerts.map((c) => (

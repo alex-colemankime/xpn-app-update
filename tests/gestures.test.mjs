@@ -33,6 +33,21 @@ test("the speed at let-go comes from the last moments only", () => {
   assert.equal(w.velocity(), 0, "a fast start that stopped is not");
 });
 
+test("a pull that stops before the finger lifts isn't a throw, though no move came between", () => {
+  const v = createVelocityTracker();
+  // 120px in 100ms, then the finger rests (a resting finger sends no moves)
+  // and lifts a second later.
+  for (let t = 0; t <= 100; t += 16) v.add(t, t * 1.2);
+  assert.ok(v.velocity(100) > 1000, "lifted at once, it is a throw");
+  assert.equal(v.velocity(1100), 0, "lifted after a rest, it is not");
+  assert.ok(v.velocity(140) < v.velocity(100), "a short rest slows it");
+  assert.equal(
+    releaseCloses({ y: 120, velocity: v.velocity(1100), height: 523 }),
+    false,
+    "and the sheet springs back",
+  );
+});
+
 test("a sheet closes when thrown or let go past the line, and settles back otherwise", () => {
   const height = 600;
   assert.ok(Math.abs(closeLine(height) - 168) < 1e-9);

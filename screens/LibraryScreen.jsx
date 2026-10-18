@@ -92,15 +92,6 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
     setType(next);
     setQuery("");
   };
-  // The app keeps Favorites alive behind the other tabs. Each time it comes
-  // back to the front (`visit`, from App) its list is drawn afresh from what
-  // is saved now, so a song hearted on Listen is there at once: iPhone's web
-  // view could keep showing the list as it was until the tab was switched.
-  const [seenVisit, setSeenVisit] = useState(visit);
-  if (seenVisit !== visit) {
-    setSeenVisit(visit);
-  }
-
   const shareSongs = async () =>
     showToast(
       await shareText(
@@ -128,6 +119,11 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
             <SearchField value={query} onChange={setQuery} placeholder="Search your favorites" />
           )}
         </div>
+        {/* The app keeps Favorites alive behind the other tabs. Each time it
+            comes back to the front (`visit`, from App) its list is drawn
+            afresh from what is saved now, so a song hearted on Listen is
+            there at once: iPhone's web view could keep showing the list as
+            it was until the tab was switched. */}
         <div key={`${category}-${visit}`} className="tab-pane">
           <p className="sr-only" role="status">
             {filtered.length} saved {category}

@@ -35,15 +35,20 @@ export function PullToRefresh({ onRefresh }) {
     let start = null;
     let busy = false;
     let frame = 0;
-    const show = (px) => {
+    // `pull`, while a finger is pulling: the pull, so it ticks only once.
+    const show = (px, pull = null) => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         spinner.style.setProperty("--pull", `${px}px`);
         spinner.style.setProperty("--turn", `${px * 4}deg`);
-        // A tick as it arms, the moment letting go would load.
+        // A tick the first time it arms, the moment letting go would load;
+        // easing back and pulling past it again in the same pull doesn't.
         if (px >= READY && !("ready" in spinner.dataset)) {
           spinner.dataset.ready = "";
-          tap("selection");
+          if (pull && !pull.ticked) {
+            pull.ticked = true;
+            tap("selection");
+          }
         } else if (px < READY) delete spinner.dataset.ready;
       });
     };
@@ -70,7 +75,7 @@ export function PullToRefresh({ onRefresh }) {
         spinner.dataset.state = "pulling";
       }
       start.dy = dy;
-      show(pullDistance(dy));
+      show(pullDistance(dy), start);
     };
     const cancel = () => {
       if (start?.on) {
