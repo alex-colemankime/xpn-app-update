@@ -99,11 +99,19 @@ const replace = (route, state = { depth: depth() }) => {
   announce();
 };
 
-// Screen changes cross-fade where the View Transitions API exists and the
-// listener has not asked for reduced motion; elsewhere they are instant.
+// Changing tabs happens dozens of times a session, so it is instant, as a
+// phone's own tab bars are. The Android app alone uses Material's quick
+// fade-through (styles/states.css), as Android's own apps do. Never under
+// reduced motion, and never where the View Transitions API is missing.
+const android = () => window.Capacitor?.getPlatform?.() === "android";
 function withTransition(update) {
   const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  if (!document.startViewTransition || reduced || document.visibilityState === "hidden")
+  if (
+    !android() ||
+    !document.startViewTransition ||
+    reduced ||
+    document.visibilityState === "hidden"
+  )
     return update();
   // flushSync renders the new screen inside the transition's snapshot window.
   const transition = document.startViewTransition(() => flushSync(update));

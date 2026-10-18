@@ -19,6 +19,15 @@ export function isDonatePage(url) {
 // "header", "sidebar", "settings", "banner" or "notification".
 export const trackDonate = (place) => track("donate_click", { place });
 export const PLAYLIST_URL = "https://xpn.org/wxpn-playlists/";
+// A song on Spotify and Apple Music: their search for it (the playlist
+// feed has no ids of theirs). Both are universal links, so they're plain
+// links that leave the app (target="_blank"): Capacitor hands those to the
+// system (iOS opens them with UIApplication.open, Android with a VIEW
+// intent), and the system opens the service's app where it is installed,
+// or else the browser. openPage's browser view would keep them on the web.
+export const spotifySearch = (q) => `https://open.spotify.com/search/${encodeURIComponent(q)}`;
+export const appleMusicSearch = (q) =>
+  `https://music.apple.com/us/search?term=${encodeURIComponent(q)}`;
 export const CALENDAR_URL = "https://xpn.org/concert-and-events/";
 export const SUBMIT_CONCERT_URL = "https://xpn.org/concert-event-submit/";
 export const LISTEN_URL = "https://xpn.org/listen/";

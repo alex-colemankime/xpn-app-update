@@ -9,28 +9,26 @@
 .station-banner {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 10px var(--page-gutter);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--page-gutter);
   background-color: color-mix(in srgb, var(--action) 15%, var(--bg));
   color: var(--text);
   border-bottom: 1px solid color-mix(in srgb, var(--action) 32%, var(--bg));
-}
-.station-banner[data-kind="live"] {
-  background-color: var(--text);
-  color: var(--bg);
-  border-bottom-color: var(--text);
 }
 /* A live video: the band itself is the button, its words lined up with the
    page and "Watch" at the end like a row's chevron. */
 .station-banner[data-kind="live"] {
   padding-block: 0;
+  background-color: var(--text);
+  color: var(--bg);
+  border-bottom-color: var(--text);
 }
 .station-banner-watch {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   min-height: 52px;
   color: inherit;
   text-align: left;
@@ -38,10 +36,10 @@
 .station-banner-go {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--space-1);
   flex-shrink: 0;
-  font-size: 0.875rem;
-  font-weight: 700;
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-bold);
 }
 @media (hover: hover) {
   .station-banner[data-kind="live"]:has(.station-banner-watch:hover) {
@@ -55,9 +53,9 @@
   /* Fill each line: evening out the lines ("pretty") left a gap before the
      close key that read as the text squeezed to one side. */
   text-wrap: wrap;
-  font-size: 0.875rem;
-  font-weight: 550;
-  line-height: 1.35;
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-body);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -69,20 +67,20 @@
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 10px;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-m);
   background: var(--action);
   color: var(--action-ink);
-  font-size: 0.875rem;
-  font-weight: 700;
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-bold);
   white-space: nowrap;
 }
-/* A full-size touch target around the compact button. */
+/* A full-size touch target around the compact button: 44px tall. */
 .station-banner-action::after {
   content: "";
   position: absolute;
-  inset: -3px 0;
+  inset: calc(-1 * var(--space-1)) 0;
 }
 @media (hover: hover) {
   .station-banner-action:hover {
@@ -98,27 +96,25 @@
 .station-banner-close {
   width: 44px;
   height: 44px;
-  margin-right: -8px;
+  margin-right: calc(-1 * var(--space-2));
   color: inherit;
   opacity: 0.75;
 }
-.station-banner-live,
-.live-card .eyebrow {
+/* LIVE as a small red tag on the dark band, the same tag as the player's
+   (.live-badge). */
+.station-banner-live {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-}
-/* LIVE as a small red tag on the dark band. */
-.station-banner-live {
+  gap: var(--space-1);
   flex-shrink: 0;
-  padding: 2px 8px 2px 7px;
-  border-radius: 5px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-s);
   background: #d93d1e;
   color: #fff;
-  font-size: 0.8125rem;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-caption);
+  letter-spacing: var(--tracking-caption);
 }
 
 .station-banner-live i,
@@ -127,7 +123,6 @@
   height: 7px;
   border-radius: 50%;
   background: #ff5a36;
-  animation: live-pulse 1.6s ease-in-out infinite;
 }
 .station-banner-live i {
   width: 6px;
@@ -138,10 +133,10 @@
 .live-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin: 0 0 24px;
-  padding: 12px 14px 12px 12px;
-  border-radius: 12px;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-6);
+  padding: var(--space-3);
+  border-radius: var(--radius-m);
   background: var(--surface);
 }
 .live-card > img {
@@ -149,47 +144,54 @@
   height: 56px;
   flex-shrink: 0;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
 }
 .live-card > div {
   flex: 1;
   min-width: 0;
 }
+/* "Live now" or when it starts, after a dot while it is live, like the
+   on-air band's label. */
 .live-card .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--accent);
 }
 .live-card h2 {
-  margin: 2px 0 1px;
-  font-size: 1.0625rem;
-  font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+  margin: 2px 0;
+  font-size: var(--text-body);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-body);
 }
 .live-card p {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   color: var(--muted);
 }
 /* The same compact button as Watch in the on-air band. */
 .live-card > button {
   flex-shrink: 0;
-  min-height: 40px;
-  padding: 0 14px;
-  gap: 7px;
-  border-radius: 10px;
-  font-size: 0.9375rem;
-  font-weight: 700;
+  min-height: 44px;
+  padding: 0 var(--space-4) 0 var(--space-3);
+  gap: var(--space-2);
+  border-radius: var(--radius-m);
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-bold);
 }
 @media (max-width: 767px) {
   .station-banner {
-    gap: 10px;
-    padding: 8px var(--edge-right) 8px var(--edge-left);
+    gap: var(--space-2);
+    padding: var(--space-2) var(--edge-right) var(--space-2) var(--edge-left);
   }
   /* A band of its own under the station tabs, edge to edge like the
-     on-air band that follows it. */
+     on-air band that follows it. It takes back the space under the tabs
+     (.listen-heading), and leaves the same space under itself for the
+     on-air band to take back, so the two bands meet. */
   .live-card {
-    margin: -18px calc(-1 * var(--edge-right)) 18px calc(-1 * var(--edge-left));
-    padding: 12px var(--edge-right) 12px var(--edge-left);
+    margin: calc(-1 * var(--space-4)) calc(-1 * var(--edge-right)) var(--space-4)
+      calc(-1 * var(--edge-left));
+    padding: var(--space-3) var(--edge-right) var(--space-3) var(--edge-left);
     border-radius: 0;
     border-bottom: 1px solid var(--border);
   }
@@ -203,11 +205,11 @@
 .offline-notice {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2);
   margin: 0;
-  padding: 10px var(--edge-right) 10px var(--edge-left);
+  padding: var(--space-3) var(--edge-right) var(--space-3) var(--edge-left);
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
 }

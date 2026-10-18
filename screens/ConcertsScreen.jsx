@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Icon, Empty, PromptLink, SearchField, SkeletonList } from "../ui.jsx";
+import { Icon, Empty, Modal, PromptLink, SearchField, SkeletonList } from "../ui.jsx";
 import { useFavoriteItems } from "../favorites.js";
-import { ConcertRow } from "../components/ConcertRow.jsx";
+import { ConcertList } from "../components/ConcertRow.jsx";
 import { RangeCalendar } from "../components/RangeCalendar.jsx";
 import { calendarEnd, easternToday, filterConcerts, rangeLabel } from "../concerts.js";
 import { CALENDAR_URL, SUBMIT_CONCERT_URL } from "../links.js";
@@ -9,13 +9,16 @@ import { mediumDay } from "../time.js";
 import { NewsletterPrompt } from "../components/Newsletter.jsx";
 import { PullToRefresh } from "../components/PullToRefresh.jsx";
 
-// Ten concerts at first, ten more with each "Load more".
-const PAGE = 10;
+// Twenty concerts at first, twenty more with each "Load more".
+const PAGE = 20;
 
-// Quick ranges, as on the calendar on xpn.org. None chosen: every date.
-const WHEN = [
-  { id: "today", label: "Tonight" },
-  { id: "weekend", label: "This weekend" },
+// The quick filters, as chips under the search: two date ranges (one at a
+// time, as are Next 7 days and dates picked in Filters) and the station's
+// own shows. None chosen: every date, every concert.
+const NEXT_WEEK = "Next 7 days";
+const TAG_CHIPS = [
+  { id: "welcomes", label: "WXPN Welcomes" },
+  { id: "fan", label: "Free at Noon" },
 ];
 const NO_RANGE = { from: "", to: "" };
 
@@ -31,29 +34,12 @@ const CalendarEmpty = ({ title, children }) => (
   </div>
 );
 
-// When: the quick ranges, one at a time (the chosen one again lets it go).
-function WhenGroup({ value, onChange }) {
-  return (
-    <div className="filter-checks when-checks" role="group" aria-label="When">
-      {WHEN.map((o) => {
-        const on = value === o.id;
-        return (
-          <button
-            key={o.id}
-            className="filter-check"
-            aria-pressed={on}
-            onClick={() => onChange(on ? "all" : o.id)}
-          >
-            <span className="filter-box round" aria-hidden="true">
-              {on && <Icon name="check" size={14} />}
-            </span>
-            {o.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
+// One quick filter: on or off, in ink when on.
+const Chip = ({ on, onClick, children }) => (
+  <button className="chip" aria-pressed={on} onClick={onClick}>
+    {children}
+  </button>
+);
 
 // Where and what: a list of choices, any number at once, each with a box
 // that takes a check.
@@ -97,11 +83,6 @@ export function ConcertsScreen({ result }) {
   const counts = new Map();
   for (const c of concerts) for (const r of c.regions) counts.set(r, (counts.get(r) || 0) + 1);
   const regionOptions = [...counts].sort((a, b) => b[1] - a[1]).map(([r]) => ({ id: r, label: r }));
-  const tagOptions = [
-    { id: "welcomes", label: "WXPN Welcomes" },
-    { id: "fan", label: "Free at Noon" },
-    ...(saved.length ? [{ id: "saved", label: "Saved" }] : []),
-  ];
 
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const filtered = filterConcerts(concerts, {
@@ -122,24 +103,31 @@ export function ConcertsScreen({ result }) {
     setShown(PAGE);
   };
   const narrowed = Boolean(words.length || when !== "all" || regions.length || tags.length);
-  const active = (when !== "all" ? 1 : 0) + regions.length + tags.length;
+  // What Filters holds that is in use: Next 7 days or picked dates, the
+  // regions, and Saved.
+  const inSheet =
+    (when === "week" || when === "range" ? 1 : 0) +
+    regions.length +
+    (tags.includes("saved") ? 1 : 0);
   // A new filter starts the list from the top.
   const change = (setter) => (value) => {
     setter(value);
     setShown(PAGE);
   };
+  // A date filter replaces any other (the chosen one again lets it go).
+  const chooseWhen = (id) => {
+    change(setWhen)(when === id ? "all" : id);
+    setRange(NO_RANGE);
+  };
+  const toggleTag = (id) =>
+    change(setTags)(tags.includes(id) ? tags.filter((t) => t !== id) : [...tags, id]);
   const visible = filtered.slice(0, shown);
 
   let body;
   if (source === "loading") {
     // Rows in the shape of the listings, so the list appears in place.
     body = (
-      <SkeletonList
-        label="Loading concerts…"
-        count={6}
-        rowClass="track-row concert-skeleton"
-        artClass="skeleton-date"
-      />
+      <SkeletonList label="Loading concerts…" count={6} rowClass="track-row concert-skeleton" />
     );
   } else if (source === "unconfigured") {
     body = (
@@ -195,9 +183,7 @@ export function ConcertsScreen({ result }) {
             </a>
           </p>
         )}
-        {visible.map((c) => (
-          <ConcertRow key={c.id} concert={c} />
-        ))}
+        <ConcertList concerts={visible} />
         {filtered.length > shown && (
           <div className="list-more">
             <button className="text-button" onClick={() => setShown(shown + PAGE)}>
@@ -234,86 +220,37 @@ export function ConcertsScreen({ result }) {
       {concerts.length > 0 && (
         <div className="concert-filters">
           <SearchField value={query} onChange={change(setQuery)} placeholder="Artist or venue" />
-          <button
-            className="filter-button"
-            aria-expanded={filtersOpen}
-            aria-controls="concert-filters"
-            onClick={() => setFiltersOpen(!filtersOpen)}
-          >
-            <Icon name="filter" size={18} />
-            Filter
-            {active > 0 && <span className="filter-count">{active}</span>}
-            {/* The dates in use, so they're known with the panel closed. */}
-            {when !== "all" && (
-              <span className="filter-when">
-                {when === "range" ? rangeLabel(range) : WHEN.find((o) => o.id === when)?.label}
-              </span>
-            )}
-            <Icon name="chevD" size={16} />
-          </button>
-          {filtersOpen && (
-            <div className="filter-options" id="concert-filters">
-              <div>
-                <p className="filter-label">When</p>
-                <WhenGroup
-                  value={when === "range" ? "" : when}
-                  onChange={(next) => {
-                    change(setWhen)(next);
-                    setRange(NO_RANGE);
-                  }}
-                />
-              </div>
-              <div>
-                <p className="filter-label">
-                  Dates
-                  {when === "range" && <span> · {rangeLabel(range)}</span>}
-                </p>
-                <RangeCalendar
-                  from={range.from}
-                  to={range.to}
-                  min={today}
-                  max={calendarEnd(today)}
-                  onChange={(next) => {
-                    change(setRange)(next);
-                    setWhen(next.from ? "range" : "all");
-                  }}
-                />
-              </div>
-              {regionOptions.length > 0 && (
-                <div>
-                  <p className="filter-label">Where</p>
-                  <CheckGroup
-                    label="Region"
-                    options={regionOptions}
-                    value={regions}
-                    onChange={change(setRegions)}
-                  />
-                </div>
-              )}
-              <div>
-                <p className="filter-label">Show only</p>
-                <CheckGroup
-                  label="Concert type"
-                  options={tagOptions}
-                  value={tags}
-                  onChange={change(setTags)}
-                />
-              </div>
-              <div className="filter-actions">
-                {active > 0 && (
-                  <button className="text-button" onClick={reset}>
-                    Clear filters
-                  </button>
-                )}
-                <button className="text-button filter-done" onClick={() => setFiltersOpen(false)}>
-                  Done
-                </button>
-              </div>
-            </div>
-          )}
+          <div className="concert-chips" role="group" aria-label="Filter concerts">
+            <Chip on={when === "today"} onClick={() => chooseWhen("today")}>
+              Tonight
+            </Chip>
+            <Chip on={when === "weekend"} onClick={() => chooseWhen("weekend")}>
+              This weekend
+            </Chip>
+            {TAG_CHIPS.map((t) => (
+              <Chip key={t.id} on={tags.includes(t.id)} onClick={() => toggleTag(t.id)}>
+                {t.label}
+              </Chip>
+            ))}
+            <button
+              className="chip"
+              aria-haspopup="dialog"
+              aria-pressed={inSheet > 0}
+              onClick={() => setFiltersOpen(true)}
+            >
+              <Icon name="filter" size={16} />
+              Filters
+              {inSheet > 0 && <span className="filter-count">{inSheet}</span>}
+            </button>
+            <span className="concert-chips-fade" aria-hidden="true" />
+          </div>
           <p className="concert-count">
             <span role="status">
               {filtered.length} {filtered.length === 1 ? "concert" : "concerts"}
+              {/* The dates in use, so they're known with Filters closed. */}
+              {(when === "week" || when === "range") && (
+                <> · {when === "range" ? rangeLabel(range) : NEXT_WEEK}</>
+              )}
             </span>
             {narrowed && (
               <button className="text-button" onClick={reset}>
@@ -322,6 +259,66 @@ export function ConcertsScreen({ result }) {
             )}
           </p>
         </div>
+      )}
+      {filtersOpen && (
+        <Modal title="Filters" onClose={() => setFiltersOpen(false)} className="filter-sheet">
+          <div className="detail-body filter-options">
+            <div>
+              <p className="filter-label">
+                Dates
+                {when === "range" && <span> · {rangeLabel(range)}</span>}
+              </p>
+              <CheckGroup
+                label="When"
+                options={[{ id: "week", label: NEXT_WEEK }]}
+                value={when === "week" ? ["week"] : []}
+                onChange={() => chooseWhen("week")}
+              />
+              <RangeCalendar
+                from={range.from}
+                to={range.to}
+                min={today}
+                max={calendarEnd(today)}
+                onChange={(next) => {
+                  change(setRange)(next);
+                  setWhen(next.from ? "range" : "all");
+                }}
+              />
+            </div>
+            {regionOptions.length > 0 && (
+              <div>
+                <p className="filter-label">Where</p>
+                <CheckGroup
+                  label="Region"
+                  options={regionOptions}
+                  value={regions}
+                  onChange={change(setRegions)}
+                />
+              </div>
+            )}
+            {saved.length > 0 && (
+              <div>
+                <p className="filter-label">Show only</p>
+                <CheckGroup
+                  label="Saved"
+                  options={[{ id: "saved", label: "Saved" }]}
+                  value={tags.includes("saved") ? ["saved"] : []}
+                  onChange={() => toggleTag("saved")}
+                />
+              </div>
+            )}
+            <div className="filter-actions">
+              {narrowed && (
+                <button className="text-button" onClick={reset}>
+                  Clear filters
+                </button>
+              )}
+              <button className="primary-button" onClick={() => setFiltersOpen(false)}>
+                Show {filtered.length} {filtered.length === 1 ? "concert" : "concerts"}
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
       {body}
     </>

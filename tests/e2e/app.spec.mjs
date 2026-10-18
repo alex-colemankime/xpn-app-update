@@ -51,7 +51,10 @@ test("a double tap on the artwork hearts the song, and never unhearts it", async
 test("each screen keeps its place, and its tab again goes to the top", async ({ page }) => {
   await page.goto("/#/shows");
   const nav = page.getByRole("navigation");
-  await expect(page.locator(".schedule-row").first()).toBeVisible();
+  // All shows, which is long every day of the week (today's schedule can be
+  // too short to scroll 400px on a weekend).
+  await page.getByLabel("Browse shows").getByRole("button", { name: "All shows" }).click();
+  await expect(page.locator(".show-card").first()).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 400));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(400);
   await nav.getByRole("button", { name: "Favorites", exact: true }).click();
@@ -67,34 +70,6 @@ test("each screen keeps its place, and its tab again goes to the top", async ({ 
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   await page.goBack();
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(300);
-});
-
-test("a swipe sideways moves between Favorites' tabs", async ({ page }, info) => {
-  test.skip(info.project.name !== "phone", "touch only");
-  await page.goto("/#/favorites");
-  const tabs = page.getByLabel("Favorites category");
-  const swipe = (from, to) =>
-    page.evaluate(
-      ([from, to]) => {
-        const el = document.querySelector('section[aria-label="Favorites"] .tab-pane');
-        const touch = (x) => new Touch({ identifier: 1, target: el, clientX: x, clientY: 500 });
-        el.dispatchEvent(new TouchEvent("touchstart", { touches: [touch(from)], bubbles: true }));
-        el.dispatchEvent(
-          new TouchEvent("touchend", { changedTouches: [touch(to)], bubbles: true }),
-        );
-      },
-      [from, to],
-    );
-  await expect(tabs.getByRole("button", { name: "Songs" })).toHaveAttribute("aria-pressed", "true");
-  await swipe(300, 120);
-  await expect(tabs.getByRole("button", { name: "Shows" })).toHaveAttribute("aria-pressed", "true");
-  await swipe(300, 120);
-  await expect(tabs.getByRole("button", { name: "Videos" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await swipe(120, 300);
-  await expect(tabs.getByRole("button", { name: "Shows" })).toHaveAttribute("aria-pressed", "true");
 });
 
 test("a show opens, can be followed, and closes", async ({ page }) => {
@@ -376,11 +351,8 @@ test("a notice whose drag is cancelled still takes the first tap on Undo", async
   await expect(row).toBeVisible();
 });
 
-test("Favorites comes back with as many songs as were showing, where it was", async ({
-  page,
-  context,
-}) => {
-  // Twelve saved songs: five show, then Load more.
+test("Favorites shows every saved song, and comes back where it was", async ({ page, context }) => {
+  // Twelve saved songs, every one shown.
   await context.addInitScript(() => {
     const songs = {};
     for (let i = 1; i <= 12; i++) {
@@ -393,15 +365,13 @@ test("Favorites comes back with as many songs as were showing, where it was", as
   const nav = page.getByRole("navigation");
   const tab = (name) => nav.getByRole("button", { name, exact: true });
   const rows = page.getByRole("region", { name: "Favorites" }).locator(".saved-songs > .track-row");
-  await expect(rows).toHaveCount(5);
-  await page.getByRole("button", { name: "Load more songs" }).click();
-  await expect(rows).toHaveCount(10);
+  await expect(rows).toHaveCount(12);
   // Down to the tenth song, as far as the page goes on this screen.
   await rows.nth(9).scrollIntoViewIfNeeded();
   const place = await page.evaluate(() => Math.round(window.scrollY));
   expect(place).toBeGreaterThan(0);
   await tab("Shows").click();
   await tab("Favorites").click();
-  await expect(rows).toHaveCount(10);
+  await expect(rows).toHaveCount(12);
   await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBe(place);
 });

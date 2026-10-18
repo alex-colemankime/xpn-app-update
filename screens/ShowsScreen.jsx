@@ -6,8 +6,7 @@ import { ShowCard, showHold } from "../components/MusicRows.jsx";
 import { useNow } from "../hooks/useNow.js";
 import { ArchiveList } from "../components/Archive.jsx";
 import { useFeatures } from "../features.js";
-import { stepper, useSwipeTabs } from "../hooks/useSwipeTabs.js";
-import { useSwipe } from "../hooks/useSwipe.js";
+import { tap } from "../haptics.js";
 import { PullToRefresh } from "../components/PullToRefresh.jsx";
 import { loadArchive } from "../archive.js";
 
@@ -35,22 +34,17 @@ export function ShowsScreen({ onOpen }) {
     setDay(today);
   }
   const [query, setQuery] = useState("");
-  // A view chosen by tab or by a swipe across the screen; a swipe also says
-  // which way the new one slides in.
-  const [enter, setEnter] = useState(0);
-  const choose = (next, direction = 0) => {
-    setEnter(direction);
+  // A view, and on the schedule a day, is chosen by its key and appears at
+  // once. (No sideways swipes: one that decided only when the finger lifted
+  // never followed it, and on the schedule it meant two things.)
+  const choose = (next) => {
+    tap("selection");
     setMode(next);
   };
-  const swipe = useSwipeTabs(modes, mode, choose);
-  // On the schedule, a swipe across the list turns the day, as the days
-  // above it do; past Sunday (or before Monday) it goes on to the next tab.
-  const [dayEnter, setDayEnter] = useState(0);
-  const chooseDay = (next, direction = 0) => {
-    setDayEnter(direction);
+  const chooseDay = (next) => {
+    tap("selection");
     setDay(next);
   };
-  const daySwipe = useSwipe(stepper(DAYS, day, chooseDay));
   // Today's slot, not one that began yesterday and runs past midnight (whose
   // start is before today's): the same show's slot later today isn't on yet.
   const isOnAir = (slot) =>
@@ -65,7 +59,7 @@ export function ShowsScreen({ onOpen }) {
     <>
       {/* The tab bar (or sidebar) already says where this is. */}
       <h1 className="sr-only">Shows</h1>
-      <div ref={swipe} className="swipe-tabs">
+      <div>
         <div className="toolbar">
           <Segmented
             label="Browse shows"
@@ -79,7 +73,7 @@ export function ShowsScreen({ onOpen }) {
             placeholder={mode === "Archive" ? "Search episodes" : "Find a show or host"}
           />
         </div>
-        <div key={mode} className="tab-pane" data-enter={enter || undefined}>
+        <div key={mode} className="tab-pane">
           {mode !== "Archive" && (
             <p className="sr-only" role="status">
               {mode === "All shows" ? shows.length : slots.length} matching shows
@@ -125,8 +119,8 @@ export function ShowsScreen({ onOpen }) {
                   </button>
                 ))}
               </div>
-              <div ref={daySwipe}>
-                <div key={day} className="tab-pane" data-enter={dayEnter || undefined}>
+              <div>
+                <div key={day} className="tab-pane">
                   <div className="section-heading schedule-heading">
                     <h2>{day}</h2>
                     <span className="subtle">All times Eastern</span>

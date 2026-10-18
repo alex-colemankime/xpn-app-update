@@ -19,14 +19,18 @@ export const getHoldMenu = menu.getSnapshot;
 export const closeHoldMenu = () => menu.set(null);
 
 // Opens the menu over whatever is in front: a sheet that is open (a modal
-// sheet makes the rest of the page inert), or the page.
+// sheet makes the rest of the page inert), or the page. `from`, the element
+// that opened it, is where it hangs on wider screens (as a menu from its
+// button) and where focus goes back to when it closes.
 export function openHoldMenu(item) {
+  // The button that opened the menu, pressed again, closes it.
+  if (item.from && menu.getSnapshot()?.from === item.from) return closeHoldMenu();
   const sheets = document.querySelectorAll("dialog[open]");
   menu.set({ ...item, container: sheets[sheets.length - 1] || document.body });
 }
 
-// A ref for an element that opens a menu when held: `open()` says what the
-// menu shows (and calls openHoldMenu).
+// A ref for an element that opens a menu when held: `open(el)` says what
+// the menu shows (and calls openHoldMenu).
 export const holdable = (open) => (el) => {
   if (!el) return;
   handlers.set(el, open);
@@ -44,8 +48,14 @@ export function startHold() {
   let press = null; // { el, x, y, timer }
   let fired = false;
   let lastTouch = 0;
+  // The row eases down into a raised fill while held (data-holding,
+  // styles/gestures.css), so the menu is the end of something visible; let
+  // go early and it springs back at once.
   const clear = () => {
-    if (press) clearTimeout(press.timer);
+    if (press) {
+      clearTimeout(press.timer);
+      delete press.el.dataset.holding;
+    }
     press = null;
   };
   document.addEventListener(
@@ -58,17 +68,19 @@ export function startHold() {
       const el = e.target.closest?.("[data-hold]");
       if (!el || !handlers.has(el) || e.target.closest("input, textarea, select")) return;
       const t = e.touches[0];
+      el.dataset.holding = "";
       press = {
         el,
         x: t.clientX,
         y: t.clientY,
         timer: setTimeout(() => {
           const open = handlers.get(el);
+          delete el.dataset.holding;
           press = null;
           if (!open || !el.isConnected) return;
           fired = true;
           tap("medium");
-          open();
+          open(el);
         }, HOLD_MS),
       };
     },

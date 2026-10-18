@@ -55,10 +55,8 @@ export async function setAlerts(on) {
     return false;
   }
   alertsStore.set({ on });
-  if (on) {
-    track("turn_on", { feature: "station_notifications" });
-    showToast("Notifications from WXPN are on.");
-  }
+  // The switch says it's on; no notice repeats it.
+  if (on) track("turn_on", { feature: "station_notifications" });
   return true;
 }
 

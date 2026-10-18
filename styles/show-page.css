@@ -21,8 +21,8 @@
   /* Slides in from the edge it is attached to; @starting-style gives the
      first frame. Browsers without it simply show the sheet. */
   transition:
-    translate 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity 0.2s ease-out;
+    translate var(--dur-sheet) var(--spring-sheet),
+    opacity var(--dur-menu) var(--ease-out);
 }
 @starting-style {
   .detail-dialog[open] {
@@ -34,7 +34,7 @@
   background: #0009;
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
-  transition: opacity 0.25s ease-out;
+  transition: opacity var(--dur-menu) var(--ease-out);
 }
 @starting-style {
   .detail-dialog[open]::backdrop {
@@ -49,71 +49,79 @@
   background-color: var(--surface);
   display: flex;
   justify-content: space-between;
-  gap: 20px;
-  padding: calc(26px + var(--safe-area-inset-top, env(safe-area-inset-top))) 28px 24px;
+  gap: var(--space-5);
+  /* The sheet's padding is the same on every width (.detail-body), so the
+     title, the close button and everything below share one edge. */
+  padding: calc(var(--space-6) + var(--safe-area-inset-top, env(safe-area-inset-top)))
+    var(--space-6) var(--space-6);
   border-bottom: 1px solid var(--border);
 }
+/* A sheet's title, bold like every title (the song on Listen, a video's
+   page), its first line centered on the close button beside it. */
 .dialog-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  margin: 10px 0 0;
+  font-size: var(--text-title);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-title);
+  line-height: var(--leading-title);
+  margin: var(--space-2) 0 0;
 }
 .detail-body {
-  padding: 28px;
+  padding: var(--space-6);
 }
 .show-detail-hero {
   display: flex;
-  gap: 23px;
+  gap: var(--space-6);
   align-items: center;
 }
 .show-detail-hero > img {
   width: 146px;
   height: 146px;
   object-fit: cover;
-  border-radius: 7px;
+  border-radius: var(--radius-s);
 }
 .show-detail-hero h3 {
-  font-weight: 550;
-  font-size: 1.25rem;
-  margin: 9px 0;
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-heading);
+  letter-spacing: var(--tracking-heading);
+  margin: var(--space-2) 0;
 }
 .show-detail-hero p {
   color: var(--muted);
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
 }
 .show-description {
-  font-size: 1rem;
-  line-height: 1.75;
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
   color: var(--muted);
-  margin: 25px 0;
+  margin: var(--space-6) 0;
 }
+/* Videos and Episodes head their lists as a section heading does on a
+   screen (.section-heading h2). */
 .detail-body .section-heading > h3 {
-  font-size: 1.25rem;
+  font-size: var(--text-heading);
   margin: 0;
-  font-weight: 550;
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-heading);
 }
 .back-button {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 .info-note {
   display: flex;
   align-items: flex-start;
-  gap: 15px;
-  margin-top: 27px;
-  padding: 18px 20px;
-  border-radius: 12px;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-m);
   background: var(--row-alt);
 }
 .playlist-more {
   display: flex;
-  margin-top: 2px;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: 8px 16px;
+  gap: var(--space-2) var(--space-4);
 }
 
 /* A show's sheet, washed lightly in the show's color (ShowDetail.jsx), at
@@ -128,7 +136,7 @@
 /* Share sits beside Follow: the show's xpn.org page, which opens the show
    in the app for anyone who has it (deep-links.js). */
 .show-share {
-  margin-left: 4px;
+  margin-left: var(--space-1);
   vertical-align: middle;
   color: var(--text);
 }

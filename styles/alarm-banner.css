@@ -10,30 +10,29 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 14px 24px;
+  gap: var(--space-4) var(--space-6);
   /* The station's orange in both themes, with near-black lettering: every
      word on it is dark, so nothing on the band is orange-on-orange. */
   background: var(--action);
   color: var(--action-ink);
-  padding: 16px var(--edge-right) 16px var(--edge-left);
+  padding: var(--space-4) var(--edge-right) var(--space-4) var(--edge-left);
 }
 .alarm-banner-title {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   min-width: 12ch;
 }
 .alarm-banner-title strong {
   display: block;
-  font-size: 1.0625rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: var(--text-body);
+  font-weight: var(--weight-bold);
 }
 .alarm-banner-title small {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 550;
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
 }
 /* The bell sits in a dark disc and rings. */
@@ -66,16 +65,17 @@
     rotate: -14deg;
   }
 }
+/* Apart enough that a sleepy thumb meant for Snooze doesn't catch Dismiss. */
 .alarm-banner-actions {
   display: flex;
-  gap: 10px;
+  gap: var(--space-3);
 }
 .alarm-banner button {
   min-height: 46px;
-  padding: 0 20px;
-  border-radius: 12px;
-  font-size: 0.9375rem;
-  font-weight: 700;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-m);
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-bold);
   white-space: nowrap;
 }
 /* Snooze is the big, easy target: white on near-black. */
@@ -97,9 +97,6 @@
 }
 @media (max-width: 767px) {
   /* Label on its own line, then two equal thumb-sized actions. */
-  .alarm-banner {
-    padding-top: 14px;
-  }
   .alarm-banner-title,
   .alarm-banner-actions {
     flex-basis: 100%;

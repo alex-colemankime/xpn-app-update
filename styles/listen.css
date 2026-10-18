@@ -8,28 +8,26 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 24px;
-  margin-bottom: 28px;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
   border-bottom: 1px solid var(--border);
 }
 .listen-heading h1 {
-  padding-bottom: 12px;
+  padding-bottom: var(--space-3);
 }
+/* The stations are the same tabs as every screen's views (.segmented), a
+   little taller beside the heading, their underline on the heading's rule. */
 .station-switcher.segmented {
   border-bottom: 0;
-  gap: 6px;
 }
 .station-switcher.segmented button {
   min-height: 48px;
-  padding: 0 14px;
   white-space: nowrap;
   margin-bottom: -1px;
-  font-size: 1rem;
-  font-weight: 600;
 }
+/* A screen's title: the h1's own type (styles/layout.css). */
 .listen-heading h1,
 .page-heading h1 {
-  font-size: clamp(2rem, 2.5vw, 2.25rem);
   margin: 0;
 }
 /* Two columns on a wide screen: the stage, as wide as its artwork and set
@@ -76,14 +74,14 @@
   position: relative;
   isolation: isolate;
   width: 100%;
-  margin: 0 0 18px;
+  margin: 0 0 var(--space-5);
   aspect-ratio: 1;
 }
 .now-art > img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: var(--radius-s);
   box-shadow: 0 16px 36px -22px rgb(0 0 0 / 0.45);
 }
 .station-art {
@@ -94,9 +92,11 @@
   justify-content: center;
   align-items: center;
   color: var(--action-ink);
-  border-radius: 10px;
-  padding: 20px;
+  border-radius: var(--radius-s);
+  padding: var(--space-5);
 }
+/* The station's name lettered as its logo is, in the stage's place when
+   there is no artwork: drawn, not set, so off the type ramp. */
 .station-art strong {
   font-size: clamp(2rem, 5vw, 4rem);
   font-weight: 800;
@@ -108,30 +108,31 @@
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas: "info actions";
   align-items: start;
-  column-gap: 8px;
+  column-gap: var(--space-2);
 }
 .now-info {
   grid-area: info;
   min-width: 0;
 }
 /* The song: title (two lines at most), then artist and album on one line,
-   so the block keeps the same height from song to song. */
+   so the block keeps the same height from song to song. The same size at
+   every width: the song is what Listen is about. */
 .now-info h2 {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
-  font-size: 1.375rem;
-  font-weight: 650;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-  margin: 2px 0 3px;
+  font-size: var(--text-title);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
+  margin: 0 0 2px;
   overflow-wrap: break-word;
   text-wrap: balance;
 }
 .now-artist {
-  font-size: 1rem;
+  font-size: var(--text-body);
   margin: 0;
   color: var(--text);
   white-space: nowrap;
@@ -141,33 +142,29 @@
 .now-album {
   color: var(--muted);
 }
-/* Heart and menu level with the title, their glyphs lined up with the
-   artwork's right edge. */
+/* Heart and menu level with the title's first line, their glyphs lined up
+   with the artwork's right edge. */
 .now-song-actions {
   grid-area: actions;
   display: flex;
-  margin: -6px -12px 0 0;
+  margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-3)) 0 0;
 }
 .now-controls {
   display: flex;
   align-items: stretch;
-  gap: 12px;
-  margin: 18px 0 4px;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 var(--space-1);
 }
 /* The station's main action, labeled: "Listen live" / "Pause". */
 .now-controls .hero-play {
   flex: 1;
   min-height: 50px;
-  padding: 0 24px;
-  border-radius: 14px;
+  padding: 0 var(--space-6);
+  border-radius: var(--radius-m);
   /* A touch of the page through it, so it sits in the page rather than on it. */
   background: color-mix(in oklab, var(--action) 90%, transparent);
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: 0.005em;
-}
-.hero-play[data-busy] {
-  animation: busy-pulse 0.9s ease-in-out infinite alternate;
+  font-size: var(--text-body);
+  font-weight: var(--weight-bold);
 }
 /* Cast / AirPlay, one tap from the main action, as on a station's own app. */
 .hero-cast {
@@ -176,32 +173,29 @@
   width: 50px;
   min-height: 50px;
   flex-shrink: 0;
-  border-radius: 14px;
+  border-radius: var(--radius-m);
   background: var(--soft-fill);
   color: var(--text);
-  transition: background-color 0.15s;
+  transition: background-color var(--dur-quick);
 }
 .hero-cast:hover {
   background: var(--soft-fill-hover);
 }
 .now-status {
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   color: var(--muted);
   min-height: 20px;
-  line-height: 1.5;
+  line-height: var(--leading-body);
 }
 .now-footer {
-  margin-top: 8px;
+  margin-top: var(--space-2);
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
   min-height: 51px;
   color: var(--muted);
-  font-size: 0.875rem;
-}
-.now-footer .text-button {
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
 }
 /* Only the sleep timer lives here, and only while the radio plays. */
 .now-footer:empty {
@@ -209,35 +203,29 @@
 }
 .recent-panel > .section-heading {
   min-height: 40px;
-  margin-bottom: 10px;
-}
-.live-lists .section-heading h2 {
-  font-size: 1.3125rem;
-}
-.live-lists .track-row {
-  gap: 13px;
+  margin-bottom: var(--space-2);
 }
 .track-time {
   font-variant-numeric: tabular-nums;
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   color: var(--muted);
   white-space: nowrap;
 }
 .playlist-empty {
-  padding: 48px 20px;
+  padding: var(--space-12) var(--space-5);
   color: var(--muted);
   text-align: center;
 }
 .playlist-empty p {
-  font-size: 0.875rem;
-  line-height: 1.6;
-  margin: 14px 0 3px;
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
+  margin: var(--space-3) 0 var(--space-1);
 }
 .player-track > img {
   width: 50px;
   height: 50px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: var(--radius-s);
   flex-shrink: 0;
 }
 .player-track > span:last-child {

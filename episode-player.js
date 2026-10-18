@@ -88,7 +88,7 @@ const withShow = (episode) => ({
 });
 
 export function playEpisode(episode) {
-  tap("medium");
+  tap();
   track("episode_play", { show: episode.show || "" });
   const current = core.getState().episode;
   core.setVolume(getVolume());
@@ -105,7 +105,7 @@ export function playEpisode(episode) {
 export function toggleEpisode(episode) {
   const state = core.getState();
   if (state.episode?.id === episode.id && episodeIsOn(state)) {
-    tap("medium");
+    tap();
     core.pause();
   } else {
     playEpisode(episode);
@@ -119,7 +119,7 @@ export function togglePlayer() {
     togglePlayback();
     return;
   }
-  tap("medium");
+  tap();
   core.toggle();
 }
 
@@ -128,7 +128,7 @@ export const pauseEpisode = () => core.pause();
 export const castEpisode = () => promptCast(episodeAudio);
 export const getEpisodeState = () => core.getState();
 export const resumeEpisode = () => {
-  tap("medium");
+  tap();
   core.resume();
 };
 export const seekEpisode = (seconds) => core.seek(seconds);

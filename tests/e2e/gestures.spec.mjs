@@ -1,6 +1,5 @@
 // Touch gestures on a phone: press and hold for a menu, pull a sheet down to
-// close it, flick the mini player up, swipe the schedule's days, pull down
-// to refresh. Each has a button too; these check the gestures themselves.
+// close it, pull down to refresh. Each has a button too; these check the gestures themselves.
 import { test, expect } from "./fixtures.mjs";
 
 test.skip(({ isMobile }) => !isMobile, "touch only");
@@ -89,40 +88,22 @@ test("a sheet pulled down whose touch is cancelled settles back open", async ({ 
   expect(await sheet.evaluate((el) => el.style.translate)).toBe("");
 });
 
-test("a flick up on the mini player opens Listen", async ({ page }) => {
-  await page.goto("/#/shows");
-  await touch(page, ".player-bar", [
-    [200, 760],
-    [200, 740],
-    [200, 700],
-  ]);
-  await expect(page).toHaveURL(/#\/listen$/);
-});
-
-test("a swipe across the schedule turns the day", async ({ page }) => {
+test("a sideways drag across the schedule leaves the day and the view alone", async ({ page }) => {
+  // Days and views are chosen by their keys only: a swipe that decided when
+  // the finger lifted never followed it, so it is gone.
   await page.goto("/#/shows");
   const days = page.getByRole("group", { name: "Schedule day" });
-  const pressed = () => days.locator('[aria-pressed="true"]').getAttribute("aria-label");
-  // Start on Monday, so there is a day either side to go to.
-  await days.getByRole("button", { name: /^Tuesday/ }).click();
-  await touch(page, ".schedule-row", [
-    [300, 400],
-    [120, 400],
-  ]);
-  expect(await pressed()).toMatch(/^Wednesday/);
-  await touch(page, ".schedule-row", [
-    [120, 400],
-    [300, 400],
-  ]);
-  expect(await pressed()).toMatch(/^Tuesday/);
-  // Before Monday, the swipe goes on to the tab before: All shows.
   await days.getByRole("button", { name: /^Monday/ }).click();
   await touch(page, ".schedule-row", [
     [120, 400],
     [300, 400],
   ]);
+  await expect(days.getByRole("button", { name: /^Monday/ })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   await expect(
-    page.getByLabel("Browse shows").getByRole("button", { name: "All shows" }),
+    page.getByLabel("Browse shows").getByRole("button", { name: "Schedule" }),
   ).toHaveAttribute("aria-pressed", "true");
 });
 
@@ -142,4 +123,24 @@ test("pulling down at the top of Listen reads the songs again", async ({ page })
   await expect(spinner).toHaveAttribute("data-state", "loading");
   await expect.poll(() => reads).toBeGreaterThan(0);
   await expect(spinner).not.toHaveAttribute("data-state", /./);
+});
+
+test("a song's row opens its sheet, about the song and with no offer to connect", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const row = page.locator(".recent-panel .track-open").first();
+  await row.click();
+  const sheet = page.locator(".hold-menu");
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "Save to Favorites" })).toBeVisible();
+  await expect(sheet.getByRole("link", { name: "Open in Spotify" })).toHaveAttribute(
+    "href",
+    /^https:\/\/open\.spotify\.com\/search\//,
+  );
+  await expect(sheet.getByRole("link", { name: "Open in Apple Music" })).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "Share song" })).toBeVisible();
+  await expect(sheet.getByText(/Connect/)).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(sheet).toBeHidden();
 });

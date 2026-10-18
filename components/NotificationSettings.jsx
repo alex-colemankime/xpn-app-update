@@ -31,7 +31,7 @@ export function ShowReminders({ onNavigate }) {
         </h2>
         <Switch
           on={settings.enabled}
-          onChange={(on) => (on ? enableReminders() : disableReminders())}
+          onChange={(on) => (on ? enableReminders({ quiet: true }) : disableReminders())}
           label="Remind me before shows I follow"
         />
       </div>

@@ -214,7 +214,7 @@ export function setMetadata(song) {
 export const promptCast = player.promptCast;
 
 export function selectStream(id) {
-  if (id !== getPlayerSnapshot().streamId) tap();
+  if (id !== getPlayerSnapshot().streamId) tap("selection");
   if (!player.setStream(id)) return false;
   update({ streamId: id });
   return true;
@@ -236,7 +236,7 @@ export function stationIsOn() {
 }
 
 export function togglePlayback() {
-  tap("medium");
+  tap();
   if (stationIsOn()) {
     pauseStream();
     return;

@@ -56,16 +56,6 @@ export function Wordmark({ text = "wxpn", dot = false }) {
   );
 }
 
-// Three bouncing bars: this is what's playing. Held still while paused
-// (`paused`), as music apps show the loaded track.
-export const EqBars = ({ paused = false }) => (
-  <span className="eq" data-paused={paused || undefined} aria-hidden="true">
-    <i />
-    <i />
-    <i />
-  </span>
-);
-
 // Artwork that falls back to the station mark when a feed image is missing
 // or fails to load, so a row never shows a broken-image icon.
 export function Art({ src, alt = "", className = "", ...props }) {
@@ -202,7 +192,7 @@ export function SkeletonList({ label, count = 4, rowClass, artClass }) {
       <span className="sr-only">{label}</span>
       {Array.from({ length: count }, (_, i) => (
         <div className={`${rowClass} skeleton-row`} aria-hidden="true" key={i}>
-          <span className={`skeleton-block ${artClass}`} />
+          {artClass && <span className={`skeleton-block ${artClass}`} />}
           <span className="skeleton-lines">
             <span className="skeleton-block skeleton-line" />
             <span className="skeleton-block skeleton-line" />

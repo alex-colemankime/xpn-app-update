@@ -1,4 +1,6 @@
 import { useEffect, useEffectEvent, useRef } from "react";
+import { rubberband } from "../motion.js";
+import { tap } from "../haptics.js";
 
 // Pull down at the top of a screen to load it again (Listen's songs, the
 // concerts, the videos, the archive): a small spinner follows the finger
@@ -8,13 +10,15 @@ import { useEffect, useEffectEvent, useRef } from "react";
 // Listeners are passive and the spinner moves on the compositor (a CSS
 // variable on one element), so scrolling is never held up.
 
-const TRAVEL = 88; // px the spinner can come down
-const READY = 64; // px pulled (after damping) that loads on release
+const TRAVEL = 88; // px the spinner can come down, at most
+const READY = 64; // px it has come down when a release loads
 const MIN_SPIN_MS = 600; // long enough to see that it ran
 
-// How far the spinner comes for a pull of `dy` px, and whether that loads.
-const pullDistance = (dy) => Math.max(0, Math.min(TRAVEL, dy * 0.5));
-const pullLoads = (dy) => pullDistance(dy) >= READY;
+// How far the spinner comes for a pull of `dy` px: it follows the finger
+// less and less the further it goes, so it slows before it stops instead of
+// hitting a wall (motion.js). Whether that loads on release.
+export const pullDistance = (dy) => (dy > 0 ? Math.min(TRAVEL, rubberband(dy, 260)) : 0);
+export const pullLoads = (dy) => pullDistance(dy) >= READY;
 
 const reduced = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
@@ -36,8 +40,11 @@ export function PullToRefresh({ onRefresh }) {
       frame = requestAnimationFrame(() => {
         spinner.style.setProperty("--pull", `${px}px`);
         spinner.style.setProperty("--turn", `${px * 4}deg`);
-        if (px >= READY) spinner.dataset.ready = "";
-        else delete spinner.dataset.ready;
+        // A tick as it arms, the moment letting go would load.
+        if (px >= READY && !("ready" in spinner.dataset)) {
+          spinner.dataset.ready = "";
+          tap("selection");
+        } else if (px < READY) delete spinner.dataset.ready;
       });
     };
     const down = (e) => {

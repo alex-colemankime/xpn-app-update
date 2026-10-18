@@ -12,16 +12,18 @@
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--border);
-  padding: calc(36px + var(--safe-area-inset-top, env(safe-area-inset-top))) 20px 24px
-    max(20px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+  padding: calc(var(--space-8) + var(--safe-area-inset-top, env(safe-area-inset-top)))
+    var(--space-5) var(--space-6)
+    max(var(--space-5), var(--safe-area-inset-left, env(safe-area-inset-left)));
   background-color: var(--bg);
   overflow-y: auto;
 }
+/* The wordmark's left edge lines up with the screens' icons below it. */
 .brand {
   color: var(--text);
   display: flex;
   flex-direction: column;
-  margin: 0 12px 44px;
+  margin: 0 0 var(--space-10) var(--space-3);
   text-align: left;
 }
 .brand > span {
@@ -42,51 +44,58 @@
 }
 /* A short label above content: quiet, in sentence case. */
 .eyebrow {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caption);
   color: var(--muted);
 }
+/* The screens. The one shown is in ink on a fill, with its glyph filled
+   (Navigation.jsx); every item keeps one weight, so no name shifts as it
+   is chosen. */
 .nav-button {
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 49px;
-  padding: 0 14px;
-  font-size: 0.9375rem;
-  gap: 13px;
-  border-radius: 10px;
-  margin-bottom: 6px;
-  font-weight: 500;
+  min-height: 48px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-secondary);
+  gap: var(--space-3);
+  border-radius: var(--radius-m);
+  margin-bottom: var(--space-2);
+  font-weight: var(--weight-semibold);
   color: var(--muted);
 }
 .nav-button.active {
   background: var(--row-alt);
-  color: var(--text);
-  font-weight: 650;
-}
-.nav-button i {
-  width: 5px;
-  height: 5px;
-  margin-left: auto;
-  border-radius: 100%;
-  background: var(--action);
+  color: var(--select-ink);
 }
 .sidebar-bottom {
   margin-top: auto;
-  padding-top: 30px;
+  padding-top: var(--space-8);
 }
+/* Settings: quieter than the screens above it, but chosen the same way. */
 .settings-button {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 0.875rem;
-  min-height: 44px;
-  padding: 7px 14px;
+  width: 100%;
+  gap: var(--space-3);
+  font-size: var(--text-secondary);
+  min-height: 48px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-m);
   color: var(--muted);
 }
 .settings-button[aria-current="page"] {
-  color: var(--accent);
-  font-weight: 600;
+  background: var(--row-alt);
+  color: var(--select-ink);
+}
+/* Forced colors drop the fill and the ink, so Settings, open, is outlined
+   like the chosen screens (styles/states.css). */
+@media (forced-colors: active) {
+  :is(.settings-button, .mobile-settings)[aria-current="page"] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
 }
 .main-shell {
   margin-left: var(--sidebar-w);
@@ -94,7 +103,7 @@
   /* A tab sliding in (states.css) never makes the page scroll sideways. */
   overflow-x: clip;
   padding-bottom: calc(
-    var(--player-h) + 30px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
+    var(--player-h) + var(--space-8) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
   );
   outline: none;
 }
@@ -104,36 +113,61 @@
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   margin-left: auto;
 }
-/* Donate: the station's color, filled, so it reads as the one call to action
-   in the header. The link is a full 44px target; the pill sits inside it. */
+/* Donate: on every screen, in the station's orange, but tonal (orange words
+   on a pale orange fill) and flat, so it never competes with Listen live as
+   a second solid orange key. The link is a full 44px target; the pill sits
+   inside it. */
 .topbar-donate {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
 }
 .topbar-donate span {
   display: inline-flex;
   align-items: center;
   min-height: 34px;
-  padding: 0 16px;
-  border-radius: 999px;
-  background: var(--action);
-  color: var(--action-ink);
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  box-shadow: 0 1px 0 rgb(0 0 0 / 0.08);
-  transition: background-color 0.15s ease;
-}
-.topbar-donate:hover span {
-  background: color-mix(in srgb, var(--action) 88%, black);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--donate-fill);
+  color: var(--donate-ink);
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-bold);
+  transition: background-color var(--dur-quick);
 }
 .topbar-donate:active span {
   transform: scale(0.97);
+}
+/* Donate at the foot of the sidebar: tonal, like the header's. */
+.sidebar-donate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  margin-top: var(--space-3);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-m);
+  background: var(--donate-fill);
+  color: var(--donate-ink);
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-bold);
+  transition: background-color var(--dur-quick);
+}
+/* Pressed, and under a pointer: the fill takes a little of its own ink (a
+   touch deeper in light, lighter in dark), and the words keep 4.5:1. */
+.topbar-donate:active span,
+.sidebar-donate:active {
+  background: color-mix(in srgb, var(--donate-fill), var(--donate-ink) 8%);
+}
+@media (hover: hover) {
+  .topbar-donate:hover span,
+  .sidebar-donate:hover {
+    background: color-mix(in srgb, var(--donate-fill), var(--donate-ink) 8%);
+  }
 }
 /* The wordmark and Settings key in the phone header (shown at phone width). */
 .mobile-brand,
@@ -142,63 +176,66 @@
 }
 .page-content {
   max-width: var(--page-max);
-  padding: 36px var(--page-gutter) 40px;
+  padding: var(--space-8) var(--page-gutter) var(--space-10);
   margin: auto;
 }
 .page-heading {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 }
 
 h1 {
-  font-weight: 650;
-  letter-spacing: -0.045em;
-  line-height: 1.2;
+  font-size: var(--text-display);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-display);
 }
 .primary-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--space-2);
   background: var(--action);
   color: var(--action-ink);
   border: 1px solid transparent;
   min-height: 48px;
-  padding: 13px 22px;
-  font-size: 0.9375rem;
-  font-weight: 700;
-  border-radius: 12px;
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--text-body);
+  font-weight: var(--weight-bold);
+  border-radius: var(--radius-m);
 }
 .section-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
 }
 .section-heading h2 {
   margin: 0;
-  font-weight: 600;
-  font-size: 1.375rem;
-  letter-spacing: -0.025em;
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-heading);
+  letter-spacing: var(--tracking-heading);
 }
 .subtle {
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
 }
+/* A quiet action in words. Semibold, so it reads as something to press
+   beside a muted note of the same size (.subtle). */
 .text-button {
   display: inline-flex;
   align-items: center;
-  gap: 11px;
+  gap: var(--space-3);
   min-height: 44px;
-  font-size: 0.9375rem;
+  font-size: var(--text-secondary);
   color: var(--muted);
   padding: 0;
-  font-weight: 500;
+  font-weight: var(--weight-semibold);
 }
 .show-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 21px;
-  margin-top: 20px;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
 }
 .show-card {
   /* At the top of its row: a button centers what it holds, so a card with a
@@ -212,139 +249,76 @@ h1 {
   aspect-ratio: 1.5;
   overflow: hidden;
   position: relative;
-  border-radius: 6px;
+  border-radius: var(--radius-s);
   background: var(--surface);
 }
 .show-cover img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.25s;
+  transition: transform var(--dur-menu) var(--ease-out);
 }
 .show-card-name {
   display: block;
-  font-size: 1rem;
-  font-weight: 550;
-  margin: 13px 0 4px;
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  margin: var(--space-3) 0 var(--space-1);
 }
 .show-card-when {
   display: block;
   /* Wraps like a paragraph would (it sits in a button, so it can't be one). */
   text-wrap: pretty;
   overflow-wrap: anywhere;
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   color: var(--muted);
 }
-/* A song in a list, between hairlines. */
+/* A song in a list, between hairlines: the same row in Favorites and in
+   Recently played, at every width. All of it but the heart is one button,
+   its full height, that opens the song's sheet. */
 .track-row {
   display: flex;
-  gap: 17px;
+  gap: var(--space-3);
   align-items: center;
-  padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
-/* Saved songs in Favorites, on bands of their artwork's colors at the
-   page's own lightness (like Listen's), so text and hearts keep their
-   contrast. The bands run the full width of the screen, one straight into
-   the next with no page between them: across each line between two songs,
-   the lower song's color comes in through the grain over the upper one's,
-   a few specks at first, then more, until it has taken over (--blend-in,
-   styles/grain.css). A song without a color of its own is on the page's
-   color, so a neighbor's color dissolves into the page the same way, as it
-   does at the top and bottom of the list.
-   Every band sits in one layer under all the songs (.saved-songs), later
-   bands over earlier ones, so a band never covers the song above it. */
-@supports (color: oklch(from red l c h)) {
-  .saved-songs {
-    isolation: isolate;
-    /* How far the blend reaches across the line between two songs (half
-       above it, half below): the height of the --blend-in tile. */
-    --blend: 44px;
-    padding-block: calc(var(--blend) / 2);
-  }
-  .saved-songs > .track-row {
-    position: relative;
-    margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
-    padding: 16px var(--edge-right) 16px var(--edge-left);
-    border-bottom: 0;
-    --band: var(--bg);
-  }
-  .saved-songs > .track-row[data-tinted] {
-    --band: var(--band-light);
-  }
-  :root[data-theme="dark"] .saved-songs > .track-row[data-tinted] {
-    --band: var(--band-dark);
-  }
-  /* The band: from halfway across the line above the row to halfway across
-     the line below it, coming in over the band before through the dither,
-     then solid. Mask layers that never overlap, so no compositing is
-     needed (Safari composites masks its own way). */
-  .saved-songs > .track-row::before {
-    content: "";
-    position: absolute;
-    inset: calc(var(--blend) / -2) 0;
-    z-index: -1;
-    background-color: var(--band);
-    mask-image: var(--blend-in), linear-gradient(#000, #000);
-    mask-size:
-      160px var(--blend),
-      100% calc(100% - var(--blend));
-    mask-position:
-      0 0,
-      0 var(--blend);
-    mask-repeat: repeat-x, no-repeat;
-  }
-  /* The last song's color goes out into the page the same way. */
-  .saved-songs:not([data-more]) > .track-row:last-child::before {
-    mask-image: var(--blend-in), linear-gradient(#000, #000), var(--blend-out);
-    mask-size:
-      160px var(--blend),
-      100% calc(100% - 2 * var(--blend)),
-      160px var(--blend);
-    mask-position:
-      0 0,
-      0 var(--blend),
-      0 100%;
-    mask-repeat: repeat-x, no-repeat, repeat-x;
-  }
-  /* With more songs to load, the last one shown stops at the line above
-     Load more (.list-more) instead of going out into the page. */
-  .saved-songs[data-more] {
-    padding-bottom: 0;
-  }
-  .saved-songs[data-more] > .track-row:last-child::before {
-    bottom: 0;
-  }
-  .saved-songs[data-more] + .list-more {
-    border-top: 1px solid var(--border);
-  }
-  /* Two songs on the page's color in a row: a hairline between them, as in
-     every other list. */
-  .saved-songs > .track-row:not([data-tinted]):has(+ .track-row:not([data-tinted]))::after {
-    content: "";
-    position: absolute;
-    inset: auto var(--edge-right) 0 var(--edge-left);
-    border-bottom: 1px solid var(--border);
-  }
+.track-open {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3) 0;
+  text-align: left;
+}
+/* Long lists (saved songs, Recently played, concerts, a show's broadcasts)
+   draw only the rows near the screen; the rest keep the height they last
+   had, so the page's length and a remembered place hold, and they can
+   still be found in the page. Their paint stops at the row's edge, so the
+   row-wide buttons draw their focus ring inside it. */
+:is(.track-row, .concert-row, .archive-row):not(.skeleton-row) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 72px;
+}
+:is(.track-open, .concert-open):focus-visible {
+  outline-offset: -2px;
 }
 .share-songs {
-  margin-top: -6px;
+  margin-top: calc(-1 * var(--space-1));
 }
-/* Load more, under the hairline that ends the list so far (the last row's
-   own, or for saved songs, one of its own above). */
+/* Load more, under the hairline that ends the list so far. */
 .list-more {
-  margin-top: 2px;
+  margin-top: var(--space-1);
 }
 .list-more + .share-songs {
   margin-top: 0;
 }
-.track-row > img {
+.track-open > img {
   width: 46px;
   height: 46px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: var(--radius-s);
 }
-.track-row > span {
+.track-open > span {
   flex: 1;
   min-width: 0;
 }
@@ -354,8 +328,8 @@ h1 {
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
-  font-size: 1rem;
-  font-weight: 550;
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
   overflow-wrap: anywhere;
 }
 /* The artist, and when it played, wrapping under it on a narrow row. */
@@ -363,10 +337,10 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 10px;
-  margin-top: 5px;
+  gap: var(--space-1) var(--space-3);
+  margin-top: var(--space-1);
   overflow: hidden;
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   color: var(--muted);
 }
 .track-meta > span {
@@ -419,7 +393,7 @@ h1 {
   height: calc(var(--player-h) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
   /* The page's own gutter, and on a very wide window the same centering as
      the page, so the bar's ends sit under the content's ends. */
   --bar-inset: max(
@@ -436,7 +410,7 @@ h1 {
    raised paper's), so text and hearts keep their contrast. */
 .player-bar[data-tinted] {
   background-color: var(--bar-light);
-  transition: background-color 0.8s ease;
+  transition: background-color var(--dur-room) var(--ease-in-out);
 }
 :root[data-theme="dark"] .player-bar[data-tinted] {
   background-color: var(--bar-dark);
@@ -445,23 +419,25 @@ h1 {
 .player-now {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   flex: 0 1 auto;
   min-width: 0;
 }
 .player-track {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-3);
   min-width: 0;
   text-align: left;
 }
+/* The station's short mark where a song has no artwork: lettering drawn as
+   the logo is, so it keeps its own size and weight. */
 .station-mark {
   width: 48px;
   height: 48px;
   flex-shrink: 0;
   background: var(--action);
-  border-radius: 6px;
+  border-radius: var(--radius-s);
   display: grid;
   place-items: center;
   color: var(--action-ink);
@@ -469,30 +445,34 @@ h1 {
   letter-spacing: -0.09em;
   font-weight: 800;
 }
+/* The song and its artist at one size, apart by weight and color: the
+   bar is compact, like the player itself. */
 .player-track strong {
   display: block;
-  font-size: 0.9375rem;
-  font-weight: 650;
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
 }
 .player-track small {
   display: block;
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   color: var(--muted);
-  margin-top: 3px;
+  margin-top: 2px;
 }
 /* What the stream is doing, as a small tag before the artist: a pulsing
    dot and "live", "connecting" or "offline". */
 .live-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  margin-right: 8px;
-  padding: 1px 7px 1px 6px;
-  border-radius: 5px;
+  gap: var(--space-1);
+  margin-right: var(--space-2);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-s);
   background: color-mix(in srgb, var(--accent) 13%, transparent);
   color: var(--accent-strong);
-  font-size: 0.8125rem;
-  font-weight: 700;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-caption);
+  letter-spacing: var(--tracking-caption);
   vertical-align: 1px;
 }
 .live-badge i {
@@ -500,9 +480,6 @@ h1 {
   height: 6px;
   border-radius: 50%;
   background: currentColor;
-}
-.live-badge[data-state="live"] i {
-  animation: live-pulse 2s ease-in-out infinite;
 }
 .live-badge[data-state="error"] {
   background: color-mix(in srgb, var(--muted) 16%, transparent);
@@ -515,7 +492,7 @@ h1 {
   flex-shrink: 0;
   width: 48px;
   height: 48px;
-  border-radius: 14px;
+  border-radius: var(--radius-m);
   display: grid;
   place-items: center;
   background: var(--action);
@@ -524,15 +501,15 @@ h1 {
 .player-utilities {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   margin-left: auto;
-  padding-left: 16px;
+  padding-left: var(--space-4);
   color: var(--muted);
 }
 .player-volume {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2);
   min-height: 44px;
 }
 /* A slim slider: the level filled in the text color on a hairline track
@@ -549,7 +526,7 @@ h1 {
 .player-volume input::-webkit-slider-runnable-track,
 .slim-range::-webkit-slider-runnable-track {
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--radius-full);
   background: linear-gradient(
     to right,
     var(--text) var(--fill, 70%),
@@ -559,13 +536,13 @@ h1 {
 .player-volume input::-moz-range-track,
 .slim-range::-moz-range-track {
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--radius-full);
   background: var(--border);
 }
 .player-volume input::-moz-range-progress,
 .slim-range::-moz-range-progress {
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--radius-full);
   background: var(--text);
 }
 .player-volume input::-webkit-slider-thumb,
@@ -607,10 +584,10 @@ h1 {
     --page-gutter: 28px;
   }
   .page-content {
-    padding: 28px;
+    padding: var(--space-6) var(--page-gutter);
   }
   .show-grid {
-    gap: 15px;
+    gap: var(--space-4);
   }
   .show-cover {
     aspect-ratio: 1.1;
@@ -627,7 +604,7 @@ h1 {
   .main-shell {
     margin: 0;
     padding-bottom: calc(
-      var(--tabbar-h) + var(--mini-h) + 4px +
+      var(--tabbar-h) + var(--mini-h) + var(--space-1) +
         var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
     );
   }
@@ -637,7 +614,7 @@ h1 {
      does its room. */
   :root[data-hero-visible]:not(:has(.player-bar[data-source="episode"])) .main-shell {
     padding-bottom: calc(
-      var(--tabbar-h) + 8px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
+      var(--tabbar-h) + var(--space-2) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
     );
   }
   .topbar {
@@ -646,9 +623,9 @@ h1 {
     justify-content: space-between;
     border-bottom: 1px solid var(--border);
     min-height: calc(64px + var(--safe-area-inset-top, env(safe-area-inset-top)));
-    padding: calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top)))
-      max(21px, var(--safe-area-inset-right, env(safe-area-inset-right))) 8px
-      max(21px, var(--safe-area-inset-left, env(safe-area-inset-left)));
+    /* The wordmark at the page's gutter, like the content under it. */
+    padding: calc(var(--space-2) + var(--safe-area-inset-top, env(safe-area-inset-top)))
+      var(--edge-right) var(--space-2) var(--edge-left);
   }
   .mobile-brand {
     display: block;
@@ -662,29 +639,24 @@ h1 {
     height: 44px;
   }
   .topbar-actions .mobile-settings[aria-current="page"] {
-    background: var(--surface);
-    color: var(--accent);
+    background: var(--select-fill);
+    color: var(--select-ink);
   }
   .page-content {
-    padding: 23px var(--edge-right) 8px var(--edge-left);
+    padding: var(--space-6) var(--edge-right) var(--space-2) var(--edge-left);
   }
+  /* Narrower sides on a phone, where it shares a row with a text action. */
   .primary-button {
-    padding: 12px 16px;
-    font-size: 0.875rem;
-    gap: 7px;
+    padding: var(--space-3) var(--space-4);
   }
   .show-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px 16px;
+    gap: var(--space-6) var(--space-4);
   }
   .show-cover {
     aspect-ratio: 1.35;
   }
-  .section-heading h2 {
-    font-size: 1.3125rem;
-  }
   .section-heading > .text-button {
-    font-size: 0.875rem;
     white-space: nowrap;
   }
   /* The mini player: full width above the tab bar, the song first and
@@ -693,23 +665,17 @@ h1 {
     left: 0;
     bottom: calc(var(--tabbar-h) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
     height: var(--mini-h);
-    padding: 0 max(18px, var(--safe-area-inset-right, env(safe-area-inset-right))) 0
-      max(18px, var(--safe-area-inset-left, env(safe-area-inset-left)));
-    gap: 12px;
+    /* Its artwork in line with the page's content above it. */
+    padding: 0 var(--edge-right) 0 var(--edge-left);
+    gap: var(--space-3);
   }
   .player-now {
     flex: 1;
-  }
-  .player-track {
-    gap: 11px;
   }
   .station-mark {
     width: 40px;
     height: 40px;
     font-size: 1.25rem;
-  }
-  .player-track strong {
-    font-size: 0.875rem;
   }
   .player-now > .icon-button,
   .player-volume {
@@ -725,9 +691,6 @@ h1 {
   .player-utilities:not(:has(.player-cast)) {
     display: none;
   }
-  .live-badge {
-    margin-right: 6px;
-  }
   .player-play {
     order: 2;
   }
@@ -736,7 +699,7 @@ h1 {
     z-index: var(--z-bars);
     inset: auto 0 0;
     display: flex;
-    padding: 0 10px var(--safe-area-inset-bottom, env(safe-area-inset-bottom));
+    padding: 0 var(--space-2) var(--safe-area-inset-bottom, env(safe-area-inset-bottom));
     background-color: var(--bg);
     border-top: 1px solid var(--border);
   }
@@ -748,12 +711,17 @@ h1 {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-1);
     color: var(--muted);
-    font-size: 0.875rem;
+    font-size: var(--text-caption);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-caption);
   }
+  /* The tab shown: in ink, its glyph filled (Navigation.jsx) on a pill
+     (styles/states.css). Its name keeps the same weight as the others, so
+     it never shifts. */
   .mobile-nav button.active {
-    color: var(--accent);
+    color: var(--select-ink);
   }
   /* Tab names stay whole and on one line, as a phone's own tab bars keep
      them, however large the text: capped to the width of the screen. */
@@ -787,24 +755,6 @@ h1 {
   clip-path: inset(50%);
   white-space: nowrap;
 }
-.sidebar-donate {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  margin-top: 14px;
-  padding: 0 16px;
-  border-radius: 12px;
-  background: var(--action);
-  color: var(--action-ink);
-  font-size: 0.9375rem;
-  font-weight: 700;
-  transition: background-color 0.15s ease;
-}
-.sidebar-donate:hover {
-  background: color-mix(in srgb, var(--action) 88%, black);
-}
 
 /* Under the phone's status bar once the page scrolls (StatusScrim.jsx): the
    page's color over the content, blurred, fading out a little below the
@@ -826,7 +776,7 @@ h1 {
   backdrop-filter: blur(12px);
   mask-image: linear-gradient(#000 60%, transparent);
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--dur-quick);
 }
 .status-scrim[data-on="true"] {
   opacity: 1;

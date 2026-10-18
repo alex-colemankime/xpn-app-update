@@ -5,23 +5,26 @@
 .app-error {
   max-width: 34rem;
   margin: 0 auto;
-  padding: 15vh 24px 0;
+  padding: 15vh var(--space-6) 0;
   text-align: center;
 }
+/* A dialog's title, not a screen's. */
 .app-error h1 {
-  font-size: 1.375rem;
-  margin: 0 0 12px;
+  font-size: var(--text-title);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
+  margin: 0 0 var(--space-3);
 }
 .app-error p {
   color: var(--muted);
-  line-height: 1.5;
-  margin: 0 0 24px;
+  line-height: var(--leading-body);
+  margin: 0 0 var(--space-6);
 }
 .app-error-actions {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-3);
 }
 
 /* ---------------------------------------------------------------------------
@@ -31,8 +34,10 @@
 /* Hover only where a pointer can hover: on touch screens a tapped control
    would otherwise stay "hovered" until the next tap elsewhere. */
 @media (hover: hover) {
-  .nav-button:hover {
-    background: var(--surface);
+  /* Half the fill of the screen shown, so a screen under the pointer never
+     looks chosen. */
+  :is(.nav-button, .settings-button):not(.active, [aria-current="page"]):hover {
+    background: color-mix(in srgb, var(--row-alt) 50%, transparent);
     color: var(--text);
   }
   .text-button:hover {
@@ -54,9 +59,12 @@
 }
 
 /* Pressed feedback, since the platform tap highlight is switched off. Keys
-   in a joined control darken rather than shrink out of line. */
+   in a joined control darken rather than shrink out of line: in ink, like
+   the chosen key, a step deeper, their words in ink too so they keep their
+   contrast on the deeper fill. */
 :is(.segmented-pill, .repeat-days, .day-picker) button:active {
-  background: color-mix(in srgb, var(--accent) 22%, var(--bg));
+  background: color-mix(in srgb, var(--select-ink) 16%, transparent);
+  color: var(--select-ink);
 }
 :is(
   .primary-button,
@@ -73,20 +81,18 @@
   opacity: 0.65;
 }
 
-/* Tab bar: the active tab gets a pill behind its icon as well as color, so
-   the current screen is never signalled by color alone (WCAG 1.4.1). */
+/* Tab bar: the tab shown gets a pill behind its glyph, and the glyph fills
+   (Navigation.jsx), as well as turning to ink, so the current screen is
+   never signalled by color alone (WCAG 1.4.1). */
 @media (max-width: 767px) {
   .mobile-nav .icon {
     width: 56px;
     height: 30px;
-    border-radius: 15px;
-    transition: background 0.2s;
+    border-radius: var(--radius-full);
+    transition: background var(--dur-quick);
   }
   .mobile-nav button.active .icon {
-    background: color-mix(in srgb, var(--accent) 15%, transparent);
-  }
-  .mobile-nav button.active span {
-    font-weight: 650;
+    background: var(--select-fill);
   }
 }
 
@@ -94,25 +100,48 @@
    Live and loading feedback
    ------------------------------------------------------------------------ */
 
-@keyframes live-pulse {
-  50% {
-    opacity: 0.35;
-    scale: 0.7;
-  }
+/* Connecting: the key keeps its words ("Connecting…") and stays still. Only
+   if it takes longer than 300ms does its glyph give way to a small spinner,
+   so a quick connection shows nothing at all. Live is a still dot and the
+   word; nothing pulses. */
+:is(.hero-play, .player-play, .episode-actions .primary-button)[data-busy] > .icon {
+  position: relative;
 }
-
-/* An outline pulses around the play button while connecting or reconnecting. */
-.player-play[data-busy]::after {
+:is(.hero-play, .player-play, .episode-actions .primary-button)[data-busy] > .icon svg {
+  animation: busy-hide 0s linear 300ms forwards;
+}
+:is(.hero-play, .player-play, .episode-actions .primary-button)[data-busy] > .icon::after {
   content: "";
   position: absolute;
-  inset: -5px;
-  border-radius: 18px;
-  border: 2px solid var(--action);
-  animation: busy-pulse 0.9s ease-in-out infinite alternate;
+  inset: 18%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  opacity: 0;
+  animation:
+    busy-show 0s linear 300ms forwards,
+    busy-spin 0.8s linear 300ms infinite;
 }
-@keyframes busy-pulse {
-  from {
-    opacity: 0.2;
+@keyframes busy-hide {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes busy-show {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes busy-spin {
+  to {
+    rotate: 1turn;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* The words say it; the glyph stays. */
+  :is(.hero-play, .player-play, .episode-actions .primary-button)[data-busy] > .icon svg,
+  :is(.hero-play, .player-play, .episode-actions .primary-button)[data-busy] > .icon::after {
+    animation: none;
   }
 }
 
@@ -121,9 +150,12 @@
 .skeleton-row {
   pointer-events: none;
 }
+.track-row.skeleton-row {
+  padding: var(--space-3) 0;
+}
 .skeleton-block {
   display: block;
-  border-radius: 4px;
+  border-radius: var(--radius-s);
   background:
     linear-gradient(
         90deg,
@@ -145,7 +177,7 @@
 .skeleton-row .skeleton-lines {
   flex: 1;
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .skeleton-row .skeleton-line {
   height: 12px;
@@ -179,9 +211,26 @@
 }
 
 /* Screen changes cross-fade (see hooks/useRoute.js). */
-::view-transition-old(root),
+/* Android's fade-through between tabs (hooks/useRoute.js; other platforms
+   change tabs instantly): the old screen fades out quickly, the new one
+   fades in as it settles from a touch smaller. No sideways motion, which
+   would suggest the tabs can be swiped. */
+::view-transition-old(root) {
+  animation: vt-fade-out 90ms var(--ease-out) both;
+}
 ::view-transition-new(root) {
-  animation-duration: 0.16s;
+  animation: vt-fade-in var(--dur-quick) var(--ease-out) 60ms both;
+}
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+    scale: 0.98;
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -249,52 +298,32 @@
 .screen-error {
   display: grid;
   justify-items: start;
-  gap: 14px;
+  gap: var(--space-4);
   max-width: 34rem;
-  padding: 32px 0;
+  padding: var(--space-8) 0;
 }
 .screen-error p {
   margin: 0;
-  font-size: 1.0625rem;
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
   color: var(--muted);
 }
 
-/* An empty list's way to the screen that fills it. */
+/* An empty list's way to the screen that fills it: a link, in the accent
+   every link and text button takes. */
 .empty-link {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   min-height: 44px;
-  margin-top: 4px;
-  color: var(--accent-strong);
-  font-weight: 650;
+  margin-top: var(--space-1);
+  color: var(--accent);
 }
 
 /* A link in an empty state's line (the calendar on xpn.org). */
 .empty-state p a {
-  color: var(--accent-strong);
-  font-weight: 650;
+  color: var(--accent);
+  font-weight: var(--weight-semibold);
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-
-/* A tab reached by a swipe (useSwipeTabs) slides in from the side the
-   finger came from; one chosen by its tab just appears. */
-.tab-pane[data-enter="1"] {
-  animation: pane-from-right 0.22s ease-out;
-}
-.tab-pane[data-enter="-1"] {
-  animation: pane-from-left 0.22s ease-out;
-}
-@keyframes pane-from-right {
-  from {
-    opacity: 0.4;
-    translate: 28px 0;
-  }
-}
-@keyframes pane-from-left {
-  from {
-    opacity: 0.4;
-    translate: -28px 0;
-  }
 }

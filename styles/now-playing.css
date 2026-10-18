@@ -7,16 +7,16 @@
   --band: var(--tint-light, var(--accent));
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   width: var(--stage, 100%);
-  margin: 0 auto 24px;
-  padding: 12px 14px 12px 12px;
-  border-radius: 12px;
+  margin: 0 auto var(--space-6);
+  padding: var(--space-3);
+  border-radius: var(--radius-m);
   color: var(--text);
   /* One even wash of the show's color, edge to edge: no fade that reads as
      the band being cut off. */
   background-color: color-mix(in srgb, var(--band) 13%, var(--bg));
-  transition: background-color 0.15s;
+  transition: background-color var(--dur-quick);
 }
 :root[data-theme="dark"] .on-air {
   --band: var(--tint-dark, var(--accent));
@@ -27,7 +27,7 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-3);
   text-align: left;
 }
 @media (hover: hover) {
@@ -49,16 +49,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: var(--space-2);
   flex-shrink: 0;
-  min-height: 40px;
-  padding: 0 16px 0 13px;
+  min-height: 44px;
+  /* Less on the play glyph's side: its box has room around the triangle,
+     so the two sides look even. */
+  padding: 0 var(--space-4) 0 var(--space-3);
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-m);
   background: var(--text);
   color: var(--bg);
-  font-size: 0.9375rem;
-  font-weight: 700;
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-bold);
   white-space: nowrap;
 }
 @media (hover: hover) {
@@ -73,7 +75,7 @@
   width: 56px;
   height: 56px;
   flex-shrink: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   object-fit: cover;
 }
 .on-air-text {
@@ -85,10 +87,11 @@
 .on-air-label {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--space-2);
   white-space: nowrap;
-  font-size: 0.875rem;
-  font-weight: 700;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caption);
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
@@ -98,56 +101,48 @@
   border-radius: 50%;
   background: var(--action);
 }
-.on-air-dot[data-live] {
-  animation: live-pulse 2s ease-in-out infinite;
-}
 .on-air-show {
-  font-size: 1.0625rem;
-  font-weight: 700;
-  line-height: 1.3;
+  font-size: var(--text-body);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-body);
 }
 .on-air-host {
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 @media (max-width: 767px) {
-  /* Edge to edge on phones, like the station tabs above it. */
+  /* Edge to edge on phones, like the station tabs above it, and compact:
+     the show sets the scene, the song under it leads. Its top margin takes
+     back the space under the station tabs (.listen-heading), so the band
+     hangs from their rule. */
   .on-air {
     width: auto;
-    margin: -18px calc(-1 * var(--edge-right)) 16px calc(-1 * var(--edge-left));
-    padding: 10px var(--edge-right) 10px var(--edge-left);
+    margin: calc(-1 * var(--space-4)) calc(-1 * var(--edge-right)) var(--space-4)
+      calc(-1 * var(--edge-left));
+    padding: var(--space-2) var(--edge-right) var(--space-2) var(--edge-left);
     border-radius: 0;
   }
   .on-air-art {
     width: 42px;
     height: 42px;
-    border-radius: 7px;
-  }
-  .on-air-open {
-    gap: 12px;
-  }
-  .on-air-label {
-    font-size: 0.75rem;
   }
   .on-air-show {
-    font-size: 0.9375rem;
+    font-size: var(--text-secondary);
   }
   .on-air-host {
-    font-size: 0.8125rem;
+    font-size: var(--text-caption);
+    letter-spacing: var(--tracking-caption);
   }
 }
 /* Beside the playlist the stage can be narrow (a tablet held sideways), so
-   the band's label and artwork step down to stay on one line. */
+   the band's artwork steps down to keep its label on one line. */
 @media (min-width: 768px) and (max-height: 900px) {
   .on-air-art {
     width: 48px;
     height: 48px;
-  }
-  .on-air-label {
-    font-size: 0.8125rem;
   }
 }
 @media (forced-colors: active) {
@@ -167,7 +162,7 @@
   width: 120%;
   height: 80%;
   z-index: -1;
-  border-radius: 24px;
+  border-radius: var(--radius-l);
   box-shadow: none;
   filter: blur(26px) saturate(1.4);
   opacity: 0.18;
@@ -175,6 +170,40 @@
 }
 :root[data-theme="dark"] .now-art > img.now-art-glow {
   opacity: 0.25;
+}
+/* The room moves only with sound: while the radio plays, the glow drifts
+   and breathes very slowly; paused, it holds still, so stillness reads as
+   paused. Two movements with unrelated lengths (53s and 71s), so the drift
+   never visibly repeats or reads as a pulse. Transform only. */
+.now-art > img.now-art-glow {
+  animation:
+    glow-drift 53s var(--ease-in-out) infinite alternate,
+    glow-breathe 71s var(--ease-in-out) infinite alternate;
+  animation-play-state: paused;
+}
+.now-card[data-playing] .now-art > img.now-art-glow {
+  animation-play-state: running;
+}
+@keyframes glow-drift {
+  from {
+    translate: -3% 1%;
+  }
+  to {
+    translate: 4% -2%;
+  }
+}
+@keyframes glow-breathe {
+  from {
+    scale: 1;
+  }
+  to {
+    scale: 1.08;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .now-art > img.now-art-glow {
+    animation: none;
+  }
 }
 
 /* Two taps on the artwork heart the song (ListenScreen.jsx): a heart blooms
@@ -197,7 +226,7 @@
   color: var(--accent);
   pointer-events: none;
   filter: drop-shadow(0 6px 18px rgb(0 0 0 / 0.35));
-  animation: art-heart 0.9s ease-out both;
+  animation: art-heart 0.6s var(--ease-out) both;
 }
 .art-heart[data-tinted] {
   color: var(--tint-light);
@@ -216,25 +245,18 @@
 @keyframes art-heart {
   0% {
     opacity: 0;
-    scale: 0.3;
+    scale: 0.8;
   }
-  18% {
-    opacity: 1;
-    scale: 1.14;
-  }
-  32% {
-    scale: 0.94;
-  }
-  46% {
-    scale: 1;
-  }
-  72% {
+  25% {
     opacity: 1;
     scale: 1;
+  }
+  70% {
+    opacity: 1;
   }
   100% {
     opacity: 0;
-    scale: 1.06;
+    scale: 1.04;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -246,7 +268,7 @@
 /* A new song fades in rather than snapping into place. */
 .now-art,
 .now-info {
-  animation: song-in 0.45s ease-out both;
+  animation: song-in var(--dur-song) var(--ease-out) both;
 }
 @keyframes song-in {
   from {
@@ -255,51 +277,19 @@
   }
 }
 
-/* Dancing bars beside NOW PLAYING while audio plays, and on the episode
-   loaded in the player (held still while it is paused). */
-.eq {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 10px;
-  margin-right: 8px;
-  vertical-align: -1px;
-}
-.eq i {
-  width: 3px;
-  height: 100%;
-  border-radius: 1px;
-  background: var(--accent);
-  transform-origin: bottom;
-  animation: eq 0.9s ease-in-out infinite alternate;
-}
-.eq i:nth-child(2) {
-  animation-duration: 0.7s;
-  animation-delay: -0.3s;
-}
-.eq i:nth-child(3) {
-  animation-duration: 1.1s;
-  animation-delay: -0.6s;
-}
-.eq[data-paused] i {
-  animation-play-state: paused;
-}
-@keyframes eq {
-  from {
-    scale: 1 0.3;
-  }
-  to {
-    scale: 1 1;
-  }
-}
-
-/* The heart pops on the tap that saves. */
+/* The tap that saves fills the heart at once; it settles in from a touch
+   smaller, quickly and without overshoot (a tap isn't a throw). */
 [data-pop] .icon {
-  animation: heart-pop 0.4s cubic-bezier(0.3, 1.6, 0.5, 1);
+  animation: heart-press var(--dur-press) var(--ease-out);
 }
-@keyframes heart-pop {
-  40% {
-    scale: 1.35;
+@keyframes heart-press {
+  from {
+    scale: 0.9;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-pop] .icon {
+    animation: none;
   }
 }
 
@@ -308,7 +298,6 @@
 }
 .sleep-button.active {
   color: var(--accent);
-  font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
 
@@ -326,30 +315,47 @@
   margin: 0;
   inset: auto;
   min-width: 240px;
-  padding: 8px;
+  padding: var(--space-2);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-m);
   background: var(--surface);
   color: var(--text);
   box-shadow: 0 16px 44px rgb(0 0 0 / 0.35);
   top: anchor(bottom);
   right: anchor(right);
-  margin-top: 8px;
+  margin-top: var(--space-2);
   position-try-fallbacks: flip-block;
+  /* Grows from the corner it hangs from, and leaves the same way, quicker
+     than it came. display and overlay transition too (allow-discrete), so
+     the closing fade plays before the browser hides it; engines without
+     that close it at once. */
+  transform-origin: top right;
   transition:
-    opacity 0.18s ease-out,
-    translate 0.18s ease-out;
+    opacity 120ms var(--ease-out),
+    scale 120ms var(--ease-out),
+    translate 120ms var(--ease-out),
+    display 120ms allow-discrete,
+    overlay 120ms allow-discrete;
+}
+.popover-menu:popover-open {
+  transition-duration: var(--dur-menu);
+}
+.popover-menu:not(:popover-open) {
+  opacity: 0;
+  scale: 0.96;
 }
 @starting-style {
   .popover-menu:popover-open {
     opacity: 0;
-    translate: 0 6px;
+    scale: 0.96;
   }
 }
 @supports not (anchor-name: --a) {
   .popover-menu {
-    right: 24px;
-    bottom: calc(110px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+    right: var(--space-6);
+    bottom: calc(
+      var(--player-h) + var(--space-8) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
+    );
   }
 }
 /* What the menu is about: the song (with its artwork) or the concert, set
@@ -357,16 +363,16 @@
 .popover-menu-head {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 0 0 6px;
-  padding: 4px 12px 12px;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-2);
+  padding: var(--space-1) var(--space-3) var(--space-3);
   border-bottom: 1px solid var(--border);
 }
 .popover-menu-head img {
   width: 44px;
   height: 44px;
   flex-shrink: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-s);
   object-fit: cover;
 }
 .popover-menu-head > span {
@@ -375,14 +381,14 @@
   min-width: 0;
 }
 .popover-menu-head strong {
-  font-size: 1rem;
-  font-weight: 650;
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .popover-menu-head small {
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -392,12 +398,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
   width: 100%;
   min-height: 48px;
-  padding: 0 12px;
-  border-radius: 8px;
-  font-size: 1rem;
+  padding: 0 var(--space-3);
+  /* Inside the menu's corner by its padding. */
+  border-radius: var(--radius-s);
+  font-size: var(--text-body);
   text-align: left;
 }
 .popover-menu :is(button, a) > .icon {
@@ -405,56 +412,57 @@
 }
 .popover-menu :is(button, a) small {
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: var(--text-secondary);
 }
 .popover-menu-note {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   margin: 0;
-  padding: 6px 12px 8px;
-  font-size: 0.875rem;
-  line-height: 1.45;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
   color: var(--muted);
 }
 .popover-menu .sleep-off {
   justify-content: center;
-  margin-top: 6px;
+  margin-top: var(--space-2);
   color: var(--accent);
-  font-weight: 650;
+  font-weight: var(--weight-semibold);
 }
 
 /* Sleep timer: the durations as large numbers on four keys, then the end of
-   the show on the air, so each choice reads at a glance. */
+   the show on the air, so each choice reads at a glance. Its title and keys
+   start as far in as a menu's words (the menu's padding and an item's). */
 .popover-menu.sleep-menu {
   width: 340px;
-  padding: 16px;
+  padding: var(--space-5);
 }
 .sleep-head {
-  margin: 0 2px 14px;
+  margin: 0 0 var(--space-4);
 }
 .sleep-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   margin: 0;
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: var(--text-heading);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-heading);
 }
 .sleep-title .icon {
   color: var(--accent);
 }
 .sleep-sub {
-  margin: 4px 0 0;
-  font-size: 0.875rem;
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-secondary);
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 .sleep-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--space-2);
 }
 .popover-menu .sleep-grid button {
   display: flex;
@@ -465,37 +473,39 @@
   min-height: 78px;
   padding: 0;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-m);
   background: var(--bg);
   text-align: center;
 }
+/* Numerals read at a glance, at the same size as the alarm's time. */
 .sleep-grid strong {
-  font-size: 1.875rem;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.03em;
+  font-size: var(--text-numeral);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-numeral);
+  letter-spacing: var(--tracking-numeral);
   font-variant-numeric: tabular-nums;
 }
 .popover-menu .sleep-grid small {
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caption);
   color: var(--muted);
 }
 .popover-menu .sleep-show {
   justify-content: flex-start;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   min-height: 64px;
-  margin-top: 8px;
-  padding: 10px 12px 10px 10px;
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-m);
   background: var(--bg);
 }
 .sleep-show img {
   width: 42px;
   height: 42px;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -505,8 +515,8 @@
   min-width: 0;
 }
 .sleep-show strong {
-  font-size: 1rem;
-  font-weight: 650;
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
 }
 @media (hover: hover) {
   .popover-menu :is(.sleep-grid button, .sleep-show):hover {
@@ -527,32 +537,66 @@
     margin: 0;
     width: 100%;
     max-width: 100%;
-    border-radius: 18px 18px 0 0;
-    padding: 22px 12px calc(16px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+    border-radius: var(--radius-l) var(--radius-l) 0 0;
+    padding: var(--space-5) var(--space-3)
+      calc(var(--space-4) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
   }
   /* The grabber that says "this is a sheet". */
   .popover-menu::before {
     content: "";
     position: absolute;
-    top: 8px;
+    top: var(--space-2);
     inset-inline: 0;
     width: 40px;
     height: 5px;
     margin-inline: auto;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: var(--grabber);
+  }
+  /* On a phone a menu is a sheet: it rises on the sheet spring and slides
+     back down when it closes, its backdrop fading with it. */
+  .popover-menu {
+    scale: none;
+    transition:
+      translate 240ms var(--ease-out),
+      display 240ms allow-discrete,
+      overlay 240ms allow-discrete;
+  }
+  .popover-menu:popover-open {
+    transition-duration: var(--dur-sheet);
+    transition-timing-function: var(--spring-sheet);
+  }
+  .popover-menu:not(:popover-open) {
+    opacity: 1;
+    scale: none;
+    translate: 0 100%;
   }
   @starting-style {
     .popover-menu:popover-open {
-      translate: 0 40px;
+      opacity: 1;
+      scale: none;
+      translate: 0 100%;
     }
   }
   .popover-menu::backdrop {
     background: #0008;
+    transition:
+      opacity var(--dur-menu) var(--ease-out),
+      display var(--dur-menu) allow-discrete,
+      overlay var(--dur-menu) allow-discrete;
+  }
+  .popover-menu:not(:popover-open)::backdrop {
+    opacity: 0;
+  }
+  @starting-style {
+    .popover-menu:popover-open::backdrop {
+      opacity: 0;
+    }
   }
   .popover-menu.sleep-menu {
     width: 100%;
-    padding: 28px 20px calc(20px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+    padding: var(--space-6) var(--space-6)
+      calc(var(--space-6) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
   }
 }
 
@@ -560,25 +604,34 @@
    time turns accent and a small label sits over the show name. */
 .schedule-row.on-air-row time {
   color: var(--accent);
-  font-weight: 700;
+  font-weight: var(--weight-semibold);
 }
 .on-air-chip {
   display: block;
-  margin-bottom: 4px;
-  font-size: 0.875rem;
-  font-weight: 700;
+  margin-bottom: var(--space-1);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caption);
   color: var(--accent);
 }
 
-/* Show sheet: when the show is next on. */
+/* Show sheet: when the show is next on, as one more line under its times,
+   in the same type as the lines around it. */
 .show-detail-hero p.airing {
-  margin: -6px 0 14px;
-  font-size: 0.875rem;
+  margin: 0 0 var(--space-3);
 }
 
 /* Glow and fades step aside when the system asks for plainer visuals. */
 @media (prefers-contrast: more), (forced-colors: active), (prefers-reduced-transparency: reduce) {
   .now-art > img.now-art-glow {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Menus and their backdrops appear and leave at once. */
+  .popover-menu,
+  .popover-menu::backdrop {
+    transition: none;
   }
 }

@@ -10,16 +10,20 @@
 .toast {
   position: fixed;
   z-index: var(--z-toast);
-  bottom: calc(var(--player-h) + 16px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+  bottom: calc(
+    var(--player-h) + var(--space-4) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
+  );
   /* Centered over the content, not the whole window. */
   left: calc(50% + var(--sidebar-w) / 2);
   transform: translateX(-50%);
-  width: min(440px, calc(100% - 32px));
+  width: min(440px, calc(100% - 2 * var(--space-4)));
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 8px 10px 10px;
-  border-radius: 16px;
+  gap: var(--space-3);
+  /* A little more at the top, where the grabber is; the artwork's corner
+     inside the bar's by its padding. */
+  padding: var(--space-3) var(--space-2) var(--space-2);
+  border-radius: var(--radius-m);
   /* It follows a finger pulled down or aside (Toast.jsx), never the page. */
   touch-action: none;
   -webkit-user-select: none;
@@ -29,48 +33,49 @@
   box-shadow:
     0 2px 6px rgb(0 0 0 / 0.12),
     0 12px 32px rgb(0 0 0 / 0.22);
-  font-size: 0.875rem;
-  line-height: 1.35;
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
   /* Rises into place, and fades as it goes. */
   transition:
-    opacity 0.2s ease-out,
-    translate 0.2s ease-out,
-    scale 0.2s ease-out;
+    opacity var(--dur-menu) var(--ease-out),
+    translate var(--dur-menu) var(--ease-out),
+    scale var(--dur-menu) var(--ease-out);
 }
 .toast[data-leaving] {
   opacity: 0;
   translate: 0 6px;
   pointer-events: none;
-  transition-duration: 0.18s;
-  transition-timing-function: ease-in;
+  /* Leaving answers faster than arriving, and never eases in. */
+  transition-duration: 120ms;
+  transition-timing-function: var(--ease-out);
 }
 .toast:not(.has-action) {
-  padding-right: 14px;
+  padding-right: var(--space-4);
 }
 /* A short grabber along the top of a bar: it can be swiped away. */
 .toast:not(.brief)::before {
   content: "";
   position: absolute;
-  top: 5px;
-  left: 50%;
+  top: var(--space-1);
+  inset-inline: 0;
   width: 28px;
   height: 4px;
-  margin-left: -14px;
-  border-radius: 999px;
+  margin-inline: auto;
+  border-radius: var(--radius-full);
   background: color-mix(in srgb, var(--inverse-text) 28%, transparent);
 }
 .toast:not(.brief):not(:has(.toast-media)) {
-  padding-left: 14px;
+  padding-left: var(--space-4);
 }
 /* The pill: as wide as its words, a little glass over the page. */
 .toast.brief {
   width: max-content;
-  max-width: calc(100% - 32px);
+  max-width: calc(100% - 2 * var(--space-4));
   min-height: 40px;
-  gap: 2px;
-  padding: 0 16px;
-  border-radius: 999px;
-  font-weight: 600;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  font-weight: var(--weight-semibold);
   background: color-mix(in srgb, var(--inverse-bg) 90%, transparent);
   -webkit-backdrop-filter: blur(14px) saturate(1.5);
   backdrop-filter: blur(14px) saturate(1.5);
@@ -78,21 +83,9 @@
     0 1px 3px rgb(0 0 0 / 0.12),
     0 6px 18px rgb(0 0 0 / 0.18);
 }
+/* The key's ends inside the pill's by the same space all round. */
 .toast.brief.has-action {
-  padding-right: 4px;
-}
-.toast.brief .toast-action {
-  position: relative;
-  min-height: 32px;
-  margin-left: 6px;
-  padding: 0 12px;
-  border-radius: 999px;
-}
-/* A full-size target around the small key. */
-.toast.brief .toast-action::after {
-  content: "";
-  position: absolute;
-  inset: -6px -4px;
+  padding-right: var(--space-1);
 }
 @media (hover: hover) {
   .toast.brief .toast-action:hover {
@@ -108,7 +101,7 @@
   width: 36px;
   height: 36px;
   flex-shrink: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   object-fit: cover;
 }
 .toast-icon {
@@ -120,10 +113,10 @@
   flex: 1;
   min-width: 0;
   display: grid;
-  gap: 1px;
+  gap: 2px;
 }
 .toast-text strong {
-  font-weight: 650;
+  font-weight: var(--weight-semibold);
 }
 /* With a title, each line keeps to one line; a notice without one may
    take two. */
@@ -139,30 +132,29 @@
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
-  font-size: 0.9375rem;
 }
+/* The line under a title: the same size, a step quieter. */
 .toast-text strong + span {
-  font-size: 0.875rem;
   opacity: 0.78;
 }
-/* The action, a small key in the accent at the end of the row. */
+/* The action, a small key in the accent at the end of the row, in the
+   notice's own size. */
 .toast-action {
   position: relative;
   flex-shrink: 0;
   min-height: 32px;
-  padding: 0 12px;
-  border-radius: 999px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
   color: var(--inverse-accent);
   background: color-mix(in srgb, var(--inverse-accent) 16%, transparent);
-  font-size: 0.875rem;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   white-space: nowrap;
 }
-/* A full-size target around it. */
+/* A full 44px target around it, however tall the key. */
 .toast-action::after {
   content: "";
   position: absolute;
-  inset: -6px -4px;
+  inset: calc(50% - 22px) calc(-1 * var(--space-1));
 }
 /* Dismiss is for a keyboard or screen reader; it shows once focused. */
 .toast .toast-close:focus-visible {
@@ -170,10 +162,9 @@
   width: auto;
   height: 32px;
   margin: 0;
-  padding: 0 10px;
+  padding: 0 var(--space-3);
   clip-path: none;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   color: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }

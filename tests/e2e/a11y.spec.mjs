@@ -102,8 +102,18 @@ const VIEWS = {
   },
   "concerts, filter open": async (page) => {
     await page.goto("/#/concerts");
-    await page.getByRole("button", { name: /^Filter/ }).click();
+    await page.getByRole("button", { name: /^Filters/ }).click();
     await expect(page.locator(".range-calendar")).toBeVisible();
+  },
+  "a concert's sheet": async (page) => {
+    await page.goto("/#/concerts");
+    await page.locator(".concert-open").first().click();
+    await expect(page.locator(".concert-sheet")).toBeVisible();
+  },
+  "a song's sheet": async (page) => {
+    await page.goto("/");
+    await page.locator(".recent-panel .track-open").first().click();
+    await expect(page.locator(".hold-menu")).toBeVisible();
   },
   "settings, alarm on": async (page) => {
     await page.goto("/#/settings");
@@ -134,3 +144,27 @@ for (const theme of ["light", "dark"]) {
     });
   }
 }
+
+// The concert listings above, in use.
+test("concerts are grouped by day, and a concert's sheet has its tickets", async ({ page }) => {
+  await page.goto("/#/concerts");
+  const first = page.locator(".concert-day").first();
+  await expect(first.getByRole("heading")).toBeVisible();
+  await first.locator(".concert-open").first().click();
+  const sheet = page.locator(".concert-sheet");
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByRole("link", { name: "Tickets" })).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "Add to calendar" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(sheet).toBeHidden();
+  // A chip narrows the list, and Clear filters lets it go.
+  const count = page.locator(".concert-count [role=status]");
+  const all = await count.textContent();
+  await page.getByRole("button", { name: "WXPN Welcomes", exact: true }).click();
+  await expect(page.getByRole("button", { name: "WXPN Welcomes", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await page.getByRole("button", { name: "Clear filters" }).click();
+  await expect(count).toHaveText(all);
+});
