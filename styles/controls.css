@@ -89,11 +89,12 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
     background: var(--surface);
   }
 }
-/* Chosen: in ink on a fill, like the tab and the station, so it reads
-   without color too. The weight stays, so no label shifts as it is chosen. */
+/* Chosen: filled in ink with the page's color for its words, so a choice
+   reads at a glance in either theme, without the station's orange (kept for
+   things to do). The weight stays, so no label shifts as it is chosen. */
 :is(.segmented-pill, .repeat-days, .day-picker) button.active {
-  background: var(--select-fill);
-  color: var(--select-ink);
+  background: var(--select-ink);
+  color: var(--bg);
 }
 .search-field {
   display: flex;
