@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Icon, Art, Segmented, Empty, SearchField } from "../ui.jsx";
 import { SHOWS, SHOW_DIRECTORY, scheduleForDay, onAirAt, untilLabel } from "../catalog.js";
 import { DAYS, easternParts, clockLabel, localClock } from "../time.js";
@@ -11,16 +11,6 @@ import { PullToRefresh } from "../components/PullToRefresh.jsx";
 import { loadArchive } from "../archive.js";
 import { HOSTS, hostsOfShow } from "../hosts.js";
 import { HostCard } from "../components/HostSheet.jsx";
-import { scheduleRuler } from "../schedule.js";
-
-// The schedule to scale: an hour is this tall, and no show draws shorter
-// than a finger's room.
-const PER_HOUR = 60;
-const MIN_ROW = 56;
-const minutesOf = (hhmm) => {
-  const [h, m] = hhmm.split(":").map(Number);
-  return h * 60 + m;
-};
 
 const matchesQuery = (query) => {
   const q = query.trim().toLowerCase();
@@ -62,47 +52,20 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
     tap("selection");
     setMode(next);
   };
-  // Choosing today again brings the line that marks now back into view.
-  const wantNow = useRef("auto");
   const chooseDay = (next) => {
     tap("selection");
-    if (next === today) wantNow.current = "smooth";
     setDay(next);
   };
-  // The slot on the air: today's, or, opening the day, the one that began
-  // last night and runs past midnight (and not the same show's slot later
-  // today, which isn't on yet).
-  const isOnAir = ({ slot, carried }) =>
+  // Today's slot, not one that began yesterday and runs past midnight (whose
+  // start is before today's): the same show's slot later today isn't on yet.
+  const isOnAir = (slot) =>
     day === today &&
     onAirNow?.show.id === slot.show.id &&
-    (carried ? onAirNow.start < 0 : onAirNow.slot.start === slot.start && onAirNow.start >= 0);
+    onAirNow.slot.start === slot.start &&
+    onAirNow.start >= 0;
   const matches = matchesQuery(query);
   const shows = SHOW_DIRECTORY.filter(matches);
   const slots = scheduleForDay(day).filter((slot) => matches(slot.show));
-  // Unsearched, the day is drawn to scale, with a line at now; searching, it
-  // is a plain list, so the matches don't float in the gaps between them.
-  const scaled = !query.trim();
-  const ruler = scaled
-    ? scheduleRuler(scheduleForDay(day), scheduleForDay(DAYS[(DAYS.indexOf(day) + 6) % 7]), {
-        perHour: PER_HOUR,
-        minHeight: MIN_ROW,
-      })
-    : null;
-  const rows = ruler ? ruler.rows : slots.map((slot) => ({ slot }));
-  const nowTime = easternParts(now).time;
-  const nowTop = ruler && day === today ? ruler.offsetAt(minutesOf(nowTime)) : null;
-  // The schedule opens at now on the first visit, and comes back to it when
-  // today is chosen again; otherwise a visit returns where the listener left
-  // it (App.jsx). Not while the screen is hidden behind another.
-  const nowLine = useRef(null);
-  useEffect(() => {
-    const el = nowLine.current;
-    if (!wantNow.current || !el || mode !== "Schedule" || el.offsetParent === null) return;
-    // Arriving, it simply opens there; choosing today, it travels.
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    el.scrollIntoView({ block: "center", behavior: reduced ? "auto" : wantNow.current });
-    wantNow.current = null;
-  }, [mode, day, today, nowTop]);
   const hosts = HOSTS.filter(hostMatches(query));
   // Hosts in the order you'll hear them: on the air now, then next, then
   // everyone else by name. Searching, simply the matches.
@@ -216,13 +179,13 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
               <div className="day-picker" role="group" aria-label="Schedule day">
                 {DAYS.map((d) => (
                   <button
-                    className={d === day ? "active" : ""}
+                    className={`${d === day ? "active" : ""} ${d === today ? "today" : ""}`}
                     aria-pressed={d === day}
-                    aria-label={d === today ? `Today, ${d}` : d}
+                    aria-label={d === today ? `${d}, today` : d}
                     key={d}
                     onClick={() => chooseDay(d)}
                   >
-                    {d === today ? "Today" : d.slice(0, 3)}
+                    {d.slice(0, 3)}
                   </button>
                 ))}
               </div>
@@ -233,53 +196,28 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
                     <span className="subtle">All times Eastern</span>
                   </div>
                   {slots.length ? (
-                    <div className={scaled ? "schedule-ruler" : undefined}>
-                      {rows.map((row) =>
-                        row.gap ? (
-                          <div
-                            key={`gap-${row.from}`}
-                            className="schedule-gap"
-                            style={{ height: row.height }}
-                            aria-hidden="true"
-                          />
-                        ) : (
-                          <button
-                            ref={showHold(row.slot.show, onOpen)}
-                            className={`schedule-row ${isOnAir(row) ? "on-air-row" : ""} ${
-                              nowTop !== null && row.to <= minutesOf(nowTime) ? "aired" : ""
-                            }`}
-                            key={`${row.slot.show.id}-${row.slot.start}-${row.carried ? "c" : ""}`}
-                            style={scaled ? { height: row.height } : undefined}
-                            onClick={() => onOpen(row.slot.show.id)}
-                          >
-                            <time>
-                              {clockLabel(row.slot.start)}
-                              <small>{clockLabel(row.slot.end)}</small>
-                            </time>
-                            <Art src={row.slot.show.img} alt="" loading="lazy" />
-                            <span className="schedule-info">
-                              {isOnAir(row) && <span className="sr-only">On air now: </span>}
-                              {row.carried && (
-                                <span className="sr-only">From the night before: </span>
-                              )}
-                              <strong>{row.slot.show.name}</strong>
-                              {row.slot.show.host && <span>{row.slot.show.host}</span>}
-                              <small className="schedule-desc">{row.slot.show.desc}</small>
-                            </span>
-                            <Icon name="chev" size={20} />
-                          </button>
-                        ),
-                      )}
-                      {nowTop !== null && (
-                        <div
-                          ref={nowLine}
-                          className="schedule-now"
-                          style={{ top: nowTop }}
-                          aria-hidden="true"
+                    <div>
+                      {slots.map((slot) => (
+                        <button
+                          ref={showHold(slot.show, onOpen)}
+                          className={`schedule-row ${isOnAir(slot) ? "on-air-row" : ""}`}
+                          key={`${slot.show.id}-${slot.start}`}
+                          onClick={() => onOpen(slot.show.id)}
                         >
-                          <span>{clockLabel(nowTime)}</span>
-                        </div>
-                      )}
+                          <time>
+                            {clockLabel(slot.start)}
+                            <small>{clockLabel(slot.end)}</small>
+                          </time>
+                          <Art src={slot.show.img} alt="" loading="lazy" />
+                          <span className="schedule-info">
+                            {isOnAir(slot) && <span className="sr-only">On air now: </span>}
+                            <strong>{slot.show.name}</strong>
+                            {slot.show.host && <span>{slot.show.host}</span>}
+                            <small className="schedule-desc">{slot.show.desc}</small>
+                          </span>
+                          <Icon name="chev" size={20} />
+                        </button>
+                      ))}
                     </div>
                   ) : (
                     <Empty

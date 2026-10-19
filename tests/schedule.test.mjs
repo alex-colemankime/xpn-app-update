@@ -83,30 +83,3 @@ test("next airing ends when that day's slot ends", () => {
   assert.equal(friday.end, "12:00");
   assert.equal(nextAiring(SHOWS.middays, at("Monday", "09:00")).end, "14:00");
 });
-
-test("a day drawn to scale: each show as tall as it runs, the night before carried in", async () => {
-  const { scheduleRuler } = await import("../schedule.js");
-  const s = (start, end, id) => ({ start, end, show: { id } });
-  const { rows, offsetAt } = scheduleRuler(
-    [s("01:00", "05:00", "b"), s("05:00", "05:30", "c"), s("05:30", "24:00", "d")],
-    [s("23:00", "01:00", "a")],
-    { perHour: 60, minHeight: 50 },
-  );
-  assert.deepEqual(
-    rows.map((r) => [r.slot?.show.id ?? "gap", r.from, r.to, r.height, Boolean(r.carried)]),
-    [
-      ["a", 0, 60, 60, true],
-      ["b", 60, 300, 240, false],
-      ["c", 300, 330, 50, false],
-      ["d", 330, 1440, 1110, false],
-    ],
-  );
-  assert.equal(offsetAt(0), 0);
-  assert.equal(offsetAt(120), 120, "two hours in, an hour into b");
-  assert.equal(offsetAt(315), 60 + 240 + 25, "halfway through the short slot");
-  const gappy = scheduleRuler([s("02:00", "04:00", "x")], [], { perHour: 60, minHeight: 50 });
-  assert.deepEqual(
-    gappy.rows.map((r) => (r.gap ? `gap ${r.from}-${r.to}` : r.slot.show.id)),
-    ["gap 0-120", "x", "gap 240-1440"],
-  );
-});

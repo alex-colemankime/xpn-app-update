@@ -34,6 +34,16 @@ const SONGS = [
   { title: "Cut Your Hair", artist: "Pavement", album: "Crooked Rain, Crooked Rain" },
 ];
 const [ON_AIR] = SONGS;
+// Earlier on the playlist, not saved: enough songs for Recently played to
+// fill its column beside the song on a laptop.
+const PLAYED = [
+  ...SONGS,
+  { title: "Right Back to It", artist: "Waxahatchee", album: "Tigers Blood" },
+  { title: "Vampire Empire", artist: "Big Thief", album: "Vampire Empire" },
+  { title: "Chaise Longue", artist: "Wet Leg", album: "Wet Leg" },
+  { title: "Space Song", artist: "Beach House", album: "Depression Cherry" },
+  { title: "Not Strong Enough", artist: "boygenius", album: "the record" },
+];
 const slug = (text) =>
   text
     .toLowerCase()
@@ -103,7 +113,7 @@ const minutesAgo = (n) => new Date(NOW.getTime() - n * 60000);
 
 // The station's playlist: the song on air two minutes ago, then the rest.
 const playlist = () =>
-  SONGS.map((song, i) => ({
+  PLAYED.map((song, i) => ({
     artist: song.artist,
     song: song.title,
     album: song.album,
@@ -816,8 +826,8 @@ const wanted = process.argv.slice(2).length ? process.argv.slice(2) : Object.key
 const unknown = wanted.filter((name) => !SHOTS[name]);
 if (unknown.length) throw new Error(`No such shot: ${unknown.join(", ")}`);
 
-const [events, ...arts] = await Promise.all([concerts(), ...SONGS.map(artwork)]);
-const ART = new Map(SONGS.map((song, i) => [artUrl(song), arts[i]]));
+const [events, ...arts] = await Promise.all([concerts(), ...PLAYED.map(artwork)]);
+const ART = new Map(PLAYED.map((song, i) => [artUrl(song), arts[i]]));
 await mkdir(OUT, { recursive: true });
 // What went into the shots, beside them (CI logs aren't always to hand).
 const notes = [];
@@ -826,7 +836,7 @@ const note = (line) => {
   notes.push(line);
 };
 note(`Concerts that week: ${events.length}`);
-SONGS.forEach((song, i) => note(`Artwork for ${song.title}: ${arts[i]?.length || "none"}`));
+PLAYED.forEach((song, i) => note(`Artwork for ${song.title}: ${arts[i]?.length || "none"}`));
 
 // Chromium, or with SCREENS_BROWSER=webkit, WebKit (Safari's engine, to see
 // how the iPhone app draws what Chromium might draw differently).

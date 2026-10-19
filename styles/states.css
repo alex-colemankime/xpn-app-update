@@ -50,8 +50,8 @@
     background: var(--row-alt);
     color: var(--accent);
   }
-  .player-play:hover {
-    background: color-mix(in srgb, var(--action) 88%, var(--text));
+  :is(.player-play, .primary-button):hover {
+    background: color-mix(in srgb, var(--action) 34%, var(--bg));
   }
   .secondary-button:hover {
     background: var(--soft-fill-hover);

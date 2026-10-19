@@ -31,11 +31,9 @@ function FollowCard({ show }) {
       <span className="welcome-show-text">
         <strong>{shortName(show)}</strong>
         <small>{show.times[0]}</small>
-        {/* What a tap does, in words: no badge floating on the art. */}
-        <span className="welcome-state" aria-hidden="true">
-          {followed && <Icon name="check" size={14} />}
-          {followed ? "Following" : "Follow"}
-        </span>
+      </span>
+      <span className="welcome-check" aria-hidden="true">
+        <Icon name={followed ? "check" : "plus"} size={16} />
       </span>
     </button>
   );

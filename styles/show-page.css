@@ -139,6 +139,29 @@
 
 /* Share sits beside Follow: the show's xpn.org page, which opens the show
    in the app for anyone who has it (deep-links.js). */
+.follow-word {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  text-decoration: underline 2px transparent;
+  text-underline-offset: 6px;
+  transition: text-decoration-color var(--dur-quick);
+}
+.follow-word.saved {
+  text-decoration-color: currentColor;
+}
+@media (hover: hover) {
+  .follow-word:not(.saved):hover {
+    text-decoration-color: var(--border);
+  }
+}
 .show-share {
   margin-left: var(--space-1);
   vertical-align: middle;

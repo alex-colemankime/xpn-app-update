@@ -173,7 +173,7 @@ The Android back button steps back through screens and closes the show sheet, be
 - **Show reminders** (`reminders.js`, `hooks/useShowReminders.js`): reminders for followed shows, at the start or 5 or 15 minutes before, set in Settings or offered in the show sheet right after following. In the native apps they are local notifications for the coming week, rescheduled whenever follows or settings change and each time the app returns to the foreground; iOS allows 64 pending, so at most 48 are scheduled. Tapping one opens Listen and starts WXPN. Permission is only asked when the listener turns reminders on. In a browser, a reminder appears in the app (with a Listen button) while it is open. Times are Eastern and handle daylight-saving changes.
 - **A song's sheet** (`components/MusicRows.jsx`, `components/HoldMenu.jsx`, `components/PlaylistSync.jsx`): every song, now playing or in a list, opens one sheet, from its row, a press and hold, or Listen's "···": Save, Open in Spotify, Open in Apple Music (or the show, for a show's own segment), Share, and once a service is connected and the song saved, where it stands in "WXPN Favorites". It never offers to connect.
 - **On air and sleep timer** (`schedule.js`): the Listen screen names the show and host on air from the FM schedule, including shows that run past midnight; overnight gaps in the schedule show nothing rather than a guess. The sleep timer stops playback after 15–60 minutes or at the end of the current show, fading out over the last 20 seconds. Native builds use three haptics (`haptics.js`): a selection tick for choosing a station, day or view, a sheet crossing its close line and a pull that will refresh; a light tap for play, pause and a heart; a medium one when a press-and-hold menu opens. Android browsers give a very short vibration for the taps, never for ticks.
-- **Brand** (`components/StationLogo.jsx`): the header and sidebar draw WXPN's own logo from xpn.org, a lowercase wxpn with the w a step lighter. The page is a neutral off-white (`#f5f5f3`) with white raised surfaces, and dark mode is xpn.org's `#111`; orange is only for things to do (Listen, Donate, a sheet's main action, a switch that is on), and each song's artwork color does the rest.
+- **Brand** (`components/StationLogo.jsx`): the header and sidebar draw WXPN's own logo from xpn.org, a lowercase wxpn with the w a step lighter. The page is a neutral off-white (`#f5f5f3`) with white raised surfaces, and dark mode is xpn.org's `#111`; orange is only for things to do, and Listen live, Tickets and play share Donate's tonal colors (a pale orange fill, deep orange words), square-cornered where Donate is a pill. Each song's artwork color does the rest.
 
 ## Layout
 
@@ -256,10 +256,9 @@ brand/               logo source files (not shipped with the app)
 The app avoids the looks generated interfaces default to (audited against Anthropic's frontend-design guidance, [avoid-ai-design](https://github.com/funboy322/avoid-ai-design) and a Reddit-mined ranking of AI-design tells). Instead its structures come from radio's own documents:
 
 - **The program log:** Recently played puts when each song played first, in a column of figures.
-- **The day to scale:** Shows › Schedule draws each show as tall as it runs, with a line at now, so the day has a shape (`scheduleRuler` in `schedule.js`).
 - **The alarm read back:** "Wakes you at 7:00 AM on weekdays to WXPN", over its controls.
 
-A choice is marked one way everywhere, as an underlined word in ink. There are no film grain, live dots, glows, heading icons or rows of equal tiles.
+A choice is marked one way everywhere, as an underlined word in ink. There are no film grain, live dots, glows or heading icons.
 
 The main journey is **listen → identify a song → save it → find it again**. Album art always belongs to the reported song; stream controls and song controls have distinct labels. Recently played shares the listening screen; saved songs live in Favorites, and shows, videos and concerts have their own screens, with a persistent mini player.
 

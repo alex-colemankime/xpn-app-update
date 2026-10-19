@@ -195,7 +195,7 @@ export function RadioAlarmPanel({ alarm, updateAlarm, onEnabled, onTest, testing
           {VOLUME_SETTABLE && (
             <label className="setting-row">
               <span>
-                Alarm volume <small>{alarm.volume}%</small>
+                Alarm volume <small className="setting-value">{alarm.volume}%</small>
               </span>
               <input
                 type="range"

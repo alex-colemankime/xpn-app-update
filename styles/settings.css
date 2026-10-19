@@ -228,6 +228,12 @@
   display: block;
   margin-top: 2px;
 }
+/* A value read with its name ("Alarm volume 70%"): on the same line, so
+   the row stays one line tall. */
+.setting-row > span > small.setting-value {
+  display: inline;
+  margin: 0 0 0 var(--space-2);
+}
 /* The slider's own height is a full touch target. */
 .setting-row input[type="range"] {
   width: 135px;

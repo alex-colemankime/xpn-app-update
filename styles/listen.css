@@ -45,7 +45,7 @@
      also bounded by the window's height (less any banner across the top)
      so Listen live usually stays above the player bar, down to a floor that
      keeps the artwork large. */
-  --stage-room: calc(100svh - 490px - var(--banner-h, 0px) - var(--alarm-h, 0px));
+  --stage-room: calc(100svh - 465px - var(--banner-h, 0px) - var(--alarm-h, 0px));
   --stage: min(480px, 100%, max(300px, var(--stage-room)));
 }
 @media (min-width: 1001px) {
@@ -106,8 +106,8 @@
   min-width: 0;
 }
 /* The song is what Listen is about, so its title is the screen's one big
-   moment: set large and heavy, two lines at most. The artist under it,
-   then the album on a quieter line. */
+   moment: set large and heavy, two lines at most. The artist and album on
+   one line under it. */
 .now-info h2 {
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -123,20 +123,15 @@
   overflow-wrap: break-word;
   text-wrap: balance;
 }
-.now-artist,
-.now-album {
+.now-artist {
   margin: 0;
+  font-size: var(--text-body);
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.now-artist {
-  font-size: var(--text-body);
-  font-weight: var(--weight-semibold);
-  color: var(--text);
-}
 .now-album {
-  font-size: var(--text-secondary);
   color: var(--muted);
 }
 /* Listen live, then the heart, the song's menu and cast as plain glyphs
@@ -158,8 +153,7 @@
   min-height: 50px;
   padding: 0 var(--space-4);
   border-radius: var(--radius-m);
-  /* A touch of the page through it, so it sits in the page rather than on it. */
-  background: color-mix(in oklab, var(--action) 90%, transparent);
+  background: var(--donate-fill);
   font-size: var(--text-body);
   font-weight: var(--weight-bold);
 }

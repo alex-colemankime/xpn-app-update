@@ -124,7 +124,7 @@ export function SettingsScreen({
               {VOLUME_SETTABLE && (
                 <label className="setting-row">
                   <span>
-                    Volume <small>{volume}%</small>
+                    Volume <small className="setting-value">{volume}%</small>
                   </span>
                   <input
                     type="range"

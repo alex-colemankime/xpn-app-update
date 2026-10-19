@@ -96,11 +96,15 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
         <div className="now-meta">
           <div className="now-info" key={`info-${songKey}`}>
             <h2>{current?.title || station.label}</h2>
-            {/* The artist, then the album on a line of its own, quieter. */}
-            <p className="now-artist">{current?.artist || station.tagline}</p>
-            {current?.album &&
-              current.album !== current.artist &&
-              current.album !== current.title && <p className="now-album">{current.album}</p>}
+            {/* Artist, then the album after it on the same line, quieter. */}
+            <p className="now-artist">
+              <span>{current?.artist || station.tagline}</span>
+              {current?.album &&
+                current.album !== current.artist &&
+                current.album !== current.title && (
+                  <span className="now-album"> · {current.album}</span>
+                )}
+            </p>
           </div>
         </div>
         {/* One steady live region: screen readers hear each new song once,
@@ -151,13 +155,48 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
 }
 
 // Keyed by station in the parent, so switching stations collapses the list.
+// Beside the song (two columns, wide screens), the list runs as far down as
+// the artwork, the song and Listen live do, so there's no gap under it: as
+// many songs as fit, never fewer than the phone's preview. Measured, and
+// again whenever either side changes size.
+function useRowsThatFit(panel) {
+  const [fit, setFit] = useState(RECENT_PREVIEW);
+  useEffect(() => {
+    const list = panel.current;
+    const card = list?.closest(".live-workspace")?.querySelector(".now-card");
+    if (!list || !card || typeof ResizeObserver === "undefined") return;
+    const wide = window.matchMedia("(min-width: 1001px)");
+    const measure = () => {
+      // The songs once they're in (not the loading placeholders).
+      const rows = list.querySelector(".recent-rows");
+      const row = rows?.querySelector(".track-row");
+      if (!wide.matches || !row) return setFit(RECENT_PREVIEW);
+      const used = list.getBoundingClientRect().height - rows.offsetHeight;
+      const room = card.getBoundingClientRect().height - used;
+      setFit(Math.max(RECENT_PREVIEW, Math.floor(room / row.getBoundingClientRect().height)));
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(card);
+    observer.observe(list);
+    wide.addEventListener("change", measure);
+    measure();
+    return () => {
+      observer.disconnect();
+      wide.removeEventListener("change", measure);
+    };
+  }, [panel]);
+  return fit;
+}
+
 function RecentlyPlayed({ playlist, station }) {
   const [expanded, setExpanded] = useState(false);
   const live = useLiveSong(playlist);
+  const panel = useRef(null);
+  const preview = useRowsThatFit(panel);
   // Everything but the song shown above; a stale latest report leads here.
   const earlier = live ? playlist.tracks.slice(1) : playlist.tracks;
   return (
-    <section className="recent-panel" aria-labelledby="recent-heading">
+    <section className="recent-panel" aria-labelledby="recent-heading" ref={panel}>
       <div className="section-heading">
         <h2 id="recent-heading">Recently played</h2>
         <span className="subtle">{station.label}</span>
@@ -171,16 +210,18 @@ function RecentlyPlayed({ playlist, station }) {
         />
       ) : earlier.length ? (
         <>
-          {earlier.slice(0, expanded ? RECENT_MAX : RECENT_PREVIEW).map((t) => (
-            <TrackRow
-              key={`${t.date}-${t.time}-${t.title}`}
-              track={t}
-              showTime
-              stationLabel={station.label}
-            />
-          ))}
+          <div className="recent-rows">
+            {earlier.slice(0, expanded ? RECENT_MAX : preview).map((t) => (
+              <TrackRow
+                key={`${t.date}-${t.time}-${t.title}`}
+                track={t}
+                showTime
+                stationLabel={station.label}
+              />
+            ))}
+          </div>
           <div className="playlist-more">
-            {earlier.length > RECENT_PREVIEW && (
+            {earlier.length > preview && (
               <button
                 className="text-button"
                 aria-expanded={expanded}
@@ -193,7 +234,7 @@ function RecentlyPlayed({ playlist, station }) {
               </button>
             )}
             {/* Earlier days, and searching what played, live on the website. */}
-            {(expanded || earlier.length <= RECENT_PREVIEW) && (
+            {(expanded || earlier.length <= preview) && (
               <a className="text-button" href={PLAYLIST_URL} target="_blank" rel="noreferrer">
                 Full playlist on xpn.org
               </a>

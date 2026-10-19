@@ -162,12 +162,9 @@ export function ShowDetail({
                   <p className="subtle">Eastern time</p>
                 )}
                 <Airing show={show} />
-                <SaveButton
-                  type="shows"
-                  item={show}
-                  className="secondary-button"
-                  onToggle={setOffer}
-                >
+                {/* Follow is a word with its heart, underlined while followed,
+                    as every choice in the app is marked; no pill. */}
+                <SaveButton type="shows" item={show} className="follow-word" onToggle={setOffer}>
                   {(saved) => (saved ? "Following" : "Follow show")}
                 </SaveButton>
                 {show.page && (

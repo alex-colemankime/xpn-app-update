@@ -90,6 +90,10 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
 :is(.segmented-pill, .repeat-days, .day-picker) button.active::after {
   opacity: 1;
 }
+/* The schedule's today, in ink even while another day is chosen. */
+.day-picker button.today {
+  color: var(--text);
+}
 .search-field {
   display: flex;
   min-height: 44px;
@@ -192,73 +196,6 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
   color: var(--muted);
   margin-top: var(--space-2);
   max-width: 600px;
-}
-/* The day to scale (ShowsScreen.jsx, scheduleRuler): each row as tall as
-   its show runs, its words at the top, a line across at now. Shows that
-   have aired step back: their names in the muted color, their art faded. */
-.schedule-ruler {
-  position: relative;
-}
-.schedule-ruler .schedule-row {
-  align-items: flex-start;
-  padding: var(--space-2) 0 0;
-  overflow: hidden;
-}
-.schedule-ruler .schedule-row > img {
-  width: 40px;
-  height: 40px;
-}
-.schedule-ruler .schedule-row > .icon {
-  margin-top: var(--space-2);
-}
-.schedule-ruler .schedule-info > span {
-  margin-top: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.schedule-ruler .schedule-info > .schedule-desc {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  overflow: hidden;
-}
-.schedule-ruler .schedule-row time small {
-  margin-top: 0;
-}
-.schedule-ruler .aired strong {
-  color: var(--muted);
-  font-weight: var(--weight-regular);
-}
-.schedule-ruler .aired > img {
-  opacity: 0.5;
-}
-.schedule-gap {
-  border-bottom: 1px solid var(--border);
-}
-/* Now: a short rule in the hours' column, the time on it, pointing at the
-   show on the air. It never crosses a show's words. */
-.schedule-now {
-  position: absolute;
-  left: 0;
-  width: calc(4.25em + var(--space-4));
-  font-size: var(--text-secondary);
-  height: 0;
-  border-top: 2px solid var(--text);
-  pointer-events: none;
-  z-index: 1;
-}
-.schedule-now span {
-  position: absolute;
-  left: 0;
-  top: -0.75em;
-  padding-right: var(--space-1);
-  background: color-mix(in srgb, var(--donate-fill) 40%, var(--bg));
-  font-size: var(--text-caption);
-  font-weight: var(--weight-bold);
-  line-height: 1.5;
-  font-variant-numeric: tabular-nums;
 }
 .data-note {
   font-size: var(--text-secondary);
