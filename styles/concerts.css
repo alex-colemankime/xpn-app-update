@@ -273,14 +273,18 @@
   gap: var(--space-1) var(--space-3);
   margin: var(--space-2) 0;
 }
-/* A day of concerts. The day is the strongest break in the list and the
-   only line in it: real space, then a rule, then the day's name, larger
-   than anything in the rows, the day as a word in ink and its date muted
-   ("Tonight Oct 18", "Wednesday Oct 21"). Concerts within a day are set
-   apart by space alone, so a day reads as one block under its name. */
+/* A day of concerts: the day's name on the page, larger than anything in
+   the rows, the day as a word in ink and its date muted ("Tonight Oct 18",
+   "Wednesday Oct 21"), then the day's concerts under it, each one a card
+   of its own on a raised surface. The edge of a card, not space, says
+   where one concert ends and the next begins; the day's name, on the page
+   between the cards, says where a day begins. */
 .concert-day + .concert-day {
-  margin-top: var(--space-8);
-  border-top: 1px solid var(--border);
+  margin-top: var(--space-4);
+}
+.concert-day-rows {
+  display: grid;
+  gap: var(--space-2);
 }
 /* On a phone the day's name stays at the top (under the status bar) while
    its concerts scroll under it, on the page's own color; its hairline
@@ -328,7 +332,7 @@
     align-items: start;
   }
   .concert-day + .concert-day {
-    margin-top: var(--space-10);
+    margin-top: var(--space-8);
   }
   .concert-day-head {
     top: var(--space-6);
@@ -353,10 +357,12 @@
 .concert-row {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-3);
+  gap: var(--space-1);
+  border-radius: var(--radius-m);
+  background: var(--raised);
 }
 .concert-row > .icon-button {
-  margin-top: var(--space-1);
+  margin: var(--space-2) var(--space-1) 0 0;
 }
 .concert-open {
   display: flex;
@@ -365,8 +371,19 @@
   align-items: flex-start;
   gap: 2px;
   min-width: 0;
-  padding: var(--space-3) 0;
+  padding: var(--space-3) 0 var(--space-3) var(--space-4);
+  border-radius: var(--radius-m) 0 0 var(--radius-m);
   text-align: left;
+}
+@media (hover: hover) {
+  .concert-row:has(> .concert-open:hover) {
+    background: color-mix(in srgb, var(--text) 4%, var(--raised));
+  }
+}
+@media (forced-colors: active) {
+  .concert-row {
+    border: 1px solid CanvasText;
+  }
 }
 /* WXPN Welcomes and Free at Noon: a small muted credit over the artist, as
    a venue's own listing prints "WXPN Welcomes"; orange is kept for things
@@ -397,14 +414,16 @@
 /* The acts supporting it, in ink but lighter and smaller, after a muted
    "with"; two lines at most here (the sheet has the whole bill). */
 .concert-support {
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
+  overflow-wrap: anywhere;
+}
+.concert-open > .concert-support {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
-  font-size: var(--text-secondary);
-  line-height: var(--leading-body);
-  overflow-wrap: anywhere;
 }
 .concert-with {
   color: var(--muted);

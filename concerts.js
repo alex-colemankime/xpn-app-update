@@ -90,6 +90,14 @@ export function splitBill(title) {
   return { headliner, support };
 }
 
+// A list as it is shown: by day, and within a day the station's own shows
+// first (Free at Noon, at noon, then WXPN Welcomes), then the rest in the
+// calendar's order. Done on the whole list before it is paged, so a station
+// show never waits behind "Load more".
+const billing = (c) => (c.freeAtNoon ? 0 : c.xpnWelcomes ? 1 : 2);
+export const inShowOrder = (concerts) =>
+  [...concerts].sort((a, b) => a.date.localeCompare(b.date) || billing(a) - billing(b));
+
 // The region nearly every concert is in: a row leaves it unsaid, and names
 // any other (Lehigh Valley, Central PA) or the town when the calendar has one.
 export const HOME_REGION = "Philadelphia Area";

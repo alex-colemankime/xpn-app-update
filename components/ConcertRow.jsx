@@ -267,10 +267,6 @@ export function ConcertRow({ concert: c }) {
   );
 }
 
-// Within a day, the station's own shows first (Free at Noon, at noon, then
-// WXPN Welcomes), then the rest in the calendar's order.
-const rank = (c) => (c.freeAtNoon ? 0 : c.xpnWelcomes ? 1 : 2);
-
 // Concerts under a heading for each day: the day as a word in ink and its
 // date muted, larger than anything in the rows, and set off from the day
 // before by space and the list's only rule. It stays at the top while its
@@ -289,7 +285,6 @@ export function ConcertList({ concerts }) {
   }
   return days.map((day) => {
     const head = dayHeading(day.date, today);
-    const shows = [...day.concerts].sort((a, b) => rank(a) - rank(b));
     return (
       <section key={day.date} className="concert-day" aria-labelledby={`${list}-${day.date}`}>
         <h2 id={`${list}-${day.date}`} className="concert-day-head">
@@ -299,7 +294,7 @@ export function ConcertList({ concerts }) {
           </span>
         </h2>
         <div className="concert-day-rows">
-          {shows.map((c) => (
+          {day.concerts.map((c) => (
             <ConcertRow key={c.id} concert={c} />
           ))}
         </div>

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   ageLabel,
   concertPlace,
+  inShowOrder,
   splitBill,
   calendarPageUrl,
   easternToday,
@@ -316,4 +317,19 @@ test("a row names the town, or a region other than the one nearly every concert 
   assert.equal(concertPlace({ city: "", region: "Philadelphia Area" }), "");
   assert.equal(concertPlace({ city: "", region: "Lehigh Valley" }), "Lehigh Valley");
   assert.equal(concertPlace({}), "");
+});
+
+test("a list is shown by day, the station's own shows first within a day, before it is paged", () => {
+  const list = [
+    { id: "a", date: "2026-10-07" },
+    { id: "b", date: "2026-10-06" },
+    { id: "c", date: "2026-10-07", xpnWelcomes: true },
+    { id: "d", date: "2026-10-07", freeAtNoon: true, xpnWelcomes: true },
+    { id: "e", date: "2026-10-07" },
+  ];
+  assert.deepEqual(
+    inShowOrder(list).map((c) => c.id),
+    ["b", "d", "c", "a", "e"],
+  );
+  assert.equal(list[0].id, "a", "the list itself is left as it was");
 });

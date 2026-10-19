@@ -3,7 +3,7 @@ import { Icon, Empty, Modal, PromptLink, SearchField, SkeletonList } from "../ui
 import { useFavoriteItems } from "../favorites.js";
 import { ConcertList } from "../components/ConcertRow.jsx";
 import { RangeCalendar } from "../components/RangeCalendar.jsx";
-import { calendarEnd, easternToday, filterConcerts, rangeLabel } from "../concerts.js";
+import { calendarEnd, easternToday, filterConcerts, inShowOrder, rangeLabel } from "../concerts.js";
 import { CALENDAR_URL, SUBMIT_CONCERT_URL } from "../links.js";
 import { mediumDay } from "../time.js";
 import { NewsletterPrompt } from "../components/Newsletter.jsx";
@@ -85,15 +85,17 @@ export function ConcertsScreen({ result }) {
   const regionOptions = [...counts].sort((a, b) => b[1] - a[1]).map(([r]) => ({ id: r, label: r }));
 
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const filtered = filterConcerts(concerts, {
-    words,
-    when,
-    range,
-    today,
-    regions,
-    tags,
-    savedIds,
-  });
+  const filtered = inShowOrder(
+    filterConcerts(concerts, {
+      words,
+      when,
+      range,
+      today,
+      regions,
+      tags,
+      savedIds,
+    }),
+  );
   const reset = () => {
     setQuery("");
     setWhen("all");

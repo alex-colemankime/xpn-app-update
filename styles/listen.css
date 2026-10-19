@@ -176,6 +176,11 @@
   color: var(--text);
   transition: background-color var(--dur-quick);
 }
+/* A saved heart in the accent until its artwork's color is known (or when
+   the artwork has none); styles/layout.css tints it after. */
+.hero-key.saved {
+  color: var(--accent);
+}
 @media (hover: hover) {
   .hero-key:hover {
     background: var(--soft-fill-hover);
