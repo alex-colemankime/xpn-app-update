@@ -422,15 +422,22 @@
 }
 /* The rest of a station show's card takes a faint wash of the banner's
    orange, so it stands out a little among the others without competing. */
+.concert-row {
+  --welcome-wash: 40%;
+}
+/* In dark, its muted lines a step lighter, to keep 4.5:1 on the wash. */
+:root[data-theme="dark"] .concert-row:has(.concert-flags) {
+  --muted: #adaeab;
+}
 .concert-row:has(.concert-flags) {
-  background: color-mix(in srgb, var(--donate-fill) 40%, var(--raised));
+  background: color-mix(in srgb, var(--donate-fill) var(--welcome-wash), var(--raised));
 }
 @media (hover: hover) {
   .concert-row:has(.concert-flags):has(> .concert-open:hover) {
     background: color-mix(
       in srgb,
       var(--text) 4%,
-      color-mix(in srgb, var(--donate-fill) 40%, var(--raised))
+      color-mix(in srgb, var(--donate-fill) var(--welcome-wash), var(--raised))
     );
   }
 }
