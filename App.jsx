@@ -153,8 +153,28 @@ export default function App() {
   useLayoutEffect(() => {
     if (shownScreen.current === route.screen) return;
     shownScreen.current = route.screen;
-    window.scrollTo({ top: placeOf(route.screen) });
+    const place = placeOf(route.screen);
+    window.scrollTo({ top: place });
     main.current?.focus({ preventScroll: true });
+    // A screen coming back can finish laying out a moment later (its
+    // effects run again as it shows), so a place near its end may not
+    // exist yet. As it grows, the place is tried again, for a second at
+    // most, and never once the listener has moved.
+    if (Math.round(window.scrollY) >= Math.round(place) || !window.ResizeObserver) return;
+    const growing = new ResizeObserver(() => {
+      window.scrollTo({ top: place });
+      if (Math.round(window.scrollY) >= Math.round(place)) stop();
+    });
+    const moved = ["wheel", "touchstart", "keydown", "pointerdown"];
+    const stop = () => {
+      growing.disconnect();
+      clearTimeout(timer);
+      for (const type of moved) window.removeEventListener(type, stop, true);
+    };
+    const timer = setTimeout(stop, 1000);
+    for (const type of moved) window.addEventListener(type, stop, { capture: true, passive: true });
+    growing.observe(document.body);
+    return stop;
   }, [route.screen]);
 
   const savedShows = useFavoriteItems("shows");
