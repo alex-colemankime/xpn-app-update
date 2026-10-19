@@ -8,9 +8,12 @@ import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 
 // What Back does now. Pure, so it can be tested.
-export function backAction({ popoverOpen, dialogOpen, canGoBack }) {
+// A sheet the address opened (a show, an episode, a host: data-routed) with
+// an entry of the app's own under it steps back one entry, as the
+// browser's Back does: a host opened from a show returns to the show.
+export function backAction({ popoverOpen, dialogOpen, routedDepth = 0, canGoBack }) {
   if (popoverOpen) return "close-menu";
-  if (dialogOpen) return "close-sheet";
+  if (dialogOpen) return routedDepth > 0 ? "back" : "close-sheet";
   return canGoBack ? "back" : "background";
 }
 
@@ -31,6 +34,7 @@ export function startBackButton() {
     const action = backAction({
       popoverOpen: Boolean(popover),
       dialogOpen: Boolean(dialog),
+      routedDepth: dialog?.hasAttribute("data-routed") ? window.history.state?.depth || 0 : 0,
       canGoBack,
     });
     if (action === "close-menu") popover.hidePopover();

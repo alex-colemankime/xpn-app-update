@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { Icon, Empty, Modal, PromptLink, SearchField, SkeletonList } from "../ui.jsx";
 import { useFavoriteItems } from "../favorites.js";
-import { concertsByLikedArtists, setLikedOnly, useLikedOnly } from "../concert-alerts.js";
+import {
+  concertsByLikedArtists,
+  setLikedOnly,
+  useLikedOnly,
+  useLikedViewRequest,
+} from "../concert-alerts.js";
 import { ConcertList } from "../components/ConcertRow.jsx";
 import { RangeCalendar } from "../components/RangeCalendar.jsx";
 import { calendarEnd, easternToday, filterConcerts, inShowOrder, rangeLabel } from "../concerts.js";
@@ -81,6 +86,19 @@ export function ConcertsScreen({ result }) {
   // "only these" can be turned on from an alert as well as from Filters.
   const songs = useFavoriteItems("songs");
   const likedOnly = useLikedOnly();
+  // An alert's View: every other filter let go, from the top
+  // (concert-alerts.js, showLikedConcerts).
+  const viewRequest = useLikedViewRequest();
+  const [viewHandled, setViewHandled] = useState(viewRequest);
+  if (viewHandled !== viewRequest) {
+    setViewHandled(viewRequest);
+    setQuery("");
+    setWhen("all");
+    setRange(NO_RANGE);
+    setRegions([]);
+    setTags([]);
+    setShown(PAGE);
+  }
   const { concerts, source, partial, through } = result;
   const today = easternToday();
 
@@ -198,20 +216,18 @@ export function ConcertsScreen({ result }) {
         <ConcertList
           concerts={visible}
           aside={
-            <>
-              {/* Shown only once a filter is on; until then, for screen
-                  readers alone. */}
-              <span role="status" className={narrowed ? undefined : "sr-only"}>
-                {narrowed
-                  ? `${filtered.length} of ${concerts.length}`
-                  : `${concerts.length} ${concerts.length === 1 ? "concert" : "concerts"} listed`}
-              </span>
-              {narrowed && (
+            narrowed && (
+              <>
+                {/* Shown once a filter is on; screen readers hear the count
+                    from the status line above the list. */}
+                <span aria-hidden="true">
+                  {filtered.length} of {concerts.length}
+                </span>
                 <button className="text-button" onClick={reset}>
                   Clear
                 </button>
-              )}
-            </>
+              </>
+            )
           }
         />
         {filtered.length > shown && (
@@ -247,6 +263,15 @@ export function ConcertsScreen({ result }) {
       {/* The tab bar (or sidebar) already says where this is. */}
       <h1 className="sr-only">Concerts</h1>
       <PullToRefresh onRefresh={result.refresh} />
+      {/* How many are listed, for screen readers: always here once the
+          calendar has loaded, so a filter that leaves none says so too. */}
+      {concerts.length > 0 && (
+        <p className="sr-only" role="status" id="concert-results">
+          {narrowed
+            ? `${filtered.length} of ${concerts.length} concerts`
+            : `${concerts.length} ${concerts.length === 1 ? "concert" : "concerts"} listed`}
+        </p>
+      )}
       {concerts.length > 0 && (
         <div className="concert-filters">
           {/* Filters at the end of the search, where it is found. */}

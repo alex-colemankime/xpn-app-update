@@ -13,42 +13,51 @@ import { useSyncExternalStore } from "react";
 import { createLocalStore, createStore, useLocalStore } from "./storage.js";
 import { splitBill } from "./concerts.js";
 
-// An artist's name as it can be compared: no accents, case, punctuation or
-// a leading "The"; "&" and "and" alike. "The Beths" and "Beths" match;
-// "Bright Eyes" and "Bright Eyes & Friends" do not. Pure.
+// An artist's name as it can be compared: no case, accents, a leading
+// "The", or punctuation, which simply goes ("R.E.M." is "REM"); a hyphen or
+// slash parts words; "&" and "and" alike; letters of any script kept
+// ("宇多田ヒカル"). "The Beths" and "Beths" match; "Bright Eyes" and
+// "Bright Eyes & Friends" do not. Pure.
 export function artistKey(name) {
   return String(name || "")
     .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/&|\+/g, " and ")
-    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/[-\u2010-\u2015/_]+/g, " ")
+    .replace(/[^\p{L}\p{M}\p{N}\s]+/gu, "")
     .replace(/\s+/g, " ")
     .trim()
     .replace(/^the /, "");
 }
 
-// The names a song's artist line stands for: the whole line, and each
-// artist credited on it ("Phoebe Bridgers feat. Conor Oberst", "A, B").
-// Names joined by "&" stay whole: "Hall & Oates" is one act.
-// Each as [key, the name as written], so an alert names the act that
-// matched ("Conor Oberst"), not the whole credit line.
+// Names split from a credit: "A feat. B", "A, B", "A / B". Names joined by
+// "&" stay whole: "Hall & Oates" is one act.
+const CREDITS = /\s+(?:feat\.?|ft\.?|featuring|with|x)\s+|\s*[,/]\s*/i;
+
+// The names a song's artist line stands for, each as [key, the name as
+// written]: the whole line, and each artist credited on it. An alert names
+// the act that matched ("Conor Oberst"), not the whole credit line.
 function songArtists(line) {
-  const parts = String(line || "").split(/\s+(?:feat\.?|ft\.?|featuring|with|x)\s+|,\s*/i);
-  return [line, ...parts]
+  return [line, ...String(line || "").split(CREDITS)]
     .map((name) => [artistKey(name), String(name || "").trim()])
-    .filter(([key]) => key.length > 1);
+    .filter(([key]) => key);
 }
 
-// The acts on a concert's bill, as compared: each act, and each without a
-// parenthetical or a backing band ("Jillian Ashcraft & Her Band").
+// The acts on a concert's bill, as compared: each act, each without a
+// parenthetical or a backing band ("Jillian Ashcraft & Her Band"), and the
+// performers a parenthetical features ("John Scofield's Electrospective
+// (feat. Adam Deitch / Oteil Burbridge)").
 function billArtists(title) {
   const { headliner, support } = splitBill(title);
   return [headliner, ...support].flatMap((act) => {
     const plain = act
       .replace(/\s*\([^)]*\)/g, "")
       .replace(/\s+(?:&|and)\s+(?:his|her|their|the)\s+.+$/i, "");
-    return [artistKey(act), artistKey(plain)];
+    const featured = [...act.matchAll(/\((?:feat\.?|ft\.?|featuring|with)\s+([^)]*)\)/gi)].flatMap(
+      ([, names]) => names.split(/\s*(?:[,/]|&|\band\b)\s*/i),
+    );
+    return [act, plain, ...featured].map(artistKey).filter(Boolean);
   });
 }
 
@@ -74,29 +83,33 @@ export function concertsByLikedArtists(concerts, songs) {
 // once, as one notice, rather than one by one.
 const store = createLocalStore("xpn.concertAlerts.v1", { enabled: true, seen: null }, (v) => ({
   enabled: v?.enabled !== false,
-  seen: Array.isArray(v?.seen) ? v.seen.filter((id) => typeof id === "string").slice(-500) : null,
+  seen: Array.isArray(v?.seen) ? v.seen.filter((id) => typeof id === "string") : null,
 }));
 export const useConcertAlertSettings = () => useLocalStore(store);
 export const setConcertAlerts = (enabled) => store.set((s) => ({ ...s, enabled }));
 
 // What to announce from a fresh calendar: the matches not announced before,
-// and the ids to remember. Pure.
-export function newMatches(matches, seen) {
+// and the ids to remember. A concert is remembered for as long as it is on
+// the calendar (`onCalendar`, every upcoming concert's id), never by count,
+// so one is never announced twice however many there are. Pure.
+export function newMatches(matches, seen, onCalendar = null) {
   const known = new Set(seen || []);
   const fresh = matches.filter((m) => !known.has(m.concert.id));
+  const kept = onCalendar ? [...known].filter((id) => onCalendar.has(id)) : [...known];
   return {
     fresh,
     first: seen === null,
-    seen: [...known, ...fresh.map((m) => m.concert.id)],
+    seen: [...kept, ...fresh.map((m) => m.concert.id)],
   };
 }
 
-// Records what was announced, and returns what to announce now.
-export function takeNewMatches(matches) {
-  const { fresh, first, seen } = newMatches(matches, store.getSnapshot().seen);
-  // Written only when there is something to remember, so a check that finds
-  // nothing new doesn't touch storage or wake the screens that read it.
-  if (fresh.length || first) store.set((s) => ({ ...s, seen }));
+// Records what was announced, and returns what to announce now. Written
+// only when there is something to remember, so a check that finds nothing
+// new doesn't touch storage or wake the screens that read it.
+export function takeNewMatches(matches, onCalendar) {
+  const before = store.getSnapshot().seen;
+  const { fresh, first, seen } = newMatches(matches, before, onCalendar);
+  if (fresh.length || first || seen.length !== before.length) store.set((s) => ({ ...s, seen }));
   return { fresh, first };
 }
 
@@ -105,3 +118,15 @@ export function takeNewMatches(matches) {
 const likedOnly = createStore(false);
 export const useLikedOnly = () => useSyncExternalStore(likedOnly.subscribe, likedOnly.getSnapshot);
 export const setLikedOnly = (on) => likedOnly.set(on);
+
+// An alert's View: Concerts with only artists you like, and every other
+// filter let go (a search or a date left from before could hide the very
+// concert announced). Concerts clears its own filters when this count
+// moves.
+const likedView = createStore(0);
+export const useLikedViewRequest = () =>
+  useSyncExternalStore(likedView.subscribe, likedView.getSnapshot);
+export function showLikedConcerts() {
+  likedOnly.set(true);
+  likedView.set((n) => n + 1);
+}

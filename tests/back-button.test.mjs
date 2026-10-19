@@ -9,3 +9,11 @@ test("Back closes what's open first, and never closes the app", () => {
   assert.equal(at({ canGoBack: true }), "back");
   assert.equal(at({}), "background", "at the start: to the background, still playing");
 });
+
+test("Back from a sheet the address opened steps back one entry", () => {
+  const at = (o) => backAction({ popoverOpen: false, dialogOpen: true, canGoBack: true, ...o });
+  assert.equal(at({ routedDepth: 2 }), "back", "a host opened from a show: back to the show");
+  assert.equal(at({ routedDepth: 1 }), "back");
+  assert.equal(at({ routedDepth: 0 }), "close-sheet", "opened from a link: closes in place");
+  assert.equal(at({}), "close-sheet", "any other sheet: as Escape");
+});
