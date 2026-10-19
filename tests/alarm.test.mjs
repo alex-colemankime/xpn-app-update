@@ -85,3 +85,13 @@ test("the alarm's days, said short", async () => {
   assert.equal(repeatLabel([5, 1, 3]), "Mon, Wed, Fri");
   assert.equal(repeatLabel([]), "No days chosen");
 });
+
+test("the alarm's days read as part of a sentence", async () => {
+  const { repeatPhrase } = await import("../alarm.js");
+  assert.equal(repeatPhrase([1, 2, 3, 4, 5]), "on weekdays");
+  assert.equal(repeatPhrase([0, 1, 2, 3, 4, 5, 6]), "every day");
+  assert.equal(repeatPhrase([6, 0]), "on weekends");
+  assert.equal(repeatPhrase([1, 3, 5]), "on Monday, Wednesday and Friday");
+  assert.equal(repeatPhrase([2]), "on Tuesday");
+  assert.equal(repeatPhrase([]), null);
+});

@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { ChoiceSetting, Icon, Switch } from "../ui.jsx";
-import { DAY_LABELS, SNOOZE_OPTIONS, repeatLabel } from "../alarm.js";
+import { DAY_LABELS, SNOOZE_OPTIONS, repeatPhrase } from "../alarm.js";
 import { notificationsAreNative } from "../notifications.js";
 import { VOLUME_SETTABLE } from "../player.js";
 import { STATION_OPTIONS, STREAMS } from "../streams.js";
@@ -128,6 +128,21 @@ export function RadioAlarmPanel({ alarm, updateAlarm, onEnabled, onTest, testing
         : [...alarm.repeatDays, id].sort(),
     });
   const [clock, period] = clockParts(alarm.time);
+  // The alarm read back as what it does, its values in ink: "Wakes you at
+  // 7:00 AM on weekdays to WXPN." The controls under it change each part.
+  const days = repeatPhrase(alarm.repeatDays);
+  const readback = (
+    <>
+      at <b>{`${clock} ${period}`.trim()}</b>
+      {days && (
+        <>
+          {" "}
+          <b>{days}</b>
+        </>
+      )}{" "}
+      to <b>{STREAMS[alarm.streamId].label}</b>
+    </>
+  );
   return (
     <section className="settings-panel">
       <div className="section-heading">
@@ -140,17 +155,12 @@ export function RadioAlarmPanel({ alarm, updateAlarm, onEnabled, onTest, testing
         />
       </div>
       {!alarm.enabled ? (
-        <p className="data-note" id="alarm-summary">
-          {[
-            `${clock} ${period}`.trim(),
-            repeatLabel(alarm.repeatDays),
-            STREAMS[alarm.streamId].label,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
+        <p className="data-note alarm-readback" id="alarm-summary">
+          Turned on, it wakes you {readback}.
         </p>
       ) : (
         <>
+          <p className="alarm-readback">Wakes you {readback}.</p>
           <AlarmTime time={alarm.time} onChange={(time) => updateAlarm({ time })} />
           <div className="repeat-days" role="group" aria-label="Repeat alarm on">
             {DAY_LABELS.map((d) => (

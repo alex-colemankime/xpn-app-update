@@ -222,3 +222,13 @@
 .host-sheet .host-hero + .section-heading {
   margin-top: var(--space-8);
 }
+/* Hosts, grouped by when you'll hear them (On now, Next, Everyone). */
+.host-group + .host-group {
+  margin-top: var(--space-10);
+}
+.host-group > .section-heading {
+  margin-top: var(--space-5);
+}
+.host-group > .section-heading + .show-grid {
+  margin-top: var(--space-3);
+}

@@ -163,3 +163,47 @@ export function upcomingStarts(shows, showIds, { date, day, time }, days = 7) {
   }
   return out.sort((a, b) => `${a.date} ${a.start}`.localeCompare(`${b.date} ${b.start}`));
 }
+
+// A day of the schedule drawn to scale (Shows › Schedule): each show as
+// tall as it runs, so the day has a shape. `today` and `yesterday` are that
+// day's and the day before's slots ({ start, end, show }); a show that began
+// the night before and runs past midnight opens the day, marked `carried`.
+// Any hour with no show is a `gap`. A slot never draws shorter than
+// `minHeight` (a 30-minute show still needs a finger's room), so the scale
+// holds for everything an hour or longer. `offsetAt(minute)` is where a
+// minute of the day falls, for the line that marks now. Pure.
+export function scheduleRuler(today, yesterday, { perHour, minHeight }) {
+  const perMinute = perHour / 60;
+  const rows = [];
+  for (const slot of yesterday) {
+    const { end } = span(slot);
+    if (end > 24 * 60) rows.push({ slot, from: 0, to: end - 24 * 60, carried: true });
+  }
+  for (const slot of today) {
+    const { start, end } = span(slot);
+    rows.push({ slot, from: start, to: Math.min(end, 24 * 60), carried: false });
+  }
+  rows.sort((a, b) => a.from - b.from);
+  const drawn = [];
+  let at = 0;
+  for (const row of rows) {
+    if (row.from > at) drawn.push({ gap: true, from: at, to: row.from });
+    if (row.to <= at) continue;
+    drawn.push({ ...row, from: Math.max(row.from, at) });
+    at = row.to;
+  }
+  if (at < 24 * 60) drawn.push({ gap: true, from: at, to: 24 * 60 });
+  for (const row of drawn) {
+    const length = (row.to - row.from) * perMinute;
+    row.height = Math.round(row.gap ? length : Math.max(minHeight, length));
+  }
+  const offsetAt = (minute) => {
+    let top = 0;
+    for (const row of drawn) {
+      if (minute < row.to) return top + ((minute - row.from) / (row.to - row.from)) * row.height;
+      top += row.height;
+    }
+    return top;
+  };
+  return { rows: drawn, offsetAt };
+}

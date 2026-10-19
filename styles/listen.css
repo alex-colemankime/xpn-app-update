@@ -215,9 +215,13 @@
   min-height: 40px;
   margin-bottom: var(--space-2);
 }
+/* The log's time column: as wide as "12:56pm", so every song starts on
+   the same edge, in figures that line up. */
 .track-time {
+  flex: 0 0 3.9rem;
   font-variant-numeric: tabular-nums;
   font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
   color: var(--muted);
   white-space: nowrap;
 }

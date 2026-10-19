@@ -24,6 +24,18 @@ export function repeatLabel(days) {
     .join(", ");
 }
 
+// The days as they read inside a sentence: "on weekdays", "every day",
+// "on Mon, Wed and Fri". Null when no day is chosen.
+export function repeatPhrase(days) {
+  const set = [...new Set(days)].sort().join();
+  if (!set) return null;
+  if (set === "0,1,2,3,4,5,6") return "every day";
+  if (set === "1,2,3,4,5") return "on weekdays";
+  if (set === "0,6") return "on weekends";
+  const names = DAY_LABELS.filter((d) => days.includes(d.id)).map((d) => d.label);
+  return `on ${names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0]}`;
+}
+
 const DEFAULT_ALARM = {
   enabled: false,
   time: "07:00",

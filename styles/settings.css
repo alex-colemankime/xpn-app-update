@@ -491,3 +491,22 @@ button.setting-row {
 .youtube-subscribe-link {
   color: var(--accent);
 }
+/* The alarm read back as a sentence over its controls: what it will do,
+   its values in ink. */
+.alarm-readback {
+  margin: var(--space-1) 0 var(--space-3);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  color: var(--muted);
+  text-wrap: pretty;
+}
+.alarm-readback b {
+  color: var(--text);
+  font-weight: var(--weight-semibold);
+}
+.data-note.alarm-readback {
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
+  letter-spacing: 0;
+}

@@ -193,6 +193,70 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
   margin-top: var(--space-2);
   max-width: 600px;
 }
+/* The day to scale (ShowsScreen.jsx, scheduleRuler): each row as tall as
+   its show runs, its words at the top, a line across at now. Shows that
+   have aired step back: their names in the muted color, their art faded. */
+.schedule-ruler {
+  position: relative;
+}
+.schedule-ruler .schedule-row {
+  align-items: flex-start;
+  padding: var(--space-2) 0 0;
+  overflow: hidden;
+}
+.schedule-ruler .schedule-row > img {
+  width: 40px;
+  height: 40px;
+}
+.schedule-ruler .schedule-row > .icon {
+  margin-top: var(--space-2);
+}
+.schedule-ruler .schedule-info > span {
+  margin-top: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.schedule-ruler .schedule-info > .schedule-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+.schedule-ruler .schedule-row time small {
+  margin-top: 0;
+}
+.schedule-ruler .aired strong {
+  color: var(--muted);
+  font-weight: var(--weight-regular);
+}
+.schedule-ruler .aired > img {
+  opacity: 0.5;
+}
+.schedule-gap {
+  border-bottom: 1px solid var(--border);
+}
+.schedule-now {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 2px solid var(--text);
+  pointer-events: none;
+  z-index: 1;
+}
+.schedule-now span {
+  position: absolute;
+  left: 0;
+  top: -0.75em;
+  padding-right: var(--space-2);
+  background: var(--bg);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-bold);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
 .data-note {
   font-size: var(--text-secondary);
   color: var(--muted);
