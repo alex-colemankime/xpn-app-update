@@ -1,6 +1,7 @@
 name: Fetch artwork
 
-# Bundles show artwork from xpn.org into the app (public/shows), and fetches
+# Bundles show artwork and the hosts (bios and portraits, public/hosts) from
+# xpn.org into the app, and fetches
 # the real video thumbnails the screens page screenshots use. Runs when
 # either script changes, or by hand.
 on:
@@ -8,6 +9,7 @@ on:
     branches: [main]
     paths:
       - tools/fetch-show-art.mjs
+      - tools/fetch-hosts.mjs
       - tools/fetch-video-fixtures.mjs
       - .github/workflows/fetch-assets.yml
   workflow_dispatch:
@@ -34,12 +36,15 @@ jobs:
       - name: Bundle show artwork
         run: node tools/fetch-show-art.mjs
 
-      - name: Commit show artwork
+      - name: Bundle the hosts
+        run: node tools/fetch-hosts.mjs
+
+      - name: Commit show artwork and hosts
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/shows shows.json
-          git diff --cached --quiet || git commit -m "Bundle show artwork from xpn.org"
+          git add public/shows shows.json public/hosts hosts.json
+          git diff --cached --quiet || git commit -m "Bundle show artwork and hosts from xpn.org"
           git push
 
       - name: Fetch video thumbnails for the screens page

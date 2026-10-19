@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Icon, Art, Segmented, Empty, SearchField } from "../ui.jsx";
-import { SHOW_DIRECTORY, scheduleForDay, onAirAt } from "../catalog.js";
+import { SHOWS, SHOW_DIRECTORY, scheduleForDay, onAirAt } from "../catalog.js";
 import { DAYS, easternParts, clockLabel } from "../time.js";
 import { ShowCard, showHold } from "../components/MusicRows.jsx";
 import { useNow } from "../hooks/useNow.js";
@@ -9,16 +9,27 @@ import { useFeatures } from "../features.js";
 import { tap } from "../haptics.js";
 import { PullToRefresh } from "../components/PullToRefresh.jsx";
 import { loadArchive } from "../archive.js";
+import { HOSTS } from "../hosts.js";
+import { HostCard } from "../components/HostSheet.jsx";
 
 const matchesQuery = (query) => {
   const q = query.trim().toLowerCase();
   return (show) => !q || `${show.name} ${show.host}`.toLowerCase().includes(q);
 };
 
-export function ShowsScreen({ onOpen }) {
-  // All shows, the week's schedule, and (when the build has it and the
-  // station hasn't switched it off: features.js) the audio archive.
-  const modes = ["All shows", "Schedule", ...(useFeatures().archive ? ["Archive"] : [])];
+// A host, by their name or a show of theirs.
+const hostMatches = (query) => {
+  const q = query.trim().toLowerCase();
+  return (host) =>
+    !q ||
+    `${host.name} ${host.shows.map((id) => SHOWS[id]?.name).join(" ")}`.toLowerCase().includes(q);
+};
+
+export function ShowsScreen({ onOpen, onOpenHost }) {
+  // All shows, the week's schedule, the station's hosts, and (when the build
+  // has it and the station hasn't switched it off: features.js) the audio
+  // archive.
+  const modes = ["All shows", "Schedule", "Hosts", ...(useFeatures().archive ? ["Archive"] : [])];
   // Shows opens on the schedule: what's on today, the show on air marked.
   const [chosen, setMode] = useState("Schedule");
   const mode = modes.includes(chosen) ? chosen : "Schedule";
@@ -55,6 +66,7 @@ export function ShowsScreen({ onOpen }) {
   const matches = matchesQuery(query);
   const shows = SHOW_DIRECTORY.filter(matches);
   const slots = scheduleForDay(day).filter((slot) => matches(slot.show));
+  const hosts = HOSTS.filter(hostMatches(query));
   return (
     <>
       {/* The tab bar (or sidebar) already says where this is. */}
@@ -70,13 +82,21 @@ export function ShowsScreen({ onOpen }) {
           <SearchField
             value={query}
             onChange={setQuery}
-            placeholder={mode === "Archive" ? "Search episodes" : "Find a show or host"}
+            placeholder={
+              mode === "Archive"
+                ? "Search episodes"
+                : mode === "Hosts"
+                  ? "Find a host or show"
+                  : "Find a show or host"
+            }
           />
         </div>
         <div key={mode} className="tab-pane">
           {mode !== "Archive" && (
             <p className="sr-only" role="status">
-              {mode === "All shows" ? shows.length : slots.length} matching shows
+              {mode === "Hosts"
+                ? `${hosts.length} matching hosts`
+                : `${mode === "All shows" ? shows.length : slots.length} matching shows`}
             </p>
           )}
           {mode === "Archive" && <PullToRefresh onRefresh={() => loadArchive({ force: true })} />}
@@ -86,6 +106,23 @@ export function ShowsScreen({ onOpen }) {
               onOpenShow={(id) => onOpen(id)}
               onClearQuery={() => setQuery("")}
             />
+          ) : mode === "Hosts" ? (
+            hosts.length ? (
+              <div className="show-grid all-shows host-grid">
+                {hosts.map((host) => (
+                  <HostCard key={host.slug} host={host} onOpen={onOpenHost} />
+                ))}
+              </div>
+            ) : (
+              <Empty
+                icon="search"
+                title="No hosts found"
+                action="Clear search"
+                onAction={() => setQuery("")}
+              >
+                Try a different host or show name.
+              </Empty>
+            )
           ) : mode === "All shows" ? (
             shows.length ? (
               <div className="show-grid all-shows">

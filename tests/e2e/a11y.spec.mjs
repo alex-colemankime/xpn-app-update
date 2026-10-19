@@ -87,6 +87,15 @@ const VIEWS = {
     await page.goto("/#/shows/show/worldcafe");
     await expect(page.getByRole("dialog", { name: "World Cafe" })).toBeVisible();
   },
+  "shows, hosts": async (page) => {
+    await page.goto("/#/shows");
+    await page.getByLabel("Browse shows").getByRole("button", { name: "Hosts" }).click();
+    await expect(page.locator(".host-card").first()).toBeVisible();
+  },
+  "a host's sheet": async (page) => {
+    await page.goto("/#/shows/host/dan-reed");
+    await expect(page.getByRole("dialog", { name: "Dan Reed" })).toBeVisible();
+  },
   "shows, archive": async (page) => {
     await page.goto("/#/shows");
     await page.getByLabel("Browse shows").getByRole("button", { name: "Archive" }).click();

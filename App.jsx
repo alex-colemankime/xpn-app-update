@@ -27,6 +27,8 @@ import { Sidebar, TabBar, TITLES, TopBar } from "./components/Navigation.jsx";
 import { NowPlayingSync } from "./components/NowPlayingSync.jsx";
 import { PlayerBar } from "./components/PlayerBar.jsx";
 import { ShowDetail } from "./components/ShowDetail.jsx";
+import { HostSheet } from "./components/HostSheet.jsx";
+import { hostBySlug } from "./hosts.js";
 import { StationBanner } from "./components/StationUpdates.jsx";
 import { OfflineNotice } from "./components/OfflineNotice.jsx";
 import { Toast } from "./components/Toast.jsx";
@@ -107,7 +109,9 @@ export default function App() {
 
   // The first-run welcome, once. Not over a shared show link: that listener
   // came for the show.
-  const [welcome, setWelcome] = useState(() => !readJson(ONBOARDED_KEY, false) && !route.showId);
+  const [welcome, setWelcome] = useState(
+    () => !readJson(ONBOARDED_KEY, false) && !route.showId && !route.hostId,
+  );
   const [WatchPage, setWatchPage] = useState(makeWatchPage);
   // Each time Favorites comes to the front, a new visit (LibraryScreen).
   const [favoritesVisit, setFavoritesVisit] = useState(0);
@@ -158,6 +162,8 @@ export default function App() {
     ? SHOWS[route.showId] || savedShows.find((s) => s.id === route.showId) || null
     : null;
 
+  const host = route.hostId ? hostBySlug(route.hostId) : null;
+
   return (
     <div className="app-layout">
       <StatusScrim />
@@ -207,7 +213,7 @@ export default function App() {
             />
           </Screen>
           <Screen id="shows" label="Shows" current={route.screen}>
-            <ShowsScreen onOpen={route.openShow} />
+            <ShowsScreen onOpen={route.openShow} onOpenHost={route.openHost} />
           </Screen>
           {features.videos && (
             <Screen id="videos" label="Videos" current={route.screen}>
@@ -258,6 +264,15 @@ export default function App() {
           onListen={() => route.navigate("listen")}
           onNavigate={route.navigate}
           onWatch={watching.watchVideo}
+          onOpenHost={route.openHost}
+        />
+      )}
+      {host && (
+        <HostSheet
+          key={host.slug}
+          host={host}
+          onClose={route.closeShow}
+          onOpenShow={route.openShow}
         />
       )}
       <UpdatePrompt />
@@ -265,7 +280,7 @@ export default function App() {
           taking the app down with it (error-boundary.jsx). */}
       <OverlayErrorBoundary>
         <Suspense fallback={null}>
-          {welcome && !show && <Welcome onDone={finishWelcome} />}
+          {welcome && !show && !host && <Welcome onDone={finishWelcome} />}
         </Suspense>
       </OverlayErrorBoundary>
       <OverlayErrorBoundary

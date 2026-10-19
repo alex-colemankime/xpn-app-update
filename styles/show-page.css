@@ -140,3 +140,81 @@
   vertical-align: middle;
   color: var(--text);
 }
+
+/* A host's sheet: their portrait (square, as on xpn.org) and line, the
+   shows they host as rows that open them, then their bio in ink, as
+   reading. */
+.host-hero > img {
+  border-radius: var(--radius-s);
+}
+.host-hero p.host-when {
+  color: var(--text);
+  font-size: var(--text-body);
+  margin: 0 0 var(--space-3);
+}
+.host-shows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.host-show {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: var(--space-4);
+  align-items: center;
+  width: 100%;
+  min-height: 72px;
+  padding: var(--space-2) 0;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.host-show > img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: var(--radius-s);
+}
+.host-show strong {
+  display: block;
+  font-weight: var(--weight-semibold);
+}
+.host-show small {
+  display: block;
+  color: var(--muted);
+  font-size: var(--text-secondary);
+}
+.host-show > svg {
+  color: var(--muted);
+}
+.host-bio {
+  margin: var(--space-8) 0 var(--space-4);
+  max-width: 62ch;
+}
+.host-bio p {
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  margin: 0 0 var(--space-4);
+}
+/* A host named in a show's sheet: the name, underlined, as a link in
+   running text. */
+.host-link {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+@media (hover: hover) {
+  .host-link:hover {
+    text-decoration-color: currentColor;
+  }
+}
+/* Hosts in their grid: portraits are faces, so square on every width. */
+.host-grid .show-cover {
+  aspect-ratio: 1;
+}
+.host-sheet .host-hero + .section-heading {
+  margin-top: var(--space-8);
+}

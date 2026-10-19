@@ -398,3 +398,35 @@ test("Listen's song has the whole width, and its keys fit one row on a narrow ph
   });
   expect(fits).toEqual({ inRow: true, oneRow: true, titleWidth: true });
 });
+
+// A show's hosts open their sheets; a host's shows open theirs, and Back
+// steps back through them.
+test("hosts and their shows open each other, and Back returns", async ({ page }) => {
+  await page.goto("/#/shows/show/worldcafe");
+  const show = page.getByRole("dialog", { name: "World Cafe" });
+  await show.getByRole("button", { name: "Raina Douris" }).click();
+  const host = page.getByRole("dialog", { name: "Raina Douris" });
+  await expect(host).toBeVisible();
+  await expect(host.locator(".host-bio p").first()).not.toBeEmpty();
+  await host.getByRole("button", { name: /^Conversations from the World Cafe/ }).click();
+  await expect(
+    page.getByRole("dialog", { name: "Conversations from the World Cafe" }),
+  ).toBeVisible();
+  await page.goBack();
+  await expect(host).toBeVisible();
+  await page.goBack();
+  await expect(show).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("the Hosts view finds a host by a show of theirs", async ({ page }) => {
+  await page.goto("/#/shows");
+  await page.getByLabel("Browse shows").getByRole("button", { name: "Hosts" }).click();
+  await page.getByPlaceholder("Find a host or show").fill("echoes");
+  await expect(page.locator(".host-card")).toHaveCount(1);
+  await page.locator(".host-card").click();
+  await expect(page.getByRole("dialog", { name: "John Diliberto" })).toBeVisible();
+  await page.getByRole("button", { name: "Close" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});

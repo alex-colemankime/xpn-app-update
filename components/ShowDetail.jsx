@@ -15,6 +15,7 @@ import { useVideos } from "../videos.js";
 import { VideoCard } from "./VideoCard.jsx";
 import { useArtTint, washVars } from "../art-tint.js";
 import { useFeatures } from "../features.js";
+import { HostLine } from "./HostSheet.jsx";
 
 // A show's sheet, washed in the show's own color: who hosts it and when,
 // Follow, a row to listen while it is on the air, its videos (World Cafe) and
@@ -107,6 +108,7 @@ export function ShowDetail({
   onListen,
   onNavigate,
   onWatch,
+  onOpenHost,
 }) {
   // The show's recent broadcasts from the archive. A saved episode still
   // opens after it has left the archive (and says so if played).
@@ -149,7 +151,9 @@ export function ShowDetail({
                 {show.host && (
                   <>
                     <span className="eyebrow">Hosted by</span>
-                    <h3>{show.host}</h3>
+                    <h3>
+                      <HostLine show={show} onOpenHost={onOpenHost} />
+                    </h3>
                   </>
                 )}
                 <ul className="show-times">
