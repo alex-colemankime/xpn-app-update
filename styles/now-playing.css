@@ -301,13 +301,15 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* The sleep timer's menu anchors to its button; each song and calendar menu
-   sets its own anchor inline (MusicRows.jsx, ConcertRow.jsx). */
+/* The sleep timer's menu anchors to its button; a concert's calendar menu
+   sets its own anchor inline (ConcertRow.jsx), and a song's sheet hangs
+   from what opened it (HoldMenu.jsx, --hold-from). */
 .sleep-menu {
   position-anchor: --sleep;
 }
 
-/* Popover menus (sleep timer, song actions, add to calendar): anchored
+/* Popover menus (sleep timer, a song's sheet on wide screens, add to
+   calendar): anchored
    under their button where CSS anchor positioning exists, a bottom sheet on
    phones, and a floating panel above the player elsewhere. The platform
    supplies Escape and tap-outside. */

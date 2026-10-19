@@ -132,10 +132,9 @@ export const resumeEpisode = () => {
   core.resume();
 };
 export const seekEpisode = (seconds) => core.seek(seconds);
-export const skipEpisode = (delta) => {
-  tap();
-  core.skip(delta);
-};
+// No haptic: the vocabulary (haptics.js) keeps taps for play, pause and a
+// heart, and the time moving on screen says the skip happened.
+export const skipEpisode = (delta) => core.skip(delta);
 // Put the episode away; the bar shows the station again.
 export function closeEpisode() {
   core.stop();

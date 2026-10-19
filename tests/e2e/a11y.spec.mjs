@@ -105,6 +105,14 @@ const VIEWS = {
     await page.getByRole("button", { name: /^Filters/ }).click();
     await expect(page.locator(".range-calendar")).toBeVisible();
   },
+  "concerts, a chip and Filters on": async (page) => {
+    await page.goto("/#/concerts");
+    await page.getByRole("button", { name: "WXPN Welcomes", exact: true }).click();
+    await page.getByRole("button", { name: /^Filters/ }).click();
+    await page.getByRole("button", { name: "Philadelphia Area", exact: true }).click();
+    await page.getByRole("button", { name: /^Show \d+ concert/ }).click();
+    await expect(page.getByRole("button", { name: /^Filters 1 in use/ })).toBeVisible();
+  },
   "a concert's sheet": async (page) => {
     await page.goto("/#/concerts");
     await page.locator(".concert-open").first().click();

@@ -121,11 +121,22 @@ export function useSheetDrag({ anyWidth = false } = {}) {
         if (!anyWidth && !window.matchMedia?.(PHONE).matches) return;
         // A menu hanging from its button on a wide screen isn't a sheet.
         if (sheet.hasAttribute("data-anchored")) return;
+        // A sheet or menu open inside this one (a concert's calendar menu, a
+        // hold menu over a show's sheet) is dragged on its own; this one
+        // stays put.
+        if (e.target.closest?.("dialog, [popover]") !== sheet) return;
         const t = e.touches[0];
         if (!startsDrag(e.target, sheet, t.clientY)) return;
         // Catch a moving sheet where it is, never where it was going.
         stopSpring();
-        drag = { x: t.clientX, y: t.clientY, from: offset, on: offset !== 0, past: false };
+        drag = {
+          x: t.clientX,
+          y: t.clientY,
+          from: offset,
+          on: offset !== 0,
+          // Caught past the line, it ticks only when it crosses back.
+          past: offset > closeLine(height()),
+        };
         tracker.reset();
         tracker.add(e.timeStamp, offset);
       };
@@ -162,11 +173,13 @@ export function useSheetDrag({ anyWidth = false } = {}) {
         drag = null;
         if (was?.on) settle();
       };
-      const end = () => {
+      const end = (e) => {
         const was = drag;
         drag = null;
         if (!was?.on) return;
-        const velocity = tracker.velocity();
+        // At the moment of letting go: a pull that stopped before the lift
+        // isn't a throw.
+        const velocity = tracker.velocity(e?.timeStamp);
         if (releaseCloses({ y: offset, velocity, height: height() })) leave(velocity);
         else settle(velocity);
       };
@@ -197,7 +210,7 @@ export function useSheetDrag({ anyWidth = false } = {}) {
       const mouseUp = (e) => {
         if (drag?.pointer !== e.pointerId) return;
         const dragged = drag.on;
-        end();
+        end(e);
         // A drag isn't also a click on whatever it started over.
         if (dragged) swallowNextClick(sheet);
       };

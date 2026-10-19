@@ -18,6 +18,7 @@ import {
   cancelAuthorization,
   forgetAuth,
   isSpotifyReturn,
+  PLAYLIST_NAME,
 } from "./music-services.js";
 import { createLocalStore } from "./storage.js";
 import { showToast } from "./toast.js";
@@ -340,7 +341,11 @@ export async function connect(serviceId) {
 
 function afterConnect(service) {
   track("music_connect", { service: service.id });
-  // The panel in Settings says it's connected and adding the songs.
+  // In Settings, its panel says so. Anywhere else (connected from the
+  // welcome, or a sign-in that returned to another screen) nothing on
+  // screen would, so a notice does.
+  if (!/^#\/settings\b/.test(globalThis.location?.hash || ""))
+    showToast(`Connected to ${service.name}. Adding your saved songs to “${PLAYLIST_NAME}”.`);
   syncNow();
 }
 

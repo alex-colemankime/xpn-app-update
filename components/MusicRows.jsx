@@ -15,8 +15,9 @@ import { PLAYLIST_URL, appleMusicSearch, spotifySearch } from "../links.js";
 import { SHOWS, shortName } from "../catalog.js";
 import { playedAt } from "../nowplaying.js";
 import { useArtTint } from "../art-tint.js";
-import { parseRoute, routeHash } from "../hooks/useRoute.js";
+import { openShow, parseRoute, routeHash } from "../hooks/useRoute.js";
 import { holdable, openHoldMenu } from "../hold.js";
+import { useNearScreen } from "../hooks/useNearScreen.js";
 
 // The artwork a saved heart takes its color from, and a precomputed tint
 // when the item is one of the station's shows. A show's segment in the
@@ -86,11 +87,15 @@ export function SaveButton({
   onToggle,
 }) {
   const saved = useIsFavorite(type, item);
-  const tint = useHeartTint(type, item, saved);
+  // Its color is read from the artwork only once the heart is near the
+  // screen, so a long list of saved songs doesn't fetch every cover at once.
+  const [nearRef, near] = useNearScreen();
+  const tint = useHeartTint(type, item, saved && near);
   // Pops only on the tap that saves, not on every render of a saved item.
   const [pop, setPop] = useState(false);
   return (
     <button
+      ref={nearRef}
       className={`${className} ${saved ? "saved" : ""}`}
       // A heart alone keeps one name and says on/off with aria-pressed; a
       // button with words ("Following") says it in the words instead.
@@ -142,10 +147,10 @@ export function openSongSheet(track, stationLabel, from) {
 }
 
 // The "…" beside Listen's song: its sheet, hanging from the button.
-export function SongMenu({ track, stationLabel = "WXPN" }) {
+export function SongMenu({ track, stationLabel = "WXPN", className = "icon-button" }) {
   return (
     <button
-      className="icon-button"
+      className={className}
       aria-label={`More for ${track.title}`}
       aria-haspopup="dialog"
       onClick={(e) => openSongSheet(track, stationLabel, e.currentTarget)}
@@ -239,7 +244,13 @@ export function SongSheetItems({ track, stationLabel = "WXPN", close }) {
       {show ? (
         <a
           href={routeHash({ screen: parseRoute(window.location.hash).screen, showId: track.show })}
-          onClick={close}
+          // Through the router, as every show opens, so closing it steps
+          // back rather than leaving an extra entry behind.
+          onClick={(e) => {
+            e.preventDefault();
+            close();
+            openShow(track.show);
+          }}
         >
           View {shortName(show)}
           <Icon name="chev" size={16} />
@@ -296,8 +307,13 @@ export const showHold = (show, onOpen) =>
     }),
   );
 
-export const SaveSong = ({ track }) => (
-  <SaveButton type="songs" item={{ ...track, id: songId(track) }} name={track.title} />
+export const SaveSong = ({ track, className }) => (
+  <SaveButton
+    type="songs"
+    item={{ ...track, id: songId(track) }}
+    name={track.title}
+    className={className}
+  />
 );
 
 // Saves a song without its button (a double tap on Listen's artwork): saves

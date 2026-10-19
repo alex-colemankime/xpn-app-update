@@ -58,7 +58,9 @@
   --bg: var(--paper);
   --surface: var(--paper-raised);
   --text: #eeede8;
-  --muted: #b6b7b3;
+  /* Secondary text a clear step below the text (2.2 times dimmer), so lines
+     of a list never read as one block of white; still 6:1 on the page. */
+  --muted: #9fa09d;
   --border: #44484a;
   --control-border: #797b7c;
   --accent: #ff9875;

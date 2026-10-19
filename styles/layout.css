@@ -294,12 +294,14 @@ h1 {
    draw only the rows near the screen; the rest keep the height they last
    had, so the page's length and a remembered place hold, and they can
    still be found in the page. Their paint stops at the row's edge, so the
-   row-wide buttons draw their focus ring inside it. */
+   row-wide buttons and the keys at the row's end (a heart) draw their focus
+   ring inside themselves. */
 :is(.track-row, .concert-row, .archive-row):not(.skeleton-row) {
   content-visibility: auto;
   contain-intrinsic-size: auto 72px;
 }
-:is(.track-open, .concert-open):focus-visible {
+:is(.track-open, .concert-open):focus-visible,
+:is(.track-row, .concert-row, .archive-row) .icon-button:focus-visible {
   outline-offset: -2px;
 }
 .share-songs {
@@ -308,9 +310,6 @@ h1 {
 /* Load more, under the hairline that ends the list so far. */
 .list-more {
   margin-top: var(--space-1);
-}
-.list-more + .share-songs {
-  margin-top: 0;
 }
 .track-open > img {
   width: 46px;

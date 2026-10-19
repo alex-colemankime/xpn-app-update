@@ -16,6 +16,10 @@
   gap: var(--space-2);
   margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
   padding-inline: var(--edge-left) var(--edge-right);
+  /* Room above and below the chips for their 44px targets: a row that
+     scrolls sideways clips anything that spills out of it. */
+  margin-block: -4px;
+  padding-block: 4px;
   overflow-x: auto;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
@@ -50,22 +54,22 @@
 .chip {
   position: relative;
 }
-.chip[aria-pressed="true"] {
+.chip:is([aria-pressed="true"], [data-on]) {
   border-color: var(--select-ink);
   background: var(--select-ink);
   color: var(--bg);
 }
-.chip[aria-pressed="true"] .filter-count {
+.chip:is([aria-pressed="true"], [data-on]) .filter-count {
   background: var(--bg);
   color: var(--select-ink);
 }
 @media (hover: hover) {
-  .chip:not([aria-pressed="true"]):hover {
+  .chip:not([aria-pressed="true"], [data-on]):hover {
     background: var(--surface);
   }
 }
 @media (forced-colors: active) {
-  .chip[aria-pressed="true"] {
+  .chip:is([aria-pressed="true"], [data-on]) {
     background: Highlight;
     color: HighlightText;
   }
@@ -269,70 +273,141 @@
   gap: var(--space-1) var(--space-3);
   margin: var(--space-2) 0;
 }
-/* A day's concerts under its name, which stays at the top (under the
-   status bar on a phone) while they scroll under it. Its hairline shows
-   only while it is stuck, where scroll-state queries exist. */
+/* A day of concerts. The day is the strongest break in the list and the
+   only line in it: real space, then a rule, then the day's name, larger
+   than anything in the rows, the day as a word in ink and its date muted
+   ("Tonight Oct 18", "Wednesday Oct 21"). Concerts within a day are set
+   apart by space alone, so a day reads as one block under its name. */
+.concert-day + .concert-day {
+  margin-top: var(--space-8);
+  border-top: 1px solid var(--border);
+}
+/* On a phone the day's name stays at the top (under the status bar) while
+   its concerts scroll under it, on the page's own color; its hairline
+   shows only while it is stuck, where scroll-state queries exist. */
 .concert-day-head {
   position: sticky;
   top: var(--safe-area-inset-top, env(safe-area-inset-top));
   z-index: 1;
-  margin: var(--space-6) 0 0;
+  margin: 0;
+  font-size: var(--text-title);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
   container-type: scroll-state;
 }
-.concert-day-head > span {
-  display: block;
+.day-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-2);
   margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
-  padding: var(--space-3) var(--edge-right) var(--space-2) var(--edge-left);
+  padding: var(--space-4) var(--edge-right) var(--space-2) var(--edge-left);
   border-bottom: 1px solid transparent;
   background: var(--bg);
-  font-size: var(--text-heading);
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-heading);
-  letter-spacing: var(--tracking-heading);
+}
+.day-word {
+  font-weight: var(--weight-bold);
+}
+.day-date {
+  font-weight: var(--weight-regular);
+  color: var(--muted);
 }
 @container scroll-state(stuck: top) {
-  .concert-day-head > span {
+  .day-bar {
     border-bottom-color: var(--border);
   }
 }
-/* A concert: the station's own shows over the artist, then where and the
-   age limit, all one button that opens its sheet; the heart at the end. */
+/* On wider screens the day's name moves into a column of its own, the
+   word over the date, and the day's concerts hang beside it; it travels
+   with its day and gives way to the next. */
+@media (min-width: 768px) {
+  .concert-day {
+    display: grid;
+    grid-template-columns: 10rem minmax(0, 1fr);
+    column-gap: var(--space-6);
+    align-items: start;
+  }
+  .concert-day + .concert-day {
+    margin-top: var(--space-10);
+  }
+  .concert-day-head {
+    top: var(--space-6);
+    container-type: normal;
+  }
+  .day-bar {
+    display: block;
+    margin: 0;
+    padding: var(--space-3) 0 0;
+    border: 0;
+    background: none;
+  }
+  .day-bar > span {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+}
+/* A concert: the station's credit over the headliner, the acts supporting
+   it, then where and who may come, each line a step apart from the next in
+   size, weight or color. The whole of it opens the concert's sheet; the
+   heart sits at its top right, so the hearts form one straight column. */
 .concert-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
-  border-bottom: 1px solid var(--border);
+}
+.concert-row > .icon-button {
+  margin-top: var(--space-1);
 }
 .concert-open {
   display: flex;
   flex: 1;
   flex-direction: column;
   align-items: flex-start;
+  gap: 2px;
   min-width: 0;
-  padding: var(--space-4) 0;
+  padding: var(--space-3) 0;
   text-align: left;
 }
-/* WXPN Welcomes and Free at Noon: a line of small type over the artist, in
-   the accent, the station's own shows led by a star. */
+/* WXPN Welcomes and Free at Noon: a small muted credit over the artist, as
+   a venue's own listing prints "WXPN Welcomes"; orange is kept for things
+   to do. */
 .concert-flags {
   display: flex;
   flex-wrap: wrap;
   gap: 2px var(--space-3);
   font-size: var(--text-caption);
   font-weight: var(--weight-semibold);
+  line-height: var(--leading-caption);
   letter-spacing: var(--tracking-caption);
-  color: var(--accent-strong);
+  color: var(--muted);
 }
 .concert-welcomes {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
 }
+/* The headliner: the only heavy line in the row. */
 .concert-open > strong {
-  margin: 2px 0;
   font-size: var(--text-body);
   font-weight: var(--weight-semibold);
+  line-height: var(--leading-body);
   overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+/* The acts supporting it, in ink but lighter and smaller, after a muted
+   "with"; two lines at most here (the sheet has the whole bill). */
+.concert-support {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
+  overflow-wrap: anywhere;
+}
+.concert-with {
+  color: var(--muted);
 }
 .concert-meta {
   display: block;
@@ -340,20 +415,6 @@
   font-size: var(--text-secondary);
   line-height: var(--leading-body);
   color: var(--muted);
-}
-/* The age limit, a small tag at the end of the line. */
-.concert-age {
-  display: inline-block;
-  margin-left: var(--space-2);
-  padding: 0 var(--space-1);
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius-s);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-caption);
-  letter-spacing: var(--tracking-caption);
-  white-space: nowrap;
-  vertical-align: 1px;
 }
 /* A concert's sheet: its photo at its own shape (no taller than a third
    of the screen), then who, when and where, and what to do. */
@@ -400,5 +461,6 @@
 }
 /* While the calendar loads: a date block and two lines per row. */
 .skeleton-row.concert-skeleton {
-  padding: var(--space-4) 0;
+  padding: var(--space-3) 0;
+  border-bottom: 0;
 }

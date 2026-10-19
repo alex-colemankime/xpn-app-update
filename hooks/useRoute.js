@@ -181,6 +181,9 @@ const actions = {
   },
 };
 
+// A show opened from outside a screen's props (a song's sheet).
+export const openShow = (showId) => actions.openShow(showId);
+
 export function useRoute() {
   const route = parseRoute(useSyncExternalStore(subscribe, getHash));
   return { ...route, ...actions };

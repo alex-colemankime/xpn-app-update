@@ -102,7 +102,8 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
           )}
           <HeartBloom type="songs" item={current} bloom={heart.bloom} onEnd={heart.onBloomEnd} />
         </div>
-        {/* The song, its heart and menu beside the title. */}
+        {/* The song, across the whole width: its heart and menu are with
+            the other things to do, in the row under it. */}
         <div className="now-meta">
           <div className="now-info" key={`info-${songKey}`}>
             <h2>{current?.title || station.label}</h2>
@@ -116,12 +117,6 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
                 )}
             </p>
           </div>
-          {current && (
-            <div className="now-song-actions">
-              <SaveSong track={current} />
-              <SongMenu track={current} stationLabel={station.label} />
-            </div>
-          )}
         </div>
         {/* One steady live region: screen readers hear each new song once,
             and only while it is playing. */}
@@ -137,12 +132,20 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
             data-busy={connecting || undefined}
           >
             <Icon name={playing || connecting ? "pause" : "play"} size={22} />
-            {text.button}
+            <span className="hero-play-label">{text.button}</span>
             <span className="sr-only">, {station.label}</span>
           </button>
+          {/* Then, in the order they're reached for: save the song, more
+              for it, and where it plays. */}
+          {current && (
+            <div className="now-song-actions">
+              <SaveSong track={current} className="hero-key" />
+              <SongMenu track={current} stationLabel={station.label} className="hero-key" />
+            </div>
+          )}
           {castAvailable && (
             <button
-              className="hero-cast"
+              className="hero-key hero-cast"
               onClick={chooseAudioOutput}
               aria-label="Play on another device"
               title="Play on another device"

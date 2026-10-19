@@ -375,3 +375,26 @@ test("Favorites shows every saved song, and comes back where it was", async ({ p
   await expect(rows).toHaveCount(12);
   await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBe(place);
 });
+
+test("Listen's song has the whole width, and its keys fit one row on a narrow phone", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 780 });
+  await page.goto("/");
+  const controls = page.locator(".now-controls");
+  await expect(controls.getByRole("button", { name: /^Save / })).toBeVisible();
+  await expect(controls.getByRole("button", { name: /^More for / })).toBeVisible();
+  // Nothing in the row spills past it, and the title has the row to itself.
+  const fits = await page.evaluate(() => {
+    const row = document.querySelector(".now-controls").getBoundingClientRect();
+    const keys = [...document.querySelectorAll(".now-controls button")];
+    const title = document.querySelector(".now-info h2").getBoundingClientRect();
+    const art = document.querySelector(".now-art").getBoundingClientRect();
+    return {
+      inRow: keys.every((k) => k.getBoundingClientRect().right <= row.right + 0.5),
+      oneRow: new Set(keys.map((k) => Math.round(k.getBoundingClientRect().top))).size === 1,
+      titleWidth: title.width >= art.width - 1,
+    };
+  });
+  expect(fits).toEqual({ inRow: true, oneRow: true, titleWidth: true });
+});

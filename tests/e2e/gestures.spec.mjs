@@ -5,12 +5,17 @@ import { test, expect } from "./fixtures.mjs";
 test.skip(({ isMobile }) => !isMobile, "touch only");
 
 // A touch along `points` ([x, y] pairs) on the element `selector` finds,
-// `holdMs` after it lands before it moves, and `stepMs` between moves.
-// `end` is how the touch ends: "touchend", or "touchcancel" when the system
-// takes it away.
-const touch = (page, selector, points, { holdMs = 0, stepMs = 16, end = "touchend" } = {}) =>
+// `holdMs` after it lands before it moves, `stepMs` between moves, and
+// `restMs` held still after the last move before it lifts. `end` is how the
+// touch ends: "touchend", or "touchcancel" when the system takes it away.
+const touch = (
+  page,
+  selector,
+  points,
+  { holdMs = 0, stepMs = 16, restMs = 0, end = "touchend" } = {},
+) =>
   page.evaluate(
-    async ({ selector, points, holdMs, stepMs, end }) => {
+    async ({ selector, points, holdMs, stepMs, restMs, end }) => {
       const el = [...document.querySelectorAll(selector)].find((e) => e.checkVisibility());
       const at = ([x, y]) => new Touch({ identifier: 1, target: el, clientX: x, clientY: y });
       const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -29,9 +34,10 @@ const touch = (page, selector, points, { holdMs = 0, stepMs = 16, end = "touchen
         await wait(stepMs);
         send("touchmove", p);
       }
+      await wait(restMs);
       send(end, points[points.length - 1]);
     },
-    { selector, points, holdMs, stepMs, end },
+    { selector, points, holdMs, stepMs, restMs, end },
   );
 
 test("press and hold a show in the schedule for its menu", async ({ page }) => {
@@ -143,4 +149,48 @@ test("a song's row opens its sheet, about the song and with no offer to connect"
   await expect(sheet.getByText(/Connect/)).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(sheet).toBeHidden();
+});
+
+test("a sheet pulled down quickly, then held still before letting go, settles back", async ({
+  page,
+}) => {
+  await page.goto("/#/shows/show/worldcafe");
+  const sheet = page.getByRole("dialog", { name: "World Cafe" });
+  await expect(sheet).toBeVisible();
+  await page.waitForTimeout(400);
+  // 100px in about 100ms (a throw, were it let go then), then a second still.
+  await touch(
+    page,
+    ".detail-dialog .dialog-header",
+    Array.from({ length: 7 }, (_, i) => [200, 300 + (100 * i) / 6]),
+    { stepMs: 16, restMs: 1000 },
+  );
+  await page.waitForTimeout(700);
+  await expect(sheet).toBeVisible();
+  await expect(page).toHaveURL(/#\/shows\/show\/worldcafe$/);
+});
+
+test("a tap on a song sheet's shade closes it, and does nothing to what is under it", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const xpn2 = page.getByLabel("Radio station").getByRole("button", { name: "XPN2" });
+  await expect(xpn2).toHaveAttribute("aria-pressed", "false");
+  // The song's sheet from Listen's "···", which leaves the screen where it is.
+  await page
+    .getByRole("button", { name: /^More for / })
+    .first()
+    .click();
+  const sheet = page.locator(".hold-menu");
+  await expect(sheet).toBeVisible();
+  await page.waitForTimeout(400);
+  // XPN2, at the top of the screen, is under the shade: tapping there only
+  // closes the sheet; the station stays as it was.
+  const box = await xpn2.boundingBox();
+  expect(box.y).toBeGreaterThan(0);
+  expect(box.y + box.height).toBeLessThan((await sheet.boundingBox()).y);
+  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+  await expect(sheet).toBeHidden();
+  await page.waitForTimeout(300);
+  await expect(xpn2).toHaveAttribute("aria-pressed", "false");
 });

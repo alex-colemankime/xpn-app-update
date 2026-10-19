@@ -235,12 +235,19 @@ export function ConcertsScreen({ result }) {
             <button
               className="chip"
               aria-haspopup="dialog"
-              aria-pressed={inSheet > 0}
+              // It opens a sheet rather than switching on, so it says how
+              // many of its filters are in use instead of "pressed".
+              data-on={inSheet > 0 || undefined}
               onClick={() => setFiltersOpen(true)}
             >
               <Icon name="filter" size={16} />
               Filters
-              {inSheet > 0 && <span className="filter-count">{inSheet}</span>}
+              {inSheet > 0 && (
+                <span className="filter-count">
+                  {inSheet}
+                  <span className="sr-only"> in use</span>
+                </span>
+              )}
             </button>
             <span className="concert-chips-fade" aria-hidden="true" />
           </div>
