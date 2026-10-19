@@ -366,9 +366,14 @@ test("Favorites shows every saved song, and comes back where it was", async ({ p
   const tab = (name) => nav.getByRole("button", { name, exact: true });
   const rows = page.getByRole("region", { name: "Favorites" }).locator(".saved-songs > .track-row");
   await expect(rows).toHaveCount(12);
-  // Down to the tenth song, as far as the page goes on this screen.
+  // Near the end of the list, where the place may not exist yet as the
+  // screen comes back. Not the very end: the page's last few pixels can
+  // settle differently from one browser to another.
   await rows.nth(9).scrollIntoViewIfNeeded();
-  const place = await page.evaluate(() => Math.round(window.scrollY));
+  const place = await page.evaluate(() => {
+    window.scrollTo({ top: document.documentElement.scrollHeight - window.innerHeight - 40 });
+    return Math.round(window.scrollY);
+  });
   expect(place).toBeGreaterThan(0);
   await tab("Shows").click();
   await tab("Favorites").click();
