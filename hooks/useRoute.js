@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import { CONCERTS_ENABLED, VIDEOS_ENABLED } from "../config.js";
+import { reduced } from "../motion.js";
 
 // Hash routes, so the browser and Android back buttons step back through
 // screens and close the show sheet, and any screen can be linked to:
@@ -108,11 +109,10 @@ const replace = (route, state = { depth: depth() }) => {
 // reduced motion, and never where the View Transitions API is missing.
 const android = () => window.Capacitor?.getPlatform?.() === "android";
 function withTransition(update) {
-  const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   if (
     !android() ||
     !document.startViewTransition ||
-    reduced ||
+    reduced() ||
     document.visibilityState === "hidden"
   )
     return update();
@@ -133,8 +133,7 @@ const actions = {
     // The screen already in front, chosen again (its tab, or the wordmark):
     // back to its top, as a phone's tab bar does.
     if (screen === route.screen && !route.showId && !route.hostId) {
-      const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-      window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+      window.scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" });
       return;
     }
     // The screen it came from, so Settings can step back to it.

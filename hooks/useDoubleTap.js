@@ -29,9 +29,3 @@ export function useDoubleTap(onDoubleTap, { ignore = "button, a, input" } = {}) 
     onDoubleTap(e);
   };
 }
-
-// A mouse's double click would also select the word under it; the double
-// tap is all it should do. Dragging to select text still works.
-export const noDoubleClickSelect = (e) => {
-  if (e.detail > 1) e.preventDefault();
-};

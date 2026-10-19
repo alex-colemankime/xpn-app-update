@@ -4,7 +4,9 @@
 // never overshoots unless it was thrown. The values follow Apple's
 // "Designing Fluid Interfaces" (WWDC 2018).
 
-const reduced = () =>
+// Whether the listener has asked for less motion. Shared by every gesture
+// and transition.
+export const reduced = () =>
   typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 // How far a throw at `velocity` (px/s) travels before it comes to rest, as a

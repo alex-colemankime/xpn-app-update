@@ -475,7 +475,6 @@
   .popover-menu {
     position-anchor: none;
     inset: auto 0 0 0;
-    margin: 0;
     width: 100%;
     max-width: 100%;
     border-radius: var(--radius-l) var(--radius-l) 0 0;

@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useRef } from "react";
-import { rubberband } from "../motion.js";
+import { reduced, rubberband } from "../motion.js";
 import { tap } from "../haptics.js";
 
 // Pull down at the top of a screen to load it again (Listen's songs, the
@@ -19,8 +19,6 @@ const MIN_SPIN_MS = 600; // long enough to see that it ran
 // hitting a wall (motion.js). Whether that loads on release.
 export const pullDistance = (dy) => (dy > 0 ? Math.min(TRAVEL, rubberband(dy, 260)) : 0);
 export const pullLoads = (dy) => pullDistance(dy) >= READY;
-
-const reduced = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 // `onRefresh()` may return a promise: the spinner turns until it settles.
 // Drawn inside the screen it refreshes; it listens on that screen (App's

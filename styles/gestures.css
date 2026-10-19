@@ -30,6 +30,13 @@
   border-radius: var(--radius-l) var(--radius-l) 0 0;
   padding: var(--space-5) var(--space-3)
     calc(var(--space-4) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+  /* A sheet at every width: it rises and leaves as the phone's menus do
+     (styles/now-playing.css). */
+  scale: none;
+  transition:
+    translate 240ms var(--ease-out),
+    display 240ms allow-discrete,
+    overlay 240ms allow-discrete;
 }
 .popover-menu.hold-menu:not([data-anchored])::before {
   content: "";
@@ -47,15 +54,6 @@
 }
 .popover-menu.hold-menu:not([data-anchored])::backdrop {
   background: #0008;
-}
-/* The hold menu is a sheet at every width: it rises and leaves as the
-   phone's menus do (styles/now-playing.css). */
-.popover-menu.hold-menu:not([data-anchored]) {
-  scale: none;
-  transition:
-    translate 240ms var(--ease-out),
-    display 240ms allow-discrete,
-    overlay 240ms allow-discrete;
 }
 .popover-menu.hold-menu:not([data-anchored]):popover-open {
   transition-duration: var(--dur-sheet);
