@@ -20,6 +20,9 @@ on:
       - styles/**
       - screens/**
       - components/**
+      - hooks/**
+      - App.jsx
+      - art-tint.js
 
 permissions:
   contents: write # the screens-out branch
