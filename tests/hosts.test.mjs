@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { HOSTS, hostBySlug, hostsOfShow } from "../hosts.js";
+import { HOSTS, foldName, hostBySlug, hostsOfShow } from "../hosts.js";
 import { SHOWS } from "../catalog.js";
 
 test("every host has a name, a bio and only shows the guide has", () => {
@@ -34,4 +34,14 @@ test("the guide's hosted shows find their hosts", () => {
   );
   assert.equal(hostBySlug("dan-reed")?.name, "Dan Reed");
   assert.equal(hostBySlug("nobody"), null);
+});
+
+test("a host line with a straight apostrophe finds the host whose page has a curly one", () => {
+  const show = { id: "s", host: "Debra D'Alessandro" };
+  const hosts = [
+    { name: "Debra D\u2019Alessandro", shows: ["s"] },
+    { name: "Other", shows: ["s"] },
+  ];
+  assert.equal(hostsOfShow(show, hosts)[0].name, "Debra D\u2019Alessandro");
+  assert.equal(foldName("D\u2019Alessandro").length, "D\u2019Alessandro".length);
 });

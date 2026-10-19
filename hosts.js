@@ -11,12 +11,20 @@ export const HOSTS = Object.values(suppliedHosts).map((host) => ({
 const BY_SLUG = new Map(HOSTS.map((h) => [h.slug, h]));
 export const hostBySlug = (slug) => BY_SLUG.get(slug) || null;
 
+// A name as compared: case and apostrophes folded ("D'Alessandro" in the
+// schedule is "D’Alessandro" on her page). One character for one, so a
+// position found in the folded text is the same in the original.
+export const foldName = (text) =>
+  String(text || "")
+    .toLowerCase()
+    .replace(/[\u2018\u2019\u02bc`]/g, "'");
+
 // A show's hosts, in the order its host line names them ("Kristen Kurtis &
 // Bob Bumbera"); a host it doesn't name, after. Pure.
 export function hostsOfShow(show, hosts = HOSTS) {
-  const line = String(show?.host || "").toLowerCase();
+  const line = foldName(show?.host);
   const at = (h) => {
-    const i = line.indexOf(h.name.toLowerCase());
+    const i = line.indexOf(foldName(h.name));
     return i < 0 ? Infinity : i;
   };
   return hosts.filter((h) => h.shows.includes(show?.id)).sort((a, b) => at(a) - at(b));

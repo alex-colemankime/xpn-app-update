@@ -132,6 +132,7 @@ export function ShowDetail({
     <Modal
       title={show.name}
       onClose={onClose}
+      routed
       className={tint ? "show-dialog" : ""}
       style={tint ? washVars("show", tint, 1, [0.12, 0.14]) : undefined}
     >

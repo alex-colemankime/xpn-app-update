@@ -1,14 +1,23 @@
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useFavoriteItems } from "../favorites.js";
 import { easternToday } from "../concerts.js";
 import { showToast } from "../toast.js";
 import { nameList } from "../ui.jsx";
 import {
   concertsByLikedArtists,
-  setLikedOnly,
+  showLikedConcerts,
   takeNewMatches,
   useConcertAlertSettings,
 } from "../concert-alerts.js";
+
+// Whether the app is in front. A calendar that arrives while it is in the
+// background waits: recorded as announced then, its notice would time out
+// unseen and never come back.
+const watchVisibility = (listener) => {
+  document.addEventListener("visibilitychange", listener);
+  return () => document.removeEventListener("visibilitychange", listener);
+};
+const isVisible = () => document.visibilityState !== "hidden";
 
 const DAY = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric" });
 
@@ -20,19 +29,19 @@ const DAY = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short",
 export function useConcertAlerts({ concerts, source }, onNavigate) {
   const { enabled } = useConcertAlertSettings();
   const songs = useFavoriteItems("songs");
+  const visible = useSyncExternalStore(watchVisibility, isVisible, () => true);
   useEffect(() => {
+    if (!visible) return;
     if (!enabled || source !== "live" || !concerts.length || !songs.length) return;
     const today = easternToday();
-    const matches = concertsByLikedArtists(
-      concerts.filter((c) => c.date >= today),
-      songs,
-    );
-    const { fresh, first } = takeNewMatches(matches);
+    const upcoming = concerts.filter((c) => c.date >= today);
+    const matches = concertsByLikedArtists(upcoming, songs);
+    const { fresh, first } = takeNewMatches(matches, new Set(upcoming.map((c) => c.id)));
     if (!fresh.length) return;
     const view = {
       label: "View",
       onClick: () => {
-        setLikedOnly(true);
+        showLikedConcerts();
         onNavigate("concerts");
       },
     };
@@ -59,5 +68,5 @@ export function useConcertAlerts({ concerts, source }, onNavigate) {
       },
       view,
     );
-  }, [enabled, source, concerts, songs, onNavigate]);
+  }, [visible, enabled, source, concerts, songs, onNavigate]);
 }

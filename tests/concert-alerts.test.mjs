@@ -30,7 +30,8 @@ test("a concert matches when any act on its bill is an artist of a saved song", 
     found.map((m) => [m.concert.id, m.artist]),
     [
       ["1", "Ioanna Gika"],
-      ["3", "Phoebe Bridgers feat. Jillian Ashcraft"],
+      // The act that plays, not the whole credit it was saved under.
+      ["3", "Jillian Ashcraft"],
       ["4", "Beths"],
     ],
   );
@@ -50,4 +51,40 @@ test("each concert is announced once; the first check announces what's already t
     ["3"],
   );
   assert.equal(later.first, false);
+});
+
+test("names in any script, punctuation that isn't a word break, and one-letter acts all match", () => {
+  assert.equal(artistKey("R.E.M."), artistKey("REM"));
+  assert.equal(artistKey("Guns N' Roses"), artistKey("Guns N Roses"));
+  assert.equal(artistKey("Jay-Z"), artistKey("Jay Z"));
+  assert.equal(artistKey("宇多田ヒカル"), "宇多田ヒカル".normalize("NFKD").toLowerCase());
+  const concerts = [concert("1", "宇多田ヒカル"), concert("2", "X"), concert("3", "R.E.M.")];
+  const songs = [{ artist: "宇多田ヒカル" }, { artist: "X" }, { artist: "REM" }];
+  assert.deepEqual(
+    concertsByLikedArtists(concerts, songs).map((m) => m.concert.id),
+    ["1", "2", "3"],
+  );
+});
+
+test("a performer a bill features in parentheses matches", () => {
+  const concerts = [
+    concert("1", "John Scofield's Electrospective (feat. Adam Deitch / Oteil Burbridge)"),
+  ];
+  const found = concertsByLikedArtists(concerts, [{ artist: "Oteil Burbridge" }]);
+  assert.deepEqual(
+    found.map((m) => [m.concert.id, m.artist]),
+    [["1", "Oteil Burbridge"]],
+  );
+});
+
+test("an announced concert is remembered while it is on the calendar, however many there are", () => {
+  const match = (id) => ({ concert: { id } });
+  const many = Array.from({ length: 600 }, (_, i) => `c${i}`);
+  const once = newMatches(many.map(match), [], new Set(many));
+  assert.equal(once.seen.length, 600, "no cap");
+  const again = newMatches(many.map(match), once.seen, new Set(many));
+  assert.equal(again.fresh.length, 0, "none announced twice");
+  // A concert that has left the calendar is forgotten.
+  const later = newMatches([], once.seen, new Set(many.slice(1)));
+  assert.equal(later.seen.length, 599);
 });

@@ -2,7 +2,7 @@ import { Art, Icon, Modal, shareText } from "../ui.jsx";
 import { showToast } from "../toast.js";
 import { SHOWS } from "../catalog.js";
 import { deviceIsEastern } from "../time.js";
-import { hostsOfShow } from "../hosts.js";
+import { foldName, hostsOfShow } from "../hosts.js";
 
 // A host's sheet: their portrait and the line under their name on xpn.org,
 // the shows they host and when (each opens its own sheet; Back returns
@@ -10,7 +10,7 @@ import { hostsOfShow } from "../hosts.js";
 export function HostSheet({ host, onClose, onOpenShow }) {
   const shows = host.shows.map((id) => SHOWS[id]).filter(Boolean);
   return (
-    <Modal title={host.name} onClose={onClose} className="host-sheet">
+    <Modal title={host.name} onClose={onClose} className="host-sheet" routed>
       <div className="detail-body">
         <div className="show-detail-hero host-hero">
           {host.img && <img src={host.img} alt="" />}
@@ -77,7 +77,7 @@ export function HostLine({ show, onOpenHost }) {
   const parts = [];
   let rest = line;
   for (const host of hosts) {
-    const i = rest.toLowerCase().indexOf(host.name.toLowerCase());
+    const i = foldName(rest).indexOf(foldName(host.name));
     if (i < 0) continue;
     if (i > 0) parts.push(rest.slice(0, i));
     parts.push(

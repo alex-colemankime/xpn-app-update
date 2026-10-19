@@ -80,7 +80,9 @@ export function Art({ src, alt = "", className = "", ...props }) {
 
 // Native dialog provides focus containment, Escape dismissal, and a modal backdrop.
 // Without `onClose` it can't be dismissed (no Close key, Escape or backdrop).
-export function Modal({ title, children, onClose, className = "", style }) {
+// `routed`: the address opened it (a show, a host), so Android's Back steps
+// back through the address rather than closing every sheet at once.
+export function Modal({ title, children, onClose, className = "", style, routed = false }) {
   const ref = useRef(null);
   const drag = useSheetDrag();
   const id = useId();
@@ -109,6 +111,7 @@ export function Modal({ title, children, onClose, className = "", style }) {
       }}
       className={`detail-dialog ${className}`}
       style={style}
+      data-routed={routed || undefined}
       aria-labelledby={id}
       onCancel={(e) => {
         e.preventDefault();

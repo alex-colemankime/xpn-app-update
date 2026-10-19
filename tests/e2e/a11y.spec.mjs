@@ -175,7 +175,7 @@ test("concerts are grouped by day, and a concert's sheet has its tickets", async
   await page.keyboard.press("Escape");
   await expect(sheet).toBeHidden();
   // A quick filter narrows the list, and Clear lets it go.
-  const count = page.locator(".day-aside [role=status]");
+  const count = page.locator("#concert-results");
   const all = await count.textContent();
   await page.getByRole("button", { name: "WXPN Welcomes", exact: true }).click();
   await expect(page.getByRole("button", { name: "WXPN Welcomes", exact: true })).toHaveAttribute(
@@ -184,6 +184,10 @@ test("concerts are grouped by day, and a concert's sheet has its tickets", async
   );
   await page.getByRole("button", { name: "Clear", exact: true }).click();
   await expect(count).toHaveText(all);
+  // A search that leaves none is announced too.
+  await page.getByPlaceholder("Artist or venue").fill("no such band zzz");
+  await expect(page.getByText("No concerts match")).toBeVisible();
+  await expect(count).toHaveText(/^0 of \d+ concerts$/);
 });
 
 test("a concert by an artist of a saved song is announced, and View shows only artists you like", async ({
@@ -212,4 +216,26 @@ test("a concert by an artist of a saved song is announced, and View shows only a
   await page.reload();
   await page.waitForTimeout(1500);
   await expect(page.getByText("Waxahatchee at Union Transfer")).toHaveCount(0);
+});
+
+test("an alert's View lets go of filters left from before", async ({ page, context }) => {
+  await context.addInitScript(() => {
+    const id = "waxahatchee--right-back-to-it";
+    localStorage.setItem(
+      "xpn.favorites.v1",
+      JSON.stringify({
+        songs: { [id]: { id, title: "Right Back to It", artist: "Waxahatchee", savedAt: 1 } },
+      }),
+    );
+  });
+  await page.goto("/#/concerts");
+  const view = page.getByRole("button", { name: "View" });
+  await expect(view).toBeVisible();
+  // A search from before that hides every concert.
+  await page.getByPlaceholder("Artist or venue").fill("no such band zzz");
+  await expect(page.getByText("No concerts match")).toBeVisible();
+  await view.click();
+  await expect(page.getByPlaceholder("Artist or venue")).toHaveValue("");
+  await expect(page.locator(".concert-row")).toHaveCount(1);
+  await expect(page.locator(".concert-row")).toContainText("Waxahatchee");
 });
