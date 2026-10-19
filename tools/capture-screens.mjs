@@ -347,13 +347,13 @@ const favoritesTab = async (page, tab) => {
   await page.getByLabel("Favorites category").getByRole("button", { name: tab }).click();
 };
 
-// The station playing, as the mini player shows it ("Live").
+// The station playing, as the mini player shows it (its key reads Pause).
 // Audio doesn't always start in a headless browser: then the shot shows the
 // station paused, and the notes say so.
 async function playStation(page) {
   try {
     await page.locator(".player-bar .player-play").click({ timeout: 5000 });
-    await page.locator('.player-bar .live-badge[data-state="live"]').waitFor({ timeout: 10000 });
+    await page.locator('.player-bar .player-play[aria-label^="Pause"]').waitFor({ timeout: 10000 });
   } catch {
     note("The station didn't start playing; that shot shows it paused.");
   }
@@ -364,7 +364,7 @@ async function playStation(page) {
 async function playFromListen(page) {
   try {
     await page.locator(".hero-play").click({ timeout: 5000 });
-    await page.locator('.player-bar .live-badge[data-state="live"]').waitFor({
+    await page.locator('.player-bar .player-play[aria-label^="Pause"]').waitFor({
       state: "attached",
       timeout: 10000,
     });

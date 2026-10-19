@@ -457,33 +457,6 @@ h1 {
   color: var(--muted);
   margin-top: 2px;
 }
-/* What the stream is doing, as a small tag before the artist: a pulsing
-   dot and "live", "connecting" or "offline". */
-.live-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  margin-right: var(--space-2);
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-s);
-  background: color-mix(in srgb, var(--accent) 13%, transparent);
-  color: var(--accent-strong);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-caption);
-  letter-spacing: var(--tracking-caption);
-  vertical-align: 1px;
-}
-.live-badge i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-.live-badge[data-state="error"] {
-  background: color-mix(in srgb, var(--muted) 16%, transparent);
-  color: var(--muted);
-}
 /* Play: an orange key, square with rounded corners like the artwork beside
    it, and the same size. */
 .player-play {

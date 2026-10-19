@@ -335,10 +335,6 @@
 .player-close {
   flex-shrink: 0;
 }
-.live-badge[data-state="archive"] {
-  background: color-mix(in srgb, var(--muted) 16%, transparent);
-  color: var(--text);
-}
 @media (max-width: 1100px) and (min-width: 768px) {
   .player-bar[data-source="episode"] .player-volume input {
     display: none;
