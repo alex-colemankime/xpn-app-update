@@ -430,3 +430,18 @@ test("the Hosts view finds a host by a show of theirs", async ({ page }) => {
   await page.getByRole("button", { name: "Close" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
+
+// The day drawn to scale: a four-hour show stands four times as tall as an
+// hour-long one, a line marks now, and searching makes it a list again.
+test("the schedule is drawn to scale, with a line at now", async ({ page }) => {
+  await page.goto("/#/shows");
+  const row = (name) => page.locator(".schedule-row", { hasText: name }).first();
+  await expect(page.locator(".schedule-now")).toBeVisible();
+  const height = async (name) => (await row(name).boundingBox()).height;
+  const middays = await height("WXPN Middays");
+  const highs = await height("Highs in the 70s");
+  expect(Math.round(middays / highs)).toBe(4);
+  await page.getByPlaceholder("Find a show or host").fill("World Cafe");
+  await expect(page.locator(".schedule-ruler")).toHaveCount(0);
+  await expect(page.locator(".schedule-now")).toHaveCount(0);
+});

@@ -237,10 +237,13 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
 .schedule-gap {
   border-bottom: 1px solid var(--border);
 }
+/* Now: a short rule in the hours' column, the time on it, pointing at the
+   show on the air. It never crosses a show's words. */
 .schedule-now {
   position: absolute;
   left: 0;
-  right: 0;
+  width: calc(4.25em + var(--space-4));
+  font-size: var(--text-secondary);
   height: 0;
   border-top: 2px solid var(--text);
   pointer-events: none;
@@ -250,8 +253,8 @@ h1.sr-only + :is(.toolbar, .concert-filters) {
   position: absolute;
   left: 0;
   top: -0.75em;
-  padding-right: var(--space-2);
-  background: var(--bg);
+  padding-right: var(--space-1);
+  background: color-mix(in srgb, var(--donate-fill) 40%, var(--bg));
   font-size: var(--text-caption);
   font-weight: var(--weight-bold);
   line-height: 1.5;

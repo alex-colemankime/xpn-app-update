@@ -85,7 +85,9 @@ function AlarmTime({ time, onChange }) {
   };
   return (
     <div className="alarm-time">
-      <label className="eyebrow" htmlFor="alarm-time">
+      {/* The readback above already says the time; the field keeps its
+          name for screen readers. */}
+      <label className="sr-only" htmlFor="alarm-time">
         Alarm time, in your time zone
       </label>
       <div className="alarm-time-row">

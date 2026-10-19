@@ -85,13 +85,13 @@
      most of the width: on a short screen the artwork leads and Listen live
      sits a short scroll below. The song and controls keep the full width. The insets
      are the ones measured at launch (fixed-insets.js), so Safari's toolbar
-     collapsing on scroll doesn't resize the artwork. 392px is the rest of
+     collapsing on scroll doesn't resize the artwork. 416px is the rest of
      that column, measured: the header, the station tabs and band, the song
      (a one-line title), Listen live, and the tab bar, so Listen live ends
      just above it and the mini player stays aside. */
   .now-card {
     --stage-room: calc(
-      100svh - 392px - var(--banner-h, 0px) - var(--alarm-h, 0px) -
+      100svh - 416px - var(--banner-h, 0px) - var(--alarm-h, 0px) -
         var(--safe-area-inset-top, var(--fixed-inset-top, 0px)) -
         var(--safe-area-inset-bottom, var(--fixed-inset-bottom, 0px))
     );

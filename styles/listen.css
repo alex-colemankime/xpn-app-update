@@ -45,7 +45,7 @@
      also bounded by the window's height (less any banner across the top)
      so Listen live usually stays above the player bar, down to a floor that
      keeps the artwork large. */
-  --stage-room: calc(100svh - 440px - var(--banner-h, 0px) - var(--alarm-h, 0px));
+  --stage-room: calc(100svh - 490px - var(--banner-h, 0px) - var(--alarm-h, 0px));
   --stage: min(480px, 100%, max(300px, var(--stage-room)));
 }
 @media (min-width: 1001px) {

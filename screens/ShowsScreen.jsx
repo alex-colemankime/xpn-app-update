@@ -63,10 +63,10 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
     setMode(next);
   };
   // Choosing today again brings the line that marks now back into view.
-  const wantNow = useRef(true);
+  const wantNow = useRef("auto");
   const chooseDay = (next) => {
     tap("selection");
-    if (next === today) wantNow.current = true;
+    if (next === today) wantNow.current = "smooth";
     setDay(next);
   };
   // The slot on the air: today's, or, opening the day, the one that began
@@ -98,9 +98,10 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
   useEffect(() => {
     const el = nowLine.current;
     if (!wantNow.current || !el || mode !== "Schedule" || el.offsetParent === null) return;
-    wantNow.current = false;
+    // Arriving, it simply opens there; choosing today, it travels.
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    el.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
+    el.scrollIntoView({ block: "center", behavior: reduced ? "auto" : wantNow.current });
+    wantNow.current = null;
   }, [mode, day, today, nowTop]);
   const hosts = HOSTS.filter(hostMatches(query));
   // Hosts in the order you'll hear them: on the air now, then next, then
