@@ -398,6 +398,37 @@
   letter-spacing: var(--tracking-caption);
   color: var(--muted);
 }
+/* In a list, the station's own shows wear it as a banner across the top
+   of their card, in Donate's colors: the station's tonal orange, its words
+   at 5.5:1 on the fill. One line, so the card below it never moves. */
+.concert-row {
+  position: relative;
+  overflow: hidden;
+  --flag-h: calc(var(--text-caption) * var(--leading-caption) + 2 * var(--space-1));
+}
+.concert-row .concert-flags {
+  position: absolute;
+  inset: 0 0 auto;
+  flex-wrap: nowrap;
+  min-height: var(--flag-h);
+  padding: var(--space-1) var(--space-4);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: var(--donate-fill);
+  color: var(--donate-ink);
+}
+.concert-row:has(.concert-flags) > .concert-open {
+  padding-top: calc(var(--flag-h) + var(--space-3));
+}
+.concert-row:has(.concert-flags) > .icon-button {
+  margin-top: calc(var(--flag-h) + var(--space-2));
+}
+@media (forced-colors: active) {
+  .concert-row .concert-flags {
+    border-bottom: 1px solid CanvasText;
+  }
+}
 .concert-welcomes {
   display: inline-flex;
   align-items: center;
