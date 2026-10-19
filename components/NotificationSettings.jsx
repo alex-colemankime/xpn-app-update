@@ -1,4 +1,4 @@
-import { ChoiceSetting, Icon, Switch, nameList } from "../ui.jsx";
+import { ChoiceSetting, Switch, nameList } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { useFavoriteItems } from "../favorites.js";
 import { notificationsAreNative } from "../notifications.js";
@@ -11,6 +11,7 @@ import {
   useReminderSettings,
 } from "../hooks/useShowReminders.js";
 import { setAlerts, useAlertSettings } from "../hooks/useStationAlerts.js";
+import { setConcertAlerts, useConcertAlertSettings } from "../concert-alerts.js";
 
 const LEAD_CHOICES = LEAD_OPTIONS.map((m) => ({
   value: m,
@@ -25,10 +26,7 @@ export function ShowReminders({ onNavigate }) {
   return (
     <section className="settings-panel">
       <div className="section-heading">
-        <h2>
-          <Icon name="bell" />
-          Show reminders
-        </h2>
+        <h2>Show reminders</h2>
         <Switch
           on={settings.enabled}
           onChange={(on) => (on ? enableReminders({ quiet: true }) : disableReminders())}
@@ -76,10 +74,7 @@ export function StationAlerts() {
   return (
     <section className="settings-panel">
       <div className="section-heading">
-        <h2 id="alerts-label">
-          <Icon name="navLive" />
-          Notifications from WXPN
-        </h2>
+        <h2 id="alerts-label">Notifications from WXPN</h2>
         <Switch on={on} onChange={setAlerts} labelledBy="alerts-label" describedBy="alerts-note" />
       </div>
       <p className="data-note" id="alerts-note">
@@ -95,6 +90,28 @@ export function StationAlerts() {
           </button>
         </p>
       )}
+    </section>
+  );
+}
+
+// Concerts by artists of the songs a listener saves (concert-alerts.js):
+// announced in the app when the calendar shows one.
+export function ConcertAlerts() {
+  const { enabled } = useConcertAlertSettings();
+  return (
+    <section className="settings-panel">
+      <div className="section-heading">
+        <h2>Concerts by artists you like</h2>
+        <Switch
+          on={enabled}
+          onChange={setConcertAlerts}
+          label="Tell me when an artist I've saved a song by has a concert"
+        />
+      </div>
+      <p className="data-note">
+        When an artist from your saved songs is on WXPN’s concert calendar, the app tells you, once
+        per concert, when it opens.
+      </p>
     </section>
   );
 }

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Icon, Segmented, Empty, SearchField, shareText } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { useFavoriteItems } from "../favorites.js";
-import { easternToday } from "../concerts.js";
+import { easternToday, inShowOrder } from "../concerts.js";
 import { VideoCard } from "../components/VideoCard.jsx";
 import { EpisodeRow, ShowHead } from "../components/Archive.jsx";
 import { hasLeftArchive, useArchiveState } from "../archive.js";
@@ -129,19 +129,17 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
             {filtered.length} saved {category}
             {q ? " match your search" : ""}
           </p>
+          {/* No "saved on this device" label over the list: Settings ›
+              Privacy says where favorites are kept. */}
           {category === "songs" && songs.length > 0 ? (
-            <PlaylistSyncStatus>
-              <p className="data-note">Saved on this device.</p>
-            </PlaylistSyncStatus>
+            <PlaylistSyncStatus />
           ) : category === "concerts" && items.concerts?.length > 1 && !calendarIsNative() ? (
             <button className="playlist-prompt" onClick={() => downloadIcs(items.concerts)}>
               <Icon name="calendarAdd" size={18} />
               <span>Add all {items.concerts.length} concerts to your calendar</span>
               <Icon name="chev" size={16} />
             </button>
-          ) : (
-            anything && <p className="data-note">Saved on this device.</p>
-          )}
+          ) : null}
           {!filtered.length ? (
             <Empty
               icon={empty.icon}
@@ -179,7 +177,7 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
               ))}
             </div>
           ) : category === "concerts" ? (
-            <ConcertList concerts={[...filtered].sort((a, b) => a.date.localeCompare(b.date))} />
+            <ConcertList concerts={inShowOrder(filtered)} />
           ) : category === "videos" ? (
             <div className="video-grid saved-videos">
               {filtered.map((v) => (

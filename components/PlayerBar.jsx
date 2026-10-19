@@ -98,9 +98,6 @@ function EpisodeBar({ onOpenEpisode }) {
           <span>
             <strong>{episode.title}</strong>
             <small>
-              <span className="live-badge" data-state="archive">
-                Archive
-              </span>
               {episode.showName}
               {status === "ended" ? " · Played" : left ? ` · ${lengthLabel(left)} left` : ""}
               <span className="sr-only">
@@ -148,9 +145,10 @@ function LiveBar({ playlist, onOpen }) {
   const current = useLiveSong(playlist);
   const { station, playing, connecting, status } = player;
   const text = playbackText(player);
-  // A small badge beside the artist says what the stream is doing; paused
-  // needs none, the play button already says it.
-  const badge = playing || connecting || status === "error" ? text.badge : "";
+  // Live needs no tag: the pause key says it is playing, and the artist
+  // keeps the whole line. While the stream connects or is lost, that line
+  // says so instead, in the same quiet type, so nothing shifts.
+  const trouble = connecting ? `${text.badge}…` : status === "error" ? text.badge : "";
   const tint = useBarTint(current?.img);
   return (
     <footer {...tint} className="player-bar" aria-label="Radio player">
@@ -174,15 +172,9 @@ function LiveBar({ playlist, onOpen }) {
           )}
           <span>
             <strong>{current?.title || station.label}</strong>
-            <small>
-              {badge && (
-                <span className="live-badge" data-state={playing ? "live" : status}>
-                  <i />
-                  {badge}
-                </span>
-              )}
-              {current ? current.artist : station.tagline}
-              {current && <span className="sr-only">, {station.label}</span>}
+            <small data-state={trouble ? status : undefined}>
+              {trouble || (current ? current.artist : station.tagline)}
+              {current && !trouble && <span className="sr-only">, {station.label}</span>}
             </small>
           </span>
         </button>

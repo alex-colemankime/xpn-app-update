@@ -15,6 +15,7 @@ import { useFavoriteItems } from "./favorites.js";
 import { placeOf, useRoute } from "./hooks/useRoute.js";
 import { useAppearance } from "./hooks/useAppearance.js";
 import { useConcerts } from "./hooks/useConcerts.js";
+import { useConcertAlerts } from "./hooks/useConcertAlerts.js";
 import { useRadioAlarm } from "./hooks/useRadioAlarm.js";
 import { useShowReminders } from "./hooks/useShowReminders.js";
 import { useSpaceToPlay } from "./hooks/useSpaceToPlay.js";
@@ -26,6 +27,8 @@ import { Sidebar, TabBar, TITLES, TopBar } from "./components/Navigation.jsx";
 import { NowPlayingSync } from "./components/NowPlayingSync.jsx";
 import { PlayerBar } from "./components/PlayerBar.jsx";
 import { ShowDetail } from "./components/ShowDetail.jsx";
+import { HostSheet } from "./components/HostSheet.jsx";
+import { hostBySlug } from "./hosts.js";
 import { StationBanner } from "./components/StationUpdates.jsx";
 import { OfflineNotice } from "./components/OfflineNotice.jsx";
 import { Toast } from "./components/Toast.jsx";
@@ -106,7 +109,9 @@ export default function App() {
 
   // The first-run welcome, once. Not over a shared show link: that listener
   // came for the show.
-  const [welcome, setWelcome] = useState(() => !readJson(ONBOARDED_KEY, false) && !route.showId);
+  const [welcome, setWelcome] = useState(
+    () => !readJson(ONBOARDED_KEY, false) && !route.showId && !route.hostId,
+  );
   const [WatchPage, setWatchPage] = useState(makeWatchPage);
   // Each time Favorites comes to the front, a new visit (LibraryScreen).
   const [favoritesVisit, setFavoritesVisit] = useState(0);
@@ -121,6 +126,8 @@ export default function App() {
   };
   // Show heads-ups wait while the welcome is open, so they never cover it.
   useShowReminders(() => route.navigate("listen"), { paused: welcome });
+  // A concert by an artist the listener likes, announced once.
+  useConcertAlerts(concerts, route.navigate, features.concerts);
   useStationAlerts(updates.all, { onWatch: watching.watchLive });
 
   // A screen the station has switched off (features.js) while it was open:
@@ -146,14 +153,36 @@ export default function App() {
   useLayoutEffect(() => {
     if (shownScreen.current === route.screen) return;
     shownScreen.current = route.screen;
-    window.scrollTo({ top: placeOf(route.screen) });
+    const place = placeOf(route.screen);
+    window.scrollTo({ top: place });
     main.current?.focus({ preventScroll: true });
+    // A screen coming back can finish laying out a moment later (its
+    // effects run again as it shows), so a place near its end may not
+    // exist yet. As it grows, the place is tried again, for a second at
+    // most, and never once the listener has moved.
+    if (Math.round(window.scrollY) >= Math.round(place) || !window.ResizeObserver) return;
+    const growing = new ResizeObserver(() => {
+      window.scrollTo({ top: place });
+      if (Math.round(window.scrollY) >= Math.round(place)) stop();
+    });
+    const moved = ["wheel", "touchstart", "keydown", "pointerdown"];
+    const stop = () => {
+      growing.disconnect();
+      clearTimeout(timer);
+      for (const type of moved) window.removeEventListener(type, stop, true);
+    };
+    const timer = setTimeout(stop, 1000);
+    for (const type of moved) window.addEventListener(type, stop, { capture: true, passive: true });
+    growing.observe(document.body);
+    return stop;
   }, [route.screen]);
 
   const savedShows = useFavoriteItems("shows");
   const show = route.showId
     ? SHOWS[route.showId] || savedShows.find((s) => s.id === route.showId) || null
     : null;
+
+  const host = route.hostId ? hostBySlug(route.hostId) : null;
 
   return (
     <div className="app-layout">
@@ -204,7 +233,7 @@ export default function App() {
             />
           </Screen>
           <Screen id="shows" label="Shows" current={route.screen}>
-            <ShowsScreen onOpen={route.openShow} />
+            <ShowsScreen onOpen={route.openShow} onOpenHost={route.openHost} />
           </Screen>
           {features.videos && (
             <Screen id="videos" label="Videos" current={route.screen}>
@@ -255,6 +284,15 @@ export default function App() {
           onListen={() => route.navigate("listen")}
           onNavigate={route.navigate}
           onWatch={watching.watchVideo}
+          onOpenHost={route.openHost}
+        />
+      )}
+      {host && (
+        <HostSheet
+          key={host.slug}
+          host={host}
+          onClose={route.closeShow}
+          onOpenShow={route.openShow}
         />
       )}
       <UpdatePrompt />
@@ -262,7 +300,7 @@ export default function App() {
           taking the app down with it (error-boundary.jsx). */}
       <OverlayErrorBoundary>
         <Suspense fallback={null}>
-          {welcome && !show && <Welcome onDone={finishWelcome} />}
+          {welcome && !show && !host && <Welcome onDone={finishWelcome} />}
         </Suspense>
       </OverlayErrorBoundary>
       <OverlayErrorBoundary

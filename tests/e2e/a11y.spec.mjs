@@ -87,6 +87,15 @@ const VIEWS = {
     await page.goto("/#/shows/show/worldcafe");
     await expect(page.getByRole("dialog", { name: "World Cafe" })).toBeVisible();
   },
+  "shows, hosts": async (page) => {
+    await page.goto("/#/shows");
+    await page.getByLabel("Browse shows").getByRole("button", { name: "Hosts" }).click();
+    await expect(page.locator(".host-card").first()).toBeVisible();
+  },
+  "a host's sheet": async (page) => {
+    await page.goto("/#/shows/host/dan-reed");
+    await expect(page.getByRole("dialog", { name: "Dan Reed" })).toBeVisible();
+  },
   "shows, archive": async (page) => {
     await page.goto("/#/shows");
     await page.getByLabel("Browse shows").getByRole("button", { name: "Archive" }).click();
@@ -165,14 +174,68 @@ test("concerts are grouped by day, and a concert's sheet has its tickets", async
   await expect(sheet.getByRole("button", { name: "Add to calendar" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(sheet).toBeHidden();
-  // A chip narrows the list, and Clear filters lets it go.
-  const count = page.locator(".concert-count [role=status]");
+  // A quick filter narrows the list, and Clear lets it go.
+  const count = page.locator("#concert-results");
   const all = await count.textContent();
   await page.getByRole("button", { name: "WXPN Welcomes", exact: true }).click();
   await expect(page.getByRole("button", { name: "WXPN Welcomes", exact: true })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  await page.getByRole("button", { name: "Clear filters" }).click();
+  await page.getByRole("button", { name: "Clear", exact: true }).click();
   await expect(count).toHaveText(all);
+  // A search that leaves none is announced too.
+  await page.getByPlaceholder("Artist or venue").fill("no such band zzz");
+  await expect(page.getByText("No concerts match")).toBeVisible();
+  await expect(count).toHaveText(/^0 of \d+ concerts$/);
+});
+
+test("a concert by an artist of a saved song is announced, and View shows only artists you like", async ({
+  page,
+  context,
+}) => {
+  // A saved song by Waxahatchee, who is on the calendar above.
+  await context.addInitScript(() => {
+    const id = "waxahatchee--right-back-to-it";
+    localStorage.setItem(
+      "xpn.favorites.v1",
+      JSON.stringify({
+        songs: { [id]: { id, title: "Right Back to It", artist: "Waxahatchee", savedAt: 1 } },
+      }),
+    );
+  });
+  await page.goto("/");
+  const notice = page.getByText("Waxahatchee at Union Transfer");
+  await expect(notice).toBeVisible();
+  await page.getByRole("button", { name: "View" }).click();
+  await expect(page).toHaveURL(/#\/concerts/);
+  await expect(page.locator(".concert-row")).toHaveCount(1);
+  await expect(page.locator(".concert-row")).toContainText("Waxahatchee");
+  await expect(page.getByRole("button", { name: /^Filters 1 in use/ })).toBeVisible();
+  // Announced once: coming back doesn't announce it again.
+  await page.reload();
+  await page.waitForTimeout(1500);
+  await expect(page.getByText("Waxahatchee at Union Transfer")).toHaveCount(0);
+});
+
+test("an alert's View lets go of filters left from before", async ({ page, context }) => {
+  await context.addInitScript(() => {
+    const id = "waxahatchee--right-back-to-it";
+    localStorage.setItem(
+      "xpn.favorites.v1",
+      JSON.stringify({
+        songs: { [id]: { id, title: "Right Back to It", artist: "Waxahatchee", savedAt: 1 } },
+      }),
+    );
+  });
+  await page.goto("/#/concerts");
+  const view = page.getByRole("button", { name: "View" });
+  await expect(view).toBeVisible();
+  // A search from before that hides every concert.
+  await page.getByPlaceholder("Artist or venue").fill("no such band zzz");
+  await expect(page.getByText("No concerts match")).toBeVisible();
+  await view.click();
+  await expect(page.getByPlaceholder("Artist or venue")).toHaveValue("");
+  await expect(page.locator(".concert-row")).toHaveCount(1);
+  await expect(page.locator(".concert-row")).toContainText("Waxahatchee");
 });

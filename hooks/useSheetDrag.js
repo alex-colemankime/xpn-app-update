@@ -22,6 +22,7 @@ const SLOP = 4; // px before the first move counts
 const LINE = 0.28; // of the sheet's height: past it, a slow let-go closes
 const LINE_MIN = 96; // px
 const UPWARD = -300; // px/s: moving up this fast at let-go never closes
+const DISMISS_WAIT_MS = 350; // how long a dismissed sheet has to close before it comes back
 
 // Where a pull this far down must reach for a slow let-go to close it.
 export const closeLine = (height) => Math.max(LINE_MIN, height * LINE);
@@ -73,7 +74,11 @@ export function useSheetDrag({ anyWidth = false } = {}) {
       let offset = 0; // where the sheet is now, px below its resting place
       let stopSpring = () => {};
       const tracker = createVelocityTracker();
-      const height = () => sheet.getBoundingClientRect().height || 1;
+      // The sheet's height, measured as a pull begins and kept for its
+      // frames and moves (reading layout on each would force it every frame).
+      let tall = 0;
+      const measure = () => (tall = sheet.getBoundingClientRect().height || 1);
+      const height = () => tall || measure();
       const place = (y) => {
         offset = y;
         sheet.style.transition = "none";
@@ -111,7 +116,11 @@ export function useSheetDrag({ anyWidth = false } = {}) {
           onFrame: place,
           onDone: () => {
             dismiss(sheet);
-            requestAnimationFrame(() => (stillOpen() ? settle() : reset()));
+            // A sheet closed by the address (a show's, a host's) closes when
+            // the history step lands, a moment after the cancel; looking
+            // sooner would spring it back into view first. It waits out of
+            // sight.
+            setTimeout(() => (stillOpen() ? settle() : reset()), DISMISS_WAIT_MS);
           },
         });
       };
@@ -129,6 +138,7 @@ export function useSheetDrag({ anyWidth = false } = {}) {
         if (!startsDrag(e.target, sheet, t.clientY)) return;
         // Catch a moving sheet where it is, never where it was going.
         stopSpring();
+        measure();
         drag = {
           x: t.clientX,
           y: t.clientY,

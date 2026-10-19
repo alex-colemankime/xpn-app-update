@@ -50,20 +50,17 @@
     background: var(--row-alt);
     color: var(--accent);
   }
-  .player-play:hover {
-    background: color-mix(in srgb, var(--action) 88%, var(--text));
+  :is(.player-play, .primary-button):hover {
+    background: color-mix(in srgb, var(--action) 34%, var(--bg));
   }
   .secondary-button:hover {
     background: var(--soft-fill-hover);
   }
 }
 
-/* Pressed feedback, since the platform tap highlight is switched off. Keys
-   in a joined control darken rather than shrink out of line: in ink, like
-   the chosen key, a step deeper, their words in ink too so they keep their
-   contrast on the deeper fill. */
+/* Pressed feedback, since the platform tap highlight is switched off: a
+   word being chosen goes to ink at once. */
 :is(.segmented-pill, .repeat-days, .day-picker) button:active {
-  background: color-mix(in srgb, var(--select-ink) 16%, transparent);
   color: var(--select-ink);
 }
 :is(

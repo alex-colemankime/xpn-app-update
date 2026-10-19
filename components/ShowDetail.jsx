@@ -15,6 +15,7 @@ import { useVideos } from "../videos.js";
 import { VideoCard } from "./VideoCard.jsx";
 import { useArtTint, washVars } from "../art-tint.js";
 import { useFeatures } from "../features.js";
+import { HostLine } from "./HostSheet.jsx";
 
 // A show's sheet, washed in the show's own color: who hosts it and when,
 // Follow, a row to listen while it is on the air, its videos (World Cafe) and
@@ -61,10 +62,7 @@ function OnAirRow({ show, onListen }) {
   return (
     <button className="show-on-air" onClick={onListen}>
       <span className="show-on-air-text">
-        <span className="on-air-label">
-          <i className="on-air-dot" />
-          On air now, {untilLabel(onAirNow)}
-        </span>
+        <span className="on-air-label">On air now, {untilLabel(onAirNow)}</span>
         <strong>Listen live on WXPN</strong>
       </span>
       <span className="show-on-air-key" aria-hidden="true">
@@ -107,6 +105,7 @@ export function ShowDetail({
   onListen,
   onNavigate,
   onWatch,
+  onOpenHost,
 }) {
   // The show's recent broadcasts from the archive. A saved episode still
   // opens after it has left the archive (and says so if played).
@@ -130,6 +129,7 @@ export function ShowDetail({
     <Modal
       title={show.name}
       onClose={onClose}
+      routed
       className={tint ? "show-dialog" : ""}
       style={tint ? washVars("show", tint, 1, [0.12, 0.14]) : undefined}
     >
@@ -146,11 +146,13 @@ export function ShowDetail({
             <div className="show-detail-hero">
               <Art src={show.img} alt="" />
               <div>
+                {/* Who hosts it, said as a line, not labeled: "with Raina
+                    Douris & Stephen Kallao". */}
                 {show.host && (
-                  <>
-                    <span className="eyebrow">Hosted by</span>
-                    <h3>{show.host}</h3>
-                  </>
+                  <h3 className="show-hosts">
+                    <span className="show-hosts-with">with </span>
+                    <HostLine show={show} onOpenHost={onOpenHost} />
+                  </h3>
                 )}
                 <ul className="show-times">
                   {show.times.map((line) => (
@@ -161,12 +163,9 @@ export function ShowDetail({
                   <p className="subtle">Eastern time</p>
                 )}
                 <Airing show={show} />
-                <SaveButton
-                  type="shows"
-                  item={show}
-                  className="secondary-button"
-                  onToggle={setOffer}
-                >
+                {/* Follow is a word with its heart, underlined while followed,
+                    as every choice in the app is marked; no pill. */}
+                <SaveButton type="shows" item={show} className="follow-word" onToggle={setOffer}>
                   {(saved) => (saved ? "Following" : "Follow show")}
                 </SaveButton>
                 {show.page && (

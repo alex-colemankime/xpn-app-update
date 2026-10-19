@@ -2,24 +2,66 @@
    Concerts: filters, then the list.
    ------------------------------------------------------------------------ */
 
-/* Concert filters: search, then rows of chips (When, Region, Show only). */
+/* Concert filters: the search with Filters at its end, then the quick filters. */
 .concert-filters {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
   margin-bottom: var(--space-2);
 }
-/* The quick filters: one row of chips that scrolls sideways, under the
-   search. A chosen chip is filled in ink, as every choice is. */
-.concert-chips {
+/* The search, a little shorter, with Filters at its end, the same height
+   and outline, so the way to every other filter sits where people look. */
+.concert-search {
   display: flex;
   gap: var(--space-2);
+}
+.concert-search > .search-field {
+  flex: 1;
+}
+.filters-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
+  transition:
+    background-color var(--dur-quick),
+    color var(--dur-quick);
+}
+/* With any of its filters in use: filled in ink, as a chosen filter is. */
+.filters-button[data-on] {
+  border-color: var(--select-ink);
+  background: var(--select-ink);
+  color: var(--bg);
+}
+.filters-button[data-on] .filter-count {
+  background: var(--bg);
+  color: var(--select-ink);
+}
+@media (hover: hover) {
+  .filters-button:not([data-on]):hover {
+    background: var(--soft-fill-hover);
+  }
+}
+@media (forced-colors: active) {
+  .filters-button[data-on] {
+    background: Highlight;
+    color: HighlightText;
+  }
+}
+/* The quick filters: one row of words that scrolls sideways, under the
+   search. */
+.concert-chips {
+  display: flex;
+  gap: var(--space-6);
   margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
   padding-inline: var(--edge-left) var(--edge-right);
-  /* Room above and below the chips for their 44px targets: a row that
-     scrolls sideways clips anything that spills out of it. */
-  margin-block: -4px;
-  padding-block: 4px;
   overflow-x: auto;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
@@ -28,50 +70,40 @@
 .concert-chips::-webkit-scrollbar {
   display: none;
 }
+/* Each quick filter is a word, not a pill: muted at rest, and when on, in
+   ink with an ink line under it, as the app's tabs mark where you are. */
 .chip {
+  position: relative;
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 36px;
-  padding: 0 var(--space-4);
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius-full);
+  min-height: 44px;
+  padding: 0;
   font-size: var(--text-secondary);
   font-weight: var(--weight-semibold);
+  color: var(--muted);
   white-space: nowrap;
-  transition:
-    background-color var(--dur-quick),
-    color var(--dur-quick),
-    border-color var(--dur-quick);
+  transition: color var(--dur-quick);
 }
-/* A 44px target around a 36px chip. */
 .chip::after {
   content: "";
   position: absolute;
-  inset: -4px 0;
+  inset: auto 0 var(--space-2);
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--dur-quick);
 }
-.chip {
-  position: relative;
-}
-.chip:is([aria-pressed="true"], [data-on]) {
-  border-color: var(--select-ink);
-  background: var(--select-ink);
-  color: var(--bg);
-}
-.chip:is([aria-pressed="true"], [data-on]) .filter-count {
-  background: var(--bg);
+.chip[aria-pressed="true"] {
   color: var(--select-ink);
 }
-@media (hover: hover) {
-  .chip:not([aria-pressed="true"], [data-on]):hover {
-    background: var(--surface);
-  }
+.chip[aria-pressed="true"]::after {
+  opacity: 1;
 }
-@media (forced-colors: active) {
-  .chip:is([aria-pressed="true"], [data-on]) {
-    background: Highlight;
-    color: HighlightText;
+@media (hover: hover) {
+  .chip:not([aria-pressed="true"]):hover {
+    color: var(--text);
   }
 }
 /* A soft edge at the end of the row, only while there are more chips past
@@ -254,17 +286,6 @@
     color: HighlightText;
   }
 }
-.concert-count {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin: var(--space-1) 0 0;
-  font-size: var(--text-secondary);
-  color: var(--muted);
-}
-.concert-count .text-button {
-  color: var(--accent);
-}
 .concert-partial {
   display: flex;
   flex-wrap: wrap;
@@ -273,14 +294,18 @@
   gap: var(--space-1) var(--space-3);
   margin: var(--space-2) 0;
 }
-/* A day of concerts. The day is the strongest break in the list and the
-   only line in it: real space, then a rule, then the day's name, larger
-   than anything in the rows, the day as a word in ink and its date muted
-   ("Tonight Oct 18", "Wednesday Oct 21"). Concerts within a day are set
-   apart by space alone, so a day reads as one block under its name. */
+/* A day of concerts: the day's name on the page, larger than anything in
+   the rows, the day as a word in ink and its date muted ("Tonight Oct 18",
+   "Wednesday Oct 21"), then the day's concerts under it, each one a card
+   of its own on a raised surface. The edge of a card, not space, says
+   where one concert ends and the next begins; the day's name, on the page
+   between the cards, says where a day begins. */
 .concert-day + .concert-day {
-  margin-top: var(--space-8);
-  border-top: 1px solid var(--border);
+  margin-top: var(--space-4);
+}
+.concert-day-rows {
+  display: grid;
+  gap: var(--space-2);
 }
 /* On a phone the day's name stays at the top (under the status bar) while
    its concerts scroll under it, on the page's own color; its hairline
@@ -289,21 +314,28 @@
   position: sticky;
   top: var(--safe-area-inset-top, env(safe-area-inset-top));
   z-index: 1;
-  margin: 0;
-  font-size: var(--text-title);
-  line-height: var(--leading-title);
-  letter-spacing: var(--tracking-title);
   container-type: scroll-state;
 }
 .day-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  column-gap: var(--space-2);
+  justify-content: space-between;
+  column-gap: var(--space-4);
   margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
   padding: var(--space-4) var(--edge-right) var(--space-2) var(--edge-left);
   border-bottom: 1px solid transparent;
   background: var(--bg);
+}
+.day-bar > h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-title);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
 }
 .day-word {
   font-weight: var(--weight-bold);
@@ -311,6 +343,21 @@
 .day-date {
   font-weight: var(--weight-regular);
   color: var(--muted);
+}
+/* How many are listed, at the far end of the first day's heading: small and
+   muted, as "All times Eastern" sits beside the schedule's day, so it reads
+   as a note about the list, not as "36 tonight". */
+.day-aside {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-left: auto;
+  font-size: var(--text-secondary);
+  color: var(--muted);
+}
+.day-aside .text-button {
+  min-height: 0;
+  color: var(--accent);
 }
 @container scroll-state(stuck: top) {
   .day-bar {
@@ -328,7 +375,7 @@
     align-items: start;
   }
   .concert-day + .concert-day {
-    margin-top: var(--space-10);
+    margin-top: var(--space-8);
   }
   .concert-day-head {
     top: var(--space-6);
@@ -341,9 +388,15 @@
     border: 0;
     background: none;
   }
-  .day-bar > span {
+  .day-bar > h2 {
+    display: block;
+  }
+  .day-bar > h2 > span {
     display: block;
     overflow-wrap: anywhere;
+  }
+  .day-aside {
+    margin: var(--space-3) 0 0;
   }
 }
 /* A concert: the station's credit over the headliner, the acts supporting
@@ -353,10 +406,11 @@
 .concert-row {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-3);
+  gap: var(--space-1);
+  background: var(--raised);
 }
 .concert-row > .icon-button {
-  margin-top: var(--space-1);
+  margin: var(--space-2) var(--space-1) 0 0;
 }
 .concert-open {
   display: flex;
@@ -365,8 +419,18 @@
   align-items: flex-start;
   gap: 2px;
   min-width: 0;
-  padding: var(--space-3) 0;
+  padding: var(--space-3) 0 var(--space-3) var(--space-4);
   text-align: left;
+}
+@media (hover: hover) {
+  .concert-row:has(> .concert-open:hover) {
+    background: color-mix(in srgb, var(--text) 4%, var(--raised));
+  }
+}
+@media (forced-colors: active) {
+  .concert-row {
+    border: 1px solid CanvasText;
+  }
 }
 /* WXPN Welcomes and Free at Noon: a small muted credit over the artist, as
    a venue's own listing prints "WXPN Welcomes"; orange is kept for things
@@ -380,6 +444,65 @@
   line-height: var(--leading-caption);
   letter-spacing: var(--tracking-caption);
   color: var(--muted);
+}
+/* In a list, the station's own shows wear it as a banner across the top
+   of their card, in Donate's colors (the station's tonal orange, its words
+   at 5.5:1 on the fill), its words centered as a venue's listing prints
+   "WXPN Welcomes" over the headliner, without the star. One line, so the
+   card below it never moves. Cards are square-cornered, as a printed
+   listing is. */
+.concert-row {
+  position: relative;
+  overflow: hidden;
+  --flag-h: calc(var(--text-caption) * var(--leading-caption) + 2 * var(--space-1));
+}
+.concert-row .concert-flags {
+  position: absolute;
+  inset: 0 0 auto;
+  flex-wrap: nowrap;
+  justify-content: center;
+  min-height: var(--flag-h);
+  padding: var(--space-1) var(--space-4);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: var(--donate-fill);
+  color: var(--donate-ink);
+}
+/* The rest of a station show's card takes a faint wash of the banner's
+   orange, so it stands out a little among the others without competing. */
+.concert-row {
+  --welcome-wash: 40%;
+}
+/* In dark, its muted lines a step lighter, to keep 4.5:1 on the wash. */
+:root[data-theme="dark"] .concert-row:has(.concert-flags) {
+  --muted: #adaeab;
+}
+.concert-row:has(.concert-flags) {
+  background: color-mix(in srgb, var(--donate-fill) var(--welcome-wash), var(--raised));
+}
+@media (hover: hover) {
+  .concert-row:has(.concert-flags):has(> .concert-open:hover) {
+    background: color-mix(
+      in srgb,
+      var(--text) 4%,
+      color-mix(in srgb, var(--donate-fill) var(--welcome-wash), var(--raised))
+    );
+  }
+}
+.concert-row .concert-welcomes > .icon {
+  display: none;
+}
+.concert-row:has(.concert-flags) > .concert-open {
+  padding-top: calc(var(--flag-h) + var(--space-3));
+}
+.concert-row:has(.concert-flags) > .icon-button {
+  margin-top: calc(var(--flag-h) + var(--space-2));
+}
+@media (forced-colors: active) {
+  .concert-row .concert-flags {
+    border-bottom: 1px solid CanvasText;
+  }
 }
 .concert-welcomes {
   display: inline-flex;
@@ -397,14 +520,16 @@
 /* The acts supporting it, in ink but lighter and smaller, after a muted
    "with"; two lines at most here (the sheet has the whole bill). */
 .concert-support {
+  font-size: var(--text-secondary);
+  line-height: var(--leading-body);
+  overflow-wrap: anywhere;
+}
+.concert-open > .concert-support {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
-  font-size: var(--text-secondary);
-  line-height: var(--leading-body);
-  overflow-wrap: anywhere;
 }
 .concert-with {
   color: var(--muted);
@@ -440,24 +565,36 @@
 /* Tickets across the sheet, then Add to calendar, Share and Save as three
    equal keys, an icon over its words, so the row never leaves one key on a
    line of its own at any width or text size. */
+/* Tickets is the sheet's one button; the calendar, Share and Save follow as
+   a quiet row of words with their glyphs, not three equal tiles. */
 .concert-sheet-actions {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-5);
   width: 100%;
   margin-top: var(--space-4);
 }
 .concert-sheet-actions > .primary-button {
-  grid-column: 1 / -1;
+  flex: 1 0 100%;
+  margin-bottom: var(--space-1);
 }
 .concert-sheet-actions > .secondary-button {
-  flex-direction: column;
-  gap: var(--space-1);
-  min-height: 64px;
-  padding: var(--space-2);
+  min-height: 44px;
+  padding: 0;
+  gap: var(--space-2);
+  background: none;
+  border: 0;
+  color: var(--text);
   font-size: var(--text-secondary);
-  text-align: center;
-  text-wrap: balance;
+  font-weight: var(--weight-semibold);
+}
+@media (hover: hover) {
+  .concert-sheet-actions > .secondary-button:hover {
+    background: none;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
 }
 /* While the calendar loads: a date block and two lines per row. */
 .skeleton-row.concert-skeleton {

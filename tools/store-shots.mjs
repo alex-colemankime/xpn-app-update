@@ -37,7 +37,7 @@ const page = (body, { width, height }) => `<!doctype html><html><head><style>
 @font-face { font-family: Figtree; src: url(data:font/woff2;base64,${font}) format("woff2"); font-weight: 300 900; }
 * { box-sizing: border-box; margin: 0; }
 html, body { width: ${width}px; height: ${height}px; overflow: hidden; }
-body { background: #f7f3ea; color: #211f1c; font-family: Figtree, sans-serif; }
+body { background: #f5f5f3; color: #111111; font-family: Figtree, sans-serif; }
 </style></head><body>${body}</body></html>`;
 
 const browser = await chromium.launch({

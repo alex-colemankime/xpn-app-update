@@ -373,12 +373,14 @@ export function TrackRow({ track, showTime = false, stationLabel }) {
         aria-haspopup="dialog"
         onClick={(e) => openSongSheet(track, stationLabel, e.currentTarget)}
       >
+        {/* The station's playlist reads as a log: when it played first, in
+            a column of its own, then the song. */}
+        {showTime && <time className="track-time">{track.time ? playedAt(track) : ""}</time>}
         <Art src={track.img} loading="lazy" />
         <span>
           <strong>{track.title}</strong>
           <small className="track-meta">
             <span>{track.artist}</span>
-            {showTime && track.time && <time className="track-time">{playedAt(track)}</time>}
           </small>
         </span>
       </button>

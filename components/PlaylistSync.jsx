@@ -37,10 +37,7 @@ export function PlaylistSyncPanel() {
   const service = SERVICES[sync.service];
   return (
     <section className="settings-panel">
-      <h2>
-        <Icon name="music" />
-        Your playlist
-      </h2>
+      <h2>Your playlist</h2>
       {service ? (
         <>
           <p className="setting-status">

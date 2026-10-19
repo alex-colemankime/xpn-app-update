@@ -10,29 +10,29 @@
   /* The theme's own page and surface, kept apart from --bg and --surface so
      a wash (below, and show sheets) can tint them and still start from
      the theme. */
-  --paper: #f7f3ea;
-  --paper-raised: #efeadf;
+  --paper: #f5f5f3;
+  --paper-raised: #ebebe8;
   --bg: var(--paper);
   --surface: var(--paper-raised);
-  --text: #211f1c;
-  --muted: #64605a;
-  --border: #dad3c7;
-  --control-border: #8e897f;
+  --text: #111111;
+  --muted: #5c5c59;
+  --border: #dcdcd8;
+  --control-border: #8a8a86;
   --accent: #b83d1c;
   /* The accent as text on an accent-tinted fill (a tonal key, the LIVE
      tag), a step darker so it keeps 4.5:1 there. */
   --accent-strong: #983012;
   --action: #ef7149;
   --action-ink: #241710;
-  --row-alt: #ebe5da;
+  --row-alt: #ececea;
   /* A control raised above its track (the chosen station). */
-  --raised: #fcf9f2;
+  --raised: #ffffff;
   /* Notices: the page's colors turned around. */
-  --inverse-bg: #2a2724;
-  --inverse-text: #f6f2ea;
+  --inverse-bg: #1b1b1b;
+  --inverse-text: #f5f5f3;
   --inverse-accent: #ff9875;
-  /* The lighter "w" in the wordmark. */
-  --brand-w: #f2b28f;
+  /* The lighter "w" in a station's lettering, as in WXPN's logo. */
+  --brand-w: color-mix(in srgb, var(--text) 75%, transparent);
   /* A second action's soft fill, and under the pointer. */
   --soft-fill: color-mix(in srgb, var(--text) 7%, transparent);
   --soft-fill-hover: color-mix(in srgb, var(--text) 11%, transparent);
@@ -53,26 +53,25 @@
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --paper: #202224;
-  --paper-raised: #292c2f;
+  --paper: #111111;
+  --paper-raised: #1d1d1d;
   --bg: var(--paper);
   --surface: var(--paper-raised);
-  --text: #eeede8;
+  --text: #f0f0ed;
   /* Secondary text a clear step below the text (2.2 times dimmer), so lines
      of a list never read as one block of white; still 6:1 on the page. */
-  --muted: #9fa09d;
-  --border: #44484a;
-  --control-border: #797b7c;
+  --muted: #a2a29f;
+  --border: #2f2f2f;
+  --control-border: #6f6f6c;
   --accent: #ff9875;
   --accent-strong: #ffa585;
   --action: #ef7149;
   --action-ink: #241710;
-  --row-alt: #2b2e30;
-  --raised: #32363a;
-  --inverse-bg: #f3f1eb;
-  --inverse-text: #211f1c;
+  --row-alt: #1b1b1b;
+  --raised: #262626;
+  --inverse-bg: #f0f0ed;
+  --inverse-text: #111111;
   --inverse-accent: #b83d1c;
-  --brand-w: #bf917c;
   --select-fill: color-mix(in srgb, var(--text) 12%, transparent);
   --donate-fill: color-mix(in srgb, var(--action) 26%, var(--bg));
 }

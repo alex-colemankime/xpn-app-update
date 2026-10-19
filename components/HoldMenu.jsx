@@ -23,7 +23,7 @@ function anchorTo(el) {
 // A tap on a sheet's shade closes the sheet and goes no further: the click
 // that follows it never reaches whatever is under the shade (another song,
 // a heart, play). Only that click: the next press, or a moment, lets go.
-function swallowNextClick() {
+function swallowClickPastShade() {
   const swallow = (e) => {
     e.stopPropagation();
     e.preventDefault();
@@ -66,7 +66,7 @@ export function HoldMenu() {
       if (from?.contains(e.target)) return;
       const r = el.getBoundingClientRect();
       if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
-        if (!hangs) swallowNextClick();
+        if (!hangs) swallowClickPastShade();
         closeHoldMenu();
       }
     };

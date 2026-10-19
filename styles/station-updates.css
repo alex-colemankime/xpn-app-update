@@ -100,8 +100,7 @@
   color: inherit;
   opacity: 0.75;
 }
-/* LIVE as a small red tag on the dark band, the same tag as the player's
-   (.live-badge). */
+/* LIVE as a small red tag on the dark band. */
 .station-banner-live {
   display: inline-flex;
   align-items: center;

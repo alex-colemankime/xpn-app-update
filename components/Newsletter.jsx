@@ -8,10 +8,7 @@ import { ENEWS_URL, TOP_STORIES_URL } from "../links.js";
 export function NewsletterPanel() {
   return (
     <section className="settings-panel newsletter-panel">
-      <h2>
-        <Icon name="mail" />
-        Newsletter
-      </h2>
+      <h2>Newsletter</h2>
       <p className="data-note">
         WXPN’s free weekly email: music news, concerts and events, and special announcements.
       </p>

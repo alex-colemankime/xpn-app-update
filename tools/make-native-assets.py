@@ -13,8 +13,8 @@ color, so its anti-aliased edges stay smooth, then recolored per theme.
 
   python3 tools/make-native-assets.py
   npx @capacitor/assets generate --iosProject ios/App --androidProject android \\
-    --iconBackgroundColor '#ef7149' --splashBackgroundColor '#faf8f3' \\
-    --splashBackgroundColorDark '#202224'
+    --iconBackgroundColor '#ef7149' --splashBackgroundColor '#f5f5f3' \\
+    --splashBackgroundColorDark '#111111'
 """
 
 from pathlib import Path

@@ -11,7 +11,7 @@ export const videoOfShow = (live, onAirNow) =>
 // this leads the screen: a band in the show's own color, like a station's
 // studio sign. Tapping opens the show; during the show's live video, the band
 // names the session and offers Watch.
-export function OnAir({ onAirNow, playing, onOpenShow, live, onWatch }) {
+export function OnAir({ onAirNow, onOpenShow, live, onWatch }) {
   if (!onAirNow) return null;
   const { show } = onAirNow;
   const until = untilLabel(onAirNow);
@@ -28,10 +28,7 @@ export function OnAir({ onAirNow, playing, onOpenShow, live, onWatch }) {
       <button className="on-air-open" onClick={() => onOpenShow(show.id)}>
         <Art className="on-air-art" src={show.img} alt="" />
         <span className="on-air-text">
-          <span className="on-air-label">
-            <i className="on-air-dot" data-live={playing || video ? "" : undefined} />
-            On air{until ? ` ${until}` : ""}
-          </span>
+          <span className="on-air-label">On air{until ? ` ${until}` : ""}</span>
           <span className="on-air-show">{video ? video.title : show.name}</span>
           {line && <span className="on-air-host">{line}</span>}
         </span>

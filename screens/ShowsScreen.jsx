@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Icon, Art, Segmented, Empty, SearchField } from "../ui.jsx";
-import { SHOW_DIRECTORY, scheduleForDay, onAirAt } from "../catalog.js";
-import { DAYS, easternParts, clockLabel } from "../time.js";
+import { SHOWS, SHOW_DIRECTORY, scheduleForDay, onAirAt, untilLabel } from "../catalog.js";
+import { DAYS, easternParts, clockLabel, localClock } from "../time.js";
 import { ShowCard, showHold } from "../components/MusicRows.jsx";
 import { useNow } from "../hooks/useNow.js";
 import { ArchiveList } from "../components/Archive.jsx";
@@ -9,16 +9,27 @@ import { useFeatures } from "../features.js";
 import { tap } from "../haptics.js";
 import { PullToRefresh } from "../components/PullToRefresh.jsx";
 import { loadArchive } from "../archive.js";
+import { HOSTS, hostsOfShow } from "../hosts.js";
+import { HostCard } from "../components/HostSheet.jsx";
 
 const matchesQuery = (query) => {
   const q = query.trim().toLowerCase();
   return (show) => !q || `${show.name} ${show.host}`.toLowerCase().includes(q);
 };
 
-export function ShowsScreen({ onOpen }) {
-  // All shows, the week's schedule, and (when the build has it and the
-  // station hasn't switched it off: features.js) the audio archive.
-  const modes = ["All shows", "Schedule", ...(useFeatures().archive ? ["Archive"] : [])];
+// A host, by their name or a show of theirs.
+const hostMatches = (query) => {
+  const q = query.trim().toLowerCase();
+  return (host) =>
+    !q ||
+    `${host.name} ${host.shows.map((id) => SHOWS[id]?.name).join(" ")}`.toLowerCase().includes(q);
+};
+
+export function ShowsScreen({ onOpen, onOpenHost }) {
+  // All shows, the week's schedule, the station's hosts, and (when the build
+  // has it and the station hasn't switched it off: features.js) the audio
+  // archive.
+  const modes = ["All shows", "Schedule", "Hosts", ...(useFeatures().archive ? ["Archive"] : [])];
   // Shows opens on the schedule: what's on today, the show on air marked.
   const [chosen, setMode] = useState("Schedule");
   const mode = modes.includes(chosen) ? chosen : "Schedule";
@@ -55,6 +66,31 @@ export function ShowsScreen({ onOpen }) {
   const matches = matchesQuery(query);
   const shows = SHOW_DIRECTORY.filter(matches);
   const slots = scheduleForDay(day).filter((slot) => matches(slot.show));
+  const hosts = HOSTS.filter(hostMatches(query));
+  // Hosts in the order you'll hear them: on the air now, then next, then
+  // everyone else by name. Searching, simply the matches.
+  const hostGroups = (() => {
+    if (query.trim() || !onAirNow) return [{ key: "all", hosts }];
+    const next = onAirAt(new Date(onAirNow.endsAt + 60000));
+    const onNow = hostsOfShow(onAirNow.show);
+    const upNext = next ? hostsOfShow(next.show).filter((h) => !onNow.includes(h)) : [];
+    const rest = hosts.filter((h) => !onNow.includes(h) && !upNext.includes(h));
+    return [
+      onNow.length && {
+        key: "now",
+        title: "On now",
+        line: `${onAirNow.show.name}, ${untilLabel(onAirNow)}`,
+        hosts: onNow,
+      },
+      upNext.length && {
+        key: "next",
+        title: "Next",
+        line: `${next.show.name} at ${localClock(onAirNow.endsAt)}`,
+        hosts: upNext,
+      },
+      { key: "all", title: onNow.length || upNext.length ? "Everyone" : null, hosts: rest },
+    ].filter(Boolean);
+  })();
   return (
     <>
       {/* The tab bar (or sidebar) already says where this is. */}
@@ -70,13 +106,21 @@ export function ShowsScreen({ onOpen }) {
           <SearchField
             value={query}
             onChange={setQuery}
-            placeholder={mode === "Archive" ? "Search episodes" : "Find a show or host"}
+            placeholder={
+              mode === "Archive"
+                ? "Search episodes"
+                : mode === "Hosts"
+                  ? "Find a host or show"
+                  : "Find a show or host"
+            }
           />
         </div>
         <div key={mode} className="tab-pane">
           {mode !== "Archive" && (
             <p className="sr-only" role="status">
-              {mode === "All shows" ? shows.length : slots.length} matching shows
+              {mode === "Hosts"
+                ? `${hosts.length} matching hosts`
+                : `${mode === "All shows" ? shows.length : slots.length} matching shows`}
             </p>
           )}
           {mode === "Archive" && <PullToRefresh onRefresh={() => loadArchive({ force: true })} />}
@@ -86,6 +130,33 @@ export function ShowsScreen({ onOpen }) {
               onOpenShow={(id) => onOpen(id)}
               onClearQuery={() => setQuery("")}
             />
+          ) : mode === "Hosts" ? (
+            hosts.length ? (
+              hostGroups.map((group) => (
+                <section key={group.key} className="host-group" aria-label={group.title || "Hosts"}>
+                  {group.title && (
+                    <div className="section-heading">
+                      <h2>{group.title}</h2>
+                      {group.line && <span className="subtle">{group.line}</span>}
+                    </div>
+                  )}
+                  <div className="show-grid all-shows host-grid">
+                    {group.hosts.map((host) => (
+                      <HostCard key={host.slug} host={host} onOpen={onOpenHost} />
+                    ))}
+                  </div>
+                </section>
+              ))
+            ) : (
+              <Empty
+                icon="search"
+                title="No hosts found"
+                action="Clear search"
+                onAction={() => setQuery("")}
+              >
+                Try a different host or show name.
+              </Empty>
+            )
           ) : mode === "All shows" ? (
             shows.length ? (
               <div className="show-grid all-shows">
@@ -108,14 +179,13 @@ export function ShowsScreen({ onOpen }) {
               <div className="day-picker" role="group" aria-label="Schedule day">
                 {DAYS.map((d) => (
                   <button
-                    className={d === day ? "active" : ""}
+                    className={`${d === day ? "active" : ""} ${d === today ? "today" : ""}`}
                     aria-pressed={d === day}
                     aria-label={d === today ? `${d}, today` : d}
                     key={d}
                     onClick={() => chooseDay(d)}
                   >
                     {d.slice(0, 3)}
-                    {d === today && <i />}
                   </button>
                 ))}
               </div>
@@ -140,7 +210,7 @@ export function ShowsScreen({ onOpen }) {
                           </time>
                           <Art src={slot.show.img} alt="" loading="lazy" />
                           <span className="schedule-info">
-                            {isOnAir(slot) && <span className="on-air-chip">On air now</span>}
+                            {isOnAir(slot) && <span className="sr-only">On air now: </span>}
                             <strong>{slot.show.name}</strong>
                             {slot.show.host && <span>{slot.show.host}</span>}
                             <small className="schedule-desc">{slot.show.desc}</small>

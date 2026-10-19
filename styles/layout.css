@@ -26,17 +26,20 @@
   margin: 0 0 var(--space-10) var(--space-3);
   text-align: left;
 }
-.brand > span {
-  font-size: 3.3125rem;
-  font-weight: 800;
-  letter-spacing: -0.085em;
-  line-height: 1;
+/* The station's own logo (StationLogo.jsx), in ink, its w a step lighter
+   as on xpn.org. */
+.station-logo {
+  display: block;
+  height: auto;
+}
+.station-logo-w {
+  opacity: 0.75;
+}
+.brand .station-logo {
+  width: 116px;
 }
 .wordmark-w {
   color: var(--brand-w);
-}
-.wordmark-dot {
-  color: var(--accent);
 }
 /* On the station's orange tiles the light "w" is a paler tint of the tile. */
 .station-art .wordmark-w {
@@ -189,13 +192,16 @@ h1 {
   letter-spacing: var(--tracking-display);
   line-height: var(--leading-display);
 }
+/* The main thing to do (Listen live, Tickets, play): in Donate's colors,
+   a tonal orange with its words in the deep orange, so the station's
+   orange looks one way everywhere. Square-cornered, unlike Donate's pill. */
 .primary-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  background: var(--action);
-  color: var(--action-ink);
+  background: var(--donate-fill);
+  color: var(--donate-ink);
   border: 1px solid transparent;
   min-height: 48px;
   padding: var(--space-3) var(--space-6);
@@ -457,33 +463,6 @@ h1 {
   color: var(--muted);
   margin-top: 2px;
 }
-/* What the stream is doing, as a small tag before the artist: a pulsing
-   dot and "live", "connecting" or "offline". */
-.live-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  margin-right: var(--space-2);
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-s);
-  background: color-mix(in srgb, var(--accent) 13%, transparent);
-  color: var(--accent-strong);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-caption);
-  letter-spacing: var(--tracking-caption);
-  vertical-align: 1px;
-}
-.live-badge i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-.live-badge[data-state="error"] {
-  background: color-mix(in srgb, var(--muted) 16%, transparent);
-  color: var(--muted);
-}
 /* Play: an orange key, square with rounded corners like the artwork beside
    it, and the same size. */
 .player-play {
@@ -494,8 +473,8 @@ h1 {
   border-radius: var(--radius-m);
   display: grid;
   place-items: center;
-  background: var(--action);
-  color: var(--action-ink);
+  background: var(--donate-fill);
+  color: var(--donate-ink);
 }
 .player-utilities {
   display: flex;
@@ -628,9 +607,10 @@ h1 {
   }
   .mobile-brand {
     display: block;
-    font-size: clamp(28px, 9vw, 36px);
-    letter-spacing: -0.08em;
-    font-weight: 800;
+    color: var(--text);
+  }
+  .mobile-brand .station-logo {
+    width: clamp(76px, 23vw, 92px);
   }
   .topbar-actions .mobile-settings {
     display: inline-flex;

@@ -267,16 +267,15 @@ export function ConcertRow({ concert: c }) {
   );
 }
 
-// Within a day, the station's own shows first (Free at Noon, at noon, then
-// WXPN Welcomes), then the rest in the calendar's order.
-const rank = (c) => (c.freeAtNoon ? 0 : c.xpnWelcomes ? 1 : 2);
-
 // Concerts under a heading for each day: the day as a word in ink and its
 // date muted, larger than anything in the rows, and set off from the day
 // before by space and the list's only rule. It stays at the top while its
 // day's concerts scroll under it; on wide screens it sits in a column of
 // its own beside them.
-export function ConcertList({ concerts }) {
+// `aside`: a quiet note at the end of the first day's heading (on Concerts,
+// how many are listed), set apart from the day as "All times Eastern" is on
+// the schedule.
+export function ConcertList({ concerts, aside = null }) {
   const today = easternToday();
   // Favorites and Concerts both draw a list, and both stay in the page:
   // each list's headings get ids of their own.
@@ -287,19 +286,21 @@ export function ConcertList({ concerts }) {
     if (day?.date !== c.date) days.push((day = { date: c.date, concerts: [] }));
     day.concerts.push(c);
   }
-  return days.map((day) => {
+  return days.map((day, i) => {
     const head = dayHeading(day.date, today);
-    const shows = [...day.concerts].sort((a, b) => rank(a) - rank(b));
     return (
       <section key={day.date} className="concert-day" aria-labelledby={`${list}-${day.date}`}>
-        <h2 id={`${list}-${day.date}`} className="concert-day-head">
-          <span className="day-bar">
-            <span className="day-word">{head.word}</span>{" "}
-            <span className="day-date">{head.date}</span>
-          </span>
-        </h2>
+        <div className="concert-day-head">
+          <div className="day-bar">
+            <h2 id={`${list}-${day.date}`}>
+              <span className="day-word">{head.word}</span>{" "}
+              <span className="day-date">{head.date}</span>
+            </h2>
+            {i === 0 && aside && <div className="day-aside">{aside}</div>}
+          </div>
+        </div>
         <div className="concert-day-rows">
-          {shows.map((c) => (
+          {day.concerts.map((c) => (
             <ConcertRow key={c.id} concert={c} />
           ))}
         </div>

@@ -111,9 +111,6 @@
   padding: var(--space-4);
   border-radius: var(--radius-l);
   background: var(--row-alt);
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.06),
-    0 8px 24px rgb(0 0 0 / 0.08);
 }
 .reminder-preview img {
   width: 38px;

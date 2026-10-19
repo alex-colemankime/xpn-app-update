@@ -1,4 +1,5 @@
-import { Icon, Wordmark } from "../ui.jsx";
+import { Icon } from "../ui.jsx";
+import { StationLogo } from "./StationLogo.jsx";
 import { DONATE_URL, trackDonate } from "../links.js";
 import { useFeatures } from "../features.js";
 
@@ -7,10 +8,11 @@ import { useFeatures } from "../features.js";
 // them off: features.js accounts for both.
 const NAV = [
   { id: "listen", label: "Listen live", short: "Listen", icon: "navLive" },
-  { id: "favorites", label: "Favorites", short: "Favorites", icon: "heart" },
   { id: "shows", label: "Shows", short: "Shows", icon: "headphones" },
   { id: "videos", label: "Videos", short: "Videos", icon: "video" },
   { id: "concerts", label: "Concerts", short: "Concerts", icon: "navConcerts" },
+  // Last: what the listener keeps, from all of the above.
+  { id: "favorites", label: "Favorites", short: "Favorites", icon: "heart" },
 ];
 export const TITLES = {
   ...Object.fromEntries(NAV.map((n) => [n.id, n.label])),
@@ -40,7 +42,7 @@ export function Sidebar({ screen, navigate }) {
     <aside className="app-sidebar">
       <button className="brand" onClick={() => navigate("listen")}>
         <span className="sr-only">WXPN home</span>
-        <Wordmark dot />
+        <StationLogo />
       </button>
       <nav aria-label="Main navigation">
         {nav.map((n) => (
@@ -80,7 +82,7 @@ export function TopBar({ screen, navigate, toggleSettings }) {
   return (
     <header className="topbar">
       <button className="mobile-brand" onClick={() => navigate("listen")} aria-label="WXPN home">
-        <Wordmark dot />
+        <StationLogo />
       </button>
       <div className="topbar-actions">
         {/* Giving happens on xpn.org, in the browser (App Review 3.2.2). */}

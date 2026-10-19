@@ -20,20 +20,30 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 
 const BASE = process.env.SCREENS_BASE_URL || "http://127.0.0.1:4173/";
 const OUT = process.env.SCREENS_OUT || "screens-out";
-const NOW = new Date("2026-10-06T15:02:00-04:00");
-const WEEK = { from: "2026-10-06", to: "2026-10-11" };
+const NOW = new Date("2026-10-20T15:02:00-04:00");
+const WEEK = { from: "2026-10-20", to: "2026-10-25" };
 const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "*" };
 const SILENCE = await readFile(new URL("../tests/e2e/fixtures/silence.mp3", import.meta.url));
 
 // The song on the air, then the rest of the saved songs, newest first.
 const SONGS = [
-  { title: "First Day Of My Life", artist: "Bright Eyes", album: "I'm Wide Awake, It's Morning" },
+  { title: "Motion Sickness", artist: "Phoebe Bridgers", album: "Stranger in the Alps" },
   { title: "Billy Came Back", artist: "This is Lorelei", album: "Holo Boy" },
   { title: "I Don't Have the Heart", artist: "Sharp Pins", album: "Radio DDR" },
   { title: "Just One of the Guys", artist: "Jenny Lewis", album: "The Voyager" },
   { title: "Cut Your Hair", artist: "Pavement", album: "Crooked Rain, Crooked Rain" },
 ];
 const [ON_AIR] = SONGS;
+// Earlier on the playlist, not saved: enough songs for Recently played to
+// fill its column beside the song on a laptop.
+const PLAYED = [
+  ...SONGS,
+  { title: "Right Back to It", artist: "Waxahatchee", album: "Tigers Blood" },
+  { title: "Vampire Empire", artist: "Big Thief", album: "Vampire Empire" },
+  { title: "Chaise Longue", artist: "Wet Leg", album: "Wet Leg" },
+  { title: "Space Song", artist: "Beach House", album: "Depression Cherry" },
+  { title: "Not Strong Enough", artist: "boygenius", album: "the record" },
+];
 const slug = (text) =>
   text
     .toLowerCase()
@@ -103,7 +113,7 @@ const minutesAgo = (n) => new Date(NOW.getTime() - n * 60000);
 
 // The station's playlist: the song on air two minutes ago, then the rest.
 const playlist = () =>
-  SONGS.map((song, i) => ({
+  PLAYED.map((song, i) => ({
     artist: song.artist,
     song: song.title,
     album: song.album,
@@ -119,35 +129,35 @@ const ARCHIVE = {
     name: "Sleepy Hollow",
     show: "sleepyhollow",
     dates: [
+      "10.18",
+      "10.17",
+      "10.11",
+      "10.10",
       "10.04",
       "10.03",
       "09.27",
       "09.26",
       "09.20",
       "09.19",
-      "09.13",
-      "09.12",
-      "09.06",
-      "09.05",
     ],
   },
   "land-of-the-lost": {
     name: "Land of the Lost",
     show: "landlost",
-    dates: ["10.02", "09.25", "09.11", "09.04", "08.28", "08.21", "08.14", "08.07", "07.31"],
+    dates: ["10.16", "10.09", "09.25", "09.18", "09.11", "09.04", "08.28", "08.21", "08.14"],
   },
   "funky-friday": {
     name: "Funky Friday",
     show: "funky",
-    dates: ["10.02", "09.25", "09.18", "09.11", "09.04"],
+    dates: ["10.16", "10.09", "10.02", "09.25", "09.18"],
   },
   "world-cafe": {
     name: "World Cafe",
     show: "worldcafe",
     features: [
-      ["Waxahatchee in the studio", "0930"],
-      ["Friko", "0924"],
-      ["Julia Jacklin", "0916"],
+      ["Waxahatchee in the studio", "1014"],
+      ["Friko", "1008"],
+      ["Julia Jacklin", "0930"],
     ],
   },
 };
@@ -242,18 +252,18 @@ const favorites = () => ({
   shows: { worldcafe: { id: "worldcafe", name: "World Cafe", savedAt: +minutesAgo(90) } },
   episodes: Object.fromEntries(
     [
-      savedEpisode("funky-friday", 0, "Friday, October 2", {
-        date: "2026-10-02T20:00:00.000Z",
+      savedEpisode("funky-friday", 0, "Friday, October 16", {
+        date: "2026-10-16T20:00:00.000Z",
         aired: "4pm–7pm",
         savedAt: +minutesAgo(30),
       }),
-      savedEpisode("funky-friday", 1, "Friday, September 25", {
-        date: "2026-09-25T20:00:00.000Z",
+      savedEpisode("funky-friday", 1, "Friday, October 9", {
+        date: "2026-10-09T20:00:00.000Z",
         aired: "4pm–7pm",
         savedAt: +minutesAgo(31),
       }),
       savedEpisode("world-cafe", 0, "Waxahatchee in the studio", {
-        date: "2026-09-30T18:00:00.000Z",
+        date: "2026-10-14T18:00:00.000Z",
         duration: 3420,
         savedAt: +minutesAgo(60),
       }),
@@ -347,13 +357,13 @@ const favoritesTab = async (page, tab) => {
   await page.getByLabel("Favorites category").getByRole("button", { name: tab }).click();
 };
 
-// The station playing, as the mini player shows it ("Live").
+// The station playing, as the mini player shows it (its key reads Pause).
 // Audio doesn't always start in a headless browser: then the shot shows the
 // station paused, and the notes say so.
 async function playStation(page) {
   try {
     await page.locator(".player-bar .player-play").click({ timeout: 5000 });
-    await page.locator('.player-bar .live-badge[data-state="live"]').waitFor({ timeout: 10000 });
+    await page.locator('.player-bar .player-play[aria-label^="Pause"]').waitFor({ timeout: 10000 });
   } catch {
     note("The station didn't start playing; that shot shows it paused.");
   }
@@ -364,7 +374,7 @@ async function playStation(page) {
 async function playFromListen(page) {
   try {
     await page.locator(".hero-play").click({ timeout: 5000 });
-    await page.locator('.player-bar .live-badge[data-state="live"]').waitFor({
+    await page.locator('.player-bar .player-play[aria-label^="Pause"]').waitFor({
       state: "attached",
       timeout: 10000,
     });
@@ -431,7 +441,7 @@ const openWatch = async (page) => {
   await page.waitForTimeout(4000);
 };
 // Free at Noon: Dawes, live (the sample station update, a Friday noon).
-const LIVE_NOW = "2026-10-09T12:20:00-04:00";
+const LIVE_NOW = "2026-10-23T12:20:00-04:00";
 
 // Each shot: how to get there. Named as on the screens page (data-shot).
 // "store-" and "ipad-" shots are the raw screens for the store listings
@@ -600,7 +610,7 @@ const SHOTS = {
   },
   // A show reminder, in the app: World Cafe in five minutes.
   "phone-reminder": async (page) => {
-    await at(page, "2026-10-06T13:55:20-04:00");
+    await at(page, "2026-10-20T13:55:20-04:00");
     await stored(page, "xpn.reminders", { enabled: true, lead: 5 });
     await openListen(page);
     await waitForToast(page);
@@ -631,6 +641,23 @@ const SHOTS = {
   // Shows, as it opens: today's schedule.
   "phone-schedule": async (page) => {
     await page.goto(`${BASE}#/shows`);
+    await settle(page);
+  },
+  // Shows › Hosts: the station's hosts, from xpn.org.
+  "phone-hosts": async (page) => {
+    await page.goto(`${BASE}#/shows`);
+    await page.getByLabel("Browse shows").getByRole("button", { name: "Hosts" }).click();
+    await page.locator(".host-card img").first().waitFor();
+    await settle(page);
+  },
+  // A host's sheet, opened from World Cafe's: Raina Douris.
+  "phone-host": async (page) => {
+    await page.goto(`${BASE}#/shows/show/worldcafe`);
+    await page
+      .getByRole("dialog", { name: "World Cafe" })
+      .getByRole("button", { name: "Raina Douris" })
+      .click();
+    await page.getByRole("dialog", { name: "Raina Douris" }).locator("img").first().waitFor();
     await settle(page);
   },
   // A Sleepy Hollow broadcast playing, its page open from the mini player.
@@ -799,8 +826,8 @@ const wanted = process.argv.slice(2).length ? process.argv.slice(2) : Object.key
 const unknown = wanted.filter((name) => !SHOTS[name]);
 if (unknown.length) throw new Error(`No such shot: ${unknown.join(", ")}`);
 
-const [events, ...arts] = await Promise.all([concerts(), ...SONGS.map(artwork)]);
-const ART = new Map(SONGS.map((song, i) => [artUrl(song), arts[i]]));
+const [events, ...arts] = await Promise.all([concerts(), ...PLAYED.map(artwork)]);
+const ART = new Map(PLAYED.map((song, i) => [artUrl(song), arts[i]]));
 await mkdir(OUT, { recursive: true });
 // What went into the shots, beside them (CI logs aren't always to hand).
 const notes = [];
@@ -809,7 +836,7 @@ const note = (line) => {
   notes.push(line);
 };
 note(`Concerts that week: ${events.length}`);
-SONGS.forEach((song, i) => note(`Artwork for ${song.title}: ${arts[i]?.length || "none"}`));
+PLAYED.forEach((song, i) => note(`Artwork for ${song.title}: ${arts[i]?.length || "none"}`));
 
 // Chromium, or with SCREENS_BROWSER=webkit, WebKit (Safari's engine, to see
 // how the iPhone app draws what Chromium might draw differently).

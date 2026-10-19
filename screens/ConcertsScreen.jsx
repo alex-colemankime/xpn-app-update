@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { Icon, Empty, Modal, PromptLink, SearchField, SkeletonList } from "../ui.jsx";
 import { useFavoriteItems } from "../favorites.js";
+import {
+  concertsByLikedArtists,
+  setLikedOnly,
+  useLikedOnly,
+  useLikedViewRequest,
+} from "../concert-alerts.js";
 import { ConcertList } from "../components/ConcertRow.jsx";
 import { RangeCalendar } from "../components/RangeCalendar.jsx";
-import { calendarEnd, easternToday, filterConcerts, rangeLabel } from "../concerts.js";
+import { calendarEnd, easternToday, filterConcerts, inShowOrder, rangeLabel } from "../concerts.js";
 import { CALENDAR_URL, SUBMIT_CONCERT_URL } from "../links.js";
 import { mediumDay } from "../time.js";
 import { NewsletterPrompt } from "../components/Newsletter.jsx";
@@ -76,6 +82,23 @@ export function ConcertsScreen({ result }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const saved = useFavoriteItems("concerts");
   const savedIds = new Set(saved.map((c) => c.id));
+  // Concerts by artists of the songs the listener saved (concert-alerts.js);
+  // "only these" can be turned on from an alert as well as from Filters.
+  const songs = useFavoriteItems("songs");
+  const likedOnly = useLikedOnly();
+  // An alert's View: every other filter let go, from the top
+  // (concert-alerts.js, showLikedConcerts).
+  const viewRequest = useLikedViewRequest();
+  const [viewHandled, setViewHandled] = useState(viewRequest);
+  if (viewHandled !== viewRequest) {
+    setViewHandled(viewRequest);
+    setQuery("");
+    setWhen("all");
+    setRange(NO_RANGE);
+    setRegions([]);
+    setTags([]);
+    setShown(PAGE);
+  }
   const { concerts, source, partial, through } = result;
   const today = easternToday();
 
@@ -84,31 +107,38 @@ export function ConcertsScreen({ result }) {
   for (const c of concerts) for (const r of c.regions) counts.set(r, (counts.get(r) || 0) + 1);
   const regionOptions = [...counts].sort((a, b) => b[1] - a[1]).map(([r]) => ({ id: r, label: r }));
 
+  const likedIds = new Set(concertsByLikedArtists(concerts, songs).map((m) => m.concert.id));
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const filtered = filterConcerts(concerts, {
-    words,
-    when,
-    range,
-    today,
-    regions,
-    tags,
-    savedIds,
-  });
+  const filtered = inShowOrder(
+    filterConcerts(likedOnly ? concerts.filter((c) => likedIds.has(c.id)) : concerts, {
+      words,
+      when,
+      range,
+      today,
+      regions,
+      tags,
+      savedIds,
+    }),
+  );
   const reset = () => {
     setQuery("");
     setWhen("all");
     setRange(NO_RANGE);
     setRegions([]);
     setTags([]);
+    setLikedOnly(false);
     setShown(PAGE);
   };
-  const narrowed = Boolean(words.length || when !== "all" || regions.length || tags.length);
+  const narrowed = Boolean(
+    words.length || when !== "all" || regions.length || tags.length || likedOnly,
+  );
   // What Filters holds that is in use: Next 7 days or picked dates, the
-  // regions, and Saved.
+  // regions, Saved and artists you like.
   const inSheet =
     (when === "week" || when === "range" ? 1 : 0) +
     regions.length +
-    (tags.includes("saved") ? 1 : 0);
+    (tags.includes("saved") ? 1 : 0) +
+    (likedOnly ? 1 : 0);
   // A new filter starts the list from the top.
   const change = (setter) => (value) => {
     setter(value);
@@ -183,7 +213,23 @@ export function ConcertsScreen({ result }) {
             </a>
           </p>
         )}
-        <ConcertList concerts={visible} />
+        <ConcertList
+          concerts={visible}
+          aside={
+            narrowed && (
+              <>
+                {/* Shown once a filter is on; screen readers hear the count
+                    from the status line above the list. */}
+                <span aria-hidden="true">
+                  {filtered.length} of {concerts.length}
+                </span>
+                <button className="text-button" onClick={reset}>
+                  Clear
+                </button>
+              </>
+            )
+          }
+        />
         {filtered.length > shown && (
           <div className="list-more">
             <button className="text-button" onClick={() => setShown(shown + PAGE)}>
@@ -217,9 +263,38 @@ export function ConcertsScreen({ result }) {
       {/* The tab bar (or sidebar) already says where this is. */}
       <h1 className="sr-only">Concerts</h1>
       <PullToRefresh onRefresh={result.refresh} />
+      {/* How many are listed, for screen readers: always here once the
+          calendar has loaded, so a filter that leaves none says so too. */}
+      {concerts.length > 0 && (
+        <p className="sr-only" role="status" id="concert-results">
+          {narrowed
+            ? `${filtered.length} of ${concerts.length} concerts`
+            : `${concerts.length} ${concerts.length === 1 ? "concert" : "concerts"} listed`}
+        </p>
+      )}
       {concerts.length > 0 && (
         <div className="concert-filters">
-          <SearchField value={query} onChange={change(setQuery)} placeholder="Artist or venue" />
+          {/* Filters at the end of the search, where it is found. */}
+          <div className="concert-search">
+            <SearchField value={query} onChange={change(setQuery)} placeholder="Artist or venue" />
+            <button
+              className="filters-button"
+              aria-haspopup="dialog"
+              // It opens a sheet rather than switching on, so it says how
+              // many of its filters are in use instead of "pressed".
+              data-on={inSheet > 0 || undefined}
+              onClick={() => setFiltersOpen(true)}
+            >
+              <Icon name="filter" size={18} />
+              Filters
+              {inSheet > 0 && (
+                <span className="filter-count">
+                  {inSheet}
+                  <span className="sr-only"> in use</span>
+                </span>
+              )}
+            </button>
+          </div>
           <div className="concert-chips" role="group" aria-label="Filter concerts">
             <Chip on={when === "today"} onClick={() => chooseWhen("today")}>
               Tonight
@@ -232,39 +307,8 @@ export function ConcertsScreen({ result }) {
                 {t.label}
               </Chip>
             ))}
-            <button
-              className="chip"
-              aria-haspopup="dialog"
-              // It opens a sheet rather than switching on, so it says how
-              // many of its filters are in use instead of "pressed".
-              data-on={inSheet > 0 || undefined}
-              onClick={() => setFiltersOpen(true)}
-            >
-              <Icon name="filter" size={16} />
-              Filters
-              {inSheet > 0 && (
-                <span className="filter-count">
-                  {inSheet}
-                  <span className="sr-only"> in use</span>
-                </span>
-              )}
-            </button>
             <span className="concert-chips-fade" aria-hidden="true" />
           </div>
-          <p className="concert-count">
-            <span role="status">
-              {filtered.length} {filtered.length === 1 ? "concert" : "concerts"}
-              {/* The dates in use, so they're known with Filters closed. */}
-              {(when === "week" || when === "range") && (
-                <> · {when === "range" ? rangeLabel(range) : NEXT_WEEK}</>
-              )}
-            </span>
-            {narrowed && (
-              <button className="text-button" onClick={reset}>
-                Clear filters
-              </button>
-            )}
-          </p>
         </div>
       )}
       {filtersOpen && (
@@ -303,14 +347,27 @@ export function ConcertsScreen({ result }) {
                 />
               </div>
             )}
-            {saved.length > 0 && (
+            {(saved.length > 0 || likedIds.size > 0 || likedOnly) && (
               <div>
                 <p className="filter-label">Show only</p>
                 <CheckGroup
-                  label="Saved"
-                  options={[{ id: "saved", label: "Saved" }]}
-                  value={tags.includes("saved") ? ["saved"] : []}
-                  onChange={() => toggleTag("saved")}
+                  label="Show only"
+                  options={[
+                    ...(likedIds.size || likedOnly
+                      ? [{ id: "liked", label: "Artists you like" }]
+                      : []),
+                    ...(saved.length ? [{ id: "saved", label: "Saved" }] : []),
+                  ]}
+                  value={[
+                    ...(likedOnly ? ["liked"] : []),
+                    ...(tags.includes("saved") ? ["saved"] : []),
+                  ]}
+                  onChange={(next) => {
+                    if (next.includes("liked") !== likedOnly) {
+                      setLikedOnly(!likedOnly);
+                      setShown(PAGE);
+                    } else toggleTag("saved");
+                  }}
                 />
               </div>
             )}

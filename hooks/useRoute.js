@@ -7,6 +7,7 @@ import { CONCERTS_ENABLED, VIDEOS_ENABLED } from "../config.js";
 //   #/shows                                a screen
 //   #/favorites/show/worldcafe             a show, open over that screen
 //   #/favorites/show/worldcafe/episode/x   one of its episodes
+//   #/shows/host/raina-douris              a host, the same way
 //   #/videos/video/6406083303112           a video, full screen over that screen
 //   #/listen/live                          the station's live video, the same way
 // Hash routing needs no server rewrites, so it works on GitHub Pages and in
@@ -38,13 +39,15 @@ export function parseRoute(hash) {
   const episodeId = showId && parts[3] === "episode" && parts[4] ? parts[4] : null;
   const videoId = parts[1] === "video" && /^\d+$/.test(parts[2] || "") ? parts[2] : null;
   const live = parts[1] === "live";
-  return { screen, showId, episodeId, videoId, live };
+  const hostId = parts[1] === "host" && parts[2] ? parts[2] : null;
+  return { screen, showId, episodeId, videoId, live, hostId };
 }
 
-export function routeHash({ screen, showId, episodeId, videoId, live }) {
+export function routeHash({ screen, showId, episodeId, videoId, live, hostId }) {
   let hash = `#/${screen}`;
   if (videoId) return `${hash}/video/${encodeURIComponent(videoId)}`;
   if (live) return `${hash}/live`;
+  if (hostId) return `${hash}/host/${encodeURIComponent(hostId)}`;
   if (showId) hash += `/show/${encodeURIComponent(showId)}`;
   if (showId && episodeId) hash += `/episode/${encodeURIComponent(episodeId)}`;
   return hash;
@@ -129,7 +132,7 @@ const actions = {
     const route = current();
     // The screen already in front, chosen again (its tab, or the wordmark):
     // back to its top, as a phone's tab bar does.
-    if (screen === route.screen && !route.showId) {
+    if (screen === route.screen && !route.showId && !route.hostId) {
       const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
       window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
       return;
@@ -144,16 +147,22 @@ const actions = {
     const route = current();
     if (route.screen !== "settings") return actions.navigate("settings");
     const from = window.history.state?.from;
-    if (from && from !== "settings" && !route.showId && !depth()) window.history.back();
+    if (from && from !== "settings" && !route.showId && !route.hostId && !depth())
+      window.history.back();
     else actions.navigate(from && from !== "settings" ? from : "listen");
   },
   openShow(showId, episodeId = null) {
     push({ screen: current().screen, showId, episodeId }, { depth: depth() + 1 });
   },
+  // A host's sheet, the same way: from a show's, Back returns to the show.
+  openHost(hostId) {
+    push({ screen: current().screen, hostId }, { depth: depth() + 1 });
+  },
   // An episode's page (opened from the mini player) gives way to its show's.
   closeEpisode() {
     replace({ ...current(), episodeId: null });
   },
+  // Closes a show's sheet or a host's, however many deep.
   closeShow() {
     const d = depth();
     if (d > 0) window.history.go(-d);

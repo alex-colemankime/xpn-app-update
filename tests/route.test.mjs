@@ -8,6 +8,7 @@ const route = (screen, showId = null, episodeId = null, videoId = null, live = f
   episodeId,
   videoId,
   live,
+  hostId: null,
 });
 
 test("routes parse, round-trip, and fall back to Listen", () => {
@@ -44,4 +45,13 @@ test("the live video is a route too, so Back closes it", () => {
 test("a malformed shared link falls back instead of throwing", () => {
   assert.doesNotThrow(() => parseRoute("#/shows/show/100%"));
   assert.deepEqual(parseRoute("#/shows/show/100%"), route("shows"));
+});
+
+test("a host's sheet is a route, over the screen it opened from", () => {
+  assert.deepEqual(parseRoute("#/shows/host/raina-douris"), {
+    ...route("shows"),
+    hostId: "raina-douris",
+  });
+  assert.equal(parseRoute("#/shows/host").hostId, null);
+  assert.equal(routeHash(parseRoute("#/listen/host/dan-reed")), "#/listen/host/dan-reed");
 });

@@ -95,12 +95,6 @@
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
-.on-air-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--action);
-}
 .on-air-show {
   font-size: var(--text-body);
   font-weight: var(--weight-bold);
@@ -148,61 +142,6 @@
 @media (forced-colors: active) {
   .on-air {
     border: 1px solid CanvasText;
-  }
-}
-
-/* The artwork, blurred and enlarged behind itself: each song tints the
-   stage in its own colors. A plain CSS filter on an image, so it renders
-   everywhere (unlike backdrop blur). */
-.now-art > img.now-art-glow {
-  position: absolute;
-  /* Spreads sideways into the margins, but stays inside the art's height
-     so the band above and the song text below stay clear. */
-  inset: 14% -10% 6%;
-  width: 120%;
-  height: 80%;
-  z-index: -1;
-  border-radius: var(--radius-l);
-  box-shadow: none;
-  filter: blur(26px) saturate(1.4);
-  opacity: 0.18;
-  pointer-events: none;
-}
-:root[data-theme="dark"] .now-art > img.now-art-glow {
-  opacity: 0.25;
-}
-/* The room moves only with sound: while the radio plays, the glow drifts
-   and breathes very slowly; paused, it holds still, so stillness reads as
-   paused. Two movements with unrelated lengths (53s and 71s), so the drift
-   never visibly repeats or reads as a pulse. Transform only. */
-.now-art > img.now-art-glow {
-  animation:
-    glow-drift 53s var(--ease-in-out) infinite alternate,
-    glow-breathe 71s var(--ease-in-out) infinite alternate;
-  animation-play-state: paused;
-}
-.now-card[data-playing] .now-art > img.now-art-glow {
-  animation-play-state: running;
-}
-@keyframes glow-drift {
-  from {
-    translate: -3% 1%;
-  }
-  to {
-    translate: 4% -2%;
-  }
-}
-@keyframes glow-breathe {
-  from {
-    scale: 1;
-  }
-  to {
-    scale: 1.08;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .now-art > img.now-art-glow {
-    animation: none;
   }
 }
 
@@ -604,30 +543,27 @@
 
 /* Schedule: the slot on the air now. Marked in type, not with a box: the
    time turns accent and a small label sits over the show name. */
-.schedule-row.on-air-row time {
-  color: var(--accent);
-  font-weight: var(--weight-semibold);
+/* The show on air now: the whole entry in the same faint wash of the
+   station's orange as a WXPN Welcomes concert, with no label (screen
+   readers hear "On air now"). The wash reaches a little past the entry on
+   both sides, as equal shadows, so nothing in it moves: its times, art,
+   words and chevron stay in line with every other row. */
+.schedule-row.on-air-row {
+  --on-air-wash: color-mix(in srgb, var(--donate-fill) 40%, var(--bg));
+  background: var(--on-air-wash);
+  box-shadow:
+    calc(-1 * var(--space-3)) 0 0 var(--on-air-wash),
+    var(--space-3) 0 0 var(--on-air-wash);
 }
-.on-air-chip {
-  display: block;
-  margin-bottom: var(--space-1);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-caption);
-  color: var(--accent);
+/* In dark, its muted lines a step lighter, to keep 4.5:1 on the wash. */
+:root[data-theme="dark"] .schedule-row.on-air-row {
+  --muted: #adaeab;
 }
 
 /* Show sheet: when the show is next on, as one more line under its times,
    in the same type as the lines around it. */
 .show-detail-hero p.airing {
   margin: 0 0 var(--space-3);
-}
-
-/* Glow and fades step aside when the system asks for plainer visuals. */
-@media (prefers-contrast: more), (forced-colors: active), (prefers-reduced-transparency: reduce) {
-  .now-art > img.now-art-glow {
-    display: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

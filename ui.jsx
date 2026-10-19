@@ -39,7 +39,7 @@ export const nameList = (names) =>
 
 // The station's lettering. As in WXPN's own logo, the "w" is set lighter so
 // "xpn" carries the name. Other text is shown as is.
-export function Wordmark({ text = "wxpn", dot = false }) {
+export function Wordmark({ text = "wxpn" }) {
   const split = /^w(?=xpn)/i.test(text);
   return (
     <span className="wordmark" aria-hidden="true">
@@ -51,7 +51,6 @@ export function Wordmark({ text = "wxpn", dot = false }) {
       ) : (
         text
       )}
-      {dot && <span className="wordmark-dot">.</span>}
     </span>
   );
 }
@@ -80,7 +79,9 @@ export function Art({ src, alt = "", className = "", ...props }) {
 
 // Native dialog provides focus containment, Escape dismissal, and a modal backdrop.
 // Without `onClose` it can't be dismissed (no Close key, Escape or backdrop).
-export function Modal({ title, children, onClose, className = "", style }) {
+// `routed`: the address opened it (a show, a host), so Android's Back steps
+// back through the address rather than closing every sheet at once.
+export function Modal({ title, children, onClose, className = "", style, routed = false }) {
   const ref = useRef(null);
   const drag = useSheetDrag();
   const id = useId();
@@ -109,6 +110,7 @@ export function Modal({ title, children, onClose, className = "", style }) {
       }}
       className={`detail-dialog ${className}`}
       style={style}
+      data-routed={routed || undefined}
       aria-labelledby={id}
       onCancel={(e) => {
         e.preventDefault();
