@@ -604,17 +604,18 @@
 
 /* Schedule: the slot on the air now. Marked in type, not with a box: the
    time turns accent and a small label sits over the show name. */
-.schedule-row.on-air-row time {
-  color: var(--accent);
-  font-weight: var(--weight-semibold);
+/* The show on air now: its whole row in the same faint wash of the
+   station's orange as a WXPN Welcomes concert, edge to edge, with no label;
+   screen readers hear "On air now". */
+.schedule-row.on-air-row {
+  width: calc(100% + var(--edge-left) + var(--edge-right));
+  margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
+  padding-inline: var(--edge-left) var(--edge-right);
+  background: color-mix(in srgb, var(--donate-fill) 40%, var(--bg));
 }
-.on-air-chip {
-  display: block;
-  margin-bottom: var(--space-1);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-caption);
-  color: var(--accent);
+/* In dark, its muted lines a step lighter, to keep 4.5:1 on the wash. */
+:root[data-theme="dark"] .schedule-row.on-air-row {
+  --muted: #adaeab;
 }
 
 /* Show sheet: when the show is next on, as one more line under its times,

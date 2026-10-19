@@ -140,7 +140,7 @@ export function ShowsScreen({ onOpen }) {
                           </time>
                           <Art src={slot.show.img} alt="" loading="lazy" />
                           <span className="schedule-info">
-                            {isOnAir(slot) && <span className="on-air-chip">On air now</span>}
+                            {isOnAir(slot) && <span className="sr-only">On air now: </span>}
                             <strong>{slot.show.name}</strong>
                             {slot.show.host && <span>{slot.show.host}</span>}
                             <small className="schedule-desc">{slot.show.desc}</small>

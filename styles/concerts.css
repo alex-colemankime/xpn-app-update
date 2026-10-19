@@ -9,6 +9,52 @@
   gap: var(--space-3);
   margin-bottom: var(--space-2);
 }
+/* The search, a little shorter, with Filters at its end, the same height
+   and outline, so the way to every other filter sits where people look. */
+.concert-search {
+  display: flex;
+  gap: var(--space-2);
+}
+.concert-search > .search-field {
+  flex: 1;
+}
+.filters-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
+  transition:
+    background-color var(--dur-quick),
+    color var(--dur-quick);
+}
+/* With any of its filters in use: filled in ink, as a chosen filter is. */
+.filters-button[data-on] {
+  border-color: var(--select-ink);
+  background: var(--select-ink);
+  color: var(--bg);
+}
+.filters-button[data-on] .filter-count {
+  background: var(--bg);
+  color: var(--select-ink);
+}
+@media (hover: hover) {
+  .filters-button:not([data-on]):hover {
+    background: var(--soft-fill-hover);
+  }
+}
+@media (forced-colors: active) {
+  .filters-button[data-on] {
+    background: Highlight;
+    color: HighlightText;
+  }
+}
 /* The quick filters: one row of chips that scrolls sideways, under the
    search. A chosen chip is filled in ink, as every choice is. */
 .concert-chips {
@@ -54,22 +100,22 @@
 .chip {
   position: relative;
 }
-.chip:is([aria-pressed="true"], [data-on]) {
+.chip[aria-pressed="true"] {
   border-color: var(--select-ink);
   background: var(--select-ink);
   color: var(--bg);
 }
-.chip:is([aria-pressed="true"], [data-on]) .filter-count {
+.chip[aria-pressed="true"] .filter-count {
   background: var(--bg);
   color: var(--select-ink);
 }
 @media (hover: hover) {
-  .chip:not([aria-pressed="true"], [data-on]):hover {
+  .chip:not([aria-pressed="true"]):hover {
     background: var(--surface);
   }
 }
 @media (forced-colors: active) {
-  .chip:is([aria-pressed="true"], [data-on]) {
+  .chip[aria-pressed="true"] {
     background: Highlight;
     color: HighlightText;
   }

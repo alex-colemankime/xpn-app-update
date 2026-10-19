@@ -11,6 +11,7 @@ import {
   useReminderSettings,
 } from "../hooks/useShowReminders.js";
 import { setAlerts, useAlertSettings } from "../hooks/useStationAlerts.js";
+import { setConcertAlerts, useConcertAlertSettings } from "../concert-alerts.js";
 
 const LEAD_CHOICES = LEAD_OPTIONS.map((m) => ({
   value: m,
@@ -95,6 +96,31 @@ export function StationAlerts() {
           </button>
         </p>
       )}
+    </section>
+  );
+}
+
+// Concerts by artists of the songs a listener saves (concert-alerts.js):
+// announced in the app when the calendar shows one.
+export function ConcertAlerts() {
+  const { enabled } = useConcertAlertSettings();
+  return (
+    <section className="settings-panel">
+      <div className="section-heading">
+        <h2>
+          <Icon name="navConcerts" />
+          Concerts by artists you like
+        </h2>
+        <Switch
+          on={enabled}
+          onChange={setConcertAlerts}
+          label="Tell me when an artist I've saved a song by has a concert"
+        />
+      </div>
+      <p className="data-note">
+        When an artist from your saved songs is on WXPN’s concert calendar, the app tells you, once
+        per concert, when it opens.
+      </p>
     </section>
   );
 }

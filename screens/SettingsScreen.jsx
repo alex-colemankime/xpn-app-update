@@ -4,7 +4,11 @@ import { setVolume, VOLUME_SETTABLE } from "../player.js";
 import { CAST_KIND } from "../cast.js";
 import { usePlayer, useVolume, chooseAudioOutput } from "../hooks/usePlayer.js";
 import { NewsletterPanel } from "../components/Newsletter.jsx";
-import { ShowReminders, StationAlerts } from "../components/NotificationSettings.jsx";
+import {
+  ConcertAlerts,
+  ShowReminders,
+  StationAlerts,
+} from "../components/NotificationSettings.jsx";
 import { PlaylistSyncPanel } from "../components/PlaylistSync.jsx";
 import { RadioAlarmPanel } from "../components/RadioAlarm.jsx";
 import { useNotificationTrouble } from "../notifications.js";
@@ -108,6 +112,7 @@ export function SettingsScreen({
           />
           <ShowReminders onNavigate={onNavigate} />
           <StationAlerts />
+          {features.concerts && <ConcertAlerts />}
           <PlaylistSyncPanel />
         </div>
         <div>

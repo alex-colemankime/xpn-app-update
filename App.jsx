@@ -15,6 +15,7 @@ import { useFavoriteItems } from "./favorites.js";
 import { placeOf, useRoute } from "./hooks/useRoute.js";
 import { useAppearance } from "./hooks/useAppearance.js";
 import { useConcerts } from "./hooks/useConcerts.js";
+import { useConcertAlerts } from "./hooks/useConcertAlerts.js";
 import { useRadioAlarm } from "./hooks/useRadioAlarm.js";
 import { useShowReminders } from "./hooks/useShowReminders.js";
 import { useSpaceToPlay } from "./hooks/useSpaceToPlay.js";
@@ -121,6 +122,8 @@ export default function App() {
   };
   // Show heads-ups wait while the welcome is open, so they never cover it.
   useShowReminders(() => route.navigate("listen"), { paused: welcome });
+  // A concert by an artist the listener likes, announced once.
+  useConcertAlerts(concerts, route.navigate);
   useStationAlerts(updates.all, { onWatch: watching.watchLive });
 
   // A screen the station has switched off (features.js) while it was open:

@@ -176,3 +176,31 @@ test("concerts are grouped by day, and a concert's sheet has its tickets", async
   await page.getByRole("button", { name: "Clear filters" }).click();
   await expect(count).toHaveText(all);
 });
+
+test("a concert by an artist of a saved song is announced, and View shows only artists you like", async ({
+  page,
+  context,
+}) => {
+  // A saved song by Waxahatchee, who is on the calendar above.
+  await context.addInitScript(() => {
+    const id = "waxahatchee--right-back-to-it";
+    localStorage.setItem(
+      "xpn.favorites.v1",
+      JSON.stringify({
+        songs: { [id]: { id, title: "Right Back to It", artist: "Waxahatchee", savedAt: 1 } },
+      }),
+    );
+  });
+  await page.goto("/");
+  const notice = page.getByText("Waxahatchee at Union Transfer");
+  await expect(notice).toBeVisible();
+  await page.getByRole("button", { name: "View" }).click();
+  await expect(page).toHaveURL(/#\/concerts/);
+  await expect(page.locator(".concert-row")).toHaveCount(1);
+  await expect(page.locator(".concert-row")).toContainText("Waxahatchee");
+  await expect(page.getByRole("button", { name: /^Filters 1 in use/ })).toBeVisible();
+  // Announced once: coming back doesn't announce it again.
+  await page.reload();
+  await page.waitForTimeout(1500);
+  await expect(page.getByText("Waxahatchee at Union Transfer")).toHaveCount(0);
+});
