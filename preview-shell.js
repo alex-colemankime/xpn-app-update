@@ -6,6 +6,7 @@
 // audio carry on. The choice is kept in the address (?device=tablet#/shows),
 // so a link can open a given size and screen.
 import "./preview-shell.css";
+import { logoSvg } from "./station-logo.js";
 
 const BASE = import.meta.env?.BASE_URL ?? "/";
 
@@ -88,7 +89,7 @@ export function mountDevicePreview(root, { build = "" } = {}) {
     <div class="dp">
       <header class="dp-bar">
         <div class="dp-brand">
-          <span class="dp-mark" aria-hidden="true"><span class="w">w</span>xpn<span class="dot">.</span></span>
+          ${logoSvg("dp-mark")}
           <span class="dp-title">App preview</span>
         </div>
         <div class="dp-switch" role="group" aria-label="Screen size">
