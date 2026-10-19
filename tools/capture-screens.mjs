@@ -498,7 +498,7 @@ const SHOTS = {
   // Favorites › Songs, with the station playing.
   "phone-favorites": async (page) => {
     await page.goto(`${BASE}#/favorites`);
-    await page.locator(".track-row").first().waitFor();
+    await page.locator(".saved-songs .track-row").first().waitFor();
     await settle(page);
     await playStation(page);
     await page.waitForTimeout(400);
