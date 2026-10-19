@@ -26,17 +26,20 @@
   margin: 0 0 var(--space-10) var(--space-3);
   text-align: left;
 }
-.brand > span {
-  font-size: 3.3125rem;
-  font-weight: 800;
-  letter-spacing: -0.085em;
-  line-height: 1;
+/* The station's own logo (StationLogo.jsx), in ink, its w a step lighter
+   as on xpn.org. */
+.station-logo {
+  display: block;
+  height: auto;
+}
+.station-logo-w {
+  opacity: 0.75;
+}
+.brand .station-logo {
+  width: 116px;
 }
 .wordmark-w {
   color: var(--brand-w);
-}
-.wordmark-dot {
-  color: var(--accent);
 }
 /* On the station's orange tiles the light "w" is a paler tint of the tile. */
 .station-art .wordmark-w {
@@ -601,9 +604,10 @@ h1 {
   }
   .mobile-brand {
     display: block;
-    font-size: clamp(28px, 9vw, 36px);
-    letter-spacing: -0.08em;
-    font-weight: 800;
+    color: var(--text);
+  }
+  .mobile-brand .station-logo {
+    width: clamp(76px, 23vw, 92px);
   }
   .topbar-actions .mobile-settings {
     display: inline-flex;

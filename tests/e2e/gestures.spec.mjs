@@ -46,9 +46,7 @@ test("press and hold a show in the schedule for its menu", async ({ page }) => {
   const menu = page.locator(".hold-menu");
   await expect(menu).toBeVisible();
   // The lift that ended the hold didn't also open the show.
-  await expect(
-    page.getByRole("dialog", { name: /./ }).filter({ hasText: "Hosted by" }),
-  ).toHaveCount(0);
+  await expect(page.locator("dialog .show-detail-hero")).toHaveCount(0);
   await menu.getByRole("button", { name: "Follow show" }).click();
   await expect(menu).toBeHidden();
   // A tap still opens the show, as before.

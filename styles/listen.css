@@ -81,8 +81,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: var(--radius-s);
-  box-shadow: 0 16px 36px -22px rgb(0 0 0 / 0.45);
+  border-radius: 2px;
 }
 .station-art {
   background: var(--action);
@@ -106,36 +105,43 @@
 .now-info {
   min-width: 0;
 }
-/* The song: title (two lines at most), then artist and album on one line,
-   so the block keeps the same height from song to song. The same size at
-   every width: the song is what Listen is about. */
+/* The song is what Listen is about, so its title is the screen's one big
+   moment: set large and heavy, two lines at most. The artist under it,
+   then the album on a quieter line. */
 .now-info h2 {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
-  font-size: var(--text-title);
-  font-weight: var(--weight-bold);
-  line-height: var(--leading-title);
-  letter-spacing: var(--tracking-title);
-  margin: 0 0 2px;
+  font-size: clamp(2rem, 8.5vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  margin: 0 0 var(--space-2);
+  padding-bottom: 0.06em;
   overflow-wrap: break-word;
   text-wrap: balance;
 }
-.now-artist {
-  font-size: var(--text-body);
+.now-artist,
+.now-album {
   margin: 0;
-  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.now-artist {
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+}
 .now-album {
+  font-size: var(--text-secondary);
   color: var(--muted);
 }
-/* Listen live, then the heart, the song's menu and cast as matching tonal
-   keys beside it, one row in reach of a thumb. */
+/* Listen live, then the heart, the song's menu and cast as plain glyphs
+   beside it (no fills: one solid key, the rest quiet), one row in reach of
+   a thumb. */
 .now-song-actions {
   display: contents;
 }
@@ -168,11 +174,10 @@
 .hero-key {
   display: grid;
   place-items: center;
-  width: 50px;
+  width: 48px;
   min-height: 50px;
   flex-shrink: 0;
   border-radius: var(--radius-m);
-  background: var(--soft-fill);
   color: var(--text);
   transition: background-color var(--dur-quick);
 }
@@ -183,7 +188,7 @@
 }
 @media (hover: hover) {
   .hero-key:hover {
-    background: var(--soft-fill-hover);
+    background: var(--soft-fill);
   }
 }
 .now-status {

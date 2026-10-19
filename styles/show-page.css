@@ -79,6 +79,10 @@
   object-fit: cover;
   border-radius: var(--radius-s);
 }
+.show-hosts-with {
+  font-weight: var(--weight-regular);
+  color: var(--muted);
+}
 .show-detail-hero h3 {
   font-weight: var(--weight-semibold);
   font-size: var(--text-heading);

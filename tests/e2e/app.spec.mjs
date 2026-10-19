@@ -81,7 +81,7 @@ test("a show opens, can be followed, and closes", async ({ page }) => {
     .first()
     .click();
   const sheet = page.getByRole("dialog", { name: "World Cafe" });
-  await expect(sheet.getByText("Hosted by")).toBeVisible();
+  await expect(sheet.locator(".show-hosts")).toContainText("with Raina Douris");
   await sheet.getByRole("button", { name: /Follow show/ }).click();
   await expect(sheet.getByRole("button", { name: /Following/ })).toBeVisible();
   await page.keyboard.press("Escape");
@@ -260,7 +260,7 @@ test("Listen's page takes each song's color, and lets it go on leaving", async (
     page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--bg").trim());
   await page.goto("/#/listen");
   await expect(page.locator(".now-info h2")).toHaveText("Song #c82828");
-  await expect.poll(page_).not.toBe("#f7f3ea");
+  await expect.poll(page_).not.toBe("#f5f5f3");
   const red = await page_();
   // A new song (as pressing play asks for one) brings its own color.
   color = "#1e5ac8";
@@ -270,7 +270,7 @@ test("Listen's page takes each song's color, and lets it go on leaving", async (
   await page.evaluate(() => {
     location.hash = "#/favorites";
   });
-  await expect.poll(page_).toBe("#f7f3ea");
+  await expect.poll(page_).toBe("#f5f5f3");
 });
 
 test("Favorites changes in place, without leaving the tab", async ({ page }) => {

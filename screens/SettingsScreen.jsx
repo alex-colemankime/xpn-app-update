@@ -55,10 +55,10 @@ function UsageReporting() {
   const { on } = useLocalStore(reportingStore);
   return (
     <section className="settings-panel">
-      <h2>
-        <Icon name="shield" />
-        Privacy
-      </h2>
+      <h2>Privacy</h2>
+      <p className="data-note">
+        Your favorites, alarm and settings stay on this device. There is no account.
+      </p>
       <div className="alert-row">
         <span>
           <strong id="usage-label">Share app usage</strong>
@@ -120,10 +120,7 @@ export function SettingsScreen({
               output, where there is either. */}
           {(VOLUME_SETTABLE || castAvailable) && (
             <section className="settings-panel">
-              <h2>
-                <Icon name="headphones" />
-                Listening
-              </h2>
+              <h2>Listening</h2>
               {VOLUME_SETTABLE && (
                 <label className="setting-row">
                   <span>
@@ -147,10 +144,7 @@ export function SettingsScreen({
             </section>
           )}
           <section className="settings-panel appearance-settings">
-            <h2>
-              <Icon name="moon" />
-              Appearance
-            </h2>
+            <h2>Appearance</h2>
             <Segmented
               label="Color theme"
               variant="pill"
@@ -162,10 +156,7 @@ export function SettingsScreen({
           {reportingAvailable() && <UsageReporting />}
           <NewsletterPanel />
           <section className="settings-panel">
-            <h2>
-              <Icon name="heart" />
-              Stay connected
-            </h2>
+            <h2>Stay connected</h2>
             <SocialLinks />
             {LINKS.filter((link) => !link.whenOff || !features[link.whenOff]).map((link) => {
               const web = link.url.startsWith("http");

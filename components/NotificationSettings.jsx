@@ -1,4 +1,4 @@
-import { ChoiceSetting, Icon, Switch, nameList } from "../ui.jsx";
+import { ChoiceSetting, Switch, nameList } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { useFavoriteItems } from "../favorites.js";
 import { notificationsAreNative } from "../notifications.js";
@@ -26,10 +26,7 @@ export function ShowReminders({ onNavigate }) {
   return (
     <section className="settings-panel">
       <div className="section-heading">
-        <h2>
-          <Icon name="bell" />
-          Show reminders
-        </h2>
+        <h2>Show reminders</h2>
         <Switch
           on={settings.enabled}
           onChange={(on) => (on ? enableReminders({ quiet: true }) : disableReminders())}
@@ -77,10 +74,7 @@ export function StationAlerts() {
   return (
     <section className="settings-panel">
       <div className="section-heading">
-        <h2 id="alerts-label">
-          <Icon name="navLive" />
-          Notifications from WXPN
-        </h2>
+        <h2 id="alerts-label">Notifications from WXPN</h2>
         <Switch on={on} onChange={setAlerts} labelledBy="alerts-label" describedBy="alerts-note" />
       </div>
       <p className="data-note" id="alerts-note">
@@ -107,10 +101,7 @@ export function ConcertAlerts() {
   return (
     <section className="settings-panel">
       <div className="section-heading">
-        <h2>
-          <Icon name="navConcerts" />
-          Concerts by artists you like
-        </h2>
+        <h2>Concerts by artists you like</h2>
         <Switch
           on={enabled}
           onChange={setConcertAlerts}

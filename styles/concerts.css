@@ -565,24 +565,36 @@
 /* Tickets across the sheet, then Add to calendar, Share and Save as three
    equal keys, an icon over its words, so the row never leaves one key on a
    line of its own at any width or text size. */
+/* Tickets is the sheet's one button; the calendar, Share and Save follow as
+   a quiet row of words with their glyphs, not three equal tiles. */
 .concert-sheet-actions {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-5);
   width: 100%;
   margin-top: var(--space-4);
 }
 .concert-sheet-actions > .primary-button {
-  grid-column: 1 / -1;
+  flex: 1 0 100%;
+  margin-bottom: var(--space-1);
 }
 .concert-sheet-actions > .secondary-button {
-  flex-direction: column;
-  gap: var(--space-1);
-  min-height: 64px;
-  padding: var(--space-2);
+  min-height: 44px;
+  padding: 0;
+  gap: var(--space-2);
+  background: none;
+  border: 0;
+  color: var(--text);
   font-size: var(--text-secondary);
-  text-align: center;
-  text-wrap: balance;
+  font-weight: var(--weight-semibold);
+}
+@media (hover: hover) {
+  .concert-sheet-actions > .secondary-button:hover {
+    background: none;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
 }
 /* While the calendar loads: a date block and two lines per row. */
 .skeleton-row.concert-skeleton {

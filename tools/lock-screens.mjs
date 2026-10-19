@@ -20,7 +20,7 @@ await mkdir(OUT, { recursive: true });
 // afternoon; the alarm Wednesday at 7; the Free at Noon video's
 // notification (samples.js) Friday just before noon, under the member
 // drive's from that morning.
-const SONG = { title: "Be Sweet", artist: "Japanese Breakfast" };
+const SONG = { title: "Motion Sickness", artist: "Phoebe Bridgers" };
 const PLAYING = { long: "Tuesday, October 20", short: "Tue, Oct 20", time: "2:42" };
 const ALARM = { long: "Wednesday, October 21", short: "Wed, Oct 21", time: "7:00" };
 const ALERTS = { long: "Friday, October 23", short: "Fri, Oct 23", time: "11:50" };

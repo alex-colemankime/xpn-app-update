@@ -1,4 +1,5 @@
-import { Icon, Wordmark } from "../ui.jsx";
+import { Icon } from "../ui.jsx";
+import { StationLogo } from "./StationLogo.jsx";
 import { DONATE_URL, trackDonate } from "../links.js";
 import { useFeatures } from "../features.js";
 
@@ -41,7 +42,7 @@ export function Sidebar({ screen, navigate }) {
     <aside className="app-sidebar">
       <button className="brand" onClick={() => navigate("listen")}>
         <span className="sr-only">WXPN home</span>
-        <Wordmark dot />
+        <StationLogo />
       </button>
       <nav aria-label="Main navigation">
         {nav.map((n) => (
@@ -81,7 +82,7 @@ export function TopBar({ screen, navigate, toggleSettings }) {
   return (
     <header className="topbar">
       <button className="mobile-brand" onClick={() => navigate("listen")} aria-label="WXPN home">
-        <Wordmark dot />
+        <StationLogo />
       </button>
       <div className="topbar-actions">
         {/* Giving happens on xpn.org, in the browser (App Review 3.2.2). */}

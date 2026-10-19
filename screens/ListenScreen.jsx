@@ -72,27 +72,16 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
 
   return (
     <section className="now-card" aria-label="Current song" data-playing={playing || undefined}>
-      <OnAir
-        onAirNow={onAirNow}
-        playing={playing}
-        onOpenShow={onOpenShow}
-        live={live}
-        onWatch={onWatch}
-      />
+      <OnAir onAirNow={onAirNow} onOpenShow={onOpenShow} live={live} onWatch={onWatch} />
       <div className="now-stage">
         <div className="now-art" key={`art-${songKey}`} onPointerUp={heart.onPointerUp}>
           {current?.img ? (
-            <>
-              {/* The artwork, blurred behind itself, tints the stage in each
-                  song's own colors. */}
-              <img className="now-art-glow" src={current.img} alt="" aria-hidden="true" />
-              <Art
-                src={current.img}
-                alt={`${current.album || current.title} — ${current.artist}`}
-                fetchPriority="high"
-                draggable={false}
-              />
-            </>
+            <Art
+              src={current.img}
+              alt={`${current.album || current.title} — ${current.artist}`}
+              fetchPriority="high"
+              draggable={false}
+            />
           ) : (
             <div className="station-art">
               <strong>
@@ -107,15 +96,11 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
         <div className="now-meta">
           <div className="now-info" key={`info-${songKey}`}>
             <h2>{current?.title || station.label}</h2>
-            {/* Artist, then the album after it on the same line, quieter. */}
-            <p className="now-artist">
-              <span>{current?.artist || station.tagline}</span>
-              {current?.album &&
-                current.album !== current.artist &&
-                current.album !== current.title && (
-                  <span className="now-album"> · {current.album}</span>
-                )}
-            </p>
+            {/* The artist, then the album on a line of its own, quieter. */}
+            <p className="now-artist">{current?.artist || station.tagline}</p>
+            {current?.album &&
+              current.album !== current.artist &&
+              current.album !== current.title && <p className="now-album">{current.album}</p>}
           </div>
         </div>
         {/* One steady live region: screen readers hear each new song once,

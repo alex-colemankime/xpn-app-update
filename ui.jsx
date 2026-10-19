@@ -39,7 +39,7 @@ export const nameList = (names) =>
 
 // The station's lettering. As in WXPN's own logo, the "w" is set lighter so
 // "xpn" carries the name. Other text is shown as is.
-export function Wordmark({ text = "wxpn", dot = false }) {
+export function Wordmark({ text = "wxpn" }) {
   const split = /^w(?=xpn)/i.test(text);
   return (
     <span className="wordmark" aria-hidden="true">
@@ -51,7 +51,6 @@ export function Wordmark({ text = "wxpn", dot = false }) {
       ) : (
         text
       )}
-      {dot && <span className="wordmark-dot">.</span>}
     </span>
   );
 }

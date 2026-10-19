@@ -95,12 +95,6 @@
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
-.on-air-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--action);
-}
 .on-air-show {
   font-size: var(--text-body);
   font-weight: var(--weight-bold);
@@ -148,61 +142,6 @@
 @media (forced-colors: active) {
   .on-air {
     border: 1px solid CanvasText;
-  }
-}
-
-/* The artwork, blurred and enlarged behind itself: each song tints the
-   stage in its own colors. A plain CSS filter on an image, so it renders
-   everywhere (unlike backdrop blur). */
-.now-art > img.now-art-glow {
-  position: absolute;
-  /* Spreads sideways into the margins, but stays inside the art's height
-     so the band above and the song text below stay clear. */
-  inset: 14% -10% 6%;
-  width: 120%;
-  height: 80%;
-  z-index: -1;
-  border-radius: var(--radius-l);
-  box-shadow: none;
-  filter: blur(26px) saturate(1.4);
-  opacity: 0.18;
-  pointer-events: none;
-}
-:root[data-theme="dark"] .now-art > img.now-art-glow {
-  opacity: 0.25;
-}
-/* The room moves only with sound: while the radio plays, the glow drifts
-   and breathes very slowly; paused, it holds still, so stillness reads as
-   paused. Two movements with unrelated lengths (53s and 71s), so the drift
-   never visibly repeats or reads as a pulse. Transform only. */
-.now-art > img.now-art-glow {
-  animation:
-    glow-drift 53s var(--ease-in-out) infinite alternate,
-    glow-breathe 71s var(--ease-in-out) infinite alternate;
-  animation-play-state: paused;
-}
-.now-card[data-playing] .now-art > img.now-art-glow {
-  animation-play-state: running;
-}
-@keyframes glow-drift {
-  from {
-    translate: -3% 1%;
-  }
-  to {
-    translate: 4% -2%;
-  }
-}
-@keyframes glow-breathe {
-  from {
-    scale: 1;
-  }
-  to {
-    scale: 1.08;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .now-art > img.now-art-glow {
-    animation: none;
   }
 }
 
@@ -427,110 +366,30 @@
   color: var(--muted);
 }
 .popover-menu .sleep-off {
-  justify-content: center;
-  margin-top: var(--space-2);
-  color: var(--accent);
+  margin-top: var(--space-1);
+  border-top: 1px solid var(--border);
+  border-radius: 0;
   font-weight: var(--weight-semibold);
 }
 
-/* Sleep timer: the durations as large numbers on four keys, then the end of
-   the show on the air, so each choice reads at a glance. Its title and keys
-   start as far in as a menu's words (the menu's padding and an item's). */
+/* Sleep timer: a menu of plain rows; the show's end time sits at the end
+   of its row, in figures. */
 .popover-menu.sleep-menu {
-  width: 340px;
-  padding: var(--space-5);
-}
-.sleep-head {
-  margin: 0 0 var(--space-4);
-}
-.sleep-title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0;
-  font-size: var(--text-heading);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-heading);
-}
-.sleep-title .icon {
-  color: var(--accent);
-}
-.sleep-sub {
-  margin: var(--space-1) 0 0;
-  font-size: var(--text-secondary);
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-.sleep-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-2);
-}
-.popover-menu .sleep-grid button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  min-height: 78px;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-m);
-  background: var(--bg);
-  text-align: center;
-}
-/* Numerals read at a glance, at the same size as the alarm's time. */
-.sleep-grid strong {
-  font-size: var(--text-numeral);
-  font-weight: var(--weight-bold);
-  line-height: var(--leading-numeral);
-  letter-spacing: var(--tracking-numeral);
-  font-variant-numeric: tabular-nums;
-}
-.popover-menu .sleep-grid small {
-  font-size: var(--text-caption);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-caption);
-  color: var(--muted);
+  width: 300px;
 }
 .popover-menu .sleep-show {
-  justify-content: flex-start;
-  align-items: center;
+  justify-content: space-between;
   gap: var(--space-3);
-  min-height: 64px;
-  margin-top: var(--space-2);
-  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-m);
-  background: var(--bg);
 }
-.sleep-show img {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-s);
-  object-fit: cover;
-  flex-shrink: 0;
-}
-.sleep-show span {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-.sleep-show strong {
-  font-size: var(--text-body);
-  font-weight: var(--weight-semibold);
+.sleep-show small {
+  color: var(--muted);
+  font-size: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 @media (hover: hover) {
-  .popover-menu :is(.sleep-grid button, .sleep-show):hover {
-    border-color: var(--accent);
-    background: var(--bg);
-  }
   .popover-menu :is(button, a):hover {
     background: var(--row-alt);
   }
-}
-.popover-menu :is(.sleep-grid button, .sleep-show):active {
-  transform: scale(0.97);
 }
 @media (max-width: 767px) {
   .popover-menu {
@@ -625,13 +484,6 @@
    in the same type as the lines around it. */
 .show-detail-hero p.airing {
   margin: 0 0 var(--space-3);
-}
-
-/* Glow and fades step aside when the system asks for plainer visuals. */
-@media (prefers-contrast: more), (forced-colors: active), (prefers-reduced-transparency: reduce) {
-  .now-art > img.now-art-glow {
-    display: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

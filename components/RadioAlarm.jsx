@@ -131,10 +131,7 @@ export function RadioAlarmPanel({ alarm, updateAlarm, onEnabled, onTest, testing
   return (
     <section className="settings-panel">
       <div className="section-heading">
-        <h2 id="alarm-heading">
-          <Icon name="clock" />
-          Radio alarm
-        </h2>
+        <h2 id="alarm-heading">Radio alarm</h2>
         <Switch
           on={alarm.enabled}
           onChange={onEnabled}

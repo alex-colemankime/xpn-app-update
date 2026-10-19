@@ -62,10 +62,7 @@ function OnAirRow({ show, onListen }) {
   return (
     <button className="show-on-air" onClick={onListen}>
       <span className="show-on-air-text">
-        <span className="on-air-label">
-          <i className="on-air-dot" />
-          On air now, {untilLabel(onAirNow)}
-        </span>
+        <span className="on-air-label">On air now, {untilLabel(onAirNow)}</span>
         <strong>Listen live on WXPN</strong>
       </span>
       <span className="show-on-air-key" aria-hidden="true">
@@ -148,13 +145,13 @@ export function ShowDetail({
             <div className="show-detail-hero">
               <Art src={show.img} alt="" />
               <div>
+                {/* Who hosts it, said as a line, not labeled: "with Raina
+                    Douris & Stephen Kallao". */}
                 {show.host && (
-                  <>
-                    <span className="eyebrow">Hosted by</span>
-                    <h3>
-                      <HostLine show={show} onOpenHost={onOpenHost} />
-                    </h3>
-                  </>
+                  <h3 className="show-hosts">
+                    <span className="show-hosts-with">with </span>
+                    <HostLine show={show} onOpenHost={onOpenHost} />
+                  </h3>
                 )}
                 <ul className="show-times">
                   {show.times.map((line) => (

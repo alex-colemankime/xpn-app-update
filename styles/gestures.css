@@ -80,6 +80,11 @@
   order: 2;
   color: var(--muted);
 }
+/* Saved: the heart shows it; the words ("Remove from Favorites") stay in
+   ink, since undoing isn't the screen's thing to do. */
+.popover-menu .menu-save.saved {
+  color: var(--text);
+}
 .popover-menu .menu-save.saved > .icon {
   color: var(--accent);
 }

@@ -1,18 +1,17 @@
 import { cancelSleepTimer, sleepUntil, startSleepTimer } from "../player.js";
 import { onAirAt } from "../catalog.js";
 import { localClock } from "../time.js";
-import { Art, Icon, focusFirstItem } from "../ui.jsx";
+import { Icon, focusFirstItem } from "../ui.jsx";
 import { usePlayer, useSleepTimer } from "../hooks/usePlayer.js";
 import { useNow } from "../hooks/useNow.js";
 import { useSheetDrag } from "../hooks/useSheetDrag.js";
 
-// Each choice as the menu shows it (a large number over its unit), as a
-// screen reader names its key.
+// Each choice as the menu says it.
 const SLEEP_CHOICES = [
-  { minutes: 15, number: "15", unit: "min", label: "15 minutes" },
-  { minutes: 30, number: "30", unit: "min", label: "30 minutes" },
-  { minutes: 45, number: "45", unit: "min", label: "45 minutes" },
-  { minutes: 60, number: "1", unit: "hour", label: "1 hour" },
+  { minutes: 15, label: "In 15 minutes" },
+  { minutes: 30, label: "In 30 minutes" },
+  { minutes: 45, label: "In 45 minutes" },
+  { minutes: 60, label: "In an hour" },
 ];
 
 // Stop playback after a while, fading out; lives in a popover so it needs no
@@ -61,32 +60,24 @@ export function SleepTimer({ onAirNow }) {
         role="dialog"
         aria-labelledby="sleep-title"
       >
-        <div className="sleep-head">
-          <p id="sleep-title" className="sleep-title">
-            <Icon name="moon" size={18} />
-            Sleep timer
-          </p>
-          <p className="sleep-sub">
-            {endsAt
-              ? `The radio turns off in ${left} min. Pick a new time, or cancel.`
-              : "Turn the radio off in"}
-          </p>
+        {/* A menu like a song's: a heading that says what it does, then
+            the choices as plain rows, the end of the show on the air last,
+            with its time. */}
+        <div className="popover-menu-head">
+          <span>
+            <strong id="sleep-title">Turn the radio off</strong>
+            {endsAt && <small>Now in {left} min. Pick a new time, or cancel.</small>}
+          </span>
         </div>
-        <div className="sleep-grid">
-          {SLEEP_CHOICES.map((c) => (
-            <button key={c.minutes} aria-label={c.label} onClick={() => choose(c.minutes)}>
-              <strong>{c.number}</strong>
-              <small>{c.unit}</small>
-            </button>
-          ))}
-        </div>
+        {SLEEP_CHOICES.map((c) => (
+          <button key={c.minutes} onClick={() => choose(c.minutes)}>
+            {c.label}
+          </button>
+        ))}
         {onAirNow && (
           <button className="sleep-show" onClick={untilShowEnds}>
-            <Art src={onAirNow.show.img} alt="" />
-            <span>
-              <strong>When {onAirNow.show.name} ends</strong>
-              <small>at {localClock(onAirNow.endsAt)}</small>
-            </span>
+            When {onAirNow.show.name} ends
+            <small>{localClock(onAirNow.endsAt)}</small>
           </button>
         )}
         {endsAt && (

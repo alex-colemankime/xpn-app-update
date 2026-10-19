@@ -27,7 +27,7 @@ const SILENCE = await readFile(new URL("../tests/e2e/fixtures/silence.mp3", impo
 
 // The song on the air, then the rest of the saved songs, newest first.
 const SONGS = [
-  { title: "Be Sweet", artist: "Japanese Breakfast", album: "Jubilee" },
+  { title: "Motion Sickness", artist: "Phoebe Bridgers", album: "Stranger in the Alps" },
   { title: "Billy Came Back", artist: "This is Lorelei", album: "Holo Boy" },
   { title: "I Don't Have the Heart", artist: "Sharp Pins", album: "Radio DDR" },
   { title: "Just One of the Guys", artist: "Jenny Lewis", album: "The Voyager" },

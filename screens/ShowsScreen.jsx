@@ -147,12 +147,11 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
                   <button
                     className={d === day ? "active" : ""}
                     aria-pressed={d === day}
-                    aria-label={d === today ? `${d}, today` : d}
+                    aria-label={d === today ? `Today, ${d}` : d}
                     key={d}
                     onClick={() => chooseDay(d)}
                   >
-                    {d.slice(0, 3)}
-                    {d === today && <i />}
+                    {d === today ? "Today" : d.slice(0, 3)}
                   </button>
                 ))}
               </div>

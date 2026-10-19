@@ -56,8 +56,8 @@
   align-content: start;
   text-align: left;
 }
-/* No box around a show: its artwork, and once followed, a ring in the
-   accent around it and a filled check. */
+/* No box around a show: its artwork, and once followed, a ring in ink
+   around it and "Following" under it. */
 .welcome-show > img {
   width: 100%;
   aspect-ratio: 1;
@@ -81,25 +81,20 @@
   font-size: var(--text-secondary);
   color: var(--muted);
 }
-.welcome-check {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--bg);
+.welcome-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  font-size: var(--text-secondary);
+  font-weight: var(--weight-semibold);
+  color: var(--muted);
+}
+.welcome-show.followed .welcome-state {
   color: var(--text);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
 }
 .welcome-show.followed > img {
-  outline-color: var(--accent);
-}
-.welcome-show.followed .welcome-check {
-  background: var(--action);
-  color: var(--action-ink);
+  outline-color: var(--text);
 }
 /* Welcome step 2: a preview of the reminder itself, styled like a phone
    notification, with a notification's large corners. */
@@ -111,9 +106,6 @@
   padding: var(--space-4);
   border-radius: var(--radius-l);
   background: var(--row-alt);
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.06),
-    0 8px 24px rgb(0 0 0 / 0.08);
 }
 .reminder-preview img {
   width: 38px;

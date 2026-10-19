@@ -129,19 +129,17 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
             {filtered.length} saved {category}
             {q ? " match your search" : ""}
           </p>
+          {/* No "saved on this device" label over the list: Settings ›
+              Privacy says where favorites are kept. */}
           {category === "songs" && songs.length > 0 ? (
-            <PlaylistSyncStatus>
-              <p className="data-note">Saved on this device.</p>
-            </PlaylistSyncStatus>
+            <PlaylistSyncStatus />
           ) : category === "concerts" && items.concerts?.length > 1 && !calendarIsNative() ? (
             <button className="playlist-prompt" onClick={() => downloadIcs(items.concerts)}>
               <Icon name="calendarAdd" size={18} />
               <span>Add all {items.concerts.length} concerts to your calendar</span>
               <Icon name="chev" size={16} />
             </button>
-          ) : (
-            anything && <p className="data-note">Saved on this device.</p>
-          )}
+          ) : null}
           {!filtered.length ? (
             <Empty
               icon={empty.icon}

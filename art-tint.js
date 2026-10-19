@@ -9,10 +9,10 @@ import { useEffect, useState } from "react";
 // Backgrounds a heart can sit on, per theme (styles/base.css): page, surface,
 // alternate row and the player bar.
 export const GROUNDS = {
-  light: ["#f7f3ea", "#efeadf", "#ebe5da", "#fcf9f2"],
-  dark: ["#202224", "#292c2f", "#2b2e30", "#32363a"],
+  light: ["#f5f5f3", "#ebebe8", "#ececea", "#ffffff"],
+  dark: ["#111111", "#1d1d1d", "#1b1b1b", "#262626"],
 };
-const MIN_CONTRAST = 3.2;
+const MIN_CONTRAST = 3.4;
 
 const hex = (rgb) => `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
 const parseHex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
