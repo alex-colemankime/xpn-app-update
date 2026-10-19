@@ -9,7 +9,7 @@
 /* A show in the archive: its art, name and slot leading its latest
    broadcasts, so the list reads as shows' episodes, never as songs. */
 .archive-show {
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-6);
 }
 .archive-show-head {
   display: flex;

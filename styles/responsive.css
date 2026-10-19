@@ -52,7 +52,7 @@
       calc(-1 * var(--edge-left));
     padding-inline: var(--edge-left) var(--edge-right);
   }
-  .main-shell[data-screen="listen"] .topbar {
+  .main-shell:is([data-screen="listen"], [data-screen="shows"], [data-screen="favorites"]) .topbar {
     border-bottom-color: transparent;
   }
   /* Hidden visually on phones, where the tab bar names the screen, but kept
@@ -143,15 +143,30 @@
     flex: 1;
     padding: 0 var(--space-2);
   }
+  /* A screen's views (Shows, Favorites) hang from the app header as
+     Listen's stations do: straight under it, the rule across the whole
+     width, the names set close from the left edge. */
+  h1.sr-only + div > .toolbar:first-child {
+    margin-top: calc(-1 * var(--space-6));
+  }
+  .toolbar > .segmented:first-child {
+    width: auto;
+    margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
+    padding-inline: var(--edge-left) var(--edge-right);
+    gap: var(--space-1);
+  }
   .toolbar .segmented button {
-    flex: 1 0 auto;
+    flex: 0 0 auto;
     white-space: nowrap;
     padding: var(--space-2);
+  }
+  .toolbar .segmented button:first-child {
+    padding-left: 0;
   }
 
   .schedule-row {
     gap: var(--space-3);
-    padding: var(--space-4) 0;
+    padding: var(--space-3) 0;
   }
   /* The hours in caption type, so "midnight" fits the narrow column, the
      end of the show under its start at the same size. */
