@@ -171,8 +171,17 @@
 /* A host's sheet: their portrait (square, as on xpn.org) and line, the
    shows they host as rows that open them, then their bio in ink, as
    reading. */
+.host-hero {
+  align-items: flex-end;
+}
 .host-hero > img {
+  width: 120px;
+  height: 120px;
   border-radius: var(--radius-s);
+}
+.host-share {
+  gap: var(--space-2);
+  color: var(--text);
 }
 .host-hero p.host-when {
   color: var(--text);
@@ -214,7 +223,7 @@
   color: var(--muted);
 }
 .host-bio {
-  margin: var(--space-8) 0 var(--space-4);
+  margin: var(--space-6) 0 var(--space-4);
   max-width: 62ch;
 }
 .host-bio p {
@@ -243,7 +252,7 @@
   aspect-ratio: 1;
 }
 .host-sheet .host-hero + .section-heading {
-  margin-top: var(--space-8);
+  margin-top: var(--space-6);
 }
 /* Hosts, grouped by when you'll hear them (On now, Next, Everyone). */
 .host-group + .host-group {
