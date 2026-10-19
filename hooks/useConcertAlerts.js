@@ -17,11 +17,13 @@ const DAY = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short",
 // the calendar loads or refreshes, and when a newly saved song's artist
 // already has a show coming. View opens Concerts showing only artists they
 // like.
-export function useConcertAlerts({ concerts, source }, onNavigate) {
+// `on`: the Concerts screen is in the app (features.js); with it switched
+// off, nothing is announced, since View would lead nowhere.
+export function useConcertAlerts({ concerts, source }, onNavigate, on = true) {
   const { enabled } = useConcertAlertSettings();
   const songs = useFavoriteItems("songs");
   useEffect(() => {
-    if (!enabled || source !== "live" || !concerts.length || !songs.length) return;
+    if (!on || !enabled || source !== "live" || !concerts.length || !songs.length) return;
     const today = easternToday();
     const matches = concertsByLikedArtists(
       concerts.filter((c) => c.date >= today),
@@ -59,5 +61,5 @@ export function useConcertAlerts({ concerts, source }, onNavigate) {
       },
       view,
     );
-  }, [enabled, source, concerts, songs, onNavigate]);
+  }, [on, enabled, source, concerts, songs, onNavigate]);
 }

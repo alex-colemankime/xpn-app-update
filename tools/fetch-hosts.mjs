@@ -64,9 +64,12 @@ for (const post of await response.json()) {
   try {
     // Not the sidebar's "On-Air Now", which names whatever is on as the
     // page is read.
-    const page = (
-      await (await fetch(post.link, { signal: AbortSignal.timeout(20000) })).text()
-    ).replace(/<section[^>]*sidebar-card--onair[\s\S]*?<\/section>/g, "");
+    const response = await fetch(post.link, { signal: AbortSignal.timeout(20000) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const page = (await response.text()).replace(
+      /<section[^>]*sidebar-card--onair[\s\S]*?<\/section>/g,
+      "",
+    );
     for (const [, program] of page.matchAll(/xpn\.org\/program\/([a-z0-9-]+)/g)) {
       if (byProgram.has(program)) shows.add(byProgram.get(program));
     }

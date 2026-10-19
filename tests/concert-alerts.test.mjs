@@ -30,7 +30,8 @@ test("a concert matches when any act on its bill is an artist of a saved song", 
     found.map((m) => [m.concert.id, m.artist]),
     [
       ["1", "Ioanna Gika"],
-      ["3", "Phoebe Bridgers feat. Jillian Ashcraft"],
+      // The act that plays, not the whole credit it was saved under.
+      ["3", "Jillian Ashcraft"],
       ["4", "Beths"],
     ],
   );

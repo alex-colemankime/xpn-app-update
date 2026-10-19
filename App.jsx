@@ -127,7 +127,7 @@ export default function App() {
   // Show heads-ups wait while the welcome is open, so they never cover it.
   useShowReminders(() => route.navigate("listen"), { paused: welcome });
   // A concert by an artist the listener likes, announced once.
-  useConcertAlerts(concerts, route.navigate);
+  useConcertAlerts(concerts, route.navigate, features.concerts);
   useStationAlerts(updates.all, { onWatch: watching.watchLive });
 
   // A screen the station has switched off (features.js) while it was open:

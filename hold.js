@@ -79,6 +79,9 @@ export function startHold() {
           press = null;
           if (!open || !el.isConnected) return;
           fired = true;
+          // Held again while its menu is already open: holding means open,
+          // so it stays (a tap on what opened it is what closes it).
+          if (menu.getSnapshot()?.from === el) return;
           tap("medium");
           open(el);
         }, HOLD_MS),

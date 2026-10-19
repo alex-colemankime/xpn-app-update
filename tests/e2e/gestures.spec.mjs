@@ -192,3 +192,16 @@ test("a tap on a song sheet's shade closes it, and does nothing to what is under
   await page.waitForTimeout(300);
   await expect(xpn2).toHaveAttribute("aria-pressed", "false");
 });
+
+test("holding a song again keeps its sheet open", async ({ page }) => {
+  await page.goto("/#/listen");
+  await expect(page.locator(".recent-panel .track-open").first()).toBeVisible();
+  await touch(page, ".recent-panel .track-open", [[200, 600]], { holdMs: 600 });
+  const sheet = page.locator(".hold-menu");
+  await expect(sheet).toBeVisible();
+  // Held again: holding means open, so it stays (a tap on it is what
+  // closes it).
+  await touch(page, ".recent-panel .track-open", [[200, 600]], { holdMs: 600 });
+  await page.waitForTimeout(300);
+  await expect(sheet).toBeVisible();
+});

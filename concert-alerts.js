@@ -31,9 +31,13 @@ export function artistKey(name) {
 // The names a song's artist line stands for: the whole line, and each
 // artist credited on it ("Phoebe Bridgers feat. Conor Oberst", "A, B").
 // Names joined by "&" stay whole: "Hall & Oates" is one act.
+// Each as [key, the name as written], so an alert names the act that
+// matched ("Conor Oberst"), not the whole credit line.
 function songArtists(line) {
   const parts = String(line || "").split(/\s+(?:feat\.?|ft\.?|featuring|with|x)\s+|,\s*/i);
-  return [line, ...parts].map(artistKey).filter((k) => k.length > 1);
+  return [line, ...parts]
+    .map((name) => [artistKey(name), String(name || "").trim()])
+    .filter(([key]) => key.length > 1);
 }
 
 // The acts on a concert's bill, as compared: each act, and each without a
@@ -48,12 +52,13 @@ function billArtists(title) {
   });
 }
 
-// The concerts with an artist the listener likes, each with the name as the
-// listener saved it. Pure, so it can be tested.
+// The concerts with an artist the listener likes, each with the name of the
+// act that matched, as the listener's saved song credits it. Pure, so it
+// can be tested.
 export function concertsByLikedArtists(concerts, songs) {
   const liked = new Map();
   for (const song of songs) {
-    for (const key of songArtists(song.artist)) if (!liked.has(key)) liked.set(key, song.artist);
+    for (const [key, name] of songArtists(song.artist)) if (!liked.has(key)) liked.set(key, name);
   }
   if (!liked.size) return [];
   const found = [];
@@ -89,7 +94,9 @@ export function newMatches(matches, seen) {
 // Records what was announced, and returns what to announce now.
 export function takeNewMatches(matches) {
   const { fresh, first, seen } = newMatches(matches, store.getSnapshot().seen);
-  store.set((s) => ({ ...s, seen }));
+  // Written only when there is something to remember, so a check that finds
+  // nothing new doesn't touch storage or wake the screens that read it.
+  if (fresh.length || first) store.set((s) => ({ ...s, seen }));
   return { fresh, first };
 }
 

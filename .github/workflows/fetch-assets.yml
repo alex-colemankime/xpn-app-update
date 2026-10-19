@@ -36,8 +36,11 @@ jobs:
       - name: Bundle show artwork
         run: node tools/fetch-show-art.mjs
 
+      # xpn.org's host listing failing never costs the show artwork above:
+      # the commit still runs, with whatever hosts.json there was.
       - name: Bundle the hosts
         run: node tools/fetch-hosts.mjs
+        continue-on-error: true
 
       - name: Commit show artwork and hosts
         run: |
