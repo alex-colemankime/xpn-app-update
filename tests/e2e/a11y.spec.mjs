@@ -165,15 +165,15 @@ test("concerts are grouped by day, and a concert's sheet has its tickets", async
   await expect(sheet.getByRole("button", { name: "Add to calendar" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(sheet).toBeHidden();
-  // A chip narrows the list, and Clear filters lets it go.
-  const count = page.locator(".concert-count [role=status]");
+  // A quick filter narrows the list, and Clear lets it go.
+  const count = page.locator(".day-aside [role=status]");
   const all = await count.textContent();
   await page.getByRole("button", { name: "WXPN Welcomes", exact: true }).click();
   await expect(page.getByRole("button", { name: "WXPN Welcomes", exact: true })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  await page.getByRole("button", { name: "Clear filters" }).click();
+  await page.getByRole("button", { name: "Clear", exact: true }).click();
   await expect(count).toHaveText(all);
 });
 

@@ -604,14 +604,17 @@
 
 /* Schedule: the slot on the air now. Marked in type, not with a box: the
    time turns accent and a small label sits over the show name. */
-/* The show on air now: its whole row in the same faint wash of the
-   station's orange as a WXPN Welcomes concert, edge to edge, with no label;
-   screen readers hear "On air now". */
+/* The show on air now: the whole entry in the same faint wash of the
+   station's orange as a WXPN Welcomes concert, with no label (screen
+   readers hear "On air now"). The wash reaches a little past the entry on
+   both sides, as equal shadows, so nothing in it moves: its times, art,
+   words and chevron stay in line with every other row. */
 .schedule-row.on-air-row {
-  width: calc(100% + var(--edge-left) + var(--edge-right));
-  margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
-  padding-inline: var(--edge-left) var(--edge-right);
-  background: color-mix(in srgb, var(--donate-fill) 40%, var(--bg));
+  --on-air-wash: color-mix(in srgb, var(--donate-fill) 40%, var(--bg));
+  background: var(--on-air-wash);
+  box-shadow:
+    calc(-1 * var(--space-3)) 0 0 var(--on-air-wash),
+    var(--space-3) 0 0 var(--on-air-wash);
 }
 /* In dark, its muted lines a step lighter, to keep 4.5:1 on the wash. */
 :root[data-theme="dark"] .schedule-row.on-air-row {

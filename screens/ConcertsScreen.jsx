@@ -195,7 +195,25 @@ export function ConcertsScreen({ result }) {
             </a>
           </p>
         )}
-        <ConcertList concerts={visible} />
+        <ConcertList
+          concerts={visible}
+          aside={
+            <>
+              {/* Shown only once a filter is on; until then, for screen
+                  readers alone. */}
+              <span role="status" className={narrowed ? undefined : "sr-only"}>
+                {narrowed
+                  ? `${filtered.length} of ${concerts.length}`
+                  : `${concerts.length} ${concerts.length === 1 ? "concert" : "concerts"} listed`}
+              </span>
+              {narrowed && (
+                <button className="text-button" onClick={reset}>
+                  Clear
+                </button>
+              )}
+            </>
+          }
+        />
         {filtered.length > shown && (
           <div className="list-more">
             <button className="text-button" onClick={() => setShown(shown + PAGE)}>
@@ -266,20 +284,6 @@ export function ConcertsScreen({ result }) {
             ))}
             <span className="concert-chips-fade" aria-hidden="true" />
           </div>
-          <p className="concert-count">
-            <span role="status">
-              {filtered.length} {filtered.length === 1 ? "concert" : "concerts"}
-              {/* The dates in use, so they're known with Filters closed. */}
-              {(when === "week" || when === "range") && (
-                <> · {when === "range" ? rangeLabel(range) : NEXT_WEEK}</>
-              )}
-            </span>
-            {narrowed && (
-              <button className="text-button" onClick={reset}>
-                Clear filters
-              </button>
-            )}
-          </p>
         </div>
       )}
       {filtersOpen && (

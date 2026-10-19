@@ -2,7 +2,7 @@
    Concerts: filters, then the list.
    ------------------------------------------------------------------------ */
 
-/* Concert filters: search, then rows of chips (When, Region, Show only). */
+/* Concert filters: the search with Filters at its end, then the quick filters. */
 .concert-filters {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -55,17 +55,13 @@
     color: HighlightText;
   }
 }
-/* The quick filters: one row of chips that scrolls sideways, under the
-   search. A chosen chip is filled in ink, as every choice is. */
+/* The quick filters: one row of words that scrolls sideways, under the
+   search. */
 .concert-chips {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-6);
   margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
   padding-inline: var(--edge-left) var(--edge-right);
-  /* Room above and below the chips for their 44px targets: a row that
-     scrolls sideways clips anything that spills out of it. */
-  margin-block: -4px;
-  padding-block: 4px;
   overflow-x: auto;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
@@ -74,50 +70,40 @@
 .concert-chips::-webkit-scrollbar {
   display: none;
 }
+/* Each quick filter is a word, not a pill: muted at rest, and when on, in
+   ink with an ink line under it, as the app's tabs mark where you are. */
 .chip {
+  position: relative;
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 36px;
-  padding: 0 var(--space-4);
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius-full);
+  min-height: 44px;
+  padding: 0;
   font-size: var(--text-secondary);
   font-weight: var(--weight-semibold);
+  color: var(--muted);
   white-space: nowrap;
-  transition:
-    background-color var(--dur-quick),
-    color var(--dur-quick),
-    border-color var(--dur-quick);
+  transition: color var(--dur-quick);
 }
-/* A 44px target around a 36px chip. */
 .chip::after {
   content: "";
   position: absolute;
-  inset: -4px 0;
-}
-.chip {
-  position: relative;
+  inset: auto 0 var(--space-2);
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--dur-quick);
 }
 .chip[aria-pressed="true"] {
-  border-color: var(--select-ink);
-  background: var(--select-ink);
-  color: var(--bg);
-}
-.chip[aria-pressed="true"] .filter-count {
-  background: var(--bg);
   color: var(--select-ink);
+}
+.chip[aria-pressed="true"]::after {
+  opacity: 1;
 }
 @media (hover: hover) {
   .chip:not([aria-pressed="true"]):hover {
-    background: var(--surface);
-  }
-}
-@media (forced-colors: active) {
-  .chip[aria-pressed="true"] {
-    background: Highlight;
-    color: HighlightText;
+    color: var(--text);
   }
 }
 /* A soft edge at the end of the row, only while there are more chips past
@@ -300,17 +286,6 @@
     color: HighlightText;
   }
 }
-.concert-count {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin: var(--space-1) 0 0;
-  font-size: var(--text-secondary);
-  color: var(--muted);
-}
-.concert-count .text-button {
-  color: var(--accent);
-}
 .concert-partial {
   display: flex;
   flex-wrap: wrap;
@@ -339,21 +314,28 @@
   position: sticky;
   top: var(--safe-area-inset-top, env(safe-area-inset-top));
   z-index: 1;
-  margin: 0;
-  font-size: var(--text-title);
-  line-height: var(--leading-title);
-  letter-spacing: var(--tracking-title);
   container-type: scroll-state;
 }
 .day-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  column-gap: var(--space-2);
+  justify-content: space-between;
+  column-gap: var(--space-4);
   margin-inline: calc(-1 * var(--edge-left)) calc(-1 * var(--edge-right));
   padding: var(--space-4) var(--edge-right) var(--space-2) var(--edge-left);
   border-bottom: 1px solid transparent;
   background: var(--bg);
+}
+.day-bar > h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-title);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
 }
 .day-word {
   font-weight: var(--weight-bold);
@@ -361,6 +343,21 @@
 .day-date {
   font-weight: var(--weight-regular);
   color: var(--muted);
+}
+/* How many are listed, at the far end of the first day's heading: small and
+   muted, as "All times Eastern" sits beside the schedule's day, so it reads
+   as a note about the list, not as "36 tonight". */
+.day-aside {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-left: auto;
+  font-size: var(--text-secondary);
+  color: var(--muted);
+}
+.day-aside .text-button {
+  min-height: 0;
+  color: var(--accent);
 }
 @container scroll-state(stuck: top) {
   .day-bar {
@@ -391,9 +388,15 @@
     border: 0;
     background: none;
   }
-  .day-bar > span {
+  .day-bar > h2 {
+    display: block;
+  }
+  .day-bar > h2 > span {
     display: block;
     overflow-wrap: anywhere;
+  }
+  .day-aside {
+    margin: var(--space-3) 0 0;
   }
 }
 /* A concert: the station's credit over the headliner, the acts supporting
