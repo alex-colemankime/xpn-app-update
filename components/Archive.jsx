@@ -132,15 +132,14 @@ export function EpisodeRow({ episode, gone = false }) {
   );
   return (
     <div ref={hold} className="archive-row" data-active={s.active || undefined}>
-      <Body
-        className="archive-open"
-        {...(!gone && {
-          onClick: () => toggleEpisode(episode),
-          "aria-label": [`${verb} ${showName(episode)}, ${episode.title}`, time, meta]
-            .filter(Boolean)
-            .join(", "),
-        })}
-      >
+      <Body className="archive-open" {...(!gone && { onClick: () => toggleEpisode(episode) })}>
+        {/* Named by what it shows (Label in Name): what a tap does and the
+            show, then the row's words, then its length. */}
+        {!gone && (
+          <span className="sr-only">
+            {verb} {showName(episode)},{" "}
+          </span>
+        )}
         <span className="archive-line">
           {!gone && (
             <span
@@ -160,9 +159,15 @@ export function EpisodeRow({ episode, gone = false }) {
           )}
           <strong>{apMonths(episode.title)}</strong>
           {/* Who or when, on the same line, at its end. */}
-          {meta && !gone && <small className="archive-meta">{meta}</small>}
+          {meta && !gone && (
+            <small className="archive-meta">
+              <span className="sr-only">, </span>
+              {meta}
+            </small>
+          )}
         </span>
         {gone && <small className="archive-meta archive-gone">{meta}</small>}
+        {!gone && time && <span className="sr-only">, {time}</span>}
       </Body>
       <SaveButton
         type="episodes"

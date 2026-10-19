@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Icon, Art, Segmented, Empty, SearchField } from "../ui.jsx";
 import { SHOWS, SHOW_DIRECTORY, scheduleForDay, onAirAt, untilLabel } from "../catalog.js";
 import { DAYS, easternParts, clockLabel, localClock } from "../time.js";
@@ -26,6 +26,7 @@ const hostMatches = (query) => {
 };
 
 export function ShowsScreen({ onOpen, onOpenHost }) {
+  const dayId = useId();
   // All shows, the week's schedule, the station's hosts, and (when the build
   // has it and the station hasn't switched it off: features.js) the audio
   // archive.
@@ -181,11 +182,18 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
                   <button
                     className={`${d === day ? "active" : ""} ${d === today ? "today" : ""}`}
                     aria-pressed={d === day}
-                    aria-label={d === today ? `${d}, today` : d}
+                    aria-label={d === today ? `${d.slice(0, 3)}, today` : undefined}
+                    aria-describedby={`${dayId}-${d}`}
                     key={d}
                     onClick={() => chooseDay(d)}
                   >
+                    {/* Named by what it shows (Label in Name), today said
+                        after it, with the full day as its description:
+                        "Sun" and "Wed" alone read as words. */}
                     {d.slice(0, 3)}
+                    <span id={`${dayId}-${d}`} hidden>
+                      {d}
+                    </span>
                   </button>
                 ))}
               </div>

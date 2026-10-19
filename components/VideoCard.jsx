@@ -9,9 +9,6 @@ import { clockTime, lengthLabel, shortDay } from "../time.js";
 // picture. The hero is the same card, larger, for the newest video.
 // `date` false leaves out when it was posted (the Videos tab, newest first).
 export function VideoCard({ video, onWatch, hero = false, date = true }) {
-  const label = [video.artist, video.detail, lengthLabel(video.duration)]
-    .filter(Boolean)
-    .join(", ");
   const title = video.artist || video.detail;
   // Press and hold: watch it, or save it.
   const hold = holdable(() =>
@@ -39,8 +36,10 @@ export function VideoCard({ video, onWatch, hero = false, date = true }) {
       ref={hold}
       className={`video-card ${hero ? "video-hero" : ""}`}
       onClick={() => onWatch(video)}
-      aria-label={`Play ${label}`}
     >
+      {/* Named by what it shows (Label in Name): "Play", then the words on
+          the card, then the length said in full. */}
+      <span className="sr-only">Play </span>
       <span className="video-thumb">
         <Art src={video.poster} alt="" loading={hero ? "eager" : "lazy"} />
         {video.duration && (
@@ -49,13 +48,22 @@ export function VideoCard({ video, onWatch, hero = false, date = true }) {
           </span>
         )}
       </span>
-      <span className="video-text" aria-hidden="true">
+      <span className="video-text">
         <strong>{video.artist || video.detail}</strong>
-        {video.artist && <small>{video.detail}</small>}
+        {video.artist && (
+          <small>
+            <span className="sr-only">, </span>
+            {video.detail}
+          </small>
+        )}
         {date && video.published && (
-          <small className="video-date">{shortDay(video.published)}</small>
+          <small className="video-date">
+            <span className="sr-only">, </span>
+            {shortDay(video.published)}
+          </small>
         )}
       </span>
+      {video.duration && <span className="sr-only">, {lengthLabel(video.duration)}</span>}
     </button>
   );
 }

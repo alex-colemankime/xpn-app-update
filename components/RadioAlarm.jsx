@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useId, useRef } from "react";
 import { ChoiceSetting, Icon, Switch } from "../ui.jsx";
 import { DAY_LABELS, SNOOZE_OPTIONS, repeatPhrase } from "../alarm.js";
 import { notificationsAreNative } from "../notifications.js";
@@ -123,6 +123,7 @@ function AlarmTime({ time, onChange }) {
 // which station, the snooze and the volume, and a test. Off, one line says
 // what turning it on would do.
 export function RadioAlarmPanel({ alarm, updateAlarm, onEnabled, onTest, testing }) {
+  const dayId = useId();
   const toggleDay = (id) =>
     updateAlarm({
       repeatDays: alarm.repeatDays.includes(id)
@@ -168,12 +169,17 @@ export function RadioAlarmPanel({ alarm, updateAlarm, onEnabled, onTest, testing
             {DAY_LABELS.map((d) => (
               <button
                 key={d.id}
-                aria-label={d.label}
+                aria-describedby={`${dayId}-${d.id}`}
                 aria-pressed={alarm.repeatDays.includes(d.id)}
                 className={alarm.repeatDays.includes(d.id) ? "active" : ""}
                 onClick={() => toggleDay(d.id)}
               >
+                {/* Named by what it shows (Label in Name), with the full day
+                    as its description: "Sun" and "Wed" alone read as words. */}
                 {d.label.slice(0, 3)}
+                <span id={`${dayId}-${d.id}`} hidden>
+                  {d.label}
+                </span>
               </button>
             ))}
           </div>

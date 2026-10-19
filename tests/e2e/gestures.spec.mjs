@@ -97,12 +97,12 @@ test("a sideways drag across the schedule leaves the day and the view alone", as
   // the finger lifted never followed it, so it is gone.
   await page.goto("/#/shows");
   const days = page.getByRole("group", { name: "Schedule day" });
-  await days.getByRole("button", { name: /^Monday/ }).click();
+  await days.getByRole("button", { name: /^Mon\b/ }).click();
   await touch(page, ".schedule-row", [
     [120, 400],
     [300, 400],
   ]);
-  await expect(days.getByRole("button", { name: /^Monday/ })).toHaveAttribute(
+  await expect(days.getByRole("button", { name: /^Mon\b/ })).toHaveAttribute(
     "aria-pressed",
     "true",
   );

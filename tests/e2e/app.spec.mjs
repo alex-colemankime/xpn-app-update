@@ -200,7 +200,7 @@ test("an archive episode plays from its row, and pauses from it", async ({ page 
   );
   await page.goto("/#/shows");
   await page.getByLabel("Browse shows").getByRole("button", { name: "Archive" }).click();
-  const episode = "Sleepy Hollow, Sunday, October 4";
+  const episode = "Sleepy Hollow, Sunday, Oct\\. 4";
   await page.getByRole("button", { name: new RegExp(`^Play ${episode}`) }).click();
   await expect(page.getByRole("contentinfo", { name: "Archive player" })).toBeVisible();
   const pause = page.getByRole("button", { name: new RegExp(`^Pause ${episode}`) });
