@@ -11,13 +11,12 @@ export function AlarmBanner({ alarm, onSnooze, onDismiss }) {
     <div className="alarm-banner" role="alert" ref={trackHeight}>
       <span className="alarm-banner-title">
         <span className="alarm-bell" aria-hidden="true">
-          <Icon name="bell" size={20} />
+          <Icon name="bell" size={24} />
         </span>
+        {/* What it is, small, then the time it went off, large. */}
         <span>
-          <strong>Radio alarm</strong>
-          <small>
-            {clockLabel(alarm.time)} · {STREAMS[alarm.streamId]?.label}
-          </small>
+          <small>Radio alarm · {STREAMS[alarm.streamId]?.label}</small>
+          <strong>{clockLabel(alarm.time)}</strong>
         </span>
       </span>
       <span className="alarm-banner-actions">
