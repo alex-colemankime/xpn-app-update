@@ -420,6 +420,20 @@
   background: var(--donate-fill);
   color: var(--donate-ink);
 }
+/* The rest of a station show's card takes a faint wash of the banner's
+   orange, so it stands out a little among the others without competing. */
+.concert-row:has(.concert-flags) {
+  background: color-mix(in srgb, var(--donate-fill) 40%, var(--raised));
+}
+@media (hover: hover) {
+  .concert-row:has(.concert-flags):has(> .concert-open:hover) {
+    background: color-mix(
+      in srgb,
+      var(--text) 4%,
+      color-mix(in srgb, var(--donate-fill) 40%, var(--raised))
+    );
+  }
+}
 .concert-row .concert-welcomes > .icon {
   display: none;
 }
