@@ -358,7 +358,6 @@
   display: flex;
   align-items: flex-start;
   gap: var(--space-1);
-  border-radius: var(--radius-m);
   background: var(--raised);
 }
 .concert-row > .icon-button {
@@ -372,7 +371,6 @@
   gap: 2px;
   min-width: 0;
   padding: var(--space-3) 0 var(--space-3) var(--space-4);
-  border-radius: var(--radius-m) 0 0 var(--radius-m);
   text-align: left;
 }
 @media (hover: hover) {
@@ -399,8 +397,11 @@
   color: var(--muted);
 }
 /* In a list, the station's own shows wear it as a banner across the top
-   of their card, in Donate's colors: the station's tonal orange, its words
-   at 5.5:1 on the fill. One line, so the card below it never moves. */
+   of their card, in Donate's colors (the station's tonal orange, its words
+   at 5.5:1 on the fill), its words centered as a venue's listing prints
+   "WXPN Welcomes" over the headliner, without the star. One line, so the
+   card below it never moves. Cards are square-cornered, as a printed
+   listing is. */
 .concert-row {
   position: relative;
   overflow: hidden;
@@ -410,6 +411,7 @@
   position: absolute;
   inset: 0 0 auto;
   flex-wrap: nowrap;
+  justify-content: center;
   min-height: var(--flag-h);
   padding: var(--space-1) var(--space-4);
   overflow: hidden;
@@ -417,6 +419,9 @@
   text-overflow: ellipsis;
   background: var(--donate-fill);
   color: var(--donate-ink);
+}
+.concert-row .concert-welcomes > .icon {
+  display: none;
 }
 .concert-row:has(.concert-flags) > .concert-open {
   padding-top: calc(var(--flag-h) + var(--space-3));
