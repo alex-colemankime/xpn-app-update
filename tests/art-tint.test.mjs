@@ -103,7 +103,7 @@ test("hearts keep 3:1 on a page, show sheet or player bar washed in any artwork'
   }
 });
 
-test("a muted cover still gives its overall tone; a grey one gives none", async () => {
+test("a muted cover gives its own tone, a grey one a grey: never the accent", async () => {
   const { averageTint, pickTint } = await import("../art-tint.js");
   const fill = (rgb, n = 64) =>
     Uint8ClampedArray.from({ length: n * 4 }, (_, i) => (i % 4 === 3 ? 255 : rgb[i % 4]));
@@ -111,5 +111,21 @@ test("a muted cover still gives its overall tone; a grey one gives none", async 
   const olive = fill([92, 96, 78]);
   assert.equal(pickTint(olive), null);
   assert.ok(averageTint(olive));
-  assert.equal(averageTint(fill([120, 120, 120])), null);
+  // A black and white photo: a grey heart, with contrast in both themes.
+  const grey = themeTints(averageTint(fill([120, 120, 120])));
+  for (const c of [grey.light, grey.dark]) {
+    const [r, g, b] = rgb(c);
+    assert.ok(r === g && g === b, `${c} is grey`);
+  }
+  for (const g of GROUNDS.light) assert.ok(contrast(rgb(grey.light), rgb(g)) >= 3);
+  for (const g of GROUNDS.dark) assert.ok(contrast(rgb(grey.dark), rgb(g)) >= 3);
+  // Only black and white (a line drawing): still a grey.
+  assert.ok(themeTints(averageTint(fill([0, 0, 0]))));
+  // A cream cover stays a quiet cream-grey, not a peach.
+  const cream = themeTints([219, 204, 186]);
+  const sat = (c) => {
+    const [r, g, b] = rgb(c);
+    return (Math.max(r, g, b) - Math.min(r, g, b)) / 255;
+  };
+  assert.ok(sat(cream.light) < 0.2, `${cream.light} stays muted`);
 });

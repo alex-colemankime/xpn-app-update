@@ -1,7 +1,8 @@
 // A saved heart takes its color from the item's artwork: the artwork's most
 // prominent vivid color, adjusted per theme so the heart keeps at least 3:1
-// contrast with the screen behind it (WCAG 1.4.11). Artwork with no vivid
-// color (black and white photos, grey logos) keeps the app's accent.
+// contrast with the screen behind it (WCAG 1.4.11). Muted artwork gives its
+// own muted tone, and black and white artwork a grey: never the app's
+// orange, which is for actions.
 
 import { useEffect, useState } from "react";
 
@@ -98,10 +99,11 @@ export function pickTint(pixels) {
   return [0, 1, 2].map((k) => near(best).reduce((sum, n) => sum + sums[n][k], 0) / w);
 }
 
-// For artwork with no vivid color of its own (a muted or nearly black and
-// white cover): its overall tone, the average of its mid-tone pixels, so the
-// page still takes a little of the cover. Truly grey art gives null.
-const MIN_TONE = 0.06;
+// For artwork with no vivid color of its own (a muted or black and white
+// cover): its overall tone, the average of its mid-tone pixels (a grey, for
+// grey art), so the heart and page still take a little of the cover. Art
+// that is only black and white gives a middle grey.
+const MIDDLE_GREY = [128, 128, 128];
 export function averageTint(pixels) {
   const sum = [0, 0, 0];
   let n = 0;
@@ -115,21 +117,27 @@ export function averageTint(pixels) {
     sum[2] += rgb[2];
     n++;
   }
-  if (!n) return null;
-  const avg = sum.map((v) => v / n);
-  return toHsl(avg)[1] >= MIN_TONE ? avg : null;
+  return n ? sum.map((v) => v / n) : MIDDLE_GREY;
 }
 
-// The color for each theme: lightness moved toward contrast, hue kept, and
-// saturation kept lively so the heart still reads as a color.
+// The color for each theme: lightness moved toward contrast, hue kept. A
+// colorful cover's saturation is kept lively so the heart still reads as
+// that color; a muted or grey one keeps its own, so a cream cover never
+// turns peach.
+const COLORFUL = 0.4;
 export function themeTints(rgb) {
   if (!rgb) return null;
   const [h, s0, l0] = toHsl(rgb);
+  const colorful = s0 >= COLORFUL;
   const s = Math.max(s0, 0.45);
+  // A muted tone is lightened or darkened in OKLCH, which keeps how much
+  // color it has; in HSL a darker cream would turn tan.
+  const [L0, C, H] = oklch(rgb);
+  const at = (l) => (colorful ? toRgb([h, s, l]) : fromOklch([l, C, H]));
   const fit = (grounds, step) => {
-    let l = l0;
+    let l = colorful ? l0 : L0;
     for (let i = 0; i < 60; i++) {
-      const c = toRgb([h, s, l]);
+      const c = at(l);
       if (grounds.every((g) => contrast(c, parseHex(g)) >= MIN_CONTRAST)) return hex(c);
       l = Math.min(1, Math.max(0, l + step));
     }
