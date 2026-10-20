@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Art, Icon, Modal, nameList } from "../ui.jsx";
-import { SHOWS, SHOW_DIRECTORY, shortName } from "../catalog.js";
+import { SHOWS, SHOW_DIRECTORY } from "../catalog.js";
 import { STATION_ART } from "../assets.js";
 import { toggleFavorite, useFavoriteItems, useIsFavorite } from "../favorites.js";
 import { enableReminders } from "../hooks/useShowReminders.js";
@@ -28,7 +28,7 @@ function FollowCard({ show }) {
     >
       <Art src={show.img} alt="" />
       <span className="welcome-show-text">
-        <strong>{shortName(show)}</strong>
+        <strong>{show.name}</strong>
         <small>{show.times[0]}</small>
       </span>
       <span className="welcome-check" aria-hidden="true">

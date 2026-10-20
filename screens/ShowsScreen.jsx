@@ -10,20 +10,20 @@ import { useFeatures } from "../features.js";
 import { tap } from "../haptics.js";
 import { PullToRefresh } from "../components/PullToRefresh.jsx";
 import { loadArchive } from "../archive.js";
-import { HOSTS, hostsOfShow } from "../hosts.js";
+import { HOSTS, foldName, hostsOfShow } from "../hosts.js";
 import { HostCard } from "../components/HostSheet.jsx";
 
+// Case and apostrophes folded, so "dave's" finds "Dave’s World".
 const matchesQuery = (query) => {
-  const q = query.trim().toLowerCase();
-  return (show) => !q || `${show.name} ${show.host}`.toLowerCase().includes(q);
+  const q = foldName(query.trim());
+  return (show) => !q || foldName(`${show.name} ${show.host}`).includes(q);
 };
 
 // A host, by their name or a show of theirs.
 const hostMatches = (query) => {
-  const q = query.trim().toLowerCase();
+  const q = foldName(query.trim());
   return (host) =>
-    !q ||
-    `${host.name} ${host.shows.map((id) => SHOWS[id]?.name).join(" ")}`.toLowerCase().includes(q);
+    !q || foldName(`${host.name} ${host.shows.map((id) => SHOWS[id]?.name).join(" ")}`).includes(q);
 };
 
 export function ShowsScreen({ onOpen, onOpenHost }) {

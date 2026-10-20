@@ -17,21 +17,23 @@ export const SHOWS = Object.fromEntries(
   ]),
 );
 
-// A show's name without the station prefix, for tight spaces such as cards.
+// A show's name without the station prefix: the playlist may use either.
 export const shortName = (show) => show.name.replace(/^WXPN /, "");
 
 // The station playlist names a show between bars in place of an artist
 // ("|World Cafe|") for its own segments, such as a World Cafe session hour.
 // The name inside, and the show it is, when it is one of the station's.
+// Names compared with case and apostrophes folded ("Dave's World").
+const fold = (name) => name.toLowerCase().replace(/[\u2018\u2019\u02bc`]/g, "'");
 const BY_NAME = new Map(
   Object.values(SHOWS).flatMap((show) => [
-    [show.name.toLowerCase(), show],
-    [shortName(show).toLowerCase(), show],
+    [fold(show.name), show],
+    [fold(shortName(show)), show],
   ]),
 );
 export function showSegment(artist) {
   const inside = /^\|\s*(.+?)\s*\|$/.exec(String(artist || "").trim())?.[1];
-  return inside ? { name: inside, show: BY_NAME.get(inside.toLowerCase()) || null } : null;
+  return inside ? { name: inside, show: BY_NAME.get(fold(inside)) || null } : null;
 }
 
 // Featured shows lead the directory; the rest follow in data order.

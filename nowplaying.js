@@ -79,8 +79,15 @@ export function durationMinutes(text) {
 // An artist as the app shows it: a show's segment by the show's name, without
 // the bars the playlist puts around it. A segment of one of the station's
 // shows also carries the show's id.
+// A field of the station's files as text: entities decoded, and the
+// backslashes some entries carry before quotes ("This Year\'s Model") gone.
+const feedText = (value) =>
+  decodeEntities(value)
+    .replace(/\\+(['"])/g, "$1")
+    .trim();
+
 const artistOf = (raw) => {
-  const plain = decodeEntities(raw).trim();
+  const plain = feedText(raw);
   const segment = showSegment(plain);
   if (!segment) return { artist: plain };
   return {
@@ -91,7 +98,7 @@ const artistOf = (raw) => {
 
 const sameSong = (a, b) =>
   a.artist.trim().toLowerCase() === artistOf(b.artist).artist.toLowerCase() &&
-  a.title.trim().toLowerCase() === decodeEntities(b.song).trim().toLowerCase();
+  a.title.trim().toLowerCase() === feedText(b.song).toLowerCase();
 
 // Adds what the now-playing file knows to the latest playlist entry when they
 // are the same song: its length, and its artwork if the playlist has none yet.
@@ -149,11 +156,11 @@ export function normalizePlaylist(data, now = Date.now()) {
         t.song.trim(),
     )
     .map((t) => ({
-      title: decodeEntities(t.song).trim(),
+      title: feedText(t.song),
       // A show's own segment carries the show, so its heart takes the show's
       // color (the segment's photo is often black and white).
       ...artistOf(t.artist),
-      album: decodeEntities(t.album).trim(),
+      album: feedText(t.album),
       img: /^https?:\/\//.test(t.image || "") ? t.image : "",
       time: String(t.timeslice || "").slice(11, 16),
       date: String(t.timeslice || "").slice(0, 10),

@@ -12,7 +12,7 @@ import {
 } from "../favorites.js";
 import { readJson, writeJson } from "../storage.js";
 import { PLAYLIST_URL, appleMusicSearch, spotifySearch } from "../links.js";
-import { SHOWS, shortName } from "../catalog.js";
+import { SHOWS } from "../catalog.js";
 import { playedAt } from "../nowplaying.js";
 import { useArtTint } from "../art-tint.js";
 import { openShow, parseRoute, routeHash } from "../hooks/useRoute.js";
@@ -268,7 +268,7 @@ export function SongSheetItems({ track, stationLabel = "WXPN", close }) {
             openShow(track.show);
           }}
         >
-          View {shortName(show)}
+          View {show.name}
           <Icon name="chev" size={16} />
         </a>
       ) : (
@@ -370,7 +370,7 @@ export function ShowCard({ show, onOpen }) {
       <span className="show-cover">
         <Art src={show.img} alt="" loading="lazy" />
       </span>
-      <strong className="show-card-name">{shortName(show)}</strong>
+      <strong className="show-card-name">{show.name}</strong>
       <small className="show-card-when">{show.host || show.times?.[0]}</small>
     </button>
   );

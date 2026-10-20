@@ -257,3 +257,15 @@ test("a song keeps its length after the now-playing file moves on, so it doesn't
   const other = { ...withoutLength, title: "Other" };
   assert.equal(rememberLengths([other], known)[0].minutes, undefined);
 });
+
+test("backslashes the files put before quotes are dropped", () => {
+  const [track] = normalizePlaylist([
+    {
+      artist: "Elvis Costello",
+      song: "Radio, Radio",
+      album: "This Year\\'s Model",
+      timeslice: "2026-10-20 12:00:00",
+    },
+  ]);
+  assert.equal(track.album, "This Year's Model");
+});

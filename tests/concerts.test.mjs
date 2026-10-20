@@ -353,3 +353,18 @@ test("a concert keeps its time only when the calendar's is a real one", async ()
     assert.deepEqual(placeholder, { time: null, endTime: null });
   }
 });
+
+test("a Free at Noon title loses the show's name, and a name in capitals is set right", async () => {
+  const { concertTitle } = await import("../concerts.js");
+  assert.equal(
+    concertTitle("WXPN Free At Noon: SAM AND LOUISE SULLIVAN"),
+    "Sam and Louise Sullivan",
+  );
+  assert.equal(concertTitle("Free at Noon – Soccer Mommy"), "Soccer Mommy");
+  assert.equal(concertTitle("MGMT"), "MGMT");
+  assert.equal(
+    concertTitle("Bright Eyes / Lullaby For The Working Class"),
+    "Bright Eyes / Lullaby For The Working Class",
+  );
+  assert.equal(concertTitle("THE O'JAYS"), "The O'Jays");
+});

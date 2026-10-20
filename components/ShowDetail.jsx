@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Icon, Art, Modal, shareText } from "../ui.jsx";
 import { showToast } from "../toast.js";
-import { shortName, onAirAt, nextAiringOf, untilLabel } from "../catalog.js";
+import { onAirAt, nextAiringOf, untilLabel } from "../catalog.js";
 import { deviceIsEastern } from "../time.js";
 import { useFavoriteItems } from "../favorites.js";
 import { playStation } from "../player.js";
@@ -31,7 +31,7 @@ function ReminderOffer({ show, onDone }) {
   return (
     <div className="reminder-offer" role="status">
       <Icon name="bell" size={18} />
-      <span>Get a reminder before {shortName(show)} starts?</span>
+      <span>Get a reminder before {show.name} starts?</span>
       <button
         className="text-button"
         onClick={async () => {

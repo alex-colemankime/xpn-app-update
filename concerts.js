@@ -45,6 +45,25 @@ export function timesOf(event) {
   return { time, endTime: endTime > time ? endTime : null };
 }
 
+// A title as the app shows it. Some Free at Noon listings are written
+// "WXPN Free At Noon: SAM AND LOUISE SULLIVAN": the show's name goes (the
+// row's flag says it), and a name of several words all in capitals is set in
+// title case. A one-word name in capitals ("MGMT") is left as it is.
+const SMALL_WORDS = new Set(["a", "an", "and", "at", "for", "of", "the", "with"]);
+export function concertTitle(title) {
+  const text = plainText(title).replace(/^(?:WXPN\s+)?Free\s+at\s+Noon\s*[:\-–—]\s*/i, "");
+  if (!/\s/.test(text) || /[a-z]/.test(text) || !/[A-Z]{2}/.test(text)) return text;
+  return text
+    .toLowerCase()
+    .split(/(\s+)/)
+    .map((word, i) =>
+      i > 0 && SMALL_WORDS.has(word)
+        ? word
+        : word.replace(/(^|[-'’(/])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()),
+    )
+    .join("");
+}
+
 export function normalizeEvent(event) {
   const title = typeof event.title === "object" ? event.title?.rendered : event.title;
   const sd = event.start_date_details;
@@ -63,7 +82,7 @@ export function normalizeEvent(event) {
   return {
     id: String(event.id ?? `${title}-${rawDate}`),
     date: isoDate(rawDate),
-    artist: plainText(title),
+    artist: concertTitle(title),
     venue: plainText(venue ? venue.venue : event.venue || event.acf?.venue),
     city: plainText(venue?.city),
     region: regions[0] || plainText(event.region || event.acf?.region),

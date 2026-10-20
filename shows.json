@@ -357,7 +357,7 @@
   "sleepyhollow": {
     "id": "sleepyhollow",
     "name": "Sleepy Hollow",
-    "host": "Keith Kelleher & Joey Sweeney",
+    "host": "Chuck Elliott, Keith Kelleher & Joey Sweeney",
     "img": "shows/sleepyhollow.jpg",
     "desc": "A mix of jazz, folk, instrumental, contemporary acoustic, and indie music perfectly blended for a distinct quiet sound.",
     "schedule": [
@@ -479,7 +479,7 @@
   },
   "starsend": {
     "id": "starsend",
-    "name": "Star's End",
+    "name": "Star’s End",
     "host": "Chuck van Zyl",
     "img": "shows/starsend.jpg",
     "desc": "A gentle aural soundscape of ambient music to accompany your sleep and dreams.",
@@ -496,7 +496,7 @@
   },
   "davesworld": {
     "id": "davesworld",
-    "name": "Dave's World",
+    "name": "Dave’s World",
     "host": "David Dye",
     "img": "shows/davesworld.jpg",
     "desc": "David Dye's eclectic musical tastes and far-reaching knowledge of music come together for a unique listening experience.",
@@ -623,7 +623,7 @@
   "amazoncountry": {
     "id": "amazoncountry",
     "name": "Amazon Country",
-    "host": "Debra D'Alessandro",
+    "host": "Debra D’Alessandro",
     "img": "shows/amazoncountry.jpg",
     "desc": "A showcase of lesbian and feminist musicians celebrating the diversity of the Women's Music movement.",
     "schedule": [
