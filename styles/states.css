@@ -207,7 +207,6 @@
   }
 }
 
-/* Screen changes cross-fade (see hooks/useRoute.js). */
 /* Android's fade-through between tabs (hooks/useRoute.js; other platforms
    change tabs instantly): the old screen fades out quickly, the new one
    fades in as it settles from a touch smaller. No sideways motion, which
@@ -240,8 +239,11 @@
   ::view-transition-new(*) {
     animation: none !important;
   }
-  :is(button, a):active {
-    transform: none;
+  /* No press scale either: !important, since the pressed rules above are
+     more specific than this. */
+  :is(button, a, .show-card):active,
+  :is(button, a):active * {
+    transform: none !important;
   }
 }
 

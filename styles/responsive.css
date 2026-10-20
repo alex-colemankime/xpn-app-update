@@ -75,6 +75,9 @@
   .now-status:empty {
     min-height: 0;
   }
+  .now-status:empty::before {
+    content: none;
+  }
   /* The stations closer together than on a wide screen (20px between
      names), so all three fit on a small phone at larger text sizes too. */
   .station-switcher.segmented {
@@ -283,14 +286,9 @@
 }
 
 /* The narrowest phones (320px): a screen's views share the width with less
-   room around each word, so the last ("Archive") isn't cut off. With large
-   text, the row scrolls sideways rather than clip. */
+   room around each word, so the last ("Archive") isn't cut off. (With large
+   text, the row scrolls sideways, as on every phone.) */
 @media (max-width: 380px) {
-  .toolbar .segmented {
-    width: 100%;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
   .toolbar .segmented button {
     flex: 1 0 auto;
     padding: 0 4px;

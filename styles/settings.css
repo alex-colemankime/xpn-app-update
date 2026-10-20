@@ -475,10 +475,6 @@ button.setting-row {
   border-top: 1px solid var(--border);
   border-bottom: 0;
 }
-.welcome .social-links {
-  margin-top: var(--space-5);
-  border-top: 1px solid var(--border);
-}
 /* Under saved videos, set apart from them as a section of its own: each
    channel, and Subscribe. */
 .youtube-subscribe {

@@ -144,8 +144,6 @@
   --surface: var(--show-dark);
 }
 
-/* Share sits beside Follow: the show's xpn.org page, which opens the show
-   in the app for anyone who has it (deep-links.js). */
 .follow-word {
   display: inline-flex;
   align-items: center;
@@ -169,6 +167,8 @@
     text-decoration-color: var(--border);
   }
 }
+/* Share sits beside Follow: the show's xpn.org page, which opens the show
+   in the app for anyone who has it (deep-links.js). */
 .show-share {
   margin-left: var(--space-1);
   vertical-align: middle;
