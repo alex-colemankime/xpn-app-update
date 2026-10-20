@@ -82,10 +82,55 @@ what you did, what happened, and a screen recording if you can.
 
 ## The car
 
-- [ ] CarPlay (Xcode's CarPlay simulator, or a car): WXPN, XPN2 and
-      Homegrown are listed; choosing one plays it and opens Now Playing;
-      play and pause work. Start it from the car with the phone app closed.
-- [ ] Android Auto (the Desktop Head Unit, or a car): the same.
+CarPlay needs Apple's CarPlay audio entitlement in the build
+(`docs/carplay-entitlement-request.md`); until then the CarPlay scene never
+appears. Android Auto needs no approval to test with the Desktop Head Unit.
+
+- [ ] CarPlay (Xcode's CarPlay simulator, then a car): WXPN, XPN2 and
+      Homegrown are listed, each with its orange tile; choosing one plays it
+      and opens Now Playing, with the song, artist and artwork, and play and
+      pause only (no skip, no scrubber: it's live).
+- [ ] CarPlay: back to the list, the playing station is marked; choose
+      another and it switches; choose the same one while Now Playing shows
+      and nothing breaks.
+- [ ] CarPlay, cold: force-quit the phone app, connect, choose a station.
+      It must play with the phone locked. (The web view runs without a
+      window then; if it doesn't play, this is the first thing to fix.)
+- [ ] CarPlay: connect while a station is already playing on the phone; the
+      list marks it straight away.
+- [ ] CarPlay: a phone call, then Siri, then a navigation prompt during
+      play; the station ducks or pauses and comes back.
+- [ ] CarPlay: no signal (airplane mode mid-play); the app recovers when
+      signal returns, and the car doesn't show a stuck spinner.
+- [ ] Android Auto (the Desktop Head Unit, then a car): the same list with
+      tiles; Now Playing shows the song's artwork (the station's tile until
+      it loads); play and pause from the car and the steering wheel; start
+      from the car with the phone app closed.
+
+## Home screen widget
+
+- [ ] Add it (iPhone: long press the home screen › + › WXPN, small, medium
+      and large; Android: long press › Widgets › WXPN). Before the app has
+      played anything it shows WXPN and the station's tile.
+- [ ] Play a station in the app: the widget shows the streams with the one
+      playing underlined, the song, artist and artwork (artwork a moment
+      after the words), and WXPN's show on the air.
+- [ ] Tap XPN2 in the widget: the app opens playing XPN2, and the widget
+      follows. Tap pause: the app opens and pauses. Both again with the app
+      force-quit.
+- [ ] Dark mode, and the phone's largest text size: nothing is cut off
+      badly; Homegrown fits on the medium iPhone widget.
+- [ ] An archived episode playing: no stream is underlined; the episode and
+      its show are shown.
+
+## Crash reports
+
+Once Firebase is set up (README › Usage and crash reporting):
+
+- [ ] A test crash in a release build reaches Crashlytics within minutes,
+      with the version, station and screen keys and the last steps in its
+      log; on iOS, with function names (symbols uploaded).
+- [ ] Settings › Privacy › off, then a test crash: nothing arrives.
 
 ## Gestures
 

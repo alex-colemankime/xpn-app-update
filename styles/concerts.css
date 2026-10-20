@@ -183,7 +183,8 @@
   flex: none;
   width: 22px;
   height: 22px;
-  border: 1.5px solid var(--control-border);
+  /* 3:1 on the sheet's surface. */
+  border: 1.5px solid var(--muted);
   border-radius: var(--radius-s);
   color: var(--action-ink);
 }
@@ -242,7 +243,7 @@
 .range-day {
   display: grid;
   place-items: center;
-  height: 40px;
+  height: 44px;
   font-size: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }

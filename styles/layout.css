@@ -289,6 +289,9 @@ h1 {
 }
 .track-open {
   display: flex;
+  /* At the largest text sizes the title and artist go under the time and
+     artwork instead of into a sliver beside them. */
+  flex-wrap: wrap;
   flex: 1;
   min-width: 0;
   gap: var(--space-3);
@@ -324,7 +327,7 @@ h1 {
   border-radius: var(--radius-s);
 }
 .track-open > span {
-  flex: 1;
+  flex: 1 1 10ch;
   min-width: 0;
 }
 .track-row strong {
@@ -608,6 +611,9 @@ h1 {
   .mobile-brand {
     display: block;
     color: var(--text);
+    /* A 44px target around the logo, without moving it. */
+    padding-block: 9px;
+    margin-block: -9px;
   }
   .mobile-brand .station-logo {
     width: clamp(76px, 23vw, 92px);

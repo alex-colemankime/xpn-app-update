@@ -142,13 +142,16 @@
 }
 .now-controls {
   display: flex;
+  /* At the largest text sizes the keys go under Listen live rather than
+     cut its words short. */
+  flex-wrap: wrap;
   align-items: stretch;
   gap: var(--space-2);
   margin: var(--space-4) 0 var(--space-1);
 }
 /* The station's main action, labeled: "Listen live" / "Pause". */
 .now-controls .hero-play {
-  flex: 1;
+  flex: 1 1 7.5em;
   min-width: 0;
   min-height: 50px;
   padding: 0 var(--space-4);

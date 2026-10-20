@@ -41,6 +41,13 @@
     opacity: 0;
   }
 }
+.dialog-header > :first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dialog-header > .icon-button {
+  flex: none;
+}
 .dialog-header {
   /* Close stays in reach however far down the sheet the listener scrolls. */
   position: sticky;

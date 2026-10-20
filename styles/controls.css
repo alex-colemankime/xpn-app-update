@@ -73,6 +73,14 @@
   white-space: nowrap;
   transition: color var(--dur-quick);
 }
+.segmented-pill button::before,
+.repeat-days button::before,
+.day-picker button::before {
+  /* At least 44px to tap, wider than the word, without moving it. */
+  content: "";
+  position: absolute;
+  inset: 0 -8px;
+}
 .segmented-pill button::after,
 .repeat-days button::after,
 .day-picker button::after {
