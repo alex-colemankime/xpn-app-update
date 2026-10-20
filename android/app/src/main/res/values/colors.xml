@@ -2,4 +2,13 @@
 <resources>
     <!-- The app's page (styles/base.css), behind the launch screen. -->
     <color name="wxpn_page">#F5F5F3</color>
+    <!-- The home screen widget (res/layout/wxpn_widget.xml), in the app's
+         colors (styles/base.css): its raised surface, ink, secondary text,
+         and Donate's tonal fill and ink for the play key. -->
+    <color name="widget_surface">#FFFFFF</color>
+    <color name="widget_text">#111111</color>
+    <color name="widget_muted">#5C5C59</color>
+    <color name="widget_art_empty">#EBEBE8</color>
+    <color name="widget_donate_fill">#F4D8CE</color>
+    <color name="widget_donate_ink">#983012</color>
 </resources>

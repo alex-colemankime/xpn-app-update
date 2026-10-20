@@ -37,6 +37,10 @@
   :root[data-theme="dark"] .on-air:has(.on-air-open:hover) {
     background-color: color-mix(in srgb, var(--band) 24%, var(--bg));
   }
+  /* The deeper band could take the hosts' line under 4.5:1. */
+  .on-air:has(.on-air-open:hover) .on-air-host {
+    color: var(--text);
+  }
 }
 .on-air-open > .icon {
   flex-shrink: 0;

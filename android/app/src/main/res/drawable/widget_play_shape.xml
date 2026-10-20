@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The play key: Donate's tonal colors, the app's squared shape. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/widget_donate_fill" />
+    <corners android:radius="14dp" />
+</shape>

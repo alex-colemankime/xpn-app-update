@@ -49,6 +49,8 @@ object CarBridge {
         val playing: Boolean = false,
         val title: String = "WXPN",
         val artist: String = "88.5 FM · Public Radio",
+        /** The song's artwork (an https address), or "" for the station's tile. */
+        val artwork: String = "",
     )
     @Volatile var nowPlaying = NowPlaying()
         private set
@@ -79,6 +81,7 @@ class CarAudioPlugin : Plugin() {
                 playing = call.getBoolean("playing") ?: false,
                 title = call.getString("title") ?: "WXPN",
                 artist = call.getString("artist") ?: "",
+                artwork = call.getString("artwork") ?: "",
             ),
         )
         call.resolve()

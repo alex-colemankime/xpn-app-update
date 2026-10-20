@@ -1,7 +1,8 @@
 // Android Auto: the car's view of the app. It lists WXPN, XPN2 and
-// Homegrown; choosing one, or the car's play and pause buttons, goes to the
-// app (CarBridge), which plays the station. What's playing comes back from
-// the app and shows on the car's screen.
+// Homegrown, each with its tile; choosing one, or the car's play and pause
+// buttons, goes to the app (CarBridge), which plays the station. What's
+// playing comes back from the app and shows on the car's screen, with the
+// song's artwork (the station's tile until it's fetched).
 //
 // The phone's notification and lock-screen controls stay with the media
 // session plugin; this session is only active while a car is connected.
@@ -13,13 +14,20 @@
 package org.xpn.wxpn
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.support.v4.media.MediaBrowserCompat.MediaItem
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.media.MediaBrowserServiceCompat
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.concurrent.Executors
 
 class WxpnCarService : MediaBrowserServiceCompat() {
     private lateinit var session: MediaSessionCompat
@@ -29,6 +37,22 @@ class WxpnCarService : MediaBrowserServiceCompat() {
         Triple("xpn2", "XPN2", "XPoNential Radio"),
         Triple("homegrown", "Homegrown", "Philadelphia's local music"),
     )
+
+    /** Each station's tile (tools/car-art.mjs), for the list and before a song's artwork. */
+    private fun tile(stationId: String): Bitmap? {
+        val id = when (stationId) {
+            "xpn2" -> R.drawable.car_xpn2
+            "homegrown" -> R.drawable.car_homegrown
+            else -> R.drawable.car_xpn
+        }
+        return BitmapFactory.decodeResource(resources, id)
+    }
+
+    // The song's artwork, fetched off the main thread and kept for the song.
+    private val fetcher = Executors.newSingleThreadExecutor()
+    private val main = Handler(Looper.getMainLooper())
+    private var artUrl = ""
+    private var art: Bitmap? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -47,6 +71,7 @@ class WxpnCarService : MediaBrowserServiceCompat() {
 
     override fun onDestroy() {
         CarBridge.onNowPlaying = null
+        fetcher.shutdownNow()
         session.release()
         super.onDestroy()
     }
@@ -63,11 +88,27 @@ class WxpnCarService : MediaBrowserServiceCompat() {
     }
 
     private fun show(now: CarBridge.NowPlaying) {
+        // The song's artwork once it's here; the station's tile until then.
+        if (now.artwork != artUrl) {
+            artUrl = now.artwork
+            art = null
+            if (now.artwork.isNotEmpty()) {
+                fetcher.execute {
+                    val fetched = fetch(now.artwork) ?: return@execute
+                    main.post {
+                        if (artUrl != now.artwork) return@post
+                        art = fetched
+                        show(CarBridge.nowPlaying)
+                    }
+                }
+            }
+        }
         session.setMetadata(
             MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, now.stationId)
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, now.title)
                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, now.artist)
+                .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, art ?: tile(now.stationId))
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, -1) // live
                 .build(),
         )
@@ -105,10 +146,24 @@ class WxpnCarService : MediaBrowserServiceCompat() {
                         .setMediaId(id)
                         .setTitle(label)
                         .setSubtitle(detail)
+                        .setIconBitmap(tile(id))
                         .build(),
                     MediaItem.FLAG_PLAYABLE,
                 )
             }.toMutableList(),
         )
     }
+
+    /** An artwork address as a picture small enough for a car's screen. */
+    private fun fetch(url: String): Bitmap? =
+        try {
+            val connection = URL(url).openConnection() as HttpURLConnection
+            connection.connectTimeout = 10000
+            connection.readTimeout = 10000
+            connection.inputStream.use { stream ->
+                BitmapFactory.decodeStream(stream)?.let { Bitmap.createScaledBitmap(it, 480, 480, true) }
+            }
+        } catch (e: Exception) {
+            null
+        }
 }

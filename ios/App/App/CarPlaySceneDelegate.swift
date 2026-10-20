@@ -15,8 +15,8 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
     private var interfaceController: CPInterfaceController?
     private var items: [String: CPListItem] = [:]
 
-    /// The stations, as in streams.js. Artwork: an image set named
-    /// "car-<id>" in Assets.xcassets (the station tiles), else none.
+    /// The stations, as in streams.js. Artwork: the image sets "car-<id>"
+    /// in Assets.xcassets, the stations' tiles (tools/car-art.mjs).
     private let stations: [(id: String, label: String, detail: String)] = [
         ("xpn", "WXPN", "88.5 FM · Public Radio"),
         ("xpn2", "XPN2", "XPoNential Radio"),
@@ -40,8 +40,13 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
                 NotificationCenter.default.post(
                     name: .wxpnCarCommand, object: nil,
                     userInfo: ["action": "play", "stationId": station.id])
-                self?.interfaceController?.pushTemplate(
-                    CPNowPlayingTemplate.shared, animated: true, completion: nil)
+                // Now Playing once: pushing it again while it's showing
+                // would be refused by CarPlay.
+                if let controller = self?.interfaceController,
+                    controller.topTemplate !== CPNowPlayingTemplate.shared
+                {
+                    controller.pushTemplate(CPNowPlayingTemplate.shared, animated: true, completion: nil)
+                }
                 completion()
             }
             items[station.id] = item
@@ -55,6 +60,11 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
         NotificationCenter.default.addObserver(
             self, selector: #selector(nowPlayingChanged(_:)),
             name: .wxpnCarNowPlaying, object: nil)
+        // Connected while a station already plays: marked at once, not at
+        // the app's next report.
+        if let last = CarAudioPlugin.lastNowPlaying {
+            nowPlayingChanged(Notification(name: .wxpnCarNowPlaying, object: nil, userInfo: last))
+        }
     }
 
     func templateApplicationScene(

@@ -52,6 +52,10 @@ public class CarAudioPlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
+    /// What the app last said was playing, for a car screen that connects
+    /// later (CarPlaySceneDelegate). Main queue only.
+    static var lastNowPlaying: [String: Any]?
+
     /// The song and station come to CarPlay from the lock screen's
     /// information (MPNowPlayingInfoCenter); this only marks which station
     /// in the car's list is playing.
@@ -64,6 +68,7 @@ public class CarAudioPlugin: CAPPlugin, CAPBridgedPlugin {
         // posting thread: post on main, since the car screen updates its
         // CarPlay templates in response, which UIKit allows only there.
         DispatchQueue.main.async {
+            CarAudioPlugin.lastNowPlaying = info
             NotificationCenter.default.post(name: .wxpnCarNowPlaying, object: nil, userInfo: info)
         }
         call.resolve()

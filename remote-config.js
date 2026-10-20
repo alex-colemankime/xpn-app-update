@@ -11,8 +11,12 @@
 //       "minVersion": "1.2.0",             below this, the app asks to update
 //       "required": false,                 true: it can't be dismissed
 //       "message": "This version can no longer play WXPN.",
-//       "ios": "https://apps.apple.com/app/id…"
+//       "ios": "https://apps.apple.com/app/id…"   the App Store page
 //     }
+//
+// An update is only ever required where it can be done: the store address
+// must be the App Store's or Google Play's, and without one for the phone's
+// own platform the request can still be set aside (updateNotice).
 //   }
 //
 // Streams change from the next connection; features turned off (or back on)
@@ -39,6 +43,13 @@ export const FEATURES = [
 ];
 const STREAM_HOSTS = /(^|\.)(xpn\.org|streamguys1\.com|streamguys\.com)$/;
 const PLAY_STORE = "https://play.google.com/store/apps/details?id=org.xpn.wxpn";
+// A store address on the store's own host, else "".
+const storeUrl = (value, hosts) => {
+  const url = webUrl(value);
+  return url && hosts.test(new URL(url).hostname) ? url : "";
+};
+const APP_STORE_HOSTS = /^(apps|itunes)\.apple\.com$/;
+const PLAY_HOSTS = /^play\.google\.com$/;
 
 const streamUrl = (value) => {
   const url = webUrl(value);
@@ -62,8 +73,8 @@ export function normalizeConfig(raw) {
       minVersion: String(u.minVersion),
       required: u.required === true,
       message: oneLine(u.message || "", 200),
-      ios: webUrl(u.ios),
-      android: webUrl(u.android) || PLAY_STORE,
+      ios: storeUrl(u.ios, APP_STORE_HOSTS),
+      android: storeUrl(u.android, PLAY_HOSTS) || PLAY_STORE,
     };
   }
   return config;
@@ -102,6 +113,19 @@ export const savedConfig = () => normalizeConfig(readJson(KEY, null));
 
 // The latest "update" request, for the prompt (components/UpdatePrompt.jsx).
 export const updateRequest = createStore(savedConfig().update);
+
+// What the phone apps show for an update request: null (nothing), or the
+// store to send the listener to and whether it can be set aside. Required
+// only with a store address for this platform: a required request with
+// nowhere to update would leave the listener with no way into the app.
+// Pure, so it can be tested.
+export function updateNotice({ request, platform, version, dismissed }) {
+  if (!request || platform === "web" || !versionBelow(version, request.minVersion)) return null;
+  const store = (platform === "ios" ? request.ios : request.android) || "";
+  const required = request.required && Boolean(store);
+  if (!required && dismissed === request.minVersion) return null;
+  return { store, required };
+}
 
 export function saveConfig(config) {
   writeJson(KEY, config);

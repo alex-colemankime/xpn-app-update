@@ -188,7 +188,7 @@ function ConcertSheet({ concert: c, bill, age, onClose }) {
             onClick={async () => showToast(await shareText(...shareArgs(c)))}
           >
             <Icon name="shareAlt" size={18} />
-            Share
+            Share<span className="sr-only"> {c.artist}</span>
           </button>
           <SaveButton
             type="concerts"

@@ -15,7 +15,10 @@ const CarAudio = registerPlugin("CarAudio");
 //   { action: "play", stationId }   that station, playing
 //   { action: "play" }              whatever has the player bar, playing
 //   { action: "pause" }             whatever has the player bar, paused
-// `live` is the station's actions ({ select, play, pause }); `episode` the
+//   { action: "toggle" }            whatever has the player bar, played if
+//                                   it was stopped, else paused (the home
+//                                   screen widget's key, widget.js)
+// `live` is the station's actions ({ select, play, pause, getSnapshot }); `episode` the
 // archive player's ({ current, play, pause }), whose `current()` is its state
 // while an episode has the bar, else null.
 export function carCommand(event, { live, episode }) {
@@ -25,7 +28,15 @@ export function carCommand(event, { live, episode }) {
     live.select(event.stationId);
     return live.play();
   }
-  const target = episode?.current() ? episode : live;
+  const current = episode?.current();
+  const target = current ? episode : live;
+  if (action === "toggle") {
+    const snap = current || live.getSnapshot?.() || {};
+    const on = current
+      ? current.status === "playing" || current.status === "loading"
+      : Boolean(snap.playing) || snap.status === "loading" || snap.status === "reconnecting";
+    return on ? target.pause() : target.play();
+  }
   if (action === "pause") return target.pause();
   if (action === "play") return target.play();
 }

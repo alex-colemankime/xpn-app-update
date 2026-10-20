@@ -1,7 +1,7 @@
 // Remote config (remote-config.js): only safe changes get through.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { configFrom, normalizeConfig, versionBelow } from "../remote-config.js";
+import { configFrom, normalizeConfig, versionBelow, updateNotice } from "../remote-config.js";
 import { STREAMS, applyStreamOverrides } from "../streams.js";
 
 test("stream addresses: https on WXPN's or StreamGuys' hosts only", () => {
@@ -56,4 +56,35 @@ test("the config is found in the file or in an Advanced Ads ad", () => {
   assert.deepEqual(configFrom({ ads }).off, ["archive"]);
   assert.deepEqual(configFrom({ id: 3, content: { rendered: ads[1].content } }).off, ["archive"]);
   assert.deepEqual(configFrom({ updates: [] }), { streams: {}, off: [], update: null });
+});
+
+test("store addresses must be the stores' own", () => {
+  const config = normalizeConfig({
+    update: { minVersion: "2", ios: "https://example.com/app", android: "https://evil.test/x" },
+  });
+  assert.equal(config.update.ios, "");
+  assert.match(config.update.android, /^https:\/\/play\.google\.com\//);
+  const apple = normalizeConfig({
+    update: { minVersion: "2", ios: "https://apps.apple.com/app/id1" },
+  });
+  assert.equal(apple.update.ios, "https://apps.apple.com/app/id1");
+});
+
+test("a required update with nowhere to update from can still be set aside", () => {
+  const request = {
+    minVersion: "2.0.0",
+    required: true,
+    ios: "",
+    android: "https://play.google.com/x",
+  };
+  const ask = (platform, dismissed = "") =>
+    updateNotice({ request, platform, version: "1.0.0", dismissed });
+  // Android has its store: required, and set aside does nothing.
+  assert.deepEqual(ask("android", "2.0.0"), { store: "https://play.google.com/x", required: true });
+  // iOS has none: a notice the listener can dismiss, and once dismissed it's gone.
+  assert.deepEqual(ask("ios"), { store: "", required: false });
+  assert.equal(ask("ios", "2.0.0"), null);
+  // Up to date, or on the web: nothing.
+  assert.equal(updateNotice({ request, platform: "ios", version: "2.0.0", dismissed: "" }), null);
+  assert.equal(ask("web"), null);
 });

@@ -77,13 +77,20 @@ export function HoldMenu() {
       const to = e.relatedTarget;
       if (to && !el.contains(to) && !from?.contains(to)) closeHoldMenu();
     };
+    // Nor does focus wander on from its opener with the menu left open
+    // behind it.
+    const away = (e) => {
+      if (!el.contains(e.target) && !from?.contains(e.target)) closeHoldMenu();
+    };
     document.addEventListener("pointerdown", outside, true);
     document.addEventListener("keydown", key, true);
+    document.addEventListener("focusin", away);
     el.addEventListener("focusout", leave);
     window.addEventListener("hashchange", closeHoldMenu);
     return () => {
       document.removeEventListener("pointerdown", outside, true);
       document.removeEventListener("keydown", key, true);
+      document.removeEventListener("focusin", away);
       el.removeEventListener("focusout", leave);
       window.removeEventListener("hashchange", closeHoldMenu);
     };

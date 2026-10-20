@@ -22,7 +22,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             self.window = window
             window.makeKeyAndVisible()
         }
-        if let url = connectionOptions.urlContexts.first?.url {
+        if let url = connectionOptions.urlContexts.first?.url, !fromWidget(url) {
             _ = ApplicationDelegateProxy.shared.application(UIApplication.shared, open: url, options: [:])
         }
         // A universal link (a shared xpn.org show page) that launched the app
@@ -43,10 +43,33 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
-        for context in URLContexts {
+        for context in URLContexts where !fromWidget(context.url) {
             _ = ApplicationDelegateProxy.shared.application(
                 UIApplication.shared, open: context.url, options: [:])
         }
+    }
+
+    /// The home screen widget's links (WXPNWidget.swift): opening the app is
+    /// all a tap on it asks; its play key also plays or pauses, and a
+    /// stream's name plays that stream, handed to the web app as the car's
+    /// commands are (CarAudioPlugin, car.js "toggle" and "play").
+    private func fromWidget(_ url: URL) -> Bool {
+        guard url.scheme == "org.xpn.wxpn", url.host == "widget" else { return false }
+        // The play key: play or pause. A stream's name: that stream, playing.
+        var command: [String: Any]?
+        if url.path == "/toggle" {
+            command = ["action": "toggle"]
+        } else if url.pathComponents.count == 3, url.pathComponents[1] == "play" {
+            command = ["action": "play", "stationId": url.pathComponents[2]]
+        }
+        if let command {
+            // Next turn of the main queue: at launch, after the web app's
+            // plugins have loaded and are listening for it.
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .wxpnCarCommand, object: nil, userInfo: command)
+            }
+        }
+        return true
     }
 
     func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {

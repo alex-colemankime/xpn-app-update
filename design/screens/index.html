@@ -72,6 +72,29 @@
         padding-block: 28px 64px;
       }
 
+      /* The car screens: wide, in a dark frame. */
+      .cars {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+        gap: 28px;
+        margin-top: 20px;
+      }
+      .car {
+        margin: 0;
+      }
+      .car img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 18px;
+        border: 8px solid var(--bezel);
+        background: var(--bezel);
+      }
+      .car figcaption {
+        margin-top: 10px;
+        font-size: 14px;
+        color: var(--muted);
+      }
       /* Masthead: the app's wordmark, then what this page is. */
       .masthead {
         display: flex;
@@ -394,29 +417,12 @@
                 width="390"
                 height="844"
                 loading="lazy"
-                alt="Welcome, step 3: Connect Spotify and Connect Apple Music buttons under a sample WXPN Favorites playlist."
+                alt="Welcome, last step: Connect Spotify and Connect Apple Music buttons under a sample WXPN Favorites playlist."
               />
             </div>
             <div class="caption">
               <h3>Your music</h3>
               <p>Connect Spotify or Apple Music so hearted songs build a playlist.</p>
-            </div>
-          </li>
-          <li class="shot">
-            <div class="device">
-              <img
-                data-shot="phone-welcome4"
-                width="390"
-                height="844"
-                loading="lazy"
-                alt="Welcome, last step: Follow WXPN and World Cafe, each name with Instagram, Facebook and YouTube icons, and a Start listening button."
-              />
-            </div>
-            <div class="caption">
-              <h3>Follow us</h3>
-              <p>
-                WXPN’s and World Cafe’s Instagram, Facebook and YouTube, as the welcome’s last step.
-              </p>
             </div>
           </li>
           <li class="shot">
@@ -549,7 +555,7 @@
                 width="390"
                 height="844"
                 loading="lazy"
-                alt="Raina Douris’s sheet, opened from World Cafe’s: her portrait with Share beside it, then On the air, World Cafe and Conversations from the World Cafe, each with its air times and a chevron, then her bio."
+                alt="Raina Douris’s sheet, opened from World Cafe’s: her portrait across the sheet, then On the air, World Cafe and Conversations from the World Cafe, each with its air times and a chevron, then her bio."
               />
             </div>
             <div class="caption">
@@ -1049,6 +1055,89 @@
         </ul>
       </section>
 
+      <section aria-labelledby="widget-heading">
+        <h2 id="widget-heading">Home screen widget</h2>
+        <p class="section-note">
+          A block for the home screen, as music apps have: the three streams, the one playing marked
+          and a tap on another playing it, the song's artwork, title and artist, the show on the
+          air, and play. Drawn from the widgets' own layouts on plain home screens; the other icons
+          are blank tiles.
+        </p>
+        <ul class="phones">
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="widget-ios"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="iPhone home screen with two WXPN widgets. The medium block: Motion Sickness's artwork beside the streams, WXPN (underlined, playing), XPN2 and Homegrown, then Motion Sickness by Phoebe Bridgers, World Cafe, and a pause key in the Donate button's tonal colors. The small one: the artwork over WXPN and Motion Sickness."
+              />
+            </div>
+            <div class="caption">
+              <h3>iPhone</h3>
+              <p>Small, medium and large. A tap opens the app; the key plays or pauses.</p>
+            </div>
+          </li>
+          <li class="shot">
+            <div class="device">
+              <img
+                data-shot="widget-android"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Android home screen under the date, with the WXPN widget as a 4 by 2 block: Motion Sickness's artwork beside the streams, WXPN (underlined, playing), XPN2 and Homegrown, then Motion Sickness by Phoebe Bridgers, World Cafe, and a pause key."
+              />
+            </div>
+            <div class="caption">
+              <h3>Android</h3>
+              <p>A 4 by 2 block that stretches. The key plays or pauses.</p>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="car-heading">
+        <h2 id="car-heading">In the car</h2>
+        <p class="section-note">
+          CarPlay and Android Auto draw these themselves from what the app gives them: the three
+          streams with their tiles, and the song, artist and artwork. Drawings of those screens, the
+          same in light and dark. CarPlay needs Apple's approval before it appears in a car.
+        </p>
+        <div class="cars">
+          <figure class="car">
+            <img
+              data-shot="car-carplay-list"
+              width="800"
+              height="480"
+              loading="lazy"
+              alt="CarPlay's WXPN screen: WXPN, 88.5 FM · Public Radio, with its orange tile and a playing indicator; XPN2, XPoNential Radio; and Homegrown, Philadelphia's local music, each with its tile."
+            />
+            <figcaption>CarPlay: the streams, the one playing marked</figcaption>
+          </figure>
+          <figure class="car">
+            <img
+              data-shot="car-carplay-playing"
+              width="800"
+              height="480"
+              loading="lazy"
+              alt="CarPlay's Now Playing: Motion Sickness's artwork, Motion Sickness, Phoebe Bridgers · WXPN, a LIVE tag, and pause between greyed-out skip buttons."
+            />
+            <figcaption>CarPlay: Now Playing, live, so no skip</figcaption>
+          </figure>
+          <figure class="car">
+            <img
+              data-shot="car-auto-playing"
+              width="800"
+              height="480"
+              loading="lazy"
+              alt="Android Auto's Now Playing: Motion Sickness's artwork, the WXPN tile and name, Motion Sickness by Phoebe Bridgers, and a round pause button."
+            />
+            <figcaption>Android Auto: Now Playing</figcaption>
+          </figure>
+        </div>
+      </section>
+
       <section aria-labelledby="desk-heading">
         <h2 id="desk-heading">Tablet and laptop</h2>
         <div class="tablets">
@@ -1160,6 +1249,16 @@
         "phone-host-light": "img/phone-host-light.webp",
         "phone-hosts-dark": "img/phone-hosts-dark.webp",
         "phone-hosts-light": "img/phone-hosts-light.webp",
+        "widget-ios-dark": "img/widget-ios-dark.webp",
+        "widget-ios-light": "img/widget-ios-light.webp",
+        "widget-android-dark": "img/widget-android-dark.webp",
+        "widget-android-light": "img/widget-android-light.webp",
+        "car-carplay-list-dark": "img/car-carplay-list.webp",
+        "car-carplay-list-light": "img/car-carplay-list.webp",
+        "car-carplay-playing-dark": "img/car-carplay-playing.webp",
+        "car-carplay-playing-light": "img/car-carplay-playing.webp",
+        "car-auto-playing-dark": "img/car-auto-playing.webp",
+        "car-auto-playing-light": "img/car-auto-playing.webp",
         "phone-listen-dark": "img/phone-listen-dark.webp",
         "phone-listen-light": "img/phone-listen-light.webp",
         "phone-live-dark": "img/phone-live-dark.webp",
@@ -1196,8 +1295,6 @@
         "phone-welcome2-light": "img/phone-welcome2-light.webp",
         "phone-welcome3-dark": "img/phone-welcome3-dark.webp",
         "phone-welcome3-light": "img/phone-welcome3-light.webp",
-        "phone-welcome4-light": "img/phone-welcome4-light.webp",
-        "phone-welcome4-dark": "img/phone-welcome4-dark.webp",
         "phone-stay-connected-light": "img/phone-stay-connected-light.webp",
         "phone-stay-connected-dark": "img/phone-stay-connected-dark.webp",
         "tablet-listen-dark": "img/tablet-listen-dark.webp",

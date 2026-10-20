@@ -139,7 +139,7 @@ export function Modal({ title, children, onClose, className = "", style, routed 
   );
 }
 // One choice among a few. "tabs" (underlined) switches between views of a
-// screen, or the station; "pill" (a joined row of keys) picks a setting.
+// screen, or the station; "pill" (a row of underlined words) picks a setting.
 export function Segmented({ value, onChange, options, label, variant = "tabs", className = "" }) {
   return (
     <div

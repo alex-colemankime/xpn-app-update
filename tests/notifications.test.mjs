@@ -58,8 +58,9 @@ function phone() {
         }),
     },
     // The phone shows what has come due and drops it from the pending list.
+    // A weekly one stays: the phone repeats it.
     deliverUntil: (t) => {
-      for (const [id, n] of pending) if (n.schedule.at.getTime() <= t) pending.delete(id);
+      for (const [id, n] of pending) if (n.schedule.at?.getTime() <= t) pending.delete(id);
     },
   };
 }
@@ -86,18 +87,47 @@ test("a notification already delivered is never scheduled again", async () => {
   assert.equal(trouble.at(-1), false, "and nothing is reported missing");
 });
 
-test("a notification due within seconds is left out rather than delivered early", async () => {
+test("a new notification due within seconds is still scheduled; one already past is not", async () => {
   const clock = Date.UTC(2026, 9, 7, 13, 59, 58);
   const device = phone();
   const scheduler = createScheduler({ api: device.api, now: () => clock });
-  await scheduler.sync("show-reminder", [
+  // An alarm set for two seconds from now has nothing on the phone yet: it
+  // must be scheduled, or it would silently never ring.
+  await scheduler.sync("radio-alarm", [
     { id: 1, at: clock + 2000, title: "now" },
-    { id: 2, at: clock + 3600000, title: "later" },
+    { id: 2, at: clock - 1000, title: "missed" },
+    { id: 3, at: clock + 3600000, title: "later" },
   ]);
   assert.deepEqual(
     device.scheduled.map((n) => n.id),
-    [2],
+    [1, 3],
   );
+});
+
+test("a weekly alarm stays on the phone across passes, and keeps ringing without the app", async () => {
+  let clock = Date.UTC(2026, 9, 5, 10, 0);
+  const device = phone();
+  const scheduler = createScheduler({ api: device.api, now: () => clock });
+  const weekly = {
+    id: 1002,
+    at: Date.UTC(2026, 9, 6, 11, 0),
+    on: { weekday: 3, hour: 7, minute: 0 },
+  };
+  await scheduler.sync("radio-alarm", [weekly]);
+  const sent = device.scheduled.at(-1);
+  assert.deepEqual(sent.schedule.on, weekly.on, "scheduled as a weekly notification");
+  // Other plans change, weeks later, the app never reopened in between:
+  // the weekly one is left as it is, not cancelled and sent again.
+  clock += 21 * 86400000;
+  device.deliverUntil(clock);
+  await scheduler.sync("show-reminder", [{ id: 1, at: clock + 3600000, title: "Later" }]);
+  assert.ok(device.pending.has(1002), "still on the phone");
+  assert.equal(device.scheduled.filter((n) => n.id === 1002).length, 1);
+  // A new time replaces it; turning the alarm off removes it.
+  await scheduler.sync("radio-alarm", [{ ...weekly, on: { weekday: 3, hour: 8, minute: 0 } }]);
+  assert.equal(device.pending.get(1002).schedule.on.hour, 8);
+  await scheduler.sync("radio-alarm", []);
+  assert.ok(!device.pending.has(1002));
 });
 
 test("an alarm about to ring stays on the phone when another plan changes", async () => {

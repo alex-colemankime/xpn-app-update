@@ -126,10 +126,29 @@ const analytics = createAnalytics({
   send: (name, params) => globalThis.gtag?.("event", name, params),
 });
 
-export const track = (name, params) => analytics.track(name, params);
-export const reportError = (error, options) => analytics.error(error, options);
+// Others told of what's reported, while reporting is on: crash reporting
+// (crash-reporting.js) keeps events as the steps leading up to a crash, and
+// records errors itself. Each listener gets { kind: "event", name, params }
+// or { kind: "error", error, options }.
+const listeners = new Set();
+export function onReported(listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+const tell = (report) => {
+  if (reportingStore.getSnapshot().on) listeners.forEach((listener) => listener(report));
+};
+
+export const track = (name, params) => {
+  analytics.track(name, params);
+  tell({ kind: "event", name, params });
+};
+export const reportError = (error, options) => {
+  analytics.error(error, options);
+  tell({ kind: "error", error, options });
+};
 export const trackScreen = (screen, title) =>
-  analytics.track("page_view", { page_title: title, page_location: pageLocation(screen) });
+  track("page_view", { page_title: title, page_location: pageLocation(screen) });
 
 // gtag set to match reporting being `on`: Google's switch, and gtag loaded,
 // or configured with this install's id, when on. (`id`, `load` and
@@ -152,14 +171,16 @@ export function followReportingInOtherTabs(options) {
   });
 }
 
-// At launch: load gtag and report errors the app doesn't catch itself.
+// At launch: report errors the app doesn't catch itself (to GA4 and crash
+// reporting), and load gtag when there's an id.
 export function startAnalytics() {
-  if (!GA4_ID || typeof window === "undefined") return;
+  if (typeof window === "undefined") return;
+  window.addEventListener("error", (e) => reportError(e.error || e.message, { fatal: true }));
+  window.addEventListener("unhandledrejection", (e) => reportError(e.reason, { where: "promise" }));
+  if (!GA4_ID) return;
   applyReporting(reportingStore.getSnapshot().on);
   followReportingInOtherTabs();
   analytics.start();
-  window.addEventListener("error", (e) => reportError(e.error || e.message, { fatal: true }));
-  window.addEventListener("unhandledrejection", (e) => reportError(e.reason, { where: "promise" }));
 }
 
 // The Settings switch. Off stops gtag outright (Google's own switch, so

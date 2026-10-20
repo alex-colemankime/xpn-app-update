@@ -26,6 +26,14 @@ android {
     // (the Release workflow, from repository secrets); without one, the
     // release build is left unsigned.
     signingConfigs {
+        // Test builds (debug), signed with one key that stays the same, so
+        // each installs over the last (android/test-signing/README.md).
+        debug {
+            storeFile file('../test-signing/wxpn-test.jks')
+            storePassword 'wxpn-test'
+            keyAlias 'wxpn-test'
+            keyPassword 'wxpn-test'
+        }
         if (System.getenv("ANDROID_KEYSTORE")) {
             upload {
                 storeFile file(System.getenv("ANDROID_KEYSTORE"))
@@ -36,6 +44,9 @@ android {
         }
     }
     buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -70,6 +81,9 @@ try {
     def servicesJSON = file('google-services.json')
     if (servicesJSON.text) {
         apply plugin: 'com.google.gms.google-services'
+        // Crash reports (crash-reporting.js): without its build id, Crashlytics
+        // stops the app at launch once Firebase is set up.
+        apply plugin: 'com.google.firebase.crashlytics'
     }
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")

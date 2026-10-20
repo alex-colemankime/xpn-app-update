@@ -1,0 +1,23 @@
+diff --git a/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/TimedNotificationPublisher.kt b/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/TimedNotificationPublisher.kt
+index 52def58..3ffa75a 100644
+--- a/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/TimedNotificationPublisher.kt
++++ b/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/TimedNotificationPublisher.kt
+@@ -63,13 +63,16 @@ class TimedNotificationPublisher : BroadcastReceiver() {
+         val storedNotification = NotificationStorage(context).getSavedNotificationAsJSObject(id.toString())
+         val wantsExact = storedNotification?.getBoolean("isExactNotification", true) ?: true
+         val canExact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()
++        // WXPN: a repeating notification (the radio alarm) re-armed as it was
++        // first armed, waking the phone and allowed while idle, so the next
++        // week's alarm rings on time on a phone left asleep overnight.
+         if (wantsExact && canExact) {
+-            alarmManager.setExact(AlarmManager.RTC, trigger, pendingIntent)
++            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
+         } else {
+             if (wantsExact) {
+                 Logger.warn("Capacitor/LocalNotification", "Exact alarms not allowed in user settings.  Notification scheduled with non-exact alarm.")
+             }
+-            alarmManager.set(AlarmManager.RTC, trigger, pendingIntent)
++            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
+         }
+         val sdf = SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
+         Logger.debug(Logger.tags("LN"), "notification " + id + " will next fire at " + sdf.format(Date(trigger)))

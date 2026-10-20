@@ -80,3 +80,15 @@ test("the car shows the song when one is known, else the station", () => {
   assert.equal(quiet.title, "Homegrown");
   assert.equal(quiet.playing, false);
 });
+
+test("the widget's toggle plays what was stopped and pauses what was playing", () => {
+  const stopped = actions();
+  stopped.live.getSnapshot = () => ({ playing: false, status: "paused" });
+  carCommand({ action: "toggle" }, stopped);
+  const on = actions();
+  on.live.getSnapshot = () => ({ playing: false, status: "loading" });
+  carCommand({ action: "toggle" }, on);
+  const episode = actions({ episode: { id: "e1" }, status: "paused" });
+  carCommand({ action: "toggle" }, episode);
+  assert.deepEqual([stopped.done, on.done, episode.done], [["play"], ["pause"], ["episode play"]]);
+});

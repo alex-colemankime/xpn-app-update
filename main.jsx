@@ -18,6 +18,8 @@ import { episodeControls, getEpisodeSnapshot, subscribeEpisode } from "./episode
 import { onAirAt } from "./catalog.js";
 import { followTextSize } from "./text-size.js";
 import { startCarAudio } from "./car.js";
+import { startHomeWidget } from "./widget.js";
+import { startCrashReporting } from "./crash-reporting.js";
 import { fixInsets } from "./fixed-insets.js";
 import {
   getPlayerSnapshot,
@@ -54,6 +56,7 @@ if (devicePreview) {
   // Hearted songs follow to Spotify or Apple Music once connected.
   startPlaylistSync();
   startAnalytics();
+  startCrashReporting({ live: { subscribe: subscribePlayer, getSnapshot: getPlayerSnapshot } });
   followTextSize();
   startDeepLinks();
   startBackButton();
@@ -89,6 +92,11 @@ if (devicePreview) {
       getSnapshot: getPlayerSnapshot,
     },
     episode: episodeControls,
+  });
+  startHomeWidget({
+    live: { subscribe: subscribePlayer, getSnapshot: getPlayerSnapshot },
+    episode: episodeControls,
+    showOnAir: () => onAirAt()?.show.name || "",
   });
   createRoot(document.getElementById("root"), {
     onCaughtError: (error, info) => {

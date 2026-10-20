@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="wxpn_page">#111111</color>
+    <color name="widget_surface">#1D1D1D</color>
+    <color name="widget_text">#F0F0ED</color>
+    <color name="widget_muted">#A2A29F</color>
+    <color name="widget_art_empty">#262626</color>
+    <color name="widget_donate_fill">#4B2A20</color>
+    <color name="widget_donate_ink">#FFA585</color>
 </resources>

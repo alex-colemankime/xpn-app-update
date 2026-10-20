@@ -79,6 +79,9 @@
      names), so all three fit on a small phone at larger text sizes too. */
   .station-switcher.segmented {
     gap: var(--space-1);
+    /* At the largest text sizes Homegrown goes to a second line rather
+       than off the screen. */
+    flex-wrap: wrap;
   }
   .station-switcher.segmented button:first-child {
     padding-left: 0;
