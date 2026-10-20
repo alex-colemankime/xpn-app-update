@@ -146,6 +146,7 @@ Use Node 22 or newer (`.nvmrc` pins 24, as CI does). Capacitor must be 8.4.3 or 
 - **Status bar**: `@capacitor/status-bar` switches the status bar text between light and dark with the app's theme, so it stays readable when the app and phone themes differ. No setup needed.
 - **Larger text on iPhone:** nothing to set up. `@capacitor/text-zoom` applies iOS's Text Size setting at launch and whenever the app comes back to the front (`text-size.js`); check the screens at the largest sizes.
 - **CarPlay and Android Auto** (`car.js`; `ios/App/App/CarPlaySceneDelegate.swift` and `CarAudioPlugin.swift`, registered by `MainViewController.swift`; `android/app/src/main/java/org/xpn/wxpn/WxpnCarService.kt` and `CarAudioPlugin.kt`, registered by `MainActivity.java`). The car lists WXPN, XPN2 and Homegrown; choosing one plays it, and play and pause work as the app's. On CarPlay the song comes from the lock screen's information; Android Auto gets it from the app.
+- **Home screen widget** (`widget.js`; `ios/App/WXPNWidget/` and `HomeWidgetPlugin.swift`; `android/app/src/main/java/org/xpn/wxpn/WxpnWidget.kt` and `HomeWidgetPlugin.kt`, with `res/layout/wxpn_widget.xml`). A block for the home screen: the stream you're listening to, the song's artwork, title and artist, WXPN's show on the air, and play. The app sends what's playing whenever it changes; the widget never fetches anything itself. Its play key opens the app and plays or pauses (the car's `toggle` command). On iOS it comes in small, medium and large and reads from the app group `group.org.xpn.wxpn`: in the Apple developer account the app ID `org.xpn.wxpn` and the widget's `org.xpn.wxpn.widget` both need that app group (automatic signing in the Release workflow can usually register them). Drawn for the screens page by `tools/widget-screens.mjs`.
   - **CarPlay needs Apple's approval:** request the CarPlay audio entitlement (developer.apple.com/contact/carplay), and once granted, add `com.apple.developer.carplay-audio` (true) to `App.entitlements`. Until then the CarPlay scene simply never appears. Test with Xcode's CarPlay simulator (I/O › External Displays › CarPlay), including starting from the car with the app closed.
   - **Android Auto** works without approval for testing (Android Studio's Desktop Head Unit); Google reviews it against the car app quality guidelines at submission. Starting the app from the car with it closed opens it in the background, which some phones block.
 - **Store review prompt** (`review.js`, `@capacitor-community/in-app-review`): nothing to set up. The app asks right after a heart, once the listener has listened two hours in all and saved three things, at most once per version and 120 days apart; the phone decides whether to show it.
@@ -205,6 +206,7 @@ updates.js           station updates: format, timing, notifications, YouTube
 push.js              push notifications: registering with the sender, taps
 analytics.js         usage and crash reporting (GA4)
 car.js               CarPlay and Android Auto (the car side is in ios/ and android/)
+widget.js            the home screen widget (the widget itself is in ios/ and android/)
 text-size.js         iPhone Text Size
 remote-config.js     station changes: stream addresses, features off, update prompt
 listening.js         listening time, for reporting
@@ -243,6 +245,7 @@ brand/               logo source files (not shipped with the app)
 
 - **Testing on phones** ([docs/device-testing.md](docs/device-testing.md)): both apps build, but neither has run on a real phone yet. Background audio, the lock screen, interruptions, notifications arriving with the app closed, links, the Android back button.
 - **CarPlay and Android Auto:** the native code now compiles in both apps; it needs Apple's CarPlay entitlement and testing in the simulators and a car.
+- **Home screen widget:** compiles in both apps; needs the app group set up for the iOS app and widget IDs, and a look on real phones (artwork, dark mode, the play key from a cold start).
 - **Developer accounts and store builds:** see "Native apps › Before the first store upload".
 - **Push sender:** choose the service (see "Push notifications") and set `VITE_PUSH_REGISTER_URL`.
 - **Station updates hosting:** choose where `updates.json` lives and who edits it.

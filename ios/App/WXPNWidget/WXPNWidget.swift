@@ -5,7 +5,7 @@
 // opens it and plays or pauses (SceneDelegate hands that to the web app as
 // the car's "toggle").
 //
-// Small: the artwork with the stream. Medium (the block): the artwork beside
+// Small: the artwork, the stream's name and the song. Medium (the block): the artwork beside
 // the stream, the song, the show and play. Large: the artwork across the top.
 
 import SwiftUI
@@ -172,7 +172,12 @@ struct WidgetView: View {
                 Artwork(image: now.art)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                StreamLine(now: now)
+                // Too narrow for the stream's line: its name, then the song.
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(now.station).font(.system(size: 13, weight: .bold)).foregroundColor(.ink)
+                    Text(now.title).font(.system(size: 12)).foregroundColor(.muted)
+                }
+                .lineLimit(1)
             }
         case .systemLarge:
             VStack(alignment: .leading, spacing: 12) {
