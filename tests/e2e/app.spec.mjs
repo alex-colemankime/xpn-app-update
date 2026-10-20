@@ -461,3 +461,28 @@ test("with no share sheet or clipboard, a show's link opens to copy by hand", as
   await expect(sheet).toHaveCount(0);
   await expect(page.getByRole("dialog")).toHaveCount(1);
 });
+
+test("removing a favorite by keyboard keeps focus in the list", async ({ page }) => {
+  await page.goto("/#/listen");
+  const main = page.locator("main");
+  for (const [song] of [SONGS[1], SONGS[2]]) {
+    await main
+      .getByRole("button", { name: `Save ${song}` })
+      .first()
+      .click();
+  }
+  await page.evaluate(() => {
+    location.hash = "#/favorites";
+  });
+  const favorites = page.getByRole("region", { name: "Favorites" });
+  const heart = (song) =>
+    favorites
+      .locator(".track-row", { hasText: song })
+      .getByRole("button", { name: `Save ${song}` });
+  await heart(SONGS[2][0]).focus();
+  await page.keyboard.press("Enter");
+  await expect(heart(SONGS[2][0])).toHaveCount(0);
+  await expect(heart(SONGS[1][0])).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("button", { name: "Undo" })).toBeFocused();
+});

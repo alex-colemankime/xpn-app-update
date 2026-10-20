@@ -75,6 +75,21 @@ function announceSave(type) {
   if (type !== "shows") firstSaveHint(type);
 }
 
+// Removing from Favorites takes the row, and the focused heart, away with
+// it: focus moves to the next saved item's heart (or the one before), and
+// with none left, to the toast's Undo.
+function keepFocus(button) {
+  if (document.activeElement !== button) return;
+  const scope = button.closest(".tab-pane") || document;
+  const hearts = [...scope.querySelectorAll("button.saved")];
+  const i = hearts.indexOf(button);
+  requestAnimationFrame(() => {
+    if (button.isConnected) return;
+    const near = [...hearts.slice(i + 1), ...hearts.slice(0, i).reverse()];
+    (near.find((b) => b.isConnected) || document.querySelector(".toast-action"))?.focus();
+  });
+}
+
 // A heart toggle for any saveable item: a song, show, episode, concert or
 // video. Once saved, the heart takes a color from the item's artwork.
 export function SaveButton({
@@ -105,8 +120,9 @@ export function SaveButton({
       data-tinted={tint ? "" : undefined}
       style={tintVars(tint)}
       onAnimationEnd={() => setPop(false)}
-      onClick={() => {
+      onClick={(event) => {
         tap();
+        if (saved) keepFocus(event.currentTarget);
         const before = saved ? getFavorite(type, item) : null;
         toggleFavorite(type, item);
         onToggle?.(!saved);
