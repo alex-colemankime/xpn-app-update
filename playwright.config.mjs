@@ -11,6 +11,9 @@ export default defineConfig({
   use: {
     baseURL: "http://127.0.0.1:4174",
     trace: "retain-on-failure",
+    // The station's own zone, so times read the same on every machine (no
+    // "ET" suffix, which a phone elsewhere would show).
+    timezoneId: "America/New_York",
     launchOptions: {
       args: ["--autoplay-policy=no-user-gesture-required"],
       // A browser already on the machine (PLAYWRIGHT_CHROMIUM), else Playwright's own.

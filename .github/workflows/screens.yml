@@ -22,6 +22,10 @@ on:
       - components/**
       - hooks/**
       - App.jsx
+      - ui.jsx
+      - icons.jsx
+      - global.css
+      - index.html
       - art-tint.js
 
 permissions:

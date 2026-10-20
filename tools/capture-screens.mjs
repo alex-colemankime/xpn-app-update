@@ -426,7 +426,7 @@ const welcomeAt = async (page, n) => {
       .click();
   }
   for (let step = 1; step < n; step++) {
-    const next = dialog.getByRole("button", { name: /^(Next|Not now|Skip for now|Maybe later)$/ });
+    const next = dialog.getByRole("button", { name: /^(Next|Not now)$/ });
     await next.first().click();
     await page.waitForTimeout(400);
   }
