@@ -158,8 +158,9 @@ export default function App() {
     main.current?.focus({ preventScroll: true });
     // A screen coming back can finish laying out a moment later (its
     // effects run again as it shows), so a place near its end may not
-    // exist yet. As it grows, the place is tried again, for a second at
-    // most, and never once the listener has moved.
+    // exist yet. As it grows, the place is tried again, for three seconds at
+    // most (a long list on a slow phone takes a while), and never once the
+    // listener has moved.
     if (Math.round(window.scrollY) >= Math.round(place) || !window.ResizeObserver) return;
     const growing = new ResizeObserver(() => {
       window.scrollTo({ top: place });
@@ -171,7 +172,7 @@ export default function App() {
       clearTimeout(timer);
       for (const type of moved) window.removeEventListener(type, stop, true);
     };
-    const timer = setTimeout(stop, 1000);
+    const timer = setTimeout(stop, 3000);
     for (const type of moved) window.addEventListener(type, stop, { capture: true, passive: true });
     growing.observe(document.body);
     return stop;
