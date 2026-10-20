@@ -64,7 +64,7 @@ function plainPage() {
 
 function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
   const player = usePlayer();
-  const { station, streamId, playing, connecting, castAvailable } = player;
+  const { station, streamId, playing, connecting } = player;
   const now = useNow();
   // Only a fresh report is presented as playing; an old one waits in
   // Recently played.
@@ -141,7 +141,7 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
               <SongMenu track={current} stationLabel={station.label} className="hero-key" />
             </div>
           )}
-          {castAvailable && (
+          {CAST_KIND && (
             <button
               className="hero-key hero-cast"
               onClick={chooseAudioOutput}

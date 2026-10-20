@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LIVESTREAM_PAGE_URL, SHOW_SAMPLES, UPDATES_URL } from "../config.js";
 import {
   LIVE_ANNOUNCE_MINUTES,
@@ -104,8 +104,9 @@ export function useStationUpdates() {
 
   // Posted updates come first, so a live video the station posts itself
   // wins. Every update goes to the notifications planned ahead
-  // (useStationAlerts).
-  const all = livestream ? [...posted, livestream] : posted;
+  // (useStationAlerts), as the same array until one changes, since this
+  // hook re-renders with the clock.
+  const all = useMemo(() => (livestream ? [...posted, livestream] : posted), [posted, livestream]);
   // Recomputed with the clock; kept as the same objects while their content
   // is unchanged. Compared on content as well as id, so a corrected banner
   // (same id, fixed text or link) replaces the old one without a restart.

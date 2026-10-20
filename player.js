@@ -136,7 +136,6 @@ const playerStore = createStore({
   status: "paused",
   playing: false,
   streamId: "xpn",
-  castAvailable: false,
   track: null,
 });
 const update = (patch) => playerStore.set((current) => ({ ...current, ...patch }));
@@ -189,7 +188,6 @@ if (typeof window !== "undefined") {
     },
   );
   player.setVolume(volumeStore.getSnapshot());
-  update({ castAvailable: player.canCast() });
   // Coming back online skips the rest of a reconnect backoff.
   window.addEventListener("online", () => player.resume());
 }

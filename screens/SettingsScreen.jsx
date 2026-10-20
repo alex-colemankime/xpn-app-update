@@ -2,7 +2,7 @@ import { Capacitor } from "@capacitor/core";
 import { Icon, Segmented, Switch } from "../ui.jsx";
 import { setVolume, VOLUME_SETTABLE } from "../player.js";
 import { CAST_KIND, CAST_NAME } from "../cast.js";
-import { usePlayer, useVolume, chooseAudioOutput } from "../hooks/usePlayer.js";
+import { useVolume, chooseAudioOutput } from "../hooks/usePlayer.js";
 import { NewsletterPanel } from "../components/Newsletter.jsx";
 import {
   ConcertAlerts,
@@ -85,7 +85,6 @@ export function SettingsScreen({
 }) {
   const features = useFeatures();
   const volume = useVolume();
-  const { castAvailable } = usePlayer();
   const trouble = useNotificationTrouble();
   return (
     <>
@@ -118,7 +117,7 @@ export function SettingsScreen({
         <div>
           {/* Volume (not on iPhone, where the buttons set it) and the audio
               output, where there is either. */}
-          {(VOLUME_SETTABLE || castAvailable) && (
+          {(VOLUME_SETTABLE || CAST_KIND) && (
             <section className="settings-panel">
               <h2>Listening</h2>
               {VOLUME_SETTABLE && (
@@ -135,7 +134,7 @@ export function SettingsScreen({
                   />
                 </label>
               )}
-              {castAvailable && (
+              {CAST_KIND && (
                 <button className="setting-row full-width" onClick={chooseAudioOutput}>
                   <span>{CAST_NAME}</span>
                   <Icon name={CAST_KIND || "cast"} />

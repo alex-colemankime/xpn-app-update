@@ -4,6 +4,7 @@ import { Icon } from "./icons.jsx";
 import { Toast, modalClosed, modalOpened } from "./components/Toast.jsx";
 import { track } from "./analytics.js";
 import { useSheetDrag } from "./hooks/useSheetDrag.js";
+import { createStore } from "./storage.js";
 
 export { Icon };
 
@@ -260,19 +261,11 @@ export function PromptLink({ href, icon, title, note }) {
 // Native share sheet where there is one, the clipboard otherwise.
 // When neither the share sheet nor the clipboard works, the words and link
 // open in a sheet of their own, selected, to copy by hand.
-let manual = null;
-const manualListeners = new Set();
-const setManual = (value) => {
-  manual = value;
-  manualListeners.forEach((listener) => listener());
-};
-const subscribeManual = (listener) => {
-  manualListeners.add(listener);
-  return () => manualListeners.delete(listener);
-};
+const manualStore = createStore(null);
+const setManual = manualStore.set;
 
 export function ManualShare() {
-  const what = useSyncExternalStore(subscribeManual, () => manual);
+  const what = useSyncExternalStore(manualStore.subscribe, manualStore.getSnapshot);
   if (!what) return null;
   return (
     <Modal title={`Share ${what.title}`} onClose={() => setManual(null)}>

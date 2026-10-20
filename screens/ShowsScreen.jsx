@@ -59,8 +59,8 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
   };
   // Today's slot, not one that began yesterday and runs past midnight (whose
   // start is before today's): the same show's slot later today isn't on yet.
-  const isOnAir = (slot) =>
-    day === today &&
+  const isOnAir = (slot, d) =>
+    d === today &&
     onAirNow?.show.id === slot.show.id &&
     onAirNow.slot.start === slot.start &&
     onAirNow.start >= 0;
@@ -215,7 +215,7 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
                         {daySlots.map((slot) => (
                           <button
                             ref={showHold(slot.show, onOpen)}
-                            className={`schedule-row ${d === today && isOnAir(slot) ? "on-air-row" : ""}`}
+                            className={`schedule-row ${isOnAir(slot, d) ? "on-air-row" : ""}`}
                             key={`${slot.show.id}-${slot.start}`}
                             onClick={() => onOpen(slot.show.id)}
                           >
@@ -225,9 +225,7 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
                             </time>
                             <Art src={slot.show.img} alt="" loading="lazy" />
                             <span className="schedule-info">
-                              {d === today && isOnAir(slot) && (
-                                <span className="sr-only">On air now: </span>
-                              )}
+                              {isOnAir(slot, d) && <span className="sr-only">On air now: </span>}
                               <strong>{slot.show.name}</strong>
                               {slot.show.host && <span>{slot.show.host}</span>}
                               <small className="schedule-desc">{slot.show.desc}</small>
@@ -242,10 +240,10 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
                   <Empty
                     icon="search"
                     title={searching ? "Nothing on this week" : "No shows"}
-                    action="Clear search"
-                    onAction={() => setQuery("")}
+                    action={searching ? "Clear search" : undefined}
+                    onAction={searching ? () => setQuery("") : undefined}
                   >
-                    Try a different show or host name.
+                    {searching ? "Try a different show or host name." : "Nothing is scheduled."}
                   </Empty>
                 )}
               </div>

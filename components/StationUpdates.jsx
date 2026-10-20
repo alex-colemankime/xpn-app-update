@@ -74,7 +74,7 @@ export function StationBanner({ banner, live, liveDismissed, onWatch, onListenSc
       {item.dismissible && (
         <button
           className="icon-button station-banner-close"
-          aria-label={`Dismiss: ${banner.text || "this message"}`}
+          aria-label={`Dismiss: ${(showLive ? live.title : banner.text) || "this message"}`}
           onClick={() => dismissUpdate(item.id)}
         >
           <Icon name="close" size={18} />

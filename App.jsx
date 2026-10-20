@@ -108,10 +108,16 @@ export default function App() {
   const watching = useWatching(route, updates.live, updates.loaded);
   useSpaceToPlay();
 
-  // The first-run welcome, once. Not over a shared show link: that listener
-  // came for the show.
+  // The first-run welcome, once. Not over a shared link (a show, host,
+  // concert or video): that listener came for it.
   const [welcome, setWelcome] = useState(
-    () => !readJson(ONBOARDED_KEY, false) && !route.showId && !route.hostId && !route.concertId,
+    () =>
+      !readJson(ONBOARDED_KEY, false) &&
+      !route.showId &&
+      !route.hostId &&
+      !route.concertId &&
+      !route.videoId &&
+      !route.live,
   );
   const [WatchPage, setWatchPage] = useState(makeWatchPage);
   // Each time Favorites comes to the front, a new visit (LibraryScreen).

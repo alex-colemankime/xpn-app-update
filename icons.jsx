@@ -148,14 +148,6 @@ const ICONS = {
   heartF: [{ ...outline(NAV_STROKE), fill: "currentColor" }, <path d={HEART} />],
   // Filter: three lines, each shorter, as a funnel.
   filter: [outline(2, roundCaps), <path d="M4 7h16M7 12h10M10 17h4" />],
-  // Privacy: a shield with a check.
-  shield: [
-    outline(1.7, rounded),
-    <>
-      <path d="M12 3 5 6v5.5c0 4.3 2.9 8 7 9.5 4.1-1.5 7-5.2 7-9.5V6l-7-3z" />
-      <path d="m9 12 2.2 2.2L15.5 10" />
-    </>,
-  ],
   // Opens elsewhere (another app, the web): an arrow out of the corner.
   out: [outline(1.8, rounded), <path d="M7 17L17 7M9 7h8v8" />],
   more: [
