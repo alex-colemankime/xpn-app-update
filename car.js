@@ -8,6 +8,7 @@
 
 import { Capacitor, registerPlugin } from "@capacitor/core";
 import { STREAMS } from "./streams.js";
+import { webUrl } from "./text.js";
 
 const CarAudio = registerPlugin("CarAudio");
 
@@ -52,7 +53,9 @@ export function carNowPlaying({ streamId, playing, track }, episode = null) {
       playing: status === "playing" || status === "loading",
       title: ep.title || "WXPN",
       artist: ep.showName || "WXPN",
-      artwork: ep.image || "",
+      // Native code fetches the art itself: only a web address will do (the
+      // app's own show art isn't one; the station tile stands in).
+      artwork: webUrl(ep.image),
     };
   }
   const station = STREAMS[streamId] || STREAMS.xpn;
