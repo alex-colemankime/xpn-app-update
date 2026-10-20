@@ -72,6 +72,29 @@
         padding-block: 28px 64px;
       }
 
+      /* The car screens: wide, in a dark frame. */
+      .cars {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+        gap: 28px;
+        margin-top: 20px;
+      }
+      .car {
+        margin: 0;
+      }
+      .car img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 18px;
+        border: 8px solid var(--bezel);
+        background: var(--bezel);
+      }
+      .car figcaption {
+        margin-top: 10px;
+        font-size: 14px;
+        color: var(--muted);
+      }
       /* Masthead: the app's wordmark, then what this page is. */
       .masthead {
         display: flex;
@@ -1074,6 +1097,47 @@
         </ul>
       </section>
 
+      <section aria-labelledby="car-heading">
+        <h2 id="car-heading">In the car</h2>
+        <p class="section-note">
+          CarPlay and Android Auto draw these themselves from what the app gives them: the three
+          streams with their tiles, and the song, artist and artwork. Drawings of those screens, the
+          same in light and dark. CarPlay needs Apple's approval before it appears in a car.
+        </p>
+        <div class="cars">
+          <figure class="car">
+            <img
+              data-shot="car-carplay-list"
+              width="800"
+              height="480"
+              loading="lazy"
+              alt="CarPlay's WXPN screen: WXPN, 88.5 FM · Public Radio, with its orange tile and a playing indicator; XPN2, XPoNential Radio; and Homegrown, Philadelphia's local music, each with its tile."
+            />
+            <figcaption>CarPlay: the streams, the one playing marked</figcaption>
+          </figure>
+          <figure class="car">
+            <img
+              data-shot="car-carplay-playing"
+              width="800"
+              height="480"
+              loading="lazy"
+              alt="CarPlay's Now Playing: Motion Sickness's artwork, Motion Sickness, Phoebe Bridgers · WXPN, a LIVE tag, and pause between greyed-out skip buttons."
+            />
+            <figcaption>CarPlay: Now Playing, live, so no skip</figcaption>
+          </figure>
+          <figure class="car">
+            <img
+              data-shot="car-auto-playing"
+              width="800"
+              height="480"
+              loading="lazy"
+              alt="Android Auto's Now Playing: Motion Sickness's artwork, the WXPN tile and name, Motion Sickness by Phoebe Bridgers, and a round pause button."
+            />
+            <figcaption>Android Auto: Now Playing</figcaption>
+          </figure>
+        </div>
+      </section>
+
       <section aria-labelledby="desk-heading">
         <h2 id="desk-heading">Tablet and laptop</h2>
         <div class="tablets">
@@ -1189,6 +1253,12 @@
         "widget-ios-light": "img/widget-ios-light.webp",
         "widget-android-dark": "img/widget-android-dark.webp",
         "widget-android-light": "img/widget-android-light.webp",
+        "car-carplay-list-dark": "img/car-carplay-list.webp",
+        "car-carplay-list-light": "img/car-carplay-list.webp",
+        "car-carplay-playing-dark": "img/car-carplay-playing.webp",
+        "car-carplay-playing-light": "img/car-carplay-playing.webp",
+        "car-auto-playing-dark": "img/car-auto-playing.webp",
+        "car-auto-playing-light": "img/car-auto-playing.webp",
         "phone-listen-dark": "img/phone-listen-dark.webp",
         "phone-listen-light": "img/phone-listen-light.webp",
         "phone-live-dark": "img/phone-live-dark.webp",
