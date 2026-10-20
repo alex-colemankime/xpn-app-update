@@ -41,14 +41,16 @@ export function parseRoute(hash) {
   const videoId = parts[1] === "video" && /^\d+$/.test(parts[2] || "") ? parts[2] : null;
   const live = parts[1] === "live";
   const hostId = parts[1] === "host" && parts[2] ? parts[2] : null;
-  return { screen, showId, episodeId, videoId, live, hostId };
+  const concertId = parts[1] === "concert" && parts[2] ? parts[2] : null;
+  return { screen, showId, episodeId, videoId, live, hostId, concertId };
 }
 
-export function routeHash({ screen, showId, episodeId, videoId, live, hostId }) {
+export function routeHash({ screen, showId, episodeId, videoId, live, hostId, concertId }) {
   let hash = `#/${screen}`;
   if (videoId) return `${hash}/video/${encodeURIComponent(videoId)}`;
   if (live) return `${hash}/live`;
   if (hostId) return `${hash}/host/${encodeURIComponent(hostId)}`;
+  if (concertId) return `${hash}/concert/${encodeURIComponent(concertId)}`;
   if (showId) hash += `/show/${encodeURIComponent(showId)}`;
   if (showId && episodeId) hash += `/episode/${encodeURIComponent(episodeId)}`;
   return hash;
@@ -132,7 +134,7 @@ const actions = {
     const route = current();
     // The screen already in front, chosen again (its tab, or the wordmark):
     // back to its top, as a phone's tab bar does.
-    if (screen === route.screen && !route.showId && !route.hostId) {
+    if (screen === route.screen && !route.showId && !route.hostId && !route.concertId) {
       window.scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" });
       return;
     }
@@ -146,7 +148,14 @@ const actions = {
     const route = current();
     if (route.screen !== "settings") return actions.navigate("settings");
     const from = window.history.state?.from;
-    if (from && from !== "settings" && !route.showId && !route.hostId && !depth())
+    if (
+      from &&
+      from !== "settings" &&
+      !route.showId &&
+      !route.hostId &&
+      !route.concertId &&
+      !depth()
+    )
       window.history.back();
     else actions.navigate(from && from !== "settings" ? from : "listen");
   },
@@ -157,11 +166,16 @@ const actions = {
   openHost(hostId) {
     push({ screen: current().screen, hostId }, { depth: depth() + 1 });
   },
+  // A concert's sheet, over the list it was opened from, so Back closes it
+  // and a link can open it.
+  openConcert(concertId) {
+    push({ screen: current().screen, concertId }, { depth: depth() + 1 });
+  },
   // An episode's page (opened from the mini player) gives way to its show's.
   closeEpisode() {
     replace({ ...current(), episodeId: null });
   },
-  // Closes a show's sheet or a host's, however many deep.
+  // Closes a show's sheet, a host's or a concert's, however many deep.
   closeShow() {
     const d = depth();
     if (d > 0) window.history.go(-d);
@@ -191,6 +205,14 @@ const actions = {
 
 // A show opened from outside a screen's props (a song's sheet).
 export const openShow = (showId) => actions.openShow(showId);
+
+// Whether the address has this concert's sheet open. Each concert row asks
+// only about itself, so a change of address re-renders the rows it opens
+// or closes, not every row in a long list.
+export const useConcertOpen = (concertId) =>
+  useSyncExternalStore(subscribe, () => parseRoute(getHash()).concertId === concertId);
+export const openConcert = (concertId) => actions.openConcert(concertId);
+export const closeConcert = () => actions.closeShow();
 
 export function useRoute() {
   const route = parseRoute(useSyncExternalStore(subscribe, getHash));

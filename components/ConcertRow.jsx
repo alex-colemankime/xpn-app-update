@@ -16,6 +16,7 @@ import { holdable, openHoldMenu } from "../hold.js";
 import { useSheetDrag } from "../hooks/useSheetDrag.js";
 import { CALENDAR_URL } from "../links.js";
 import { shiftDate } from "../time.js";
+import { closeConcert, openConcert, useConcertOpen } from "../hooks/useRoute.js";
 
 // Age limits arrive one by one; each row listens for its own, so one arriving
 // re-renders one row, not the list.
@@ -167,7 +168,7 @@ function ConcertSheet({ concert: c, bill, age, onClose }) {
   const [photo, setPhoto] = useState(Boolean(c.image));
   const where = whereOf(c, age);
   return createPortal(
-    <Modal title={bill.headliner || c.artist} onClose={onClose} className="concert-sheet">
+    <Modal title={bill.headliner || c.artist} onClose={onClose} className="concert-sheet" routed>
       <div className="detail-body concert-sheet-body">
         {photo && (
           <img className="concert-photo" src={c.image} alt="" onError={() => setPhoto(false)} />
@@ -211,7 +212,9 @@ function ConcertSheet({ concert: c, bill, age, onClose }) {
 // saves it.
 export function ConcertRow({ concert: c }) {
   const age = useAge(c);
-  const [open, setOpen] = useState(false);
+  // Open by address (#/concerts/concert/<id>), so Back closes it and a link
+  // opens it.
+  const open = useConcertOpen(c.id);
   const bill = splitBill(c.artist);
   const where = whereOf(c, age);
   const when = FULL_DATE.format(dateOf(c));
@@ -253,7 +256,7 @@ export function ConcertRow({ concert: c }) {
         ref={hold}
         className="concert-open"
         aria-haspopup="dialog"
-        onClick={() => setOpen(true)}
+        onClick={() => openConcert(c.id)}
       >
         <Flags concert={c} />
         <strong>{bill.headliner || c.artist}</strong>
@@ -262,7 +265,7 @@ export function ConcertRow({ concert: c }) {
         <span className="sr-only">, {when}</span>
       </button>
       <SaveButton type="concerts" item={c} name={`${c.artist} concert`} />
-      {open && <ConcertSheet concert={c} bill={bill} age={age} onClose={() => setOpen(false)} />}
+      {open && <ConcertSheet concert={c} bill={bill} age={age} onClose={closeConcert} />}
     </div>
   );
 }

@@ -110,7 +110,7 @@ export default function App() {
   // The first-run welcome, once. Not over a shared show link: that listener
   // came for the show.
   const [welcome, setWelcome] = useState(
-    () => !readJson(ONBOARDED_KEY, false) && !route.showId && !route.hostId,
+    () => !readJson(ONBOARDED_KEY, false) && !route.showId && !route.hostId && !route.concertId,
   );
   const [WatchPage, setWatchPage] = useState(makeWatchPage);
   // Each time Favorites comes to the front, a new visit (LibraryScreen).

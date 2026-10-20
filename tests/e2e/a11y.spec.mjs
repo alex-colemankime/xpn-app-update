@@ -239,3 +239,20 @@ test("an alert's View lets go of filters left from before", async ({ page, conte
   await expect(page.locator(".concert-row")).toHaveCount(1);
   await expect(page.locator(".concert-row")).toContainText("Waxahatchee");
 });
+
+test("Back closes a concert's sheet and stays on Concerts; its link opens it again", async ({
+  page,
+}) => {
+  await page.goto("/#/listen");
+  await page.goto("/#/concerts");
+  await page.locator(".concert-day .concert-open").first().click();
+  const sheet = page.locator(".concert-sheet");
+  await expect(sheet).toBeVisible();
+  await expect(page).toHaveURL(/#\/concerts\/concert\//);
+  const link = page.url();
+  await page.goBack();
+  await expect(sheet).toBeHidden();
+  await expect(page).toHaveURL(/#\/concerts$/);
+  await page.goto(link);
+  await expect(sheet).toBeVisible();
+});
