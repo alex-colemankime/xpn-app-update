@@ -16,7 +16,7 @@ quotes can be compared and kept tight.
 - **Phone-only pieces, written and compiling:** CarPlay and Android Auto, a
   home screen widget (iOS and Android), crash reporting (Firebase
   Crashlytics), push registration, background audio and the lock screen.
-- **Tests and builds.** About 330 unit tests and 120 browser tests
+- **Tests and builds.** About 340 unit tests and 130 browser tests
   (phone and desktop, with automated accessibility checks). Every push
   runs them, builds both native apps, and publishes an Android test build.
   A Release workflow signs store builds once the accounts' keys are added.
