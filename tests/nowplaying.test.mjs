@@ -7,6 +7,7 @@ import {
   playedAt,
   durationMinutes,
   withNowPlaying,
+  rememberLengths,
   readPlaylist,
 } from "../nowplaying.js";
 import { shiftDate } from "../time.js";
@@ -240,4 +241,19 @@ test("after the clocks fall back, the file's order says which 1am a song is", ()
 test("a repeated-hour time with nothing before it in the file goes by the clock", () => {
   const rows = normalizePlaylist(fallFile(["01:04"]), Date.parse("2026-11-01T06:05:00Z"));
   assert.equal(new Date(rows[0].at).toISOString(), "2026-11-01T06:04:00.000Z");
+});
+
+test("a song keeps its length after the now-playing file moves on, so it doesn't come back", () => {
+  const known = new Map();
+  const bottle = { date: "2026-10-20", time: "16:40", title: "Bottle", artist: "X", minutes: 4 };
+  // Read while the now-playing file named it: its length is kept.
+  rememberLengths([bottle], known);
+  // Next read: the file has moved on to the next song, the playlist hasn't.
+  const { minutes, ...withoutLength } = bottle;
+  assert.equal(minutes, 4);
+  const [latest] = rememberLengths([withoutLength], known);
+  assert.equal(latest.minutes, 4, "still a 4-minute song, not the 15-minute fallback");
+  // A song never given a length stays without one.
+  const other = { ...withoutLength, title: "Other" };
+  assert.equal(rememberLengths([other], known)[0].minutes, undefined);
 });

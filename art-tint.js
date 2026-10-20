@@ -145,7 +145,60 @@ export function themeTints(rgb) {
   };
   const light = fit(GROUNDS.light, -0.02);
   const dark = fit(GROUNDS.dark, 0.02);
-  return light && dark ? { light, dark } : null;
+  if (!light || !dark) return null;
+  const wash = pageWash(rgb, { light, dark });
+  return wash ? { light, dark, wash } : { light, dark };
+}
+
+// Listen's page, washed in the artwork's own color: its hue, with enough
+// color that one album's page reads differently from the next (not the
+// same faint cream for every cover), at the page's lightness or a little
+// darker where a screen can't show that much of the hue so light (reds and
+// purples), and never so much that text, secondary text or the hearts lose
+// their contrast on it. A cover with next to no color of its own (black
+// and white, a grey) leaves the page plain: no color is the honest wash
+// for it. { light, dark } as hex, or null.
+const WASH = {
+  light: {
+    paper: GROUNDS.light[0],
+    share: 0.5,
+    min: 0.026,
+    max: 0.06,
+    room: -0.045,
+    ink: ["#111111", "#5c5c59"],
+  },
+  dark: {
+    paper: GROUNDS.dark[0],
+    share: 0.4,
+    min: 0.02,
+    max: 0.05,
+    room: 0.045,
+    ink: ["#f0f0ed", "#a2a29f"],
+  },
+};
+const GREY_CHROMA = 0.025;
+export function pageWash(rgb, hearts = null) {
+  const [, chroma, hue] = oklch(rgb);
+  if (chroma < GREY_CHROMA) return null;
+  const out = {};
+  for (const theme of ["light", "dark"]) {
+    const { paper, share, min, max, room, ink } = WASH[theme];
+    const L0 = oklch(parseHex(paper))[0];
+    const fits = (color) =>
+      ink.every((t) => contrast(parseHex(t), color) >= 4.5) &&
+      (!hearts || contrast(parseHex(hearts[theme]), color) >= 3);
+    // The most color up to the target, nearest the page's own lightness.
+    let found = null;
+    for (let c = Math.min(max, Math.max(min, chroma * share)); c > 0.008 && !found; c -= 0.002) {
+      for (let k = 0; k <= 9 && !found; k++) {
+        const color = fromOklchExact([L0 + (room * k) / 9, c, hue]);
+        if (color && fits(color)) found = color;
+      }
+    }
+    if (!found) return null;
+    out[theme] = hex(found);
+  }
+  return out;
 }
 
 // OKLCH from and to sRGB (Björn Ottosson's OKLab), for the page's wash.
@@ -174,6 +227,21 @@ function fromOklch([L, C, H]) {
     -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
     -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
   ].map(fromLinear);
+}
+
+// sRGB from OKLCH, or null when the color is outside sRGB (rather than
+// clipped, which would shift its hue).
+function fromOklchExact([L, C, H]) {
+  const [A, B] = [C * Math.cos(H), C * Math.sin(H)];
+  const l = (L + 0.3963377774 * A + 0.2158037573 * B) ** 3;
+  const m = (L - 0.1055613458 * A - 0.0638541728 * B) ** 3;
+  const s = (L - 0.0894841775 * A - 1.291485548 * B) ** 3;
+  const linear = [
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+  ];
+  return linear.every((v) => v >= -1e-4 && v <= 1 + 1e-4) ? linear.map(fromLinear) : null;
 }
 
 // A wash: `share` of `color` mixed into `paper` (sRGB), then set back to the
@@ -241,9 +309,10 @@ function readTint(url) {
   });
 }
 
-// { light, dark } for an artwork URL, or a precomputed tint ({ light, dark }
-// from the show data); null until known, or when the art gives no color.
-export function useArtTint(url, preset = null) {
+// { tint, known } for an artwork URL: the tint ({ light, dark }, and the
+// page's wash for song artwork) or null when the art gives no color, and
+// whether that is known yet (false while the art is being read).
+export function useArtTintState(url, preset = null) {
   const [found, setFound] = useState({ url: null, tint: null });
   useEffect(() => {
     if (preset || !url) return;
@@ -253,5 +322,10 @@ export function useArtTint(url, preset = null) {
       live = false;
     };
   }, [url, preset]);
-  return preset || (found.url === url ? found.tint : null);
+  if (preset || !url) return { tint: preset || null, known: true };
+  return found.url === url ? { tint: found.tint, known: true } : { tint: null, known: false };
 }
+
+// { light, dark } for an artwork URL, or a precomputed tint ({ light, dark }
+// from the show data); null until known, or when the art gives no color.
+export const useArtTint = (url, preset = null) => useArtTintState(url, preset).tint;

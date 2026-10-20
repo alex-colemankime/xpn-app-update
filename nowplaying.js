@@ -104,6 +104,24 @@ export function withNowPlaying(tracks, nowFile) {
   return [{ ...latest, ...(minutes ? { minutes } : {}), img }, ...tracks.slice(1)];
 }
 
+// Lengths learned from the now-playing file, kept by song (`known`, a Map):
+// that file moves on to the next song before the playlist lists it, and the
+// song still on top would lose its length, fall back to the 15-minute
+// window, and come back as playing after it had ended. Adds a known length
+// back to a song missing one; keeps the latest few. Pure but for `known`.
+export function rememberLengths(tracks, known, keep = 20) {
+  const latest = tracks[0];
+  if (!latest) return tracks;
+  const key = reportedKey(latest);
+  if (latest.minutes > 0) {
+    known.delete(key);
+    known.set(key, latest.minutes);
+    while (known.size > keep) known.delete(known.keys().next().value);
+    return tracks;
+  }
+  return known.has(key) ? [{ ...latest, minutes: known.get(key) }, ...tracks.slice(1)] : tracks;
+}
+
 // When a song played, in the listener's time: "2:32pm".
 export function playedAt(track, timeZone) {
   const at = momentOf(track);
@@ -196,6 +214,8 @@ export function useNowPlaying(streamId) {
     // The last now-playing file that loaded, so one failed fetch does not
     // drop the current song's length (it only applies to the same song).
     let lastNow = null;
+    // Songs' lengths once known, for while the now-playing file has moved on.
+    const lengths = new Map();
     let controller;
     const store = (next) =>
       setByStream((prev) => {
@@ -233,7 +253,10 @@ export function useNowPlaying(streamId) {
         return;
       }
       if (result.nowFile) lastNow = result.nowFile;
-      const tracks = withNowPlaying(result.tracks, result.nowFile || lastNow);
+      const tracks = rememberLengths(
+        withNowPlaying(result.tracks, result.nowFile || lastNow),
+        lengths,
+      );
       if (active) store({ tracks, status: tracks.length ? "ready" : "empty" });
     }
     update();
