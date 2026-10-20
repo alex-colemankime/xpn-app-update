@@ -9,21 +9,24 @@ import { foldName, hostsOfShow } from "../hosts.js";
 // here), then their bio, and their page on xpn.org.
 export function HostSheet({ host, onClose, onOpenShow }) {
   const shows = host.shows.map((id) => SHOWS[id]).filter(Boolean);
+  // Their line from xpn.org, unless it only names a show listed below.
+  const when =
+    host.when && !shows.some((s) => foldName(s.name) === foldName(host.when)) ? host.when : "";
   return (
     <Modal title={host.name} onClose={onClose} className="host-sheet" routed>
       <div className="detail-body">
         <div className="show-detail-hero host-hero">
           {host.img && <img src={host.img} alt="" />}
           <div>
-            {host.when && <p className="host-when">{host.when}</p>}
+            {when && <p className="host-when">{when}</p>}
             <button
-              className="icon-button show-share"
-              aria-label={`Share ${host.name}`}
+              className="text-button host-share"
               onClick={async () =>
                 showToast(await shareText(host.name, `${host.name} on WXPN`, host.page))
               }
             >
-              <Icon name="shareAlt" size={19} />
+              <Icon name="shareAlt" size={17} />
+              Share<span className="sr-only"> {host.name}</span>
             </button>
           </div>
         </div>

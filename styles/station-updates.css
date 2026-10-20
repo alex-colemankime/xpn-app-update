@@ -116,7 +116,6 @@
   letter-spacing: var(--tracking-caption);
 }
 
-.station-banner-live i,
 .live-dot {
   width: 7px;
   height: 7px;
@@ -126,6 +125,7 @@
 .station-banner-live i {
   width: 6px;
   height: 6px;
+  border-radius: 50%;
   background: #fff;
 }
 

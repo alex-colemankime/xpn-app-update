@@ -17,10 +17,8 @@
 .expand-chevron {
   display: inline-flex;
 }
+/* Automatic, Light and Dark: a row of words, as every other choice. */
 .appearance-settings .segmented {
-  display: grid;
-  width: 100%;
-  max-width: 440px;
   margin-top: var(--space-3);
 }
 /* The status line keeps its height, so messages come and go without the

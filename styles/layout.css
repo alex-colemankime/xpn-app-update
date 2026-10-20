@@ -26,14 +26,14 @@
   margin: 0 0 var(--space-10) var(--space-3);
   text-align: left;
 }
-/* The station's own logo (StationLogo.jsx), in ink, its w a step lighter
-   as on xpn.org. */
+/* The station's own logo (StationLogo.jsx), in ink, its w in the Donate
+   button's fill (--brand-w). */
 .station-logo {
   display: block;
   height: auto;
 }
 .station-logo-w {
-  opacity: 0.75;
+  fill: var(--brand-w);
 }
 .brand .station-logo {
   width: 116px;
