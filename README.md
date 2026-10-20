@@ -124,7 +124,7 @@ Like the playlist workout apps build from the songs you like: every song a liste
 
 ## Native apps
 
-The iPhone and Android projects are in `ios/` and `android/` (Capacitor 8, app ID `org.xpn.wxpn`), set up for everything below. The **Native apps** workflow builds both on every push: an Android test build anyone can install (from `main`, the **Android test build** pre-release under Releases), and an unsigned iPhone simulator build that shows the project compiles. Each build's log is on the `native-out` branch. What only a phone can show is listed in [docs/device-testing.md](docs/device-testing.md).
+The iPhone and Android projects are in `ios/` and `android/` (Capacitor 8, app ID `org.xpn.wxpn`), set up for everything below. The **Native apps** workflow builds both on every push: an Android test build anyone can install (from `main`, the **Android test build** pre-release under Releases; signed with a test key that stays the same, so each installs over the last: `android/test-signing/`), and an unsigned iPhone simulator build that shows the project compiles. Each build's log is on the `native-out` branch. What only a phone can show is listed in [docs/device-testing.md](docs/device-testing.md).
 
 Use Node 22 or newer (`.nvmrc` pins 24, as CI does). Capacitor must be 8.4.3 or later: 8.3.5–8.4.2 let remote content load at the app's origin ([GHSA-rvm3-566m-v7fv](https://github.com/advisories/GHSA-rvm3-566m-v7fv)).
 
@@ -141,6 +141,7 @@ Use Node 22 or newer (`.nvmrc` pins 24, as CI does). Capacitor must be 8.4.3 or 
 **What's set up:**
 
 - **Background audio.** iOS: `UIBackgroundModes: audio` and an `AVAudioSession` playback category (`AppDelegate.swift`), so the station plays with the screen locked and through the silent switch. Android: `@capgo/capacitor-media-session` provides the media notification and the foreground service that keeps audio alive.
+- **The radio alarm** is a notification the phone repeats each week by itself, one per chosen day (`alarm.js` › `alarmPlan`), so it keeps ringing if the app isn't opened again. On Android, `patches/` (applied by `patch-package` on install) makes the plugin re-arm each week's alarm as it armed the first, waking the phone and allowed while idle; the plugin is pinned to the version the patch is for.
 - **Notifications** (`@capacitor/local-notifications`): the permission prompt appears when the listener turns reminders or the alarm on. Android 13+ declares `POST_NOTIFICATIONS` and `SCHEDULE_EXACT_ALARM` (from the plugin); Android 14+ leaves exact alarms off for apps that aren't alarm clocks, so turning the alarm on checks and, if needed, offers Settings › Alarms & reminders. (Not `USE_EXACT_ALARM`: Play allows it only for alarm clock and calendar apps.) The notification icon is `res/drawable/ic_stat_wxpn.xml`, the Listen icon. A notification can't start audio by itself on either platform: the alarm wakes the listener, and tapping it starts the station.
 - **Push** (`@capacitor/push-notifications`): the iOS entitlement (`App.entitlements`) and the token hand-off in `AppDelegate.swift`. Notifications arriving while the app is open show as banners (`capacitor.config.json`).
 - **Spotify's sign-in return:** the URL scheme `org.xpn.wxpn` (iOS URL Types; an Android intent filter for `org.xpn.wxpn://spotify-callback`).

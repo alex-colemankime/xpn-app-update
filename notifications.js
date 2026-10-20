@@ -88,14 +88,24 @@ const troubleStore = createStore(false);
 export const useNotificationTrouble = () =>
   useSyncExternalStore(troubleStore.subscribe, troubleStore.getSnapshot);
 
-// A notification due this soon is left out: the phone would deliver it at
-// once rather than at its time.
+// A notification on the phone and due this soon is left as it is: cancelled
+// and scheduled again, it might not make its time. One not yet on the phone
+// is scheduled however soon it's due, as long as its time hasn't passed.
 const TOO_SOON_MS = 5000;
 // A held notification this long past its time has fired; it's let go.
 const FIRED_MS = 60000;
 
+// When a notification is set for, as kept with it on the phone (its
+// extra.slot): a time, or for a weekly one (`on`: { weekday, hour,
+// minute }, Capacitor's), its day and time. A weekly one already on the
+// phone for the same slot is left there: the phone repeats it by itself.
+export const slotOf = (n) =>
+  n.on ? `on:${n.on.weekday}:${n.on.hour}:${n.on.minute}` : `at:${n.at}`;
+
 // The scheduler itself, with the phone's notification API passed in, so it
-// can be tested with a stand-in. `api` is LocalNotifications' shape.
+// can be tested with a stand-in. `api` is LocalNotifications' shape. A
+// plan's notifications are { id, at, title, body, extra }, plus `on` for
+// one that repeats weekly (`at` is then its next time, for ordering).
 export function createScheduler({
   api,
   native = () => true,
@@ -113,35 +123,50 @@ export function createScheduler({
 
   async function reconcile() {
     if (!native()) return "granted";
-    // One moment for the whole pass. Whatever has come due is gone from the
-    // plans for good: delivered already (the phone shows it once), or missed
-    // while the app was closed. Scheduled again, a past date would make the
-    // phone deliver it now, a second time.
-    // One about to fire stays on the phone as it is (held, below): cancelled
-    // now, it could not be scheduled again in time (an alarm would never ring
-    // because some other plan changed a moment before).
+    // One moment for the whole pass, and the phone's pending notifications
+    // as they stand at its start.
     const moment = now();
     const soonest = moment + TOO_SOON_MS;
-    for (const kind of Object.keys(plans)) {
-      held[kind] ||= new Map();
-      for (const n of plans[kind]) if (n.at <= soonest) held[kind].set(n.id, n.at);
-      plans[kind] = plans[kind].filter((n) => n.at > soonest);
-      // Fired a while ago: delivered, so nothing to keep.
-      for (const [id, at] of held[kind]) if (at < moment - FIRED_MS) held[kind].delete(id);
-    }
     const { notifications: pending = [] } = await api.getPending();
     // (Not Object.hasOwn, which iOS gained only in 15.4.)
     const ours = (n) => Object.prototype.hasOwnProperty.call(plans, n.extra?.kind ?? "");
-    const kept = (n) => ours(n) && Boolean(held[n.extra.kind]?.has(n.id));
+    const onPhone = new Map(pending.filter(ours).map((n) => [n.id, n.extra?.slot]));
+    for (const kind of Object.keys(plans)) {
+      held[kind] ||= new Map();
+      // One about to fire that's on the phone for that time stays there as
+      // it is (held): cancelled now, it could not be scheduled again in time
+      // (an alarm would never ring because some other plan changed a moment
+      // before). One whose time has passed is gone from the plan for good:
+      // delivered already, or missed while the app was closed; scheduled
+      // again, the phone would deliver it now, a second time. A weekly one
+      // is never done: the phone repeats it.
+      for (const n of plans[kind]) {
+        if (!n.on && n.at <= soonest && onPhone.get(n.id) === slotOf(n)) held[kind].set(n.id, n.at);
+      }
+      plans[kind] = plans[kind].filter((n) => n.on || (n.at > moment && !held[kind].has(n.id)));
+      // Fired a while ago: delivered, so nothing to keep.
+      for (const [id, at] of held[kind]) if (at < moment - FIRED_MS) held[kind].delete(id);
+    }
+    // Ours left on the phone as they are: the held ones, and weekly ones
+    // already set for the same slot.
+    const planned = new Map(Object.values(plans).flatMap((plan) => plan.map((n) => [n.id, n])));
+    const kept = (n) =>
+      ours(n) &&
+      (Boolean(held[n.extra.kind]?.has(n.id)) ||
+        (planned.get(n.id)?.on && slotOf(planned.get(n.id)) === n.extra?.slot));
+    const keptIds = new Set(pending.filter(kept).map((n) => n.id));
     // Notifications of a kind whose plan hasn't arrived yet this session stay
-    // as they are, and count against the budget, as do the imminent ones.
+    // as they are, and count against the budget, as do the kept ones.
     const room = NOTIFICATION_BUDGET - pending.filter((n) => !ours(n) || kept(n)).length;
     const stale = pending.filter((n) => ours(n) && !kept(n));
     if (stale.length) {
       await api.cancel({ notifications: stale.map((n) => ({ id: n.id })) });
     }
     const allowed = await permission();
-    const wanted = allocateNotifications(plans, room);
+    const toSchedule = Object.fromEntries(
+      Object.entries(plans).map(([kind, plan]) => [kind, plan.filter((n) => !keptIds.has(n.id))]),
+    );
+    const wanted = allocateNotifications(toSchedule, room);
     if (allowed !== "granted" || !wanted.length) {
       onTrouble(false);
       return allowed;
@@ -151,14 +176,16 @@ export function createScheduler({
         id: n.id,
         title: n.title,
         body: n.body,
-        schedule: { at: new Date(n.at), allowWhileIdle: true },
-        extra: { ...n.extra, kind: n.kind },
+        schedule: n.on
+          ? { on: n.on, allowWhileIdle: true }
+          : { at: new Date(n.at), allowWhileIdle: true },
+        extra: { ...n.extra, kind: n.kind, slot: slotOf(n) },
       })),
     });
     // Anything that came due while scheduling may already have been
     // delivered; only the rest must still be pending.
     const later = now() + TOO_SOON_MS;
-    const expected = wanted.filter((n) => n.at > later).length;
+    const expected = wanted.filter((n) => n.on || n.at > later).length;
     const after = await api.getPending();
     onTrouble((after.notifications || []).filter(ours).length < expected);
     return allowed;

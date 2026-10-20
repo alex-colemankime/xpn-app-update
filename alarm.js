@@ -147,21 +147,34 @@ export function alarmDue(alarm, now = new Date()) {
   return dueAlarmDate(alarm, now) ? "alarm" : null;
 }
 
-// For the phone apps, where the alarm is a notification scheduled ahead:
-// every time it should ring over the next week, in the listener's own time,
-// plus a pending snooze. [{ id, at }], soonest first. Ids are fixed per slot
-// (re-planning replaces them) and sit below the range reminders use.
+// For the phone apps, where the alarm is a notification the phone keeps:
+// one for each of its days, repeating weekly by itself (`on`, Capacitor's
+// weekday: 1 is Sunday), so it rings whether or not the app is opened again,
+// plus a pending snooze. [{ id, at, on? }], soonest first; `at` is each one's
+// next time. Ids are fixed per day (re-planning replaces them) and sit below
+// the range reminders use. (The phone repeats a day's alarm without knowing
+// what has rung: one that already rang today, moved later in the day, rings
+// again; the app, opened by it, rings it only once.)
 export const ALARM_ID_BASE = 1000;
-export function alarmPlan(alarm, now = new Date(), days = 7) {
-  if (!alarm.enabled) return [];
+export function alarmPlan(alarm, now = new Date()) {
+  if (!alarm.enabled || !isValidTime(alarm.time)) return [];
   const plan = [];
   if (alarm.snoozeUntil > now.getTime()) plan.push({ id: ALARM_ID_BASE, at: alarm.snoozeUntil });
   const [hour, minute] = alarm.time.split(":").map(Number);
-  for (let k = 0; k <= days; k++) {
-    const at = new Date(now.getFullYear(), now.getMonth(), now.getDate() + k, hour, minute);
-    if (at <= now || !alarm.repeatDays.includes(at.getDay())) continue;
-    if (dateKey(at) === alarm.lastTriggeredDate) continue; // already rang today
-    plan.push({ id: ALARM_ID_BASE + 1 + k, at: at.getTime() });
+  for (const day of new Set(alarm.repeatDays)) {
+    // Its next time: today's if still to come (and it hasn't rung today),
+    // else a later day's.
+    let at = null;
+    for (let k = 0; k <= 7 && !at; k++) {
+      const t = new Date(now.getFullYear(), now.getMonth(), now.getDate() + k, hour, minute);
+      if (t > now && t.getDay() === day && dateKey(t) !== alarm.lastTriggeredDate) at = t;
+    }
+    if (!at) continue;
+    plan.push({
+      id: ALARM_ID_BASE + 1 + day,
+      at: at.getTime(),
+      on: { weekday: day + 1, hour, minute },
+    });
   }
   return plan.sort((a, b) => a.at - b.at);
 }

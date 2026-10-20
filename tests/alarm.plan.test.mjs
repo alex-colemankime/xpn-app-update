@@ -5,13 +5,23 @@ import { reminderId } from "../reminders.js";
 
 const local = (y, m, d, h, mi) => new Date(y, m - 1, d, h, mi);
 
-test("the phone alarm is planned a week ahead on its repeat days", () => {
+test("the phone alarm is one weekly notification per day, so it never runs out", () => {
   const alarm = normalizeAlarm({ enabled: true, time: "07:00", repeatDays: [1, 3, 5] });
   const now = local(2026, 10, 5, 6, 0); // a Monday, before the alarm
   const plan = alarmPlan(alarm, now);
-  const days = plan.map((a) => new Date(a.at).getDay());
-  assert.deepEqual(days, [1, 3, 5, 1], "Mon, Wed, Fri, then next Mon");
-  assert.ok(plan.every((a) => new Date(a.at).getHours() === 7));
+  assert.deepEqual(
+    plan.map((a) => a.on),
+    [
+      { weekday: 2, hour: 7, minute: 0 }, // Capacitor's weekdays: 1 is Sunday
+      { weekday: 4, hour: 7, minute: 0 },
+      { weekday: 6, hour: 7, minute: 0 },
+    ],
+  );
+  assert.deepEqual(
+    plan.map((a) => new Date(a.at).getDay()),
+    [1, 3, 5],
+    "each one's next time, soonest first",
+  );
   assert.equal(new Set(plan.map((a) => a.id)).size, plan.length, "ids are unique");
 });
 

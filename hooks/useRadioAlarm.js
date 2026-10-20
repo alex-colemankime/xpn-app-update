@@ -74,8 +74,9 @@ export function useRadioAlarm() {
     return () => clearInterval(timer);
   }, [alarm.enabled]);
 
-  // Native: keep a week of alarms scheduled on the phone, rolled forward
-  // whenever the app comes back to the foreground.
+  // Native: the alarm's days on the phone as notifications it repeats each
+  // week by itself (alarmPlan), checked again whenever the app comes back to
+  // the foreground.
   const { enabled, time, streamId, snoozeUntil, lastTriggeredDate } = alarm;
   const days = alarm.repeatDays.join();
   useEveryShow(() => {

@@ -8,7 +8,9 @@ notifications, links, the car, and how the system treats the app.
 Get the builds from:
 
 - **Android:** the **Android test build** pre-release on GitHub (Releases),
-  rebuilt from every push to `main`. Open `wxpn-test.apk` on the phone.
+  rebuilt from every push to `main`. Open `wxpn-test.apk` on the phone; each
+  new one installs over the last (they share a test signing key). A test
+  build installed before that key was added has to be uninstalled once.
 - **iPhone:** TestFlight, once the Release workflow can sign (see README ›
   Native apps). Until then, Xcode on a Mac: open `ios/App/App.xcodeproj`,
   choose the team under Signing & Capabilities, and run on a connected phone.
@@ -51,6 +53,12 @@ what you did, what happened, and a screen recording if you can.
       it arrives on time; tapping starts the wake-up station at the alarm
       volume. Android 14+: the prompt to allow Alarms & reminders appears
       when the alarm is turned on.
+- [ ] The alarm keeps ringing with the app left closed: set it for a time
+      a few minutes ahead on today's weekday, let it ring, then (without
+      opening the app) move the phone's clock a week on, or leave it two
+      weeks; it rings each week. On Android, with the phone left idle and
+      unplugged overnight, the next week's alarm is still on time.
+- [ ] An alarm set for under a minute from now still rings.
 - [ ] Turn notifications off for WXPN in the phone's Settings, reopen the
       app: reminders and the alarm switch themselves off and say why.
 - [ ] Android: the notification icon is the station icon, not a square.

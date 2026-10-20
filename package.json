@@ -17,7 +17,8 @@
     "format:check": "prettier --check .",
     "check": "npm run lint && npm run format:check && npm test && npm run build",
     "cap:sync": "vite build && cap sync",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@capacitor-community/in-app-review": "^8.0.0",
@@ -28,7 +29,7 @@
     "@capacitor/core": "^8.4.3",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.4.3",
-    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/local-notifications": "8.3.1",
     "@capacitor/push-notifications": "^8.1.2",
     "@capacitor/status-bar": "^8.0.4",
     "@capacitor/text-zoom": "^8.0.1",
@@ -51,6 +52,7 @@
     "eslint": "^10.11.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.12.0",
+    "patch-package": "^8.0.1",
     "prettier": "^3.9.9",
     "vite": "^8.0.16"
   }
