@@ -3,7 +3,7 @@
 The app shows what WXPN's playlist files say
 (`origin.xpn.org/utils/playlist/json/<date>.json` and
 `…/nowplaying/json/xpnNowPlaying.json`). Three problems in those files show
-up in the app, and xpn.org's own playlist page. They can only be fixed where
+up in the app. They can only be fixed where
 the files are made. Examples are from October 13–20, 2026.
 
 ## 1. Accented letters become spaces
