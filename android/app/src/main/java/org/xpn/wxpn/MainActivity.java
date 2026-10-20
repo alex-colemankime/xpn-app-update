@@ -21,13 +21,21 @@ public class MainActivity extends BridgeActivity {
         fromWidget(intent);
     }
 
-    // The widget's play key (WxpnWidget): play or pause, handed to the web app
-    // as the car's commands are (car.js), and kept until it's listening.
+    // The widget's keys (WxpnWidget): play or pause, or a stream to play,
+    // handed to the web app as the car's commands are (car.js), and kept
+    // until it's listening.
     private void fromWidget(Intent intent) {
-        if (intent != null && WxpnWidget.ACTION_TOGGLE.equals(intent.getAction())) {
+        if (intent == null) return;
+        String action = intent.getAction();
+        if (WxpnWidget.ACTION_TOGGLE.equals(action)) {
             CarBridge.INSTANCE.command("toggle", null);
-            // Once only: not again when the activity is recreated.
-            intent.setAction(Intent.ACTION_MAIN);
+        } else if (WxpnWidget.ACTION_PLAY.equals(action)) {
+            // A stream's name in the widget's top row: that stream, playing.
+            CarBridge.INSTANCE.command("play", intent.getStringExtra(WxpnWidget.EXTRA_STATION));
+        } else {
+            return;
         }
+        // Once only: not again when the activity is recreated.
+        intent.setAction(Intent.ACTION_MAIN);
     }
 }

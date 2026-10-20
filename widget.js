@@ -5,7 +5,8 @@
 // android/app/src/main/java/org/xpn/wxpn/HomeWidgetPlugin.kt), which stores
 // what's playing where the widget can read it and asks the system to redraw
 // it. The widget's play key opens the app and plays or pauses, as a car's
-// play key does (car.js, "toggle").
+// play key does (car.js, "toggle"), and a tap on a stream's name in its top
+// row opens the app playing that stream (car.js, "play" with a station).
 
 import { Capacitor, registerPlugin } from "@capacitor/core";
 import { STREAMS } from "./streams.js";
@@ -13,10 +14,10 @@ import { STREAMS } from "./streams.js";
 const HomeWidget = registerPlugin("HomeWidget");
 
 // What the widget shows. Pure, so it can be tested.
-//   station   the stream, as its tab names it (WXPN, XPN2, Homegrown), or
-//             the show's name while an archived episode has the player
-//   detail    under it: the station's line (88.5 FM · Public Radio), or
-//             "Archive" for an episode
+//   stationId the stream playing, marked in the widget's row of streams
+//             (WXPN, XPN2, Homegrown; a tap on one plays it), or "" while an
+//             archived episode has the player
+//   station   its name (WXPN, XPN2, Homegrown), or the episode's show
 //   title, artist, artwork   the song when one is known, else the station
 //   show      the show on the air (WXPN's schedule only), else ""
 //   playing   whether the player is playing (or about to)
@@ -26,7 +27,6 @@ export function widgetNowPlaying({ streamId, playing, track }, episode = null, o
     return {
       stationId: "",
       station: ep.showName || "WXPN",
-      detail: "Archive",
       title: ep.title || "WXPN",
       artist: ep.showName || "",
       show: "",
@@ -39,7 +39,6 @@ export function widgetNowPlaying({ streamId, playing, track }, episode = null, o
   return {
     stationId: station.id,
     station: station.label,
-    detail: station.tagline,
     title: song ? track.title : station.label,
     artist: song ? track.artist || "" : station.tagline,
     show: station.id === "xpn" ? onAir : "",

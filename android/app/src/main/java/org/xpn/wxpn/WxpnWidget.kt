@@ -1,8 +1,9 @@
-// The home screen widget, Android side: a block with the stream you're
-// listening to, the song's artwork, title and artist, the show on the air,
-// and a play key. What it shows comes from the app (HomeWidgetPlugin,
-// widget.js). A tap on it opens the app; the play key opens it and plays or
-// pauses (MainActivity hands that to the web app as the car's "toggle").
+// The home screen widget, Android side: a block with the streams (the one
+// you're listening to marked), the song's artwork, title and artist, the
+// show on the air, and a play key. What it shows comes from the app
+// (HomeWidgetPlugin, widget.js). A tap on it opens the app; the play key
+// opens it and plays or pauses, and a stream's name opens it playing that
+// stream (MainActivity hands both to the web app as the car's commands).
 //
 // Its size and look: res/xml/wxpn_widget_info.xml, res/layout/wxpn_widget.xml.
 
@@ -14,6 +15,10 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Typeface
+import android.text.SpannableString
+import android.text.style.StyleSpan
+import android.text.style.UnderlineSpan
 import android.view.View
 import android.widget.RemoteViews
 
@@ -24,6 +29,15 @@ class WxpnWidget : AppWidgetProvider() {
 
     companion object {
         const val ACTION_TOGGLE = "org.xpn.wxpn.WIDGET_TOGGLE"
+        const val ACTION_PLAY = "org.xpn.wxpn.WIDGET_PLAY"
+        const val EXTRA_STATION = "stationId"
+
+        /** The streams in the widget's top row, as the app's tabs name them (streams.js). */
+        private val STATIONS = listOf(
+            Triple("xpn", "WXPN", R.id.widget_st_xpn),
+            Triple("xpn2", "XPN2", R.id.widget_st_xpn2),
+            Triple("homegrown", "Homegrown", R.id.widget_st_homegrown),
+        )
         private const val ACTION_OPEN = "org.xpn.wxpn.WIDGET_OPEN"
 
         /** Redraws every WXPN widget on the home screen. */
@@ -37,9 +51,24 @@ class WxpnWidget : AppWidgetProvider() {
             val now = WidgetState.read(context)
             val views = RemoteViews(context.packageName, R.layout.wxpn_widget)
 
-            views.setTextViewText(R.id.widget_station, now.station)
-            views.setTextViewText(R.id.widget_detail, now.detail)
-            views.setViewVisibility(R.id.widget_detail, if (now.detail.isEmpty()) View.GONE else View.VISIBLE)
+            // The streams, the one playing in ink, bold and underlined.
+            val ink = context.getColor(R.color.widget_text)
+            val muted = context.getColor(R.color.widget_muted)
+            STATIONS.forEachIndexed { i, (id, label, view) ->
+                val on = id == now.stationId
+                val text = SpannableString(label)
+                if (on) {
+                    text.setSpan(StyleSpan(Typeface.BOLD), 0, label.length, 0)
+                    text.setSpan(UnderlineSpan(), 0, label.length, 0)
+                }
+                views.setTextViewText(view, text)
+                views.setTextColor(view, if (on) ink else muted)
+                views.setContentDescription(
+                    view,
+                    context.getString(if (on) R.string.widget_station_on else R.string.widget_station_play, label),
+                )
+                views.setOnClickPendingIntent(view, open(context, ACTION_PLAY, 10 + i, id))
+            }
             views.setTextViewText(R.id.widget_title, now.title)
             views.setTextViewText(R.id.widget_artist, now.artist)
             views.setViewVisibility(R.id.widget_artist, if (now.artist.isEmpty()) View.GONE else View.VISIBLE)
@@ -68,10 +97,11 @@ class WxpnWidget : AppWidgetProvider() {
         }
 
         /** Opens the app, carrying what the widget asked for. */
-        private fun open(context: Context, action: String, code: Int): PendingIntent {
+        private fun open(context: Context, action: String, code: Int, stationId: String? = null): PendingIntent {
             val intent = Intent(context, MainActivity::class.java)
                 .setAction(action)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            if (stationId != null) intent.putExtra(EXTRA_STATION, stationId)
             return PendingIntent.getActivity(
                 context,
                 code,

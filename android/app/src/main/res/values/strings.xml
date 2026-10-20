@@ -9,4 +9,6 @@
     <string name="widget_play">Play %1$s</string>
     <string name="widget_pause">Pause %1$s</string>
     <string name="widget_play_wxpn">Play WXPN</string>
+    <string name="widget_station_on">%1$s, playing</string>
+    <string name="widget_station_play">Play %1$s</string>
 </resources>

@@ -22,4 +22,16 @@
              the app's page, light or dark with the phone. -->
         <item name="windowSplashScreenBackground">@color/wxpn_page</item>
     </style>
+
+    <!-- A stream's name in the widget's top row (res/layout/wxpn_widget.xml):
+         tall enough to tap. -->
+    <style name="WidgetStation">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">6dp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textColor">@color/widget_muted</item>
+        <item name="android:textSize">13sp</item>
+    </style>
 </resources>

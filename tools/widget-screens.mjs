@@ -19,7 +19,6 @@ await mkdir(OUT, { recursive: true });
 
 const NOW = {
   station: "WXPN",
-  detail: "88.5 FM · Public Radio",
   title: "Motion Sickness",
   artist: "Phoebe Bridgers",
   show: "World Cafe",
@@ -63,8 +62,19 @@ const TILE = { light: "rgba(255,255,255,.55)", dark: "rgba(255,255,255,.12)" };
 const pause = (color) =>
   `<svg width="18" height="18" viewBox="0 0 24 24"><path fill="${color}" d="M7 4h3a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm7 0h3a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/></svg>`;
 
+// The streams across the top: the one playing in ink, bold and underlined.
 const stream = (c) =>
-  `<div style="display:flex;gap:6px;align-items:baseline;white-space:nowrap;overflow:hidden"><b style="font-size:13px;color:${c.ink}">${NOW.station}</b><span style="font-size:12px;color:${c.muted};overflow:hidden;text-overflow:ellipsis">${NOW.detail}</span></div>`;
+  `<div style="display:flex;gap:14px;white-space:nowrap;font-size:13px">${[
+    "WXPN",
+    "XPN2",
+    "Homegrown",
+  ]
+    .map((name) =>
+      name === NOW.station
+        ? `<b style="color:${c.ink};text-decoration:underline;text-underline-offset:2px">${name}</b>`
+        : `<span style="color:${c.muted}">${name}</span>`,
+    )
+    .join("")}</div>`;
 const song = (c, size = 17) =>
   `<div><div style="font-size:${size}px;font-weight:700;color:${c.ink};line-height:1.2">${NOW.title}</div><div style="font-size:14px;color:${c.muted};margin-top:2px">${NOW.artist}</div></div>`;
 const key = (c, radius = 12, side = 44) =>

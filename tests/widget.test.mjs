@@ -10,7 +10,6 @@ test("the widget names the stream, the song and the show on the air", () => {
     {
       stationId: "xpn",
       station: "WXPN",
-      detail: "88.5 FM · Public Radio",
       title: "Motion Sickness",
       artist: "Phoebe Bridgers",
       show: "World Cafe",
@@ -39,7 +38,7 @@ test("an archived episode in the player bar is shown as the episode", () => {
     "World Cafe",
   );
   assert.equal(w.station, "Sleepy Hollow");
-  assert.equal(w.detail, "Archive");
+  assert.equal(w.stationId, "");
   assert.equal(w.title, "Sunday, October 18");
   assert.equal(w.playing, true);
   assert.equal(w.show, "");

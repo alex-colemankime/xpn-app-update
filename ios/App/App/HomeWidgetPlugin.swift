@@ -35,7 +35,7 @@ public class HomeWidgetPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func update(_ call: CAPPluginCall) {
         let now: [String: Any] = [
             "station": call.getString("station") ?? "WXPN",
-            "detail": call.getString("detail") ?? "",
+            "stationId": call.getString("stationId") ?? "",
             "title": call.getString("title") ?? "WXPN",
             "artist": call.getString("artist") ?? "",
             "show": call.getString("show") ?? "",

@@ -25,7 +25,8 @@ object WidgetState {
 
     data class NowPlaying(
         val station: String = "WXPN",
-        val detail: String = "88.5 FM · Public Radio",
+        /** The stream playing ("" while an archived episode has the player). */
+        val stationId: String = "xpn",
         val title: String = "WXPN",
         val artist: String = "88.5 FM · Public Radio",
         val show: String = "",
@@ -38,7 +39,7 @@ object WidgetState {
         val d = NowPlaying()
         return NowPlaying(
             station = p.getString("station", d.station) ?: d.station,
-            detail = p.getString("detail", d.detail) ?: d.detail,
+            stationId = p.getString("stationId", d.stationId) ?: d.stationId,
             title = p.getString("title", d.title) ?: d.title,
             artist = p.getString("artist", d.artist) ?: d.artist,
             show = p.getString("show", d.show) ?: d.show,
@@ -50,7 +51,7 @@ object WidgetState {
     fun write(context: Context, now: NowPlaying) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putString("station", now.station)
-            .putString("detail", now.detail)
+            .putString("stationId", now.stationId)
             .putString("title", now.title)
             .putString("artist", now.artist)
             .putString("show", now.show)
@@ -79,7 +80,7 @@ class HomeWidgetPlugin : Plugin() {
         val before = WidgetState.read(app)
         val now = WidgetState.NowPlaying(
             station = call.getString("station") ?: "WXPN",
-            detail = call.getString("detail") ?: "",
+            stationId = call.getString("stationId") ?: "",
             title = call.getString("title") ?: "WXPN",
             artist = call.getString("artist") ?: "",
             show = call.getString("show") ?: "",

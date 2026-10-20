@@ -50,16 +50,23 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     /// The home screen widget's links (WXPNWidget.swift): opening the app is
-    /// all a tap on it asks; its play key also plays or pauses, handed to the
-    /// web app as the car's commands are (CarAudioPlugin, car.js "toggle").
+    /// all a tap on it asks; its play key also plays or pauses, and a
+    /// stream's name plays that stream, handed to the web app as the car's
+    /// commands are (CarAudioPlugin, car.js "toggle" and "play").
     private func fromWidget(_ url: URL) -> Bool {
         guard url.scheme == "org.xpn.wxpn", url.host == "widget" else { return false }
+        // The play key: play or pause. A stream's name: that stream, playing.
+        var command: [String: Any]?
         if url.path == "/toggle" {
+            command = ["action": "toggle"]
+        } else if url.pathComponents.count == 3, url.pathComponents[1] == "play" {
+            command = ["action": "play", "stationId": url.pathComponents[2]]
+        }
+        if let command {
             // Next turn of the main queue: at launch, after the web app's
             // plugins have loaded and are listening for it.
             DispatchQueue.main.async {
-                NotificationCenter.default.post(
-                    name: .wxpnCarCommand, object: nil, userInfo: ["action": "toggle"])
+                NotificationCenter.default.post(name: .wxpnCarCommand, object: nil, userInfo: command)
             }
         }
         return true

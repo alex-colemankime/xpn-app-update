@@ -1,12 +1,14 @@
-// The home screen widget, iOS side: a block with the stream you're
-// listening to, the song's artwork, title and artist, the show on the air,
-// and a play key. What it shows comes from the app (HomeWidgetPlugin.swift,
-// widget.js) through the app group. A tap on it opens the app; the play key
-// opens it and plays or pauses (SceneDelegate hands that to the web app as
-// the car's "toggle").
+// The home screen widget, iOS side: a block with the streams (the one
+// you're listening to marked), the song's artwork, title and artist, the
+// show on the air, and a play key. What it shows comes from the app
+// (HomeWidgetPlugin.swift, widget.js) through the app group. A tap on it
+// opens the app; the play key opens it and plays or pauses, and a stream's
+// name opens it playing that stream (SceneDelegate hands both to the web
+// app as the car's commands).
 //
-// Small: the artwork, the stream's name and the song. Medium (the block): the artwork beside
-// the stream, the song, the show and play. Large: the artwork across the top.
+// Small: the artwork, the stream's name and the song. Medium (the block):
+// the artwork beside the streams, the song, the show and play. Large: the
+// artwork across the top.
 
 import SwiftUI
 import WidgetKit
@@ -18,11 +20,14 @@ private enum Shared {
     static let artFile = "widget-art.jpg"
     static let open = URL(string: "org.xpn.wxpn://widget/open")!
     static let toggle = URL(string: "org.xpn.wxpn://widget/toggle")!
+    static func play(_ id: String) -> URL { URL(string: "org.xpn.wxpn://widget/play/\(id)")! }
+    /// The streams, as the app's tabs name them (streams.js).
+    static let stations = [("xpn", "WXPN"), ("xpn2", "XPN2"), ("homegrown", "Homegrown")]
 }
 
 struct NowPlaying {
+    var stationId = "xpn"
     var station = "WXPN"
-    var detail = "88.5 FM · Public Radio"
     var title = "WXPN"
     var artist = "88.5 FM · Public Radio"
     var show = ""
@@ -34,8 +39,8 @@ struct NowPlaying {
         guard let saved = UserDefaults(suiteName: Shared.group)?.dictionary(forKey: Shared.key) else {
             return now
         }
+        now.stationId = saved["stationId"] as? String ?? ""
         now.station = saved["station"] as? String ?? now.station
-        now.detail = saved["detail"] as? String ?? ""
         now.title = saved["title"] as? String ?? now.title
         now.artist = saved["artist"] as? String ?? ""
         now.show = saved["show"] as? String ?? ""
@@ -51,7 +56,7 @@ struct NowPlaying {
 
     /// For the widget gallery.
     static let sample = NowPlaying(
-        station: "WXPN", detail: "88.5 FM · Public Radio", title: "Motion Sickness",
+        stationId: "xpn", station: "WXPN", title: "Motion Sickness",
         artist: "Phoebe Bridgers", show: "World Cafe", playing: true)
 }
 
@@ -109,14 +114,22 @@ struct Artwork: View {
     }
 }
 
-/// The stream: its name, then its line, quieter.
-struct StreamLine: View {
+/// The streams: the one playing in ink, bold and underlined; a tap on
+/// another opens the app playing it.
+struct StationSwitcher: View {
     let now: NowPlaying
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
-            Text(now.station).font(.system(size: 13, weight: .bold)).foregroundColor(.ink)
-            if !now.detail.isEmpty {
-                Text(now.detail).font(.system(size: 12)).foregroundColor(.muted)
+        HStack(spacing: 14) {
+            ForEach(Shared.stations, id: \.0) { station in
+                let (id, label) = station
+                let on = id == now.stationId
+                Link(destination: Shared.play(id)) {
+                    Text(label)
+                        .font(.system(size: 13, weight: on ? .bold : .regular))
+                        .underline(on)
+                        .foregroundColor(on ? .ink : .muted)
+                }
+                .accessibilityLabel(on ? "\(label), playing" : "Play \(label)")
             }
         }
         .lineLimit(1)
@@ -184,7 +197,7 @@ struct WidgetView: View {
                 Artwork(image: now.art)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                StreamLine(now: now)
+                StationSwitcher(now: now)
                 HStack(alignment: .bottom) {
                     VStack(alignment: .leading, spacing: 4) {
                         Song(now: now, titleSize: 20)
@@ -202,7 +215,7 @@ struct WidgetView: View {
                     .aspectRatio(1, contentMode: .fit)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 VStack(alignment: .leading, spacing: 0) {
-                    StreamLine(now: now)
+                    StationSwitcher(now: now)
                     Spacer(minLength: 4)
                     Song(now: now)
                     Spacer(minLength: 4)
