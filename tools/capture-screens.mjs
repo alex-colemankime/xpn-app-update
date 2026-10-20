@@ -581,11 +581,10 @@ const SHOTS = {
     await page.locator(".saved-videos .video-card img").first().waitFor();
     await settle(page);
   },
-  // First launch: the four steps of the welcome.
+  // First launch: the three steps of the welcome.
   "phone-welcome": (page) => welcomeAt(page, 1),
   "phone-welcome2": (page) => welcomeAt(page, 2),
   "phone-welcome3": (page) => welcomeAt(page, 3),
-  "phone-welcome4": (page) => welcomeAt(page, 4),
   // Listen, ready to play.
   "phone-listen": async (page) => {
     await openListen(page);

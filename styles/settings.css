@@ -66,6 +66,12 @@
 .settings-panel > :is(h2, .section-heading) + :is(.setting-row, .setting-choice, .alert-row) {
   margin-top: var(--space-2);
 }
+/* A title reads as a title, not as one more row: the first row straight
+   under it has no hairline of its own (Stay connected, Listening). */
+.settings-panel > :is(h2, .section-heading) + :is(.setting-row, .setting-choice, .alert-row),
+.settings-panel > :is(h2, .section-heading) + .social-links > .social-row:first-child {
+  border-top: 0;
+}
 .alarm-time {
   display: flex;
   flex-direction: column;

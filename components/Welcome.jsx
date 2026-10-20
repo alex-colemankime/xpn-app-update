@@ -10,7 +10,6 @@ import { tap } from "../haptics.js";
 import { PLAYLIST_NAME } from "../music-services.js";
 import { connect } from "../playlist-sync.js";
 import { offeredServices } from "./PlaylistSync.jsx";
-import { SocialLinks } from "./SocialLinks.jsx";
 
 // The featured shows with a place on the FM schedule, so each one can also
 // be reminded about.
@@ -76,8 +75,8 @@ function PlaylistPreview() {
 }
 
 // First launch only: follow a few shows, turn on reminders for them,
-// connect Spotify or Apple Music so hearted songs build a playlist, and
-// finally the station's social accounts. A step with nothing to offer is
+// and connect Spotify or Apple Music so hearted songs build a playlist. No
+// step sends the listener out of the app. A step with nothing to offer is
 // left out (no reminders without a followed show, no playlist step when no
 // service is set up). Closing it any way counts as done; it never comes back.
 export function Welcome({ onDone }) {
@@ -87,7 +86,6 @@ export function Welcome({ onDone }) {
     "follow",
     ...(followed.length ? ["remind"] : []),
     ...(services.length ? ["music"] : []),
-    "social",
   ];
   const [stepName, setStepName] = useState("follow");
   const step = Math.max(0, steps.indexOf(stepName));
@@ -146,7 +144,7 @@ export function Welcome({ onDone }) {
               {counter}
               {followed.length ? (
                 <button className="primary-button" onClick={next}>
-                  Next
+                  {step + 1 >= steps.length ? "Start listening" : "Next"}
                 </button>
               ) : (
                 <button className="text-button" onClick={next}>
@@ -184,20 +182,6 @@ export function Welcome({ onDone }) {
               {counter}
               <button className="text-button" onClick={next}>
                 Not now
-              </button>
-            </div>
-          </>
-        ) : stepName === "social" ? (
-          <>
-            <h3 ref={heading} tabIndex={-1}>
-              Follow WXPN and World Cafe
-            </h3>
-            <p className="welcome-lede">These links are also in Settings › Stay connected.</p>
-            <SocialLinks />
-            <div className="welcome-actions">
-              {counter}
-              <button className="primary-button" onClick={onDone}>
-                Start listening
               </button>
             </div>
           </>

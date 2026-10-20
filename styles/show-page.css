@@ -171,22 +171,25 @@
 /* A host's sheet: their portrait (square, as on xpn.org) and line, the
    shows they host as rows that open them, then their bio in ink, as
    reading. */
-.host-hero {
-  align-items: flex-end;
+/* On their own page the host's portrait is the page's picture: across the
+   sheet, a little wider than tall, framed on the face, with their line
+   under it. */
+.host-sheet .host-hero {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
 }
-.host-hero > img {
-  width: 120px;
-  height: 120px;
-  border-radius: var(--radius-s);
-}
-.host-share {
-  gap: var(--space-2);
-  color: var(--text);
+.host-sheet .host-hero > img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-position: 50% 25%;
+  border-radius: var(--radius-m);
 }
 .host-hero p.host-when {
   color: var(--text);
   font-size: var(--text-body);
-  margin: 0 0 var(--space-3);
+  margin: 0;
 }
 .host-shows {
   list-style: none;

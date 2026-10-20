@@ -1,5 +1,4 @@
-import { Art, Icon, Modal, shareText } from "../ui.jsx";
-import { showToast } from "../toast.js";
+import { Art, Icon, Modal } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { deviceIsEastern } from "../time.js";
 import { foldName, hostsOfShow } from "../hosts.js";
@@ -17,18 +16,7 @@ export function HostSheet({ host, onClose, onOpenShow }) {
       <div className="detail-body">
         <div className="show-detail-hero host-hero">
           {host.img && <img src={host.img} alt="" />}
-          <div>
-            {when && <p className="host-when">{when}</p>}
-            <button
-              className="text-button host-share"
-              onClick={async () =>
-                showToast(await shareText(host.name, `${host.name} on WXPN`, host.page))
-              }
-            >
-              <Icon name="shareAlt" size={17} />
-              Share<span className="sr-only"> {host.name}</span>
-            </button>
-          </div>
+          {when && <p className="host-when">{when}</p>}
         </div>
         {shows.length > 0 && (
           <>
