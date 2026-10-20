@@ -134,7 +134,7 @@ export const inShowOrder = (concerts) =>
 
 // The region nearly every concert is in: a row leaves it unsaid, and names
 // any other (Lehigh Valley, Central PA) or the town when the calendar has one.
-export const HOME_REGION = "Philadelphia Area";
+const HOME_REGION = "Philadelphia Area";
 export const concertPlace = (c) => c.city || (c.region !== HOME_REGION ? c.region : "") || "";
 
 // The calendar's age field: "AA", "18+", "21+".

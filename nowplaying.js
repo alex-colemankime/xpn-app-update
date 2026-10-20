@@ -76,9 +76,6 @@ export function durationMinutes(text) {
   return total > 0 && total < 24 * 60 ? Math.ceil(total) : null;
 }
 
-// An artist as the app shows it: a show's segment by the show's name, without
-// the bars the playlist puts around it. A segment of one of the station's
-// shows also carries the show's id.
 // A field of the station's files as text: entities decoded, and the
 // backslashes some entries carry before quotes ("This Year\'s Model") gone.
 const feedText = (value) =>
@@ -86,6 +83,9 @@ const feedText = (value) =>
     .replace(/\\+(['"])/g, "$1")
     .trim();
 
+// An artist as the app shows it: a show's segment by the show's name, without
+// the bars the playlist puts around it. A segment of one of the station's
+// shows also carries the show's id.
 const artistOf = (raw) => {
   const plain = feedText(raw);
   const segment = showSegment(plain);

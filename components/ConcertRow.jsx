@@ -44,7 +44,7 @@ const dateOf = (c) => new Date(`${c.date}T12:00:00`);
 // A day's heading, in two parts: the day as a word ("Tonight", "Tomorrow",
 // then the weekday, "Wednesday") and its date ("Oct 21", with the year only
 // when it isn't this one). Eastern dates, as the calendar's are.
-export function dayHeading(date, today = easternToday()) {
+function dayHeading(date, today = easternToday()) {
   const day = new Date(`${date}T12:00:00`);
   const word =
     date === today ? "Tonight" : date === shiftDate(today, 1) ? "Tomorrow" : WEEKDAY.format(day);
@@ -101,7 +101,7 @@ function AddToCalendar({ concert, className }) {
 
 // The ways into a calendar in a browser: a file for Apple Calendar or
 // Outlook, or Google Calendar's own page.
-export function CalendarFileItems({ concert, close }) {
+function CalendarFileItems({ concert, close }) {
   return (
     <>
       <button

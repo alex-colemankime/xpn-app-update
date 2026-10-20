@@ -18,9 +18,7 @@ const TIMEOUT_MS = 15000;
 // Kept lengths: { [episode id]: seconds }, anything damaged left out.
 export function normalizeLengths(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-  const kept = Object.entries(value).filter(
-    ([id, s]) => typeof id === "string" && Number.isFinite(s) && s > 0,
-  );
+  const kept = Object.entries(value).filter(([, s]) => Number.isFinite(s) && s > 0);
   return Object.fromEntries(kept.slice(-KEEP));
 }
 

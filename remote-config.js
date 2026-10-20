@@ -13,11 +13,11 @@
 //       "message": "This version can no longer play WXPN.",
 //       "ios": "https://apps.apple.com/app/id…"   the App Store page
 //     }
+//   }
 //
 // An update is only ever required where it can be done: the store address
 // must be the App Store's or Google Play's, and without one for the phone's
 // own platform the request can still be set aside (updateNotice).
-//   }
 //
 // Streams change from the next connection; features turned off (or back on)
 // apply at once, while the app runs (features.js). The last config is kept

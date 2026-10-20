@@ -36,8 +36,8 @@ export const UPDATES_URL = updatesUrl(
   Boolean(import.meta.env?.PROD) && !SHOW_SAMPLES,
 );
 
-// Push notifications (push.js): where the app registers a phone's push token
-// and the listener's topics (live video, member drives) for the station's
+// Push notifications (push.js): where the app registers a phone's push token,
+// and whether the listener wants the station's notices, for the station's
 // sender. Unset: those notifications are planned on the phone instead.
 export const PUSH_REGISTER_URL = import.meta.env?.VITE_PUSH_REGISTER_URL || "";
 

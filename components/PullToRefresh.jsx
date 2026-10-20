@@ -17,8 +17,8 @@ const MIN_SPIN_MS = 600; // long enough to see that it ran
 // How far the spinner comes for a pull of `dy` px: it follows the finger
 // less and less the further it goes, so it slows before it stops instead of
 // hitting a wall (motion.js). Whether that loads on release.
-export const pullDistance = (dy) => (dy > 0 ? Math.min(TRAVEL, rubberband(dy, 260)) : 0);
-export const pullLoads = (dy) => pullDistance(dy) >= READY;
+const pullDistance = (dy) => (dy > 0 ? Math.min(TRAVEL, rubberband(dy, 260)) : 0);
+const pullLoads = (dy) => pullDistance(dy) >= READY;
 
 // `onRefresh()` may return a promise: the spinner turns until it settles.
 // Drawn inside the screen it refreshes; it listens on that screen (App's

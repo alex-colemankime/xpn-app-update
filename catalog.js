@@ -1,5 +1,6 @@
 import suppliedShows from "./shows.json" with { type: "json" };
 import { publicAsset } from "./assets.js";
+import { foldName } from "./hosts.js";
 import { onAir, nextAiring, scheduleLines, slotMinutes, toHHMM } from "./schedule.js";
 import { easternParts, easternToEpoch, shiftDate, stationClock, stationWhen } from "./time.js";
 
@@ -18,22 +19,21 @@ export const SHOWS = Object.fromEntries(
 );
 
 // A show's name without the station prefix: the playlist may use either.
-export const shortName = (show) => show.name.replace(/^WXPN /, "");
+const shortName = (show) => show.name.replace(/^WXPN /, "");
 
 // The station playlist names a show between bars in place of an artist
 // ("|World Cafe|") for its own segments, such as a World Cafe session hour.
 // The name inside, and the show it is, when it is one of the station's.
 // Names compared with case and apostrophes folded ("Dave's World").
-const fold = (name) => name.toLowerCase().replace(/[\u2018\u2019\u02bc`]/g, "'");
 const BY_NAME = new Map(
   Object.values(SHOWS).flatMap((show) => [
-    [fold(show.name), show],
-    [fold(shortName(show)), show],
+    [foldName(show.name), show],
+    [foldName(shortName(show)), show],
   ]),
 );
 export function showSegment(artist) {
   const inside = /^\|\s*(.+?)\s*\|$/.exec(String(artist || "").trim())?.[1];
-  return inside ? { name: inside, show: BY_NAME.get(fold(inside)) || null } : null;
+  return inside ? { name: inside, show: BY_NAME.get(foldName(inside)) || null } : null;
 }
 
 // Featured shows lead the directory; the rest follow in data order.

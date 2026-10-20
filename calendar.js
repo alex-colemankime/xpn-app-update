@@ -32,11 +32,14 @@ export function concertEvent(c) {
 }
 
 const compact = (date) => date.replaceAll("-", "");
-// "2026-10-23" and "12:00" as "20261023T120000"; a missing end is an hour on.
+// "2026-10-23" and "12:00" as "20261023T120000". A missing end is an hour
+// on, or the day's last minute for a late start.
 const local = (date, time) => `${compact(date)}T${time.replace(":", "")}00`;
-const endOf = (c) =>
-  c.endTime ||
-  `${String(Math.min(23, Number(c.time.slice(0, 2)) + 1)).padStart(2, "0")}${c.time.slice(2)}`;
+const endOf = (c) => {
+  if (c.endTime) return c.endTime;
+  const hour = Number(c.time.slice(0, 2)) + 1;
+  return hour > 23 ? "23:59" : `${String(hour).padStart(2, "0")}${c.time.slice(2)}`;
+};
 const nextDay = (date) => shiftDate(date, 1);
 
 // iCalendar text escaping, and lines folded at 75 octets (RFC 5545).

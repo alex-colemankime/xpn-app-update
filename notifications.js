@@ -99,8 +99,7 @@ const FIRED_MS = 60000;
 // extra.slot): a time, or for a weekly one (`on`: { weekday, hour,
 // minute }, Capacitor's), its day and time. A weekly one already on the
 // phone for the same slot is left there: the phone repeats it by itself.
-export const slotOf = (n) =>
-  n.on ? `on:${n.on.weekday}:${n.on.hour}:${n.on.minute}` : `at:${n.at}`;
+const slotOf = (n) => (n.on ? `on:${n.on.weekday}:${n.on.hour}:${n.on.minute}` : `at:${n.at}`);
 
 // The scheduler itself, with the phone's notification API passed in, so it
 // can be tested with a stand-in. `api` is LocalNotifications' shape. A

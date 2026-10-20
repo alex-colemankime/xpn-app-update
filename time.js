@@ -28,13 +28,6 @@ export function easternParts(date = new Date()) {
   };
 }
 
-// The real moment (epoch ms) of something the station reported at an
-// Eastern wall-clock date and time, as of `now`. When the clocks fall back,
-// 1:00–1:59am happens twice; of the moments a time can name, it's the latest
-// not after now (give or take a clock a couple of minutes ahead), so a song
-// at 1:58am EDT is three minutes old at 1:01am EST, and older than a song
-// at 1:01am EST. Null when the date or time can't be read, or doesn't exist
-// (the hour skipped in spring).
 const CLOCK_AHEAD_MS = 2 * 60000;
 // The moments an Eastern date and time can name, earliest first: one, two
 // in the hour repeated in the fall (EDT, then EST), none for a time that
@@ -58,6 +51,13 @@ const latestNotAfter = (fits, now) => {
   const past = fits.filter((t) => t <= now + CLOCK_AHEAD_MS);
   return past.length ? Math.max(...past) : Math.min(...fits);
 };
+// The real moment (epoch ms) of something the station reported at an
+// Eastern wall-clock date and time, as of `now`. When the clocks fall back,
+// 1:00–1:59am happens twice; of the moments a time can name, it's the latest
+// not after now (give or take a clock a couple of minutes ahead), so a song
+// at 1:58am EDT is three minutes old at 1:01am EST, and older than a song
+// at 1:01am EST. Null when the date or time can't be read, or doesn't exist
+// (the hour skipped in spring).
 export function reportedAt(date, time, now = Date.now()) {
   const fits = momentsOf(date, time);
   return fits.length ? latestNotAfter(fits, now) : null;
@@ -125,24 +125,13 @@ export function shiftDate(date, days) {
 }
 
 // The real moment (epoch ms) of an Eastern wall-clock date and time.
-// Eastern is UTC-4 in summer and UTC-5 in winter: try both and keep the one
-// that reads back as the same wall-clock time. In the hour repeated when
-// clocks fall back, the first occurrence wins; a time inside the hour
-// skipped in spring does not exist, so it returns null.
-export function easternToEpoch(date, time) {
-  const [y, mo, d] = date.split("-").map(Number);
-  const [h, mi] = time.split(":").map(Number);
-  for (const offset of [4, 5]) {
-    const t = Date.UTC(y, mo - 1, d, h + offset, mi);
-    const back = easternParts(new Date(t));
-    if (back.date === date && back.time === time) return t;
-  }
-  return null;
-}
+// The moment an Eastern date and time names. In the hour repeated when
+// clocks fall back, the first occurrence wins; a time that can't be read, or
+// falls in the hour skipped in spring, is null.
+export const easternToEpoch = (date, time) => momentsOf(date, time)[0] ?? null;
 
-// Times shown to the listener are in their own zone, so a reminder, an
-// "until 4pm" and a sleep timer all agree with the clock on their phone.
-// For listeners in Eastern time this is the same as the station's clock.
+// Clock times in a zone: the station's (stationClock, below) for its
+// schedule, the listener's own for when a song played.
 // A 24-hour clock in `timeZone`, or in the listener's own zone when none is
 // given. Each zone's formatter is made once.
 const clockFormats = new Map();
