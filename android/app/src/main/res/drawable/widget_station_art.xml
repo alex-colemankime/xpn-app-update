@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Before a song's artwork is known: the station's own tile, the app's
+     icon on the station's orange. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#EF7149" />
+            <size android:width="180dp" android:height="180dp" />
+        </shape>
+    </item>
+    <item android:drawable="@mipmap/ic_launcher_foreground" android:gravity="center" />
+</layer-list>

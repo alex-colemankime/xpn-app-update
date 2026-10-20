@@ -18,6 +18,7 @@ import { episodeControls, getEpisodeSnapshot, subscribeEpisode } from "./episode
 import { onAirAt } from "./catalog.js";
 import { followTextSize } from "./text-size.js";
 import { startCarAudio } from "./car.js";
+import { startHomeWidget } from "./widget.js";
 import { fixInsets } from "./fixed-insets.js";
 import {
   getPlayerSnapshot,
@@ -89,6 +90,11 @@ if (devicePreview) {
       getSnapshot: getPlayerSnapshot,
     },
     episode: episodeControls,
+  });
+  startHomeWidget({
+    live: { subscribe: subscribePlayer, getSnapshot: getPlayerSnapshot },
+    episode: episodeControls,
+    showOnAir: () => onAirAt()?.show.name || "",
   });
   createRoot(document.getElementById("root"), {
     onCaughtError: (error, info) => {

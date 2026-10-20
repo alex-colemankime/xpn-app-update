@@ -9,5 +9,10 @@
 		<string>applinks:xpn.org</string>
 		<string>applinks:www.xpn.org</string>
 	</array>
+	<!-- Shared with the home screen widget (HomeWidgetPlugin.swift). -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.org.xpn.wxpn</string>
+	</array>
 </dict>
 </plist>

@@ -19,7 +19,34 @@
 		3A43C4580B8A21FB21B926D0 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 359F6524426937987F01F345 /* SceneDelegate.swift */; };
 		0AB6FD1A372B39810011B95D /* CarPlaySceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1734FDCB4A4A5EE79C6F5C65 /* CarPlaySceneDelegate.swift */; };
 		D6DFD9048EB27A3C4ADFD35E /* CarAudioPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32D015917C928FA39C7D7892 /* CarAudioPlugin.swift */; };
+		7E1D6E000000000000000002 /* HomeWidgetPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1D6E000000000000000001 /* HomeWidgetPlugin.swift */; };
+		7E1D6E000000000000000004 /* WXPNWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1D6E000000000000000003 /* WXPNWidget.swift */; };
+		7E1D6E000000000000000008 /* WXPNWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7E1D6E000000000000000007 /* WXPNWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		7E1D6E00000000000000000F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7E1D6E00000000000000000A;
+			remoteInfo = WXPNWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		7E1D6E00000000000000000E /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				7E1D6E000000000000000008 /* WXPNWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
@@ -37,6 +64,11 @@
 		1734FDCB4A4A5EE79C6F5C65 /* CarPlaySceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlaySceneDelegate.swift; sourceTree = "<group>"; };
 		32D015917C928FA39C7D7892 /* CarAudioPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarAudioPlugin.swift; sourceTree = "<group>"; };
 		B4B44BD627FCB83831408C15 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
+		7E1D6E000000000000000001 /* HomeWidgetPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetPlugin.swift; sourceTree = "<group>"; };
+		7E1D6E000000000000000003 /* WXPNWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WXPNWidget.swift; sourceTree = "<group>"; };
+		7E1D6E000000000000000005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7E1D6E000000000000000006 /* WXPNWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WXPNWidget.entitlements; sourceTree = "<group>"; };
+		7E1D6E000000000000000007 /* WXPNWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WXPNWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,6 +80,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7E1D6E00000000000000000C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -56,6 +95,7 @@
 			children = (
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
+				7E1D6E000000000000000009 /* WXPNWidget */,
 				504EC3051FED79650016851F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -64,6 +104,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				7E1D6E000000000000000007 /* WXPNWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -77,6 +118,7 @@
 				359F6524426937987F01F345 /* SceneDelegate.swift */,
 				1734FDCB4A4A5EE79C6F5C65 /* CarPlaySceneDelegate.swift */,
 				32D015917C928FA39C7D7892 /* CarAudioPlugin.swift */,
+				7E1D6E000000000000000001 /* HomeWidgetPlugin.swift */,
 				B4B44BD627FCB83831408C15 /* App.entitlements */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
@@ -86,6 +128,16 @@
 				50B271D01FEDC1A000F3C39B /* public */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		7E1D6E000000000000000009 /* WXPNWidget */ = {
+			isa = PBXGroup;
+			children = (
+				7E1D6E000000000000000003 /* WXPNWidget.swift */,
+				7E1D6E000000000000000005 /* Info.plist */,
+				7E1D6E000000000000000006 /* WXPNWidget.entitlements */,
+			);
+			path = WXPNWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -98,10 +150,12 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
+				7E1D6E00000000000000000E /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				7E1D6E000000000000000010 /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -110,6 +164,23 @@
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
+		};
+		7E1D6E00000000000000000A /* WXPNWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7E1D6E000000000000000011 /* Build configuration list for PBXNativeTarget "WXPNWidget" */;
+			buildPhases = (
+				7E1D6E00000000000000000B /* Sources */,
+				7E1D6E00000000000000000C /* Frameworks */,
+				7E1D6E00000000000000000D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WXPNWidget;
+			productName = WXPNWidget;
+			productReference = 7E1D6E000000000000000007 /* WXPNWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -123,6 +194,10 @@
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1100;
+						ProvisioningStyle = Automatic;
+					};
+					7E1D6E00000000000000000A = {
+						CreatedOnToolsVersion = 15.0;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -144,6 +219,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				7E1D6E00000000000000000A /* WXPNWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -162,6 +238,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7E1D6E00000000000000000D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -174,10 +257,27 @@
 				3A43C4580B8A21FB21B926D0 /* SceneDelegate.swift in Sources */,
 				0AB6FD1A372B39810011B95D /* CarPlaySceneDelegate.swift in Sources */,
 				D6DFD9048EB27A3C4ADFD35E /* CarAudioPlugin.swift in Sources */,
+				7E1D6E000000000000000002 /* HomeWidgetPlugin.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7E1D6E00000000000000000B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7E1D6E000000000000000004 /* WXPNWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		7E1D6E000000000000000010 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7E1D6E00000000000000000A /* WXPNWidget */;
+			targetProxy = 7E1D6E00000000000000000F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -354,6 +454,57 @@
 			};
 			name = Release;
 		};
+		7E1D6E000000000000000012 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = WXPNWidget/WXPNWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WXPNWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.xpn.wxpn.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		7E1D6E000000000000000013 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = WXPNWidget/WXPNWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WXPNWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.xpn.wxpn.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -371,6 +522,15 @@
 			buildConfigurations = (
 				504EC3171FED79650016851F /* Debug */,
 				504EC3181FED79650016851F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7E1D6E000000000000000011 /* Build configuration list for PBXNativeTarget "WXPNWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7E1D6E000000000000000012 /* Debug */,
+				7E1D6E000000000000000013 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
