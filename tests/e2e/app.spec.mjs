@@ -435,3 +435,13 @@ test("the Hosts view finds a host by a show of theirs", async ({ page }) => {
   await page.getByRole("button", { name: "Close" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
+
+test("searching the schedule finds a host's shows on every day of the week", async ({ page }) => {
+  await page.goto("/#/shows");
+  await page.getByRole("searchbox").fill("dan reed");
+  // Funky Friday is on Fridays, whatever day it is now.
+  await expect(page.locator(".schedule-row", { hasText: "Funky Friday" }).first()).toBeVisible();
+  await expect(page.getByRole("group", { name: "Schedule day" })).toBeHidden();
+  await page.getByRole("searchbox").fill("");
+  await expect(page.getByRole("group", { name: "Schedule day" })).toBeVisible();
+});

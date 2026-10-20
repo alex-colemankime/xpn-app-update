@@ -66,6 +66,15 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
   const matches = matchesQuery(query);
   const shows = SHOW_DIRECTORY.filter(matches);
   const slots = scheduleForDay(day).filter((slot) => matches(slot.show));
+  // Searching the schedule searches the whole week, from today, by day: a
+  // host's or show's every airing, not only the chosen day's.
+  const searching = Boolean(query.trim());
+  const week = searching
+    ? [...DAYS.slice(DAYS.indexOf(today)), ...DAYS.slice(0, DAYS.indexOf(today))]
+        .map((d) => ({ day: d, slots: scheduleForDay(d).filter((slot) => matches(slot.show)) }))
+        .filter((d) => d.slots.length)
+    : [{ day, slots }];
+  const weekCount = week.reduce((n, d) => n + d.slots.length, 0);
   const hosts = HOSTS.filter(hostMatches(query));
   // Hosts in the order you'll hear them: on the air now, then next, then
   // everyone else by name. Searching, simply the matches.
@@ -120,7 +129,9 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
             <p className="sr-only" role="status">
               {mode === "Hosts"
                 ? `${hosts.length} matching hosts`
-                : `${mode === "All shows" ? shows.length : slots.length} matching shows`}
+                : mode === "All shows"
+                  ? `${shows.length} matching shows`
+                  : `${weekCount} matching airings${searching ? " this week" : ""}`}
             </p>
           )}
           {mode === "Archive" && <PullToRefresh onRefresh={() => loadArchive({ force: true })} />}
@@ -176,60 +187,66 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
             )
           ) : (
             <>
-              <div className="day-picker" role="group" aria-label="Schedule day">
-                {DAYS.map((d) => (
-                  <button
-                    className={`${d === day ? "active" : ""} ${d === today ? "today" : ""}`}
-                    aria-pressed={d === day}
-                    aria-label={d === today ? `${d}, today` : d}
-                    key={d}
-                    onClick={() => chooseDay(d)}
-                  >
-                    {d.slice(0, 3)}
-                  </button>
-                ))}
-              </div>
-              <div>
-                <div key={day} className="tab-pane">
-                  <div className="section-heading schedule-heading">
-                    <h2>{day}</h2>
-                    <span className="subtle">All times Eastern</span>
-                  </div>
-                  {slots.length ? (
-                    <div>
-                      {slots.map((slot) => (
-                        <button
-                          ref={showHold(slot.show, onOpen)}
-                          className={`schedule-row ${isOnAir(slot) ? "on-air-row" : ""}`}
-                          key={`${slot.show.id}-${slot.start}`}
-                          onClick={() => onOpen(slot.show.id)}
-                        >
-                          <time>
-                            {clockLabel(slot.start)}
-                            <small>{clockLabel(slot.end)}</small>
-                          </time>
-                          <Art src={slot.show.img} alt="" loading="lazy" />
-                          <span className="schedule-info">
-                            {isOnAir(slot) && <span className="sr-only">On air now: </span>}
-                            <strong>{slot.show.name}</strong>
-                            {slot.show.host && <span>{slot.show.host}</span>}
-                            <small className="schedule-desc">{slot.show.desc}</small>
-                          </span>
-                          <Icon name="chev" size={20} />
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <Empty
-                      icon="search"
-                      title="No matching shows"
-                      action="Clear search"
-                      onAction={() => setQuery("")}
+              {!searching && (
+                <div className="day-picker" role="group" aria-label="Schedule day">
+                  {DAYS.map((d) => (
+                    <button
+                      className={`${d === day ? "active" : ""} ${d === today ? "today" : ""}`}
+                      aria-pressed={d === day}
+                      aria-label={d === today ? `${d}, today` : d}
+                      key={d}
+                      onClick={() => chooseDay(d)}
                     >
-                      Try a different day or clear your search.
-                    </Empty>
-                  )}
+                      {d.slice(0, 3)}
+                    </button>
+                  ))}
                 </div>
+              )}
+              <div>
+                {week.length && weekCount ? (
+                  week.map(({ day: d, slots: daySlots }, i) => (
+                    <div key={d} className="tab-pane">
+                      <div className="section-heading schedule-heading">
+                        <h2>{searching && d === today ? `${d}, today` : d}</h2>
+                        {i === 0 && <span className="subtle">All times Eastern</span>}
+                      </div>
+                      <div>
+                        {daySlots.map((slot) => (
+                          <button
+                            ref={showHold(slot.show, onOpen)}
+                            className={`schedule-row ${d === today && isOnAir(slot) ? "on-air-row" : ""}`}
+                            key={`${slot.show.id}-${slot.start}`}
+                            onClick={() => onOpen(slot.show.id)}
+                          >
+                            <time>
+                              {clockLabel(slot.start)}
+                              <small>{clockLabel(slot.end)}</small>
+                            </time>
+                            <Art src={slot.show.img} alt="" loading="lazy" />
+                            <span className="schedule-info">
+                              {d === today && isOnAir(slot) && (
+                                <span className="sr-only">On air now: </span>
+                              )}
+                              <strong>{slot.show.name}</strong>
+                              {slot.show.host && <span>{slot.show.host}</span>}
+                              <small className="schedule-desc">{slot.show.desc}</small>
+                            </span>
+                            <Icon name="chev" size={20} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <Empty
+                    icon="search"
+                    title={searching ? "Nothing on this week" : "No shows"}
+                    action="Clear search"
+                    onAction={() => setQuery("")}
+                  >
+                    Try a different show or host name.
+                  </Empty>
+                )}
               </div>
             </>
           )}
