@@ -5,7 +5,7 @@ import { SaveButton } from "./MusicRows.jsx";
 import { Toast, modalClosed, modalOpened } from "./Toast.jsx";
 import { SHOWS } from "../catalog.js";
 import { STATION_ART } from "../assets.js";
-import { clockTime, lengthLabel, localWhen, mediumDay } from "../time.js";
+import { clockTime, lengthLabel, mediumDay, stationWhen } from "../time.js";
 import {
   fetchVideo,
   findVideo,
@@ -223,7 +223,7 @@ export function WatchPage({ videoId, live, onPick, onClose }) {
     : live
       ? live.state === "live"
         ? "Live now"
-        : localWhen(live.starts)
+        : stationWhen(live.starts)
       : "";
   const show = video ? showOf(video.tags) : SHOWS[live?.show];
 

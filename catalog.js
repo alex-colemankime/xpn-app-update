@@ -1,7 +1,7 @@
 import suppliedShows from "./shows.json" with { type: "json" };
 import { publicAsset } from "./assets.js";
 import { onAir, nextAiring, scheduleLines, slotMinutes, toHHMM } from "./schedule.js";
-import { easternParts, easternToEpoch, localClock, localWhen, shiftDate } from "./time.js";
+import { easternParts, easternToEpoch, shiftDate, stationClock, stationWhen } from "./time.js";
 
 // Local show art lives in public/shows; everything else is a full URL.
 export const SHOWS = Object.fromEntries(
@@ -52,7 +52,7 @@ export function scheduleForDay(day) {
 }
 
 // The FM schedule, evaluated at a moment (defaults to now). Adds `endsAt`,
-// the real moment the show ends, for timers and for labels in local time.
+// the real moment the show ends, for timers and for labels (in Eastern time, as the schedule is).
 export function onAirAt(date = new Date()) {
   const parts = easternParts(date);
   const found = onAir(SHOWS, parts);
@@ -63,11 +63,12 @@ export function onAirAt(date = new Date()) {
   return { ...found, endsAt };
 }
 
-// "until 4pm", in the listener's own time.
-export const untilLabel = (onAirNow) => `until ${localClock(onAirNow.endsAt)}`;
+// "until 4pm", in Eastern time as the schedule is ("until 4pm ET" for a
+// listener elsewhere).
+export const untilLabel = (onAirNow) => `until ${stationClock(onAirNow.endsAt)}`;
 
 // When a show next starts: { startsAt, start, end, label } with a label such
-// as "Today at 2pm" or "Friday at 10am" in the listener's time. Null for
+// as "Today at 2pm" or "Friday at 10am" in Eastern time, as the schedule is (marked ET for a listener elsewhere). Null for
 // shows with no schedule.
 export function nextAiringOf(show, date = new Date()) {
   const parts = easternParts(date);
@@ -80,7 +81,7 @@ export function nextAiringOf(show, date = new Date()) {
     end: next.end,
     // A start inside the hour skipped when clocks spring forward (no
     // startsAt): keep the station's own wording.
-    label: startsAt === null ? next.label : localWhen(startsAt, date.valueOf()),
+    label: startsAt === null ? next.label : stationWhen(startsAt, date.valueOf()),
   };
 }
 

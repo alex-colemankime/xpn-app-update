@@ -161,12 +161,22 @@ const clockFormat = (zone) => {
   }
   return clockFormats.get(timeZone);
 };
-const localDateFormat = new Intl.DateTimeFormat("en-CA", {
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
-const localWeekday = new Intl.DateTimeFormat("en-US", { weekday: "long" });
+const dateFormats = new Map();
+const dateFormat = (timeZone) => {
+  if (!dateFormats.has(timeZone)) {
+    dateFormats.set(
+      timeZone,
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }),
+    );
+  }
+  return dateFormats.get(timeZone);
+};
+const weekdayFormat = (timeZone) => new Intl.DateTimeFormat("en-US", { timeZone, weekday: "long" });
 
 // An instant as a clock label in the listener's zone: "4pm", "7:30am",
 // "midnight", "noon".
@@ -175,24 +185,39 @@ export function localClock(epoch, timeZone) {
   return clockLabel(`${hour}:${minute}`);
 }
 
-// "Today at 2pm", "Tomorrow at 6am", "Friday at 10am", in the listener's zone.
-export function localWhen(epoch, now = Date.now()) {
-  const day = localDateFormat.format(new Date(epoch));
-  const today = localDateFormat.format(new Date(now));
+// "Today at 2pm", "Tomorrow at 6am", "Friday at 10am", in the listener's zone
+// (or `timeZone`'s).
+export function localWhen(epoch, now = Date.now(), timeZone) {
+  const days = dateFormat(timeZone);
+  const day = days.format(new Date(epoch));
+  const today = days.format(new Date(now));
   // The next calendar day, not 24 hours on, which lands on the wrong day
   // when the clocks change overnight.
-  const n = new Date(now);
-  const tomorrow = localDateFormat.format(
-    new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 12),
-  );
+  let next = now;
+  while (days.format(new Date(next)) === today) next += 3600000;
+  const tomorrow = days.format(new Date(next));
   const when =
-    day === today ? "Today" : day === tomorrow ? "Tomorrow" : localWeekday.format(new Date(epoch));
-  return `${when} at ${localClock(epoch)}`;
+    day === today
+      ? "Today"
+      : day === tomorrow
+        ? "Tomorrow"
+        : weekdayFormat(timeZone).format(new Date(epoch));
+  return `${when} at ${localClock(epoch, timeZone)}`;
 }
 
 // Whether the listener's clock reads Eastern time (then no zone needs naming).
 export const deviceIsEastern = (now = new Date()) =>
   clockFormat().format(now) === clockFormat("America/New_York").format(now);
+
+// A time from the station's schedule (a show's end, its next airing, a live
+// video's start) as the schedule itself gives it: in Eastern time, marked
+// "ET" for a listener whose phone is set elsewhere, so the on-air band, the
+// schedule and a show's page never disagree. "4pm", or "4pm ET".
+const ET = (now) => (deviceIsEastern(new Date(now)) ? "" : " ET");
+export const stationClock = (epoch, now = Date.now()) =>
+  localClock(epoch, "America/New_York") + ET(now);
+export const stationWhen = (epoch, now = Date.now()) =>
+  localWhen(epoch, now, "America/New_York") + ET(now);
 
 // ---- Lengths and dates, as the app shows them --------------------------------
 

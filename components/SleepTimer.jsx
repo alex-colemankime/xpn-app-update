@@ -1,6 +1,6 @@
 import { cancelSleepTimer, sleepUntil, startSleepTimer } from "../player.js";
 import { onAirAt } from "../catalog.js";
-import { localClock } from "../time.js";
+import { stationClock } from "../time.js";
 import { Art, Icon, focusFirstItem } from "../ui.jsx";
 import { usePlayer, useSleepTimer } from "../hooks/usePlayer.js";
 import { useNow } from "../hooks/useNow.js";
@@ -85,7 +85,7 @@ export function SleepTimer({ onAirNow }) {
             <Art src={onAirNow.show.img} alt="" />
             <span>
               <strong>When {onAirNow.show.name} ends</strong>
-              <small>at {localClock(onAirNow.endsAt)}</small>
+              <small>at {stationClock(onAirNow.endsAt)}</small>
             </span>
           </button>
         )}

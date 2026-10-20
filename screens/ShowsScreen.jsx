@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Icon, Art, Segmented, Empty, SearchField } from "../ui.jsx";
 import { SHOWS, SHOW_DIRECTORY, scheduleForDay, onAirAt, untilLabel } from "../catalog.js";
-import { DAYS, easternParts, clockLabel, localClock } from "../time.js";
+import { DAYS, easternParts, clockLabel, stationClock } from "../time.js";
 import { ShowCard, showHold } from "../components/MusicRows.jsx";
 import { useNow } from "../hooks/useNow.js";
 import { ArchiveList } from "../components/Archive.jsx";
@@ -85,7 +85,7 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
       upNext.length && {
         key: "next",
         title: "Next",
-        line: `${next.show.name} at ${localClock(onAirNow.endsAt)}`,
+        line: `${next.show.name} at ${stationClock(onAirNow.endsAt)}`,
         hosts: upNext,
       },
       { key: "all", title: onNow.length || upNext.length ? "Everyone" : null, hosts: rest },
