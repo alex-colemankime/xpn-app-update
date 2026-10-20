@@ -29,8 +29,22 @@ const HIDDEN_CATEGORIES = [25];
 
 // One event from the calendar (or an older-style feed) in the app's shape:
 // { id, date, artist, venue, city, region, regions, xpnWelcomes, freeAtNoon,
-//   ticketUrl, pageUrl, image, age }. Start times are left out: many events
-// carry placeholder times.
+//   ticketUrl, pageUrl, image, age, time, endTime }. Most events carry
+// placeholder times (all day, midnight, or WordPress's 8am-to-5pm default),
+// so a time ("12:00", Eastern) is kept only when it's a real one.
+const clockOf = (value) => /^(\d{4}-\d{2}-\d{2})[ T](\d{2}):(\d{2})/.exec(String(value || ""));
+export function timesOf(event) {
+  const start = clockOf(event.start_date);
+  if (event.all_day || !start) return { time: null, endTime: null };
+  const end = clockOf(event.end_date);
+  const time = `${start[2]}:${start[3]}`;
+  const endTime = end && end[1] === start[1] ? `${end[2]}:${end[3]}` : null;
+  if (time === "00:00" || (time === "08:00" && endTime === "17:00")) {
+    return { time: null, endTime: null };
+  }
+  return { time, endTime: endTime > time ? endTime : null };
+}
+
 export function normalizeEvent(event) {
   const title = typeof event.title === "object" ? event.title?.rendered : event.title;
   const sd = event.start_date_details;
@@ -64,6 +78,7 @@ export function normalizeEvent(event) {
     pageUrl: webUrl(event.url, { http: true }),
     image: webUrl(event.image?.url, { http: true }),
     hidden: Boolean(event.hide_from_listings),
+    ...timesOf(event),
   };
 }
 

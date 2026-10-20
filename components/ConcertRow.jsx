@@ -15,7 +15,7 @@ import { MenuHead, MenuItem, MenuSave, SaveButton, shareFrom } from "./MusicRows
 import { holdable, openHoldMenu } from "../hold.js";
 import { useSheetDrag } from "../hooks/useSheetDrag.js";
 import { CALENDAR_URL } from "../links.js";
-import { shiftDate } from "../time.js";
+import { clockLabel, shiftDate } from "../time.js";
 import { closeConcert, openConcert, useConcertOpen } from "../hooks/useRoute.js";
 
 // Age limits arrive one by one; each row listens for its own, so one arriving
@@ -175,7 +175,11 @@ function ConcertSheet({ concert: c, bill, age, onClose }) {
         )}
         <Flags concert={c} />
         <Support acts={bill.support} />
-        <p className="concert-sheet-when">{FULL_DATE.format(dateOf(c))}</p>
+        <p className="concert-sheet-when">
+          {FULL_DATE.format(dateOf(c))}
+          {c.time && ` at ${clockLabel(c.time)}`}
+        </p>
+        {!c.time && <p className="concert-meta">Times are on the venue's listing.</p>}
         {where && <p className="concert-meta">{where}</p>}
         <div className="concert-sheet-actions">
           {c.ticketUrl && (

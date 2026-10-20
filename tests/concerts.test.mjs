@@ -333,3 +333,23 @@ test("a list is shown by day, the station's own shows first within a day, before
   );
   assert.equal(list[0].id, "a", "the list itself is left as it was");
 });
+
+test("a concert keeps its time only when the calendar's is a real one", async () => {
+  const { timesOf } = await import("../concerts.js");
+  const at = (start_date, end_date, all_day = false) => timesOf({ start_date, end_date, all_day });
+  assert.deepEqual(at("2026-10-23 12:00:00", "2026-10-23 13:00:00"), {
+    time: "12:00",
+    endTime: "13:00",
+  });
+  assert.deepEqual(at("2026-10-23 20:00:00", "2026-10-24 01:00:00"), {
+    time: "20:00",
+    endTime: null,
+  });
+  for (const placeholder of [
+    at("2026-10-23 00:00:00", "2026-10-23 23:59:59"),
+    at("2026-10-23 08:00:00", "2026-10-23 17:00:00"),
+    at("2026-10-23 19:00:00", "2026-10-23 22:00:00", true),
+  ]) {
+    assert.deepEqual(placeholder, { time: null, endTime: null });
+  }
+});
