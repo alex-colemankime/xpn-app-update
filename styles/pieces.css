@@ -49,3 +49,15 @@
 .reminder-offer .icon {
   color: var(--accent);
 }
+
+/* Sharing by hand (ui.jsx ManualShare): the words and link, to select. */
+.manual-share textarea {
+  width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: var(--raised);
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  resize: none;
+}

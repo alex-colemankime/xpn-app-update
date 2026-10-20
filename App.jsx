@@ -32,6 +32,7 @@ import { hostBySlug } from "./hosts.js";
 import { StationBanner } from "./components/StationUpdates.jsx";
 import { OfflineNotice } from "./components/OfflineNotice.jsx";
 import { Toast } from "./components/Toast.jsx";
+import { ManualShare } from "./ui.jsx";
 import { HoldMenu } from "./components/HoldMenu.jsx";
 import { readJson, writeJson } from "./storage.js";
 import { ListenScreen } from "./screens/ListenScreen.jsx";
@@ -325,6 +326,7 @@ export default function App() {
       </OverlayErrorBoundary>
       <Toast />
       <HoldMenu />
+      <ManualShare />
     </div>
   );
 }

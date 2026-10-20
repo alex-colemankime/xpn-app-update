@@ -445,3 +445,19 @@ test("searching the schedule finds a host's shows on every day of the week", asy
   await page.getByRole("searchbox").fill("");
   await expect(page.getByRole("group", { name: "Schedule day" })).toBeVisible();
 });
+
+test("with no share sheet or clipboard, a show's link opens to copy by hand", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "share", { value: undefined });
+    Object.defineProperty(navigator, "clipboard", { value: undefined });
+  });
+  await page.goto("/#/shows/show/funky");
+  await page.getByRole("button", { name: /^Share / }).click();
+  const sheet = page.getByRole("dialog", { name: /^Share / });
+  await expect(sheet.getByRole("textbox", { name: "Text to share" })).toHaveValue(
+    /on WXPN\nhttps:/,
+  );
+  await page.keyboard.press("Escape");
+  await expect(sheet).toHaveCount(0);
+  await expect(page.getByRole("dialog")).toHaveCount(1);
+});
