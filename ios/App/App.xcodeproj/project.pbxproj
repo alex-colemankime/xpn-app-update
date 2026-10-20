@@ -151,6 +151,7 @@
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
 				7E1D6E00000000000000000E /* Embed Foundation Extensions */,
+				7E1D6E000000000000000020 /* Upload Crashlytics symbols */,
 			);
 			buildRules = (
 			);
@@ -246,6 +247,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		7E1D6E000000000000000020 /* Upload Crashlytics symbols */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Upload Crashlytics symbols";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Crash reports (crash-reporting.js): upload the release build's debug symbols to Crashlytics,\n# so native crashes show function names. Only once Firebase is set up.\n[ -f \"${PROJECT_DIR}/App/GoogleService-Info.plist\" ] || exit 0\n[ \"${CONFIGURATION}\" = \"Release\" ] || exit 0\n\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		504EC3001FED79650016851F /* Sources */ = {
