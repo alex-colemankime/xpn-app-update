@@ -57,3 +57,7 @@ export function webUrl(value, { http = false } = {}) {
     return "";
   }
 }
+
+// "1 saved show", "2 saved shows": a count with its noun (given in the
+// plural) made singular for one. Pure, so it can be tested.
+export const counted = (n, plural) => `${n} ${n === 1 ? plural.replace(/s$/, "") : plural}`;

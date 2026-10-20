@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { counted } from "../text.js";
 import { Icon, Segmented, Empty, SearchField, shareText } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { useFavoriteItems } from "../favorites.js";
@@ -126,7 +127,7 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
             it was until the tab was switched. */}
         <div key={`${category}-${visit}`} className="tab-pane">
           <p className="sr-only" role="status">
-            {filtered.length} saved {category}
+            {counted(filtered.length, `saved ${category}`)}
             {q ? " match your search" : ""}
           </p>
           {/* No "saved on this device" label over the list: Settings ›

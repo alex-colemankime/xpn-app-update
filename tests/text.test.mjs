@@ -37,3 +37,10 @@ test("fields become one tidy line, and only text counts", () => {
   assert.equal(oneLine(null), "");
   assert.equal(decodeEntities("Hall &amp; Oates"), "Hall & Oates");
 });
+
+test("a count of one is singular", async () => {
+  const { counted } = await import("../text.js");
+  assert.equal(counted(1, "saved shows"), "1 saved show");
+  assert.equal(counted(2, "saved shows"), "2 saved shows");
+  assert.equal(counted(0, "matching airings"), "0 matching airings");
+});

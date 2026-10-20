@@ -23,7 +23,9 @@ export function SleepTimer({ onAirNow }) {
   const { playing, connecting } = usePlayer();
   const drag = useSheetDrag();
   if (!endsAt && !playing && !connecting) return null;
-  const left = endsAt ? Math.max(1, Math.ceil((endsAt - now) / 60000)) : 0;
+  // The shared clock ticks every 15 seconds, so it can be that much behind;
+  // allowed for, 15 minutes reads 15 the moment it's chosen, not 16.
+  const left = endsAt ? Math.max(1, Math.ceil((endsAt - now - 15000) / 60000)) : 0;
   const close = () => document.getElementById("sleep-menu")?.hidePopover?.();
   const choose = (minutes) => {
     startSleepTimer(minutes);

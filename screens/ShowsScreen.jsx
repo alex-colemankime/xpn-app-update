@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { counted } from "../text.js";
 import { Icon, Art, Segmented, Empty, SearchField } from "../ui.jsx";
 import { SHOWS, SHOW_DIRECTORY, scheduleForDay, onAirAt, untilLabel } from "../catalog.js";
 import { DAYS, easternParts, clockLabel, stationClock } from "../time.js";
@@ -128,10 +129,10 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
           {mode !== "Archive" && (
             <p className="sr-only" role="status">
               {mode === "Hosts"
-                ? `${hosts.length} matching hosts`
+                ? counted(hosts.length, "matching hosts")
                 : mode === "All shows"
-                  ? `${shows.length} matching shows`
-                  : `${weekCount} matching airings${searching ? " this week" : ""}`}
+                  ? counted(shows.length, "matching shows")
+                  : `${counted(weekCount, "matching airings")}${searching ? " this week" : ""}`}
             </p>
           )}
           {mode === "Archive" && <PullToRefresh onRefresh={() => loadArchive({ force: true })} />}
