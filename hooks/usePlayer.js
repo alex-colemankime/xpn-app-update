@@ -32,7 +32,9 @@ async function choose(open) {
   } catch (error) {
     // Closing the picker without choosing isn't a failure.
     if (error.name !== "NotAllowedError" && error.name !== "AbortError") {
-      showToast("No other speakers or TVs are available. Use your device’s audio controls.");
+      showToast(
+        "No speakers or TVs found. Check they’re on and on the same Wi‑Fi, or use your device’s audio controls.",
+      );
     }
   }
 }

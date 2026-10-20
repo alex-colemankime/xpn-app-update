@@ -15,8 +15,9 @@ export function castKind(audio) {
 export const CAST_KIND =
   typeof document === "undefined" ? null : castKind(document.createElement("audio"));
 
-// The words for the button and its icon.
-export const CAST_LABEL = { airplay: "AirPlay", cast: "Cast to a speaker or TV" };
+// The feature's one name, on every button and row that opens the picker
+// (the icon says AirPlay or Cast).
+export const CAST_NAME = "Play on another device";
 
 // Opens the picker for this element. Rejects where there's none.
 export async function promptCast(audio) {

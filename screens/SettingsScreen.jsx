@@ -1,7 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { Icon, Segmented, Switch } from "../ui.jsx";
 import { setVolume, VOLUME_SETTABLE } from "../player.js";
-import { CAST_KIND } from "../cast.js";
+import { CAST_KIND, CAST_NAME } from "../cast.js";
 import { usePlayer, useVolume, chooseAudioOutput } from "../hooks/usePlayer.js";
 import { NewsletterPanel } from "../components/Newsletter.jsx";
 import {
@@ -137,7 +137,7 @@ export function SettingsScreen({
               )}
               {castAvailable && (
                 <button className="setting-row full-width" onClick={chooseAudioOutput}>
-                  <span>Choose audio output</span>
+                  <span>{CAST_NAME}</span>
                   <Icon name={CAST_KIND || "cast"} />
                 </button>
               )}

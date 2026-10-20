@@ -10,7 +10,7 @@ import { HeartBloom, heartSong, SaveSong, SongMenu, TrackRow } from "../componen
 import { OnAir, videoOfShow } from "../components/OnAir.jsx";
 import { SleepTimer } from "../components/SleepTimer.jsx";
 import { LiveCard } from "../components/StationUpdates.jsx";
-import { CAST_KIND } from "../cast.js";
+import { CAST_KIND, CAST_NAME } from "../cast.js";
 import { usePlayer, chooseAudioOutput } from "../hooks/usePlayer.js";
 import { useHeroVisibility } from "../hooks/useHeroVisibility.js";
 import { useNow } from "../hooks/useNow.js";
@@ -145,8 +145,8 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
             <button
               className="hero-key hero-cast"
               onClick={chooseAudioOutput}
-              aria-label="Play on another device"
-              title="Play on another device"
+              aria-label={CAST_NAME}
+              title={CAST_NAME}
             >
               <Icon name={CAST_KIND || "cast"} size={22} />
             </button>
