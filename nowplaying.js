@@ -76,11 +76,18 @@ export function durationMinutes(text) {
   return total > 0 && total < 24 * 60 ? Math.ceil(total) : null;
 }
 
+// A field of the station's files as text: entities decoded, and the
+// backslashes some entries carry before quotes ("This Year\'s Model") gone.
+const feedText = (value) =>
+  decodeEntities(value)
+    .replace(/\\+(['"])/g, "$1")
+    .trim();
+
 // An artist as the app shows it: a show's segment by the show's name, without
 // the bars the playlist puts around it. A segment of one of the station's
 // shows also carries the show's id.
 const artistOf = (raw) => {
-  const plain = decodeEntities(raw).trim();
+  const plain = feedText(raw);
   const segment = showSegment(plain);
   if (!segment) return { artist: plain };
   return {
@@ -91,7 +98,7 @@ const artistOf = (raw) => {
 
 const sameSong = (a, b) =>
   a.artist.trim().toLowerCase() === artistOf(b.artist).artist.toLowerCase() &&
-  a.title.trim().toLowerCase() === decodeEntities(b.song).trim().toLowerCase();
+  a.title.trim().toLowerCase() === feedText(b.song).toLowerCase();
 
 // Adds what the now-playing file knows to the latest playlist entry when they
 // are the same song: its length, and its artwork if the playlist has none yet.
@@ -102,6 +109,24 @@ export function withNowPlaying(tracks, nowFile) {
   const minutes = durationMinutes(now.duration);
   const img = latest.img || (/^https:\/\//.test(now.image || "") ? now.image : "");
   return [{ ...latest, ...(minutes ? { minutes } : {}), img }, ...tracks.slice(1)];
+}
+
+// Lengths learned from the now-playing file, kept by song (`known`, a Map):
+// that file moves on to the next song before the playlist lists it, and the
+// song still on top would lose its length, fall back to the 15-minute
+// window, and come back as playing after it had ended. Adds a known length
+// back to a song missing one; keeps the latest few. Pure but for `known`.
+export function rememberLengths(tracks, known, keep = 20) {
+  const latest = tracks[0];
+  if (!latest) return tracks;
+  const key = reportedKey(latest);
+  if (latest.minutes > 0) {
+    known.delete(key);
+    known.set(key, latest.minutes);
+    while (known.size > keep) known.delete(known.keys().next().value);
+    return tracks;
+  }
+  return known.has(key) ? [{ ...latest, minutes: known.get(key) }, ...tracks.slice(1)] : tracks;
 }
 
 // When a song played, in the listener's time: "2:32pm".
@@ -131,11 +156,11 @@ export function normalizePlaylist(data, now = Date.now()) {
         t.song.trim(),
     )
     .map((t) => ({
-      title: decodeEntities(t.song).trim(),
+      title: feedText(t.song),
       // A show's own segment carries the show, so its heart takes the show's
       // color (the segment's photo is often black and white).
       ...artistOf(t.artist),
-      album: decodeEntities(t.album).trim(),
+      album: feedText(t.album),
       img: /^https?:\/\//.test(t.image || "") ? t.image : "",
       time: String(t.timeslice || "").slice(11, 16),
       date: String(t.timeslice || "").slice(0, 10),
@@ -196,6 +221,8 @@ export function useNowPlaying(streamId) {
     // The last now-playing file that loaded, so one failed fetch does not
     // drop the current song's length (it only applies to the same song).
     let lastNow = null;
+    // Songs' lengths once known, for while the now-playing file has moved on.
+    const lengths = new Map();
     let controller;
     const store = (next) =>
       setByStream((prev) => {
@@ -233,7 +260,10 @@ export function useNowPlaying(streamId) {
         return;
       }
       if (result.nowFile) lastNow = result.nowFile;
-      const tracks = withNowPlaying(result.tracks, result.nowFile || lastNow);
+      const tracks = rememberLengths(
+        withNowPlaying(result.tracks, result.nowFile || lastNow),
+        lengths,
+      );
       if (active) store({ tracks, status: tracks.length ? "ready" : "empty" });
     }
     update();

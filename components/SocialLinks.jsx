@@ -2,7 +2,7 @@ import { Icon } from "../ui.jsx";
 import { SOCIAL } from "../links.js";
 
 // The station's accounts and World Cafe's: each name, then its platforms as
-// icons. In Settings › Stay connected and the welcome's last step.
+// icons. In Settings › Stay connected.
 export function SocialLinks() {
   return (
     <div className="social-links">

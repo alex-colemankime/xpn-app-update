@@ -1,7 +1,8 @@
 import suppliedShows from "./shows.json" with { type: "json" };
 import { publicAsset } from "./assets.js";
+import { foldName } from "./hosts.js";
 import { onAir, nextAiring, scheduleLines, slotMinutes, toHHMM } from "./schedule.js";
-import { easternParts, easternToEpoch, localClock, localWhen, shiftDate } from "./time.js";
+import { easternParts, easternToEpoch, shiftDate, stationClock, stationWhen } from "./time.js";
 
 // Local show art lives in public/shows; everything else is a full URL.
 export const SHOWS = Object.fromEntries(
@@ -17,21 +18,22 @@ export const SHOWS = Object.fromEntries(
   ]),
 );
 
-// A show's name without the station prefix, for tight spaces such as cards.
-export const shortName = (show) => show.name.replace(/^WXPN /, "");
+// A show's name without the station prefix: the playlist may use either.
+const shortName = (show) => show.name.replace(/^WXPN /, "");
 
 // The station playlist names a show between bars in place of an artist
 // ("|World Cafe|") for its own segments, such as a World Cafe session hour.
 // The name inside, and the show it is, when it is one of the station's.
+// Names compared with case and apostrophes folded ("Dave's World").
 const BY_NAME = new Map(
   Object.values(SHOWS).flatMap((show) => [
-    [show.name.toLowerCase(), show],
-    [shortName(show).toLowerCase(), show],
+    [foldName(show.name), show],
+    [foldName(shortName(show)), show],
   ]),
 );
 export function showSegment(artist) {
   const inside = /^\|\s*(.+?)\s*\|$/.exec(String(artist || "").trim())?.[1];
-  return inside ? { name: inside, show: BY_NAME.get(inside.toLowerCase()) || null } : null;
+  return inside ? { name: inside, show: BY_NAME.get(foldName(inside)) || null } : null;
 }
 
 // Featured shows lead the directory; the rest follow in data order.
@@ -52,7 +54,7 @@ export function scheduleForDay(day) {
 }
 
 // The FM schedule, evaluated at a moment (defaults to now). Adds `endsAt`,
-// the real moment the show ends, for timers and for labels in local time.
+// the real moment the show ends, for timers and for labels (in Eastern time, as the schedule is).
 export function onAirAt(date = new Date()) {
   const parts = easternParts(date);
   const found = onAir(SHOWS, parts);
@@ -63,11 +65,12 @@ export function onAirAt(date = new Date()) {
   return { ...found, endsAt };
 }
 
-// "until 4pm", in the listener's own time.
-export const untilLabel = (onAirNow) => `until ${localClock(onAirNow.endsAt)}`;
+// "until 4pm", in Eastern time as the schedule is ("until 4pm ET" for a
+// listener elsewhere).
+export const untilLabel = (onAirNow) => `until ${stationClock(onAirNow.endsAt)}`;
 
 // When a show next starts: { startsAt, start, end, label } with a label such
-// as "Today at 2pm" or "Friday at 10am" in the listener's time. Null for
+// as "Today at 2pm" or "Friday at 10am" in Eastern time, as the schedule is (marked ET for a listener elsewhere). Null for
 // shows with no schedule.
 export function nextAiringOf(show, date = new Date()) {
   const parts = easternParts(date);
@@ -80,7 +83,7 @@ export function nextAiringOf(show, date = new Date()) {
     end: next.end,
     // A start inside the hour skipped when clocks spring forward (no
     // startsAt): keep the station's own wording.
-    label: startsAt === null ? next.label : localWhen(startsAt, date.valueOf()),
+    label: startsAt === null ? next.label : stationWhen(startsAt, date.valueOf()),
   };
 }
 

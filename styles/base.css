@@ -213,10 +213,10 @@
      clear of a notch or rounded corner where that reaches further in. */
   --edge-left: max(var(--page-gutter), var(--safe-area-inset-left, env(safe-area-inset-left)));
   --edge-right: max(var(--page-gutter), var(--safe-area-inset-right, env(safe-area-inset-right)));
-  /* Stacking, lowest to highest. */
   /* The bar at the top of a sheet that says it can be pulled down: plain
      enough to see on any sheet, in either theme. */
   --grabber: color-mix(in srgb, var(--text) 30%, transparent);
+  /* Stacking, lowest to highest. */
   --z-sidebar: 20;
   --z-banner: 25;
   --z-bars: 30;

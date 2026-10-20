@@ -75,6 +75,9 @@
   .now-status:empty {
     min-height: 0;
   }
+  .now-status:empty::before {
+    content: none;
+  }
   /* The stations closer together than on a wide screen (20px between
      names), so all three fit on a small phone at larger text sizes too. */
   .station-switcher.segmented {
@@ -279,5 +282,25 @@
       var(--tabbar-h) + var(--mini-h) + var(--space-6) +
         var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
     );
+  }
+}
+
+/* The narrowest phones (320px): a screen's views share the width with less
+   room around each word, so the last ("Archive") isn't cut off. (With large
+   text, the row scrolls sideways, as on every phone.) */
+@media (max-width: 380px) {
+  .toolbar .segmented button {
+    flex: 1 0 auto;
+    padding: 0 4px;
+    font-size: var(--text-secondary);
+  }
+  .day-picker {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 0;
+  }
+  .day-picker button {
+    min-width: 0;
+    font-size: var(--text-secondary);
   }
 }

@@ -15,7 +15,8 @@ import { MenuHead, MenuItem, MenuSave, SaveButton, shareFrom } from "./MusicRows
 import { holdable, openHoldMenu } from "../hold.js";
 import { useSheetDrag } from "../hooks/useSheetDrag.js";
 import { CALENDAR_URL } from "../links.js";
-import { shiftDate } from "../time.js";
+import { clockLabel, shiftDate } from "../time.js";
+import { closeConcert, openConcert, useConcertOpen } from "../hooks/useRoute.js";
 
 // Age limits arrive one by one; each row listens for its own, so one arriving
 // re-renders one row, not the list.
@@ -43,7 +44,7 @@ const dateOf = (c) => new Date(`${c.date}T12:00:00`);
 // A day's heading, in two parts: the day as a word ("Tonight", "Tomorrow",
 // then the weekday, "Wednesday") and its date ("Oct 21", with the year only
 // when it isn't this one). Eastern dates, as the calendar's are.
-export function dayHeading(date, today = easternToday()) {
+function dayHeading(date, today = easternToday()) {
   const day = new Date(`${date}T12:00:00`);
   const word =
     date === today ? "Tonight" : date === shiftDate(today, 1) ? "Tomorrow" : WEEKDAY.format(day);
@@ -100,7 +101,7 @@ function AddToCalendar({ concert, className }) {
 
 // The ways into a calendar in a browser: a file for Apple Calendar or
 // Outlook, or Google Calendar's own page.
-export function CalendarFileItems({ concert, close }) {
+function CalendarFileItems({ concert, close }) {
   return (
     <>
       <button
@@ -167,14 +168,18 @@ function ConcertSheet({ concert: c, bill, age, onClose }) {
   const [photo, setPhoto] = useState(Boolean(c.image));
   const where = whereOf(c, age);
   return createPortal(
-    <Modal title={bill.headliner || c.artist} onClose={onClose} className="concert-sheet">
+    <Modal title={bill.headliner || c.artist} onClose={onClose} className="concert-sheet" routed>
       <div className="detail-body concert-sheet-body">
         {photo && (
           <img className="concert-photo" src={c.image} alt="" onError={() => setPhoto(false)} />
         )}
         <Flags concert={c} />
         <Support acts={bill.support} />
-        <p className="concert-sheet-when">{FULL_DATE.format(dateOf(c))}</p>
+        <p className="concert-sheet-when">
+          {FULL_DATE.format(dateOf(c))}
+          {c.time && ` at ${clockLabel(c.time)}`}
+        </p>
+        {!c.time && <p className="concert-meta">Times are on the venue's listing.</p>}
         {where && <p className="concert-meta">{where}</p>}
         <div className="concert-sheet-actions">
           {c.ticketUrl && (
@@ -211,7 +216,9 @@ function ConcertSheet({ concert: c, bill, age, onClose }) {
 // saves it.
 export function ConcertRow({ concert: c }) {
   const age = useAge(c);
-  const [open, setOpen] = useState(false);
+  // Open by address (#/concerts/concert/<id>), so Back closes it and a link
+  // opens it.
+  const open = useConcertOpen(c.id);
   const bill = splitBill(c.artist);
   const where = whereOf(c, age);
   const when = FULL_DATE.format(dateOf(c));
@@ -253,7 +260,7 @@ export function ConcertRow({ concert: c }) {
         ref={hold}
         className="concert-open"
         aria-haspopup="dialog"
-        onClick={() => setOpen(true)}
+        onClick={() => openConcert(c.id)}
       >
         <Flags concert={c} />
         <strong>{bill.headliner || c.artist}</strong>
@@ -262,7 +269,7 @@ export function ConcertRow({ concert: c }) {
         <span className="sr-only">, {when}</span>
       </button>
       <SaveButton type="concerts" item={c} name={`${c.artist} concert`} />
-      {open && <ConcertSheet concert={c} bill={bill} age={age} onClose={() => setOpen(false)} />}
+      {open && <ConcertSheet concert={c} bill={bill} age={age} onClose={closeConcert} />}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { GROUNDS, useArtTint, washed } from "../art-tint.js";
+import { useArtTintState } from "../art-tint.js";
 import { selectStream, togglePlayback } from "../player.js";
 import { STATION_OPTIONS } from "../streams.js";
 import { refreshPlaylist, useLiveSong } from "../nowplaying.js";
@@ -10,7 +10,7 @@ import { HeartBloom, heartSong, SaveSong, SongMenu, TrackRow } from "../componen
 import { OnAir, videoOfShow } from "../components/OnAir.jsx";
 import { SleepTimer } from "../components/SleepTimer.jsx";
 import { LiveCard } from "../components/StationUpdates.jsx";
-import { CAST_KIND } from "../cast.js";
+import { CAST_KIND, CAST_NAME } from "../cast.js";
 import { usePlayer, chooseAudioOutput } from "../hooks/usePlayer.js";
 import { useHeroVisibility } from "../hooks/useHeroVisibility.js";
 import { useNow } from "../hooks/useNow.js";
@@ -34,28 +34,37 @@ function useDoubleTapHeart(song) {
 }
 
 // While Listen is in front, the page takes a light wash of the playing
-// song's artwork color (styles/base.css, data-art-wash), worked out here
-// for each theme. Artwork with no color leaves the page as it is, and so
-// does leaving Listen.
+// song's artwork color (styles/base.css, data-art-wash; art-tint.js,
+// pageWash). While the next song's artwork is read, the last song's wash
+// stays, so the page eases from one color to the next instead of dropping
+// to plain in between. Artwork with no color of its own, no song, and
+// leaving Listen leave the page plain.
 function useArtWash(art) {
-  const wash = useArtTint(art || null);
+  const { tint, known } = useArtTintState(art || null);
+  const wash = tint?.wash || null;
   useEffect(() => {
-    if (!wash) return;
+    if (!known) return; // still reading the new artwork: keep what's shown
     const root = document.documentElement;
-    root.style.setProperty("--wash-bg-light", washed(wash.light, GROUNDS.light[0], 0.24));
-    root.style.setProperty("--wash-bg-dark", washed(wash.dark, GROUNDS.dark[0], 0.22));
+    if (!wash) {
+      plainPage();
+      return;
+    }
+    root.style.setProperty("--wash-bg-light", wash.light);
+    root.style.setProperty("--wash-bg-dark", wash.dark);
     root.dataset.artWash = "";
-    return () => {
-      delete root.dataset.artWash;
-      root.style.removeProperty("--wash-bg-light");
-      root.style.removeProperty("--wash-bg-dark");
-    };
-  }, [wash]);
+  }, [known, wash]);
+  useEffect(() => plainPage, []);
+}
+function plainPage() {
+  const root = document.documentElement;
+  delete root.dataset.artWash;
+  root.style.removeProperty("--wash-bg-light");
+  root.style.removeProperty("--wash-bg-dark");
 }
 
 function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
   const player = usePlayer();
-  const { station, streamId, playing, connecting, castAvailable } = player;
+  const { station, streamId, playing, connecting } = player;
   const now = useNow();
   // Only a fresh report is presented as playing; an old one waits in
   // Recently played.
@@ -132,12 +141,12 @@ function NowPlaying({ playlist, onOpenShow, live, onWatch }) {
               <SongMenu track={current} stationLabel={station.label} className="hero-key" />
             </div>
           )}
-          {castAvailable && (
+          {CAST_KIND && (
             <button
               className="hero-key hero-cast"
               onClick={chooseAudioOutput}
-              aria-label="Play on another device"
-              title="Play on another device"
+              aria-label={CAST_NAME}
+              title={CAST_NAME}
             >
               <Icon name={CAST_KIND || "cast"} size={22} />
             </button>

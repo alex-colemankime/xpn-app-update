@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { counted } from "../text.js";
 import { Icon, Empty, Modal, PromptLink, SearchField, SkeletonList } from "../ui.jsx";
 import { useFavoriteItems } from "../favorites.js";
 import {
@@ -268,7 +269,7 @@ export function ConcertsScreen({ result }) {
       {concerts.length > 0 && (
         <p className="sr-only" role="status" id="concert-results">
           {narrowed
-            ? `${filtered.length} of ${concerts.length} concerts`
+            ? `${filtered.length} of ${counted(concerts.length, "concerts")}`
             : `${concerts.length} ${concerts.length === 1 ? "concert" : "concerts"} listed`}
         </p>
       )}

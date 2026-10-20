@@ -62,3 +62,16 @@ test("Google Calendar link carries the same event", () => {
   assert.equal(url.searchParams.get("dates"), "20261007/20261008");
   assert.equal(url.searchParams.get("location"), "Union Transfer, Philadelphia");
 });
+
+test("a concert with a real time is a timed event, in Eastern time", () => {
+  const noon = { ...BRIGHT_EYES, time: "12:00", endTime: "13:00" };
+  const ics = icsFor([noon], new Date("2026-10-05T18:00:00Z"));
+  assert.match(
+    ics,
+    /DTSTART;TZID=America\/New_York:20261007T120000\r\nDTEND;TZID=America\/New_York:20261007T130000/,
+  );
+  assert.doesNotMatch(concertEvent(noon).description, /Check the venue/);
+  const url = new URL(googleCalendarUrl({ ...noon, endTime: null }));
+  assert.equal(url.searchParams.get("dates"), "20261007T120000/20261007T130000");
+  assert.equal(url.searchParams.get("ctz"), "America/New_York");
+});

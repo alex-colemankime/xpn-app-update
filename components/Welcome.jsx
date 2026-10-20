@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Art, Icon, Modal, nameList } from "../ui.jsx";
-import { SHOWS, SHOW_DIRECTORY, shortName } from "../catalog.js";
+import { SHOWS, SHOW_DIRECTORY } from "../catalog.js";
 import { STATION_ART } from "../assets.js";
 import { toggleFavorite, useFavoriteItems, useIsFavorite } from "../favorites.js";
 import { enableReminders } from "../hooks/useShowReminders.js";
@@ -28,7 +28,7 @@ function FollowCard({ show }) {
     >
       <Art src={show.img} alt="" />
       <span className="welcome-show-text">
-        <strong>{shortName(show)}</strong>
+        <strong>{show.name}</strong>
         <small>{show.times[0]}</small>
       </span>
       <span className="welcome-check" aria-hidden="true">
@@ -77,28 +77,28 @@ function PlaylistPreview() {
 // First launch only: follow a few shows, turn on reminders for them,
 // and connect Spotify or Apple Music so hearted songs build a playlist. No
 // step sends the listener out of the app. A step with nothing to offer is
-// left out (no reminders without a followed show, no playlist step when no
-// service is set up). Closing it any way counts as done; it never comes back.
+// passed over (no reminders without a followed show) or left out (no
+// playlist step when no service is set up), and the step count shown never
+// changes on the way. Closing it any way counts as done; it never comes back.
 export function Welcome({ onDone }) {
   const followed = useFavoriteItems("shows");
   const services = offeredServices();
-  const steps = [
-    "follow",
-    ...(followed.length ? ["remind"] : []),
-    ...(services.length ? ["music"] : []),
-  ];
+  // The steps are known from the start, so the count never changes on the
+  // way; reminders, with no show followed, are passed over.
+  const steps = ["follow", "remind", ...(services.length ? ["music"] : [])];
   const [stepName, setStepName] = useState("follow");
   const step = Math.max(0, steps.indexOf(stepName));
+  const nextStep = steps.slice(step + 1).find((name) => name !== "remind" || followed.length > 0);
   const heading = useRef(null);
   // Each step replaces the button that was just pressed, so focus moves to
   // the new step's heading rather than fall back to the page. (The first
   // step needs none: the dialog starts at its own title.)
   const next = () => {
-    if (step + 1 >= steps.length) {
+    if (!nextStep) {
       onDone();
       return;
     }
-    flushSync(() => setStepName(steps[step + 1]));
+    flushSync(() => setStepName(nextStep));
     heading.current?.focus();
   };
   // Progress as a row of short bars, one per step, filled up to this one.
@@ -144,11 +144,11 @@ export function Welcome({ onDone }) {
               {counter}
               {followed.length ? (
                 <button className="primary-button" onClick={next}>
-                  {step + 1 >= steps.length ? "Start listening" : "Next"}
+                  {nextStep ? "Next" : "Start listening"}
                 </button>
               ) : (
                 <button className="text-button" onClick={next}>
-                  Skip for now
+                  {nextStep ? "Next" : "Start listening"}
                 </button>
               )}
             </div>

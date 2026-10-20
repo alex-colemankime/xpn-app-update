@@ -155,7 +155,8 @@ export function parseArchivePage(html, { show, name = "", schedule = [] }) {
     const at = (slot && easternToEpoch(day, slot.start)) ?? Date.parse(`${day}T16:00:00Z`);
     const title = dated
       ? BROADCAST_DAY.format(new Date(`${day}T12:00:00Z`))
-      : raw.replace(new RegExp(`\\s*on\\s*${escapeRegExp(name)}\\s*$`, "i"), "").trim() || raw;
+      : (name && raw.replace(new RegExp(`\\s*on\\s*${escapeRegExp(name)}\\s*$`, "i"), "").trim()) ||
+        raw;
     const feature = dated ? plain(dated[5] || "") : "";
     // The same broadcast listed twice on the page is kept once: the same
     // track, or the same title on the same day. Two sessions that share a

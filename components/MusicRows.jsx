@@ -12,7 +12,7 @@ import {
 } from "../favorites.js";
 import { readJson, writeJson } from "../storage.js";
 import { PLAYLIST_URL, appleMusicSearch, spotifySearch } from "../links.js";
-import { SHOWS, shortName } from "../catalog.js";
+import { SHOWS } from "../catalog.js";
 import { playedAt } from "../nowplaying.js";
 import { useArtTint } from "../art-tint.js";
 import { openShow, parseRoute, routeHash } from "../hooks/useRoute.js";
@@ -62,7 +62,7 @@ function firstSaveHint(type) {
 
 // The color a saved item's heart takes, from its artwork (null: none, so
 // the accent). `on` false asks for nothing yet.
-export function useHeartTint(type, item, on = true) {
+function useHeartTint(type, item, on = true) {
   const { art, preset } = tintSource(type, item || {});
   return useArtTint(on ? art : null, on ? preset : null);
 }
@@ -73,6 +73,21 @@ const tintVars = (tint) =>
 // offers reminders in place, so no hint on top of that.
 function announceSave(type) {
   if (type !== "shows") firstSaveHint(type);
+}
+
+// Removing from Favorites takes the row, and the focused heart, away with
+// it: focus moves to the next saved item's heart (or the one before), and
+// with none left, to the toast's Undo.
+function keepFocus(button) {
+  if (document.activeElement !== button) return;
+  const scope = button.closest(".tab-pane") || document;
+  const hearts = [...scope.querySelectorAll("button.saved")];
+  const i = hearts.indexOf(button);
+  requestAnimationFrame(() => {
+    if (button.isConnected) return;
+    const near = [...hearts.slice(i + 1), ...hearts.slice(0, i).reverse()];
+    (near.find((b) => b.isConnected) || document.querySelector(".toast-action"))?.focus();
+  });
 }
 
 // A heart toggle for any saveable item: a song, show, episode, concert or
@@ -105,8 +120,9 @@ export function SaveButton({
       data-tinted={tint ? "" : undefined}
       style={tintVars(tint)}
       onAnimationEnd={() => setPop(false)}
-      onClick={() => {
+      onClick={(event) => {
         tap();
+        if (saved) keepFocus(event.currentTarget);
         const before = saved ? getFavorite(type, item) : null;
         toggleFavorite(type, item);
         onToggle?.(!saved);
@@ -133,7 +149,7 @@ export function SaveButton({
 // Music, Share, and (with a playlist connected) where it stands there. A
 // sheet from the bottom on phones; on wider screens it hangs from `from`,
 // the row or button that opened it.
-export function openSongSheet(track, stationLabel, from) {
+function openSongSheet(track, stationLabel, from) {
   openHoldMenu({
     label: `${track.title} by ${track.artist}`,
     from,
@@ -220,7 +236,7 @@ const ELSEWHERE = [
 // A song's sheet, in order: Save, the song elsewhere, Share, and its place
 // in a connected playlist. A show's own segment in the playlist (a World
 // Cafe session hour) isn't a song on those services: it offers the show.
-export function SongSheetItems({ track, stationLabel = "WXPN", close }) {
+function SongSheetItems({ track, stationLabel = "WXPN", close }) {
   const show = track.show && SHOWS[track.show];
   const share = async () => {
     close();
@@ -252,7 +268,7 @@ export function SongSheetItems({ track, stationLabel = "WXPN", close }) {
             openShow(track.show);
           }}
         >
-          View {shortName(show)}
+          View {show.name}
           <Icon name="chev" size={16} />
         </a>
       ) : (
@@ -273,8 +289,7 @@ export function SongSheetItems({ track, stationLabel = "WXPN", close }) {
 }
 
 // A song's press-and-hold: the same sheet a tap on its row opens.
-export const songHold = (track, stationLabel) =>
-  holdable((el) => openSongSheet(track, stationLabel, el));
+const songHold = (track, stationLabel) => holdable((el) => openSongSheet(track, stationLabel, el));
 
 // A show's press-and-hold menu: open it, follow it, share it.
 export const showHold = (show, onOpen) =>
@@ -354,7 +369,7 @@ export function ShowCard({ show, onOpen }) {
       <span className="show-cover">
         <Art src={show.img} alt="" loading="lazy" />
       </span>
-      <strong className="show-card-name">{shortName(show)}</strong>
+      <strong className="show-card-name">{show.name}</strong>
       <small className="show-card-when">{show.host || show.times?.[0]}</small>
     </button>
   );

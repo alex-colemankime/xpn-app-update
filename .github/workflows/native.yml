@@ -17,6 +17,9 @@ on:
       - "design/**"
       - "store/**"
       - "control/**"
+      - "docs/**"
+      - "tests/**"
+      - "tools/**"
       - "**.md"
   workflow_dispatch:
 

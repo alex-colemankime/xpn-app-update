@@ -1,9 +1,13 @@
+import { foldName } from "./hosts.js";
+
 // Favorites › Shows: each show the listener follows or has saved episodes
 // of, as a short list with the show at its head. A show whose episodes are
 // saved but which isn't followed still gets a group, its heart empty, so
 // following it is one tap from the episodes that show the interest.
 
-const lower = (value) => String(value || "").toLowerCase();
+// Case and apostrophes folded, as the Shows search does.
+
+const lower = (value) => foldName(value || "");
 
 // Groups, most recently saved first. A group's place comes from its newest
 // saved episode (or, with none, from when the show was followed), so

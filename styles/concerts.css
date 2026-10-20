@@ -134,8 +134,6 @@
   min-height: 20px;
   padding: 0 var(--space-1);
   border-radius: var(--radius-full);
-  background: var(--action);
-  color: var(--action-ink);
   font-size: var(--text-caption);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-caption);
@@ -563,9 +561,6 @@
   font-size: var(--text-body);
   font-weight: var(--weight-semibold);
 }
-/* Tickets across the sheet, then Add to calendar, Share and Save as three
-   equal keys, an icon over its words, so the row never leaves one key on a
-   line of its own at any width or text size. */
 /* Tickets is the sheet's one button; the calendar, Share and Save follow as
    a quiet row of words with their glyphs, not three equal tiles. */
 .concert-sheet-actions {

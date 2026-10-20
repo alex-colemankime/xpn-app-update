@@ -111,6 +111,8 @@ const SCHEMA = {
       id: i.id,
       artist: text(i.artist, 300),
       date: i.date,
+      time: clock(i.time),
+      endTime: clock(i.endTime),
       venue: text(i.venue, 200),
       city: text(i.city, 100),
       region: text(i.region, 100),

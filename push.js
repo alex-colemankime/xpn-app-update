@@ -32,6 +32,7 @@ import { withTimeout } from "./net.js";
 import { createStore, readJson, writeJson } from "./storage.js";
 import { webUrl } from "./text.js";
 import { featureOn } from "./features.js";
+import { ALERT_KINDS } from "./updates.js";
 
 const SENT_KEY = "xpn.push.sent";
 const APP_ID = "org.xpn.wxpn";
@@ -228,7 +229,7 @@ const setStatus = (next) => {
 };
 
 // Every notice from the station, under one subscription.
-export const STATION_TOPIC = "station";
+const STATION_TOPIC = "station";
 
 // What the sender should have for this phone: the station's topic while the
 // listener has notifications on, nothing once they turn them off or the
@@ -242,7 +243,7 @@ export const topicsToSend = (on, pushOn, kinds = null) =>
 // The kinds of notice the sender delivers for these topics, so the phone
 // doesn't schedule them a second time.
 export const kindsPushed = (topics) =>
-  topics.includes(STATION_TOPIC) ? ["live", "drives"] : topics.filter((t) => t !== STATION_TOPIC);
+  topics.includes(STATION_TOPIC) ? ALERT_KINDS : topics.filter((t) => t !== STATION_TOPIC);
 
 // The listener's choice (on or off), sent to the server. With push
 // switched off by the station, the server is told to send nothing (when it

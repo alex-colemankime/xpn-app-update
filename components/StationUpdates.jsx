@@ -1,7 +1,7 @@
 import { Art, Icon, heightVar } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { STATION_ART } from "../assets.js";
-import { localClock } from "../time.js";
+import { stationClock } from "../time.js";
 import { isDonatePage, trackDonate } from "../links.js";
 import { dismissUpdate } from "../hooks/useStationUpdates.js";
 
@@ -23,7 +23,7 @@ function keepHyphenated(text) {
 const liveArt = (live) => live.image || SHOWS[live.show]?.img || STATION_ART;
 const trackHeight = heightVar("--banner-h");
 const liveWhen = (live) =>
-  live.state === "live" ? "Live now" : `Today at ${localClock(live.starts)}`;
+  live.state === "live" ? "Live now" : `Today at ${stationClock(live.starts)}`;
 
 // The line across the top of every screen. A live video takes it over while
 // it is on; otherwise it carries the station's banner (a member drive).
@@ -74,7 +74,7 @@ export function StationBanner({ banner, live, liveDismissed, onWatch, onListenSc
       {item.dismissible && (
         <button
           className="icon-button station-banner-close"
-          aria-label={`Dismiss: ${banner.text || "this message"}`}
+          aria-label={`Dismiss: ${(showLive ? live.title : banner.text) || "this message"}`}
           onClick={() => dismissUpdate(item.id)}
         >
           <Icon name="close" size={18} />

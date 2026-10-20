@@ -9,6 +9,7 @@ const route = (screen, showId = null, episodeId = null, videoId = null, live = f
   videoId,
   live,
   hostId: null,
+  concertId: null,
 });
 
 test("routes parse, round-trip, and fall back to Listen", () => {
@@ -54,4 +55,12 @@ test("a host's sheet is a route, over the screen it opened from", () => {
   });
   assert.equal(parseRoute("#/shows/host").hostId, null);
   assert.equal(routeHash(parseRoute("#/listen/host/dan-reed")), "#/listen/host/dan-reed");
+});
+
+test("a concert's sheet is a route, so Back closes it and a link opens it", () => {
+  const route = parseRoute("#/concerts/concert/12345");
+  assert.equal(route.screen, "concerts");
+  assert.equal(route.concertId, "12345");
+  assert.equal(routeHash(route), "#/concerts/concert/12345");
+  assert.equal(parseRoute("#/favorites/concert/a%20b").concertId, "a b");
 });

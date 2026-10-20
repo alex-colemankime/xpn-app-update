@@ -39,8 +39,11 @@ export function createStore(initial) {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+    // Listeners hear of a change only; setting the same value is no news.
     set(next) {
-      snapshot = typeof next === "function" ? next(snapshot) : next;
+      const value = typeof next === "function" ? next(snapshot) : next;
+      if (Object.is(value, snapshot)) return;
+      snapshot = value;
       listeners.forEach((listener) => listener());
     },
   };

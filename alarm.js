@@ -12,18 +12,6 @@ export const DAY_LABELS = [
 ];
 export const SNOOZE_OPTIONS = [5, 10, 15, 20];
 
-// The days an alarm repeats, short: "Weekdays", "Every day", "Mon, Wed, Fri".
-export function repeatLabel(days) {
-  const set = [...new Set(days)].sort().join();
-  if (!set) return "No days chosen";
-  if (set === "0,1,2,3,4,5,6") return "Every day";
-  if (set === "1,2,3,4,5") return "Weekdays";
-  if (set === "0,6") return "Weekends";
-  return DAY_LABELS.filter((d) => days.includes(d.id))
-    .map((d) => d.label.slice(0, 3))
-    .join(", ");
-}
-
 // The days as they read inside a sentence: "on weekdays", "every day",
 // "on Mon, Wed and Fri". Null when no day is chosen.
 export function repeatPhrase(days) {

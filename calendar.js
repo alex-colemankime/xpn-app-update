@@ -3,11 +3,12 @@
 //     listener picks the calendar and confirms (@ebarooni/capacitor-calendar).
 //   - In a browser: an .ics file (Apple Calendar, Outlook, and Google on
 //     Android open it), or a Google Calendar link.
-// The calendar's event times are placeholders, so concerts are all-day events
-// and the note says to check the venue for times.
+// Most of the calendar's event times are placeholders, so a concert without
+// a real time (concerts.js) is an all-day event and the note says to check
+// the venue; one with a time is timed, in Eastern time.
 
 import { Capacitor } from "@capacitor/core";
-import { shiftDate } from "./time.js";
+import { easternToEpoch, shiftDate } from "./time.js";
 
 const plain = (value) => String(value || "").trim();
 
@@ -17,7 +18,9 @@ export function concertEvent(c) {
   const notes = [
     c.ticketUrl && `Tickets: ${c.ticketUrl}`,
     c.pageUrl && c.pageUrl !== c.ticketUrl && `Details: ${c.pageUrl}`,
-    "Check the venue for door and show times. Saved from the WXPN app.",
+    c.time
+      ? "Saved from the WXPN app."
+      : "Check the venue for door and show times. Saved from the WXPN app.",
   ].filter(Boolean);
   return {
     title: plain(c.artist),
@@ -29,6 +32,14 @@ export function concertEvent(c) {
 }
 
 const compact = (date) => date.replaceAll("-", "");
+// "2026-10-23" and "12:00" as "20261023T120000". A missing end is an hour
+// on, or the day's last minute for a late start.
+const local = (date, time) => `${compact(date)}T${time.replace(":", "")}00`;
+const endOf = (c) => {
+  if (c.endTime) return c.endTime;
+  const hour = Number(c.time.slice(0, 2)) + 1;
+  return hour > 23 ? "23:59" : `${String(hour).padStart(2, "0")}${c.time.slice(2)}`;
+};
 const nextDay = (date) => shiftDate(date, 1);
 
 // iCalendar text escaping, and lines folded at 75 octets (RFC 5545).
@@ -77,8 +88,15 @@ export function icsFor(concerts, now = new Date()) {
       "BEGIN:VEVENT",
       `UID:wxpn-concert-${String(c.id).replace(/[^\w-]/g, "")}@xpn.org`,
       `DTSTAMP:${stamp(now)}`,
-      `DTSTART;VALUE=DATE:${compact(e.date)}`,
-      `DTEND;VALUE=DATE:${compact(nextDay(e.date))}`,
+      ...(c.time
+        ? [
+            `DTSTART;TZID=America/New_York:${local(e.date, c.time)}`,
+            `DTEND;TZID=America/New_York:${local(e.date, endOf(c))}`,
+          ]
+        : [
+            `DTSTART;VALUE=DATE:${compact(e.date)}`,
+            `DTEND;VALUE=DATE:${compact(nextDay(e.date))}`,
+          ]),
       `SUMMARY:${escapeText(e.title)}`,
       ...(e.location ? [`LOCATION:${escapeText(e.location)}`] : []),
       `DESCRIPTION:${escapeText(e.description)}`,
@@ -96,7 +114,10 @@ export function googleCalendarUrl(c) {
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: e.title,
-    dates: `${compact(e.date)}/${compact(nextDay(e.date))}`,
+    dates: c.time
+      ? `${local(e.date, c.time)}/${local(e.date, endOf(c))}`
+      : `${compact(e.date)}/${compact(nextDay(e.date))}`,
+    ...(c.time ? { ctz: "America/New_York" } : {}),
     details: e.description,
     location: e.location,
   });
@@ -143,9 +164,17 @@ export async function addToCalendar(c) {
       location: e.location,
       description: e.description,
       url: e.url || undefined,
-      isAllDay: true,
-      startDate: new Date(y, m - 1, d).valueOf(),
-      endDate: new Date(y, m - 1, d + 1).valueOf(),
+      ...(c.time
+        ? {
+            isAllDay: false,
+            startDate: easternToEpoch(c.date, c.time),
+            endDate: easternToEpoch(c.date, endOf(c)),
+          }
+        : {
+            isAllDay: true,
+            startDate: new Date(y, m - 1, d).valueOf(),
+            endDate: new Date(y, m - 1, d + 1).valueOf(),
+          }),
     });
     return true;
   } catch {

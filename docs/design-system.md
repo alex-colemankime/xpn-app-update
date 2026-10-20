@@ -177,7 +177,7 @@ station art if an image fails), `Wordmark` and `PromptLink`.
 
 **Sidebar** (`Sidebar`; `styles/layout.css`). 768px and up. The logo (116px wide), the screens as 48px rows (the current one on `--row-alt` in ink), then Settings and a tonal Donate block at the bottom.
 
-**Mini player and player bar** (`components/PlayerBar.jsx`; `styles/layout.css`, `styles/archive.css`). On tablet and desktop it is a bar on `--raised` under the content. Its ends line up with the page's content edges (`--bar-inset`). It holds play, the song (50px art, title and artist at 15px), the heart, and at the far end the volume (a slim range with a 4px track, 104px wide, 84px at ≤1000px) and AirPlay/Cast. On phones it is the mini player: full width above the tab bar on `--surface`, with the song first, then Cast, then play. When there is no artwork it shows the station mark. Play (`.player-play`) is 48 × 48px, `--radius-m`, and tonal. While connecting, its words say "Connecting…" and a spinner replaces the glyph only after 300ms. While Listen's big controls are on screen, the mini player steps aside (30% down, faded, over `--dur-menu`); an episode's mini player stays. The bar takes the artwork wash (section 2.2). Episodes add a scrubber and a close key; live radio never gets either.
+**Mini player and player bar** (`components/PlayerBar.jsx`; `styles/layout.css`, `styles/archive.css`). On tablet and desktop it is a bar on `--raised` under the content. Its ends line up with the page's content edges (`--bar-inset`). It holds play, the song (50px art, title and artist at 15px), the heart, and at the far end the volume (a slim range with a 4px track, 104px wide, 84px at ≤1000px) and Play on another device (the AirPlay or Cast glyph). On phones it is the mini player: full width above the tab bar on `--surface`, with the song first, then Play on another device, then play. When there is no artwork it shows the station mark. Play (`.player-play`) is 48 × 48px, `--radius-m`, and tonal. While connecting, its words say "Connecting…" and a spinner replaces the glyph only after 300ms. While Listen's big controls are on screen, the mini player steps aside (30% down, faded, over `--dur-menu`); an episode's mini player stays. The bar takes the artwork wash (section 2.2). Episodes add a scrubber and a close key; live radio never gets either.
 
 **Status-bar scrim** (`components/StatusScrim.jsx`). Once the page scrolls, the page color blurs in under the phone's status bar. With reduced transparency it is a solid band instead.
 
@@ -195,16 +195,16 @@ station art if an image fails), `Wordmark` and `PromptLink`.
 
 ### Buttons
 
-| Kind          | Class                      | Anatomy and size                                                                                           | Tokens                                               |
-| ------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Primary tonal | `.primary-button`          | Min height 48px, padding 12 × 24px (12 × 16px on phones), 17px bold, `--radius-m`                          | `--donate-fill`, `--donate-ink`; hover at 34% action |
-| Listen live   | `.now-controls .hero-play` | Fills its row, min height 50px (46px on phones); the label shortens with an ellipsis                       | Same tonal pair                                      |
-| Hero keys     | `.hero-key`                | 48 × 50px (46 × 46px on phones): heart, the song's "…" menu, Cast; plain glyphs in ink, soft fill on hover | `--text`, `--soft-fill`; a saved heart in its tint   |
-| Secondary     | `.secondary-button`        | Min height 44px, padding 12 × 16px, 17px semibold, no outline                                              | `--soft-fill` / `--soft-fill-hover`                  |
-| Text          | `.text-button`             | Min height 44px, 15px semibold, muted; `--accent` on hover                                                 | `--muted`, `--accent`                                |
-| Icon          | `.icon-button`             | 44 × 44px circle, muted; hover on `--row-alt` in `--accent`                                                | `--muted`, `--row-alt`                               |
-| Watch         | `.watch-button`            | 44px, ink fill with page-colored text, never orange                                                        | `--text`, `--bg`                                     |
-| Round key     | `.round-key`               | 34px circle, accent outline; filled with `--action` while its sound plays (alarm test)                     | `--accent`, `--action`                               |
+| Kind          | Class                      | Anatomy and size                                                                                                             | Tokens                                               |
+| ------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Primary tonal | `.primary-button`          | Min height 48px, padding 12 × 24px (12 × 16px on phones), 17px bold, `--radius-m`                                            | `--donate-fill`, `--donate-ink`; hover at 34% action |
+| Listen live   | `.now-controls .hero-play` | Fills its row, min height 50px (46px on phones); the label shortens with an ellipsis                                         | Same tonal pair                                      |
+| Hero keys     | `.hero-key`                | 48 × 50px (46 × 46px on phones): heart, the song's "…" menu, Play on another device; plain glyphs in ink, soft fill on hover | `--text`, `--soft-fill`; a saved heart in its tint   |
+| Secondary     | `.secondary-button`        | Min height 44px, padding 12 × 16px, 17px semibold, no outline                                                                | `--soft-fill` / `--soft-fill-hover`                  |
+| Text          | `.text-button`             | Min height 44px, 15px semibold, muted; `--accent` on hover                                                                   | `--muted`, `--accent`                                |
+| Icon          | `.icon-button`             | 44 × 44px circle, muted; hover on `--row-alt` in `--accent`                                                                  | `--muted`, `--row-alt`                               |
+| Watch         | `.watch-button`            | 44px, ink fill with page-colored text, never orange                                                                          | `--text`, `--bg`                                     |
+| Round key     | `.round-key`               | 34px circle, accent outline; filled with `--action` while its sound plays (alarm test)                                       | `--accent`, `--action`                               |
 
 All of them scale to 0.96 on press, are dimmed to 0.6 when disabled, and show the focus ring described in section 5.
 

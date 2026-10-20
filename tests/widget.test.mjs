@@ -42,4 +42,5 @@ test("an archived episode in the player bar is shown as the episode", () => {
   assert.equal(w.title, "Sunday, October 18");
   assert.equal(w.playing, true);
   assert.equal(w.show, "");
+  assert.equal(w.artwork, "", "the app's own show art isn't reachable from native code");
 });

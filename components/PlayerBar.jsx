@@ -7,7 +7,7 @@ import {
   chooseAudioOutput,
   chooseEpisodeOutput,
 } from "../hooks/usePlayer.js";
-import { CAST_KIND, CAST_LABEL } from "../cast.js";
+import { CAST_KIND, CAST_NAME } from "../cast.js";
 import { playbackText } from "../playback-text.js";
 import { useLiveSong } from "../nowplaying.js";
 import { clockTime, lengthLabel } from "../time.js";
@@ -54,8 +54,8 @@ function CastButton({ onClick }) {
   return (
     <button
       className="icon-button player-cast"
-      aria-label={CAST_LABEL[CAST_KIND]}
-      title={CAST_LABEL[CAST_KIND]}
+      aria-label={CAST_NAME}
+      title={CAST_NAME}
       onClick={onClick}
     >
       <Icon name={CAST_KIND} size={20} />

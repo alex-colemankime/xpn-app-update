@@ -86,9 +86,6 @@
   display: grid;
   gap: 2px;
 }
-.show-on-air-text .on-air-label {
-  font-size: var(--text-caption);
-}
 .show-on-air-text strong {
   font-size: var(--text-body);
   font-weight: var(--weight-bold);

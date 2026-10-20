@@ -14,7 +14,7 @@
 // for audio. Drops, stalls and errors while that is true are retried; the
 // same events after the listener paused are ignored.
 
-import { castKind, promptCast as openCastPicker } from "./cast.js";
+import { promptCast as openCastPicker } from "./cast.js";
 
 const noop = () => {};
 
@@ -210,8 +210,9 @@ export function createPlayer({
   }
 
   // Lock screen, notification and headset buttons drive the same actions as
-  // the on-screen button. Bound again on every play, since an archive episode
-  // binds its own (with seeking, which a live station has none of).
+  // the on-screen button. Bound at start, and again when the station takes
+  // the lock screen back from an archive episode (takeControls), which binds
+  // its own (with seeking, which a live station has none of).
   function bindControls() {
     mediaSession.setActionHandler({ action: "play" }, () => play());
     mediaSession.setActionHandler({ action: "pause" }, () => pause());
@@ -233,7 +234,6 @@ export function createPlayer({
   function play() {
     if (!audio) init(onPlaying, onStatus);
     if (!audio || !stream?.url) return;
-    bindControls();
     wantPlaying = true;
     attempt = 0;
     connect();
@@ -280,7 +280,6 @@ export function createPlayer({
   }
 
   // Playing on another device (cast.js): AirPlay or Google Cast.
-  const canCast = () => Boolean(castKind(audio));
   const promptCast = () => openCastPicker(audio);
 
   return {
@@ -289,11 +288,9 @@ export function createPlayer({
     pause,
     resume,
     setStream,
-    getStream: () => stream,
     setVolume,
     setMetadata,
     takeControls,
-    canCast,
     promptCast,
   };
 }

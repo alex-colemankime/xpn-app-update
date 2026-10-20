@@ -13,11 +13,7 @@
 /* Screens named by the tab bar start straight with their controls, also
    when they're wrapped (Shows, Favorites) or come after pull to refresh
    (Videos). */
-:is(
-  h1.sr-only + :is(.toolbar, .concert-filters),
-  h1.sr-only + div > .toolbar:first-child,
-  h1.sr-only + .pull-refresh + .toolbar
-) {
+:is(h1.sr-only + div > .toolbar:first-child, h1.sr-only + .pull-refresh + .toolbar) {
   margin-top: 0;
 }
 .segmented {
