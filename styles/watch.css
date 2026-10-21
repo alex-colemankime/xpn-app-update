@@ -24,7 +24,7 @@
   overscroll-behavior: contain;
   transition:
     opacity var(--dur-menu) var(--ease-out),
-    translate 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    translate 0.3s var(--ease-out);
 }
 @starting-style {
   .watch-page[open] {

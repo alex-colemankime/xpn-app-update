@@ -475,7 +475,7 @@
 }
 /* In dark, its muted lines a step lighter, to keep 4.5:1 on the wash. */
 :root[data-theme="dark"] .concert-row:has(.concert-flags) {
-  --muted: #adaeab;
+  --muted: var(--muted-on-wash-dark);
 }
 .concert-row:has(.concert-flags) {
   background: color-mix(in srgb, var(--donate-fill) var(--welcome-wash), var(--raised));

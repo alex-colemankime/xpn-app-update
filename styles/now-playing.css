@@ -523,7 +523,7 @@
     }
   }
   .popover-menu::backdrop {
-    background: #0008;
+    background: var(--scrim);
     transition:
       opacity var(--dur-menu) var(--ease-out),
       display var(--dur-menu) allow-discrete,
@@ -558,7 +558,7 @@
 }
 /* In dark, its muted lines a step lighter, to keep 4.5:1 on the wash. */
 :root[data-theme="dark"] .schedule-row.on-air-row {
-  --muted: #adaeab;
+  --muted: var(--muted-on-wash-dark);
 }
 
 /* Show sheet: when the show is next on, as one more line under its times,

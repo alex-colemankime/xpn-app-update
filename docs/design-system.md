@@ -66,7 +66,7 @@ The app always sets `data-theme` (Settings › Appearance: Automatic, Light, Dar
 | `--soft-fill`       | text at 7%                                   | same                                         | Secondary button fill; a row while it is being held                                     |
 | `--soft-fill-hover` | text at 11%                                  | same                                         | Secondary button hover                                                                  |
 | `--select-ink`      | `var(--text)`                                | same                                         | Where you are: tab, station, view, day, filter                                          |
-| `--select-fill`     | text at 9%                                   | text at 12%                                  | Pill behind the chosen tab-bar glyph, date range band                                   |
+| `--select-fill`     | text at 9%                                   | text at 12%                                  | Pill behind the chosen tab-bar glyph, the sidebar's current screen, date range band                                   |
 | `--donate-fill`     | `--action` 22% into `--bg` (about `#f4d8ce`) | `--action` 26% into `--bg` (about `#4b2a20`) | Donate, primary, play, Snooze, the Welcomes banner                                      |
 | `--donate-ink`      | `var(--accent-strong)`                       | same                                         | Text on `--donate-fill` (5.5:1)                                                         |
 | `--key-lit`         | `var(--donate-fill)`                         | same                                         | A secondary tonal key (an episode's play at rest, alarm test hover)                     |
@@ -189,7 +189,7 @@ station art if an image fails), `Wordmark` and `PromptLink`.
 
 **Day pickers** (`.day-picker` for the schedule, `.repeat-days` for the alarm's days). They use the same underline mark. On the schedule, today stays in ink even while another day is chosen.
 
-**Concert quick filters** (`.chip`, `styles/concerts.css`). Despite the class name, these are words and not chips: 15px semibold, underlined when `aria-pressed="true"`, in a row that scrolls sideways and fades at the end only while there is more to scroll. **Filters** (`.filters-button`) is an outlined 44px key that fills with ink when any of its filters is on, with an orange count badge. Inside the filter sheet, checkboxes (`.filter-box`, 22px) fill with `--action` when on. The date range calendar (`components/RangeCalendar.jsx`) marks the chosen range with a `--select-fill` band, and its first and last days as ink circles.
+**Concert quick filters** (`.chip`, `styles/concerts.css`). Despite the class name, these are words and not chips: 15px semibold, underlined when `aria-pressed="true"`, in a row that scrolls sideways and fades at the end only while there is more to scroll. **Filters** (`.filters-button`) is an outlined 44px key that fills with ink when any of its filters is on, with its count in a badge of the page color. Inside the filter sheet, checkboxes (`.filter-box`, 22px) fill with `--action` when on. The date range calendar (`components/RangeCalendar.jsx`) marks the chosen range with a `--select-fill` band, and its first and last days as ink circles.
 
 **Switch** (`Switch`; `styles/settings.css`). 45 × 27px. Off is `--muted` with a `--bg` knob. On is `--action` with an `--action-ink` knob, moved 18px. Its hit area extends to at least 44px. It has `role="switch"` and `aria-checked`.
 

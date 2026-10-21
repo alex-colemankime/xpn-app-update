@@ -103,7 +103,7 @@
 
 /* An episode: a play key with its length or time left, its title, and its
    heart. The row plays it, so it answers the pointer as a whole; the
-   episode in the player is tinted, its title in the accent. The tint
+   episode in the player is tinted in ink, as a choice is. The tint
    reaches a little past the page's edge, as far as its corner's radius,
    while the words and the divider stay at the edge like the song rows'. */
 .archive-row {
@@ -120,7 +120,7 @@
   transition: background-color var(--dur-quick);
 }
 .archive-row[data-active] {
-  background-color: color-mix(in srgb, var(--accent) 7%, var(--bg));
+  background-color: color-mix(in srgb, var(--select-ink) 7%, var(--bg));
   background-image: none;
 }
 @media (hover: hover) {
@@ -128,17 +128,17 @@
     background-color: color-mix(in srgb, var(--text) 4%, var(--bg));
   }
   .archive-row[data-active]:has(> button.archive-open:hover) {
-    background-color: color-mix(in srgb, var(--accent) 10%, var(--bg));
+    background-color: color-mix(in srgb, var(--select-ink) 10%, var(--bg));
   }
 }
 .archive-row:has(> button.archive-open:active) {
   background-color: color-mix(in srgb, var(--text) 8%, var(--bg));
 }
 .archive-row[data-active]:has(> button.archive-open:active) {
-  background-color: color-mix(in srgb, var(--accent) 13%, var(--bg));
+  background-color: color-mix(in srgb, var(--select-ink) 13%, var(--bg));
 }
 .archive-row[data-active] .archive-line strong {
-  color: var(--accent-strong);
+  color: var(--select-ink);
 }
 /* Out to the row's edges, so a tap anywhere but the heart plays. */
 .archive-open {
