@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import { defineConfig, loadEnv } from "vite";
@@ -11,22 +12,6 @@ import {
 } from "./config.js";
 
 const { version } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
-
-// Production builds without samples get an empty stand-in for samples.js, so
-// the placeholder content is not even shipped as an unused file. The hook
-// filters let the bundler skip calling these hooks for every other module.
-function noSamples() {
-  const id = "\0no-samples";
-  return {
-    name: "wxpn-no-samples",
-    enforce: "pre",
-    resolveId: { filter: { id: /(^|\/)samples\.js$/ }, handler: () => id },
-    load: {
-      filter: { id: new RegExp(`^${id}$`) },
-      handler: () => "export const SAMPLE_UPDATES = {};",
-    },
-  };
-}
 
 // Link previews (Slack, iMessage, social): the share image and page address
 // need absolute URLs, so they are added only when the build knows where it
@@ -127,10 +112,15 @@ function contentSecurityPolicy(env, mode) {
           "base-uri 'self'",
           "form-action 'none'",
         ].join("; ");
-        return html.replace(
-          "<head>",
-          `<head>\n    <meta http-equiv="Content-Security-Policy" content="${policy}" />`,
-        );
+        return {
+          tags: [
+            {
+              tag: "meta",
+              attrs: { "http-equiv": "Content-Security-Policy", content: policy },
+              injectTo: "head-prepend",
+            },
+          ],
+        };
       },
     },
   };
@@ -144,7 +134,6 @@ export default defineConfig(({ mode }) => {
   const showSamples = mode === "development" || env.VITE_SHOW_SAMPLES === "true";
   return {
     plugins: [
-      ...(showSamples ? [] : [noSamples()]),
       react(),
       // React Compiler: memoizes components and hooks automatically.
       babel({ presets: [reactCompilerPreset()] }),
@@ -161,6 +150,19 @@ export default defineConfig(({ mode }) => {
     // itself. Newer syntax is rewritten for them.
     build: {
       target: ["es2022", "safari16.4"],
+    },
+    // Replace the fixture module with an empty module in production builds
+    // unless samples were explicitly enabled. The app's feature flag then
+    // lets production tree-shaking remove the fixture-only path as well.
+    resolve: {
+      alias: showSamples
+        ? []
+        : [
+            {
+              find: /^(?:.*\/)?samples\.js$/,
+              replacement: fileURLToPath(new URL("./samples.empty.js", import.meta.url)),
+            },
+          ],
     },
     // The native projects hold copies of the built app (ios/App/App/public,
     // android/app/src/main/assets/public): the dev server neither scans
