@@ -66,7 +66,7 @@ The app always sets `data-theme` (Settings › Appearance: Automatic, Light, Dar
 | `--soft-fill`       | text at 7%                                   | same                                         | Secondary button fill; a row while it is being held                                     |
 | `--soft-fill-hover` | text at 11%                                  | same                                         | Secondary button hover                                                                  |
 | `--select-ink`      | `var(--text)`                                | same                                         | Where you are: tab, station, view, day, filter                                          |
-| `--select-fill`     | text at 9%                                   | text at 12%                                  | Pill behind the chosen tab-bar glyph, the sidebar's current screen, date range band                                   |
+| `--select-fill`     | text at 9%                                   | text at 12%                                  | Pill behind the chosen tab-bar glyph, the sidebar's current screen, date range band     |
 | `--donate-fill`     | `--action` 22% into `--bg` (about `#f4d8ce`) | `--action` 26% into `--bg` (about `#4b2a20`) | Donate, primary, play, Snooze, the Welcomes banner                                      |
 | `--donate-ink`      | `var(--accent-strong)`                       | same                                         | Text on `--donate-fill` (5.5:1)                                                         |
 | `--key-lit`         | `var(--donate-fill)`                         | same                                         | A secondary tonal key (an episode's play at rest, alarm test hover)                     |
