@@ -102,6 +102,9 @@ class HomeWidgetPlugin : Plugin() {
             // Still the song playing? A later one may have taken its place.
             if (WidgetState.read(app).artwork != now.artwork) return@execute
             WidgetState.artFile(app).outputStream().use { art.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            // A later song may have arrived while it was written: then it's
+            // not this song's picture to show.
+            if (WidgetState.read(app).artwork != now.artwork) WidgetState.artFile(app).delete()
             WxpnWidget.refresh(app)
         }
     }
