@@ -175,8 +175,18 @@ if [ -z "$UDID" ]; then
 fi
 note "simulator: $(echo "$UDID" | cut -f3) on $(echo "$UDID" | cut -f2)"
 UDID=$(echo "$UDID" | cut -f1)
-limit 60 xcrun simctl boot "$UDID" 2>/dev/null
-if ! limit 300 xcrun simctl bootstatus "$UDID" -b >/dev/null; then
+# A runner's simulator sometimes fails to come up the first time: shut it
+# down and try once more before calling it.
+booted=0
+for _ in 1 2; do
+  limit 60 xcrun simctl boot "$UDID" 2>/dev/null
+  if limit 300 xcrun simctl bootstatus "$UDID" -b >/dev/null; then
+    booted=1
+    break
+  fi
+  limit 60 xcrun simctl shutdown "$UDID" 2>/dev/null
+done
+if ((booted == 0)); then
   fail "the simulator didn't boot"
   summary
   exit 1

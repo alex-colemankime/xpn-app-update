@@ -112,8 +112,8 @@ app_pid() { sh_ pidof "$PKG" | awk '{print $1}'; }
 session_states() {
   sh_ dumpsys media_session | awk -v pkg="package=$PKG" '
     /package=/ { mine = index($0, pkg) > 0 }
-    mine && /state=PlaybackState \{state=/ {
-      s = $0; sub(/.*state=PlaybackState \{state=/, "", s); sub(/[^0-9].*/, "", s); print s
+    mine && match($0, /state=PlaybackState \{state=[A-Z_]+\([0-9]+\)/) {
+      s = substr($0, RSTART, RLENGTH); gsub(/[^0-9]/, "", s); print s
     }'
 }
 is_playing() { session_states | grep -qx 3; }
@@ -217,8 +217,8 @@ fi
 # --- 2. Play -------------------------------------------------------------
 
 step "Playing the station"
-PLAY='^(Play WXPN|Listen live, WXPN|Listen live)$'
-PLAYING='^(Pause WXPN|Pause)$'
+PLAY='^(Play WXPN|Listen live ?, ?WXPN|Listen live)$'
+PLAYING='^(Pause ?,? ?WXPN|Pause)$'
 TROUBLE='^(Retry WXPN|Try again|Offline)$|could not connect|Having trouble reaching'
 played=0
 if wait_for "$PLAY" 30 && tap "$PLAY"; then
@@ -327,7 +327,8 @@ car_up=0
 for _ in $(seq 1 10); do
   if sh_ dumpsys activity services "$PKG" | grep -q "ServiceRecord.*WxpnCarService" ||
     sh_ dumpsys media_session | grep -q "$PKG/WxpnCar" ||
-    sh_ logcat -d | grep -qE "Service connected for ComponentInfo\{$PKG/$PKG.WxpnCarService\}|addSession.*$PKG/WxpnCar"; then
+    # The whole run's log (the phone's own buffer rolls over).
+    grep -qE "Service connected for ComponentInfo\{$PKG/$PKG.WxpnCarService\}|addSession.*$PKG/WxpnCar" "$OUT/logcat.txt"; then
     car_up=1
     break
   fi

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Looks through a screen dump from `uiautomator dump` for the first element
+# Looks through a screen dump from `uiautomator dump` for the element
 # whose text or accessible name (content-desc) matches a pattern, and prints
 # the middle of it as "x y", ready for `adb shell input tap`. Exits 1 when
 # nothing matches, or when the dump can't be read (a half-written file).
@@ -22,6 +22,10 @@ def main():
     except (ET.ParseError, OSError):
         return 1
     pattern = re.compile(sys.argv[2], re.IGNORECASE)
+    # Of every match, a button first, then the smallest: a screen's region
+    # can carry the same name as its main button ("Listen live"), and its
+    # middle is the artwork, not the button.
+    found = []
     for node in root.iter("node"):
         names = (node.get("text") or "", node.get("content-desc") or "")
         if not any(pattern.search(name.strip()) for name in names if name):
@@ -34,7 +38,11 @@ def main():
         # one that can be tapped.
         if x2 <= x1 or y2 <= y1:
             continue
-        print((x1 + x2) // 2, (y1 + y2) // 2)
+        button = node.get("class", "").endswith("Button") or node.get("clickable") == "true"
+        found.append((not button, (x2 - x1) * (y2 - y1), (x1 + x2) // 2, (y1 + y2) // 2))
+    if found:
+        _, _, x, y = min(found)
+        print(x, y)
         return 0
     return 1
 
