@@ -157,15 +157,19 @@ export const VOLUME_SETTABLE = Capacitor.getPlatform() !== "ios";
 // The alarm plays at its own volume without touching the listener's saved
 // one, which comes back as soon as playback stops.
 let temporaryVolume = false;
+// The level playing now: the saved volume, or the alarm's.
+let playingLevel = volumeStore.getSnapshot();
 
 export function setVolume(percent) {
   temporaryVolume = false;
   volumeStore.set(percent);
-  player.setVolume(volumeStore.getSnapshot());
+  playingLevel = volumeStore.getSnapshot();
+  player.setVolume(playingLevel);
 }
 
 export function setTemporaryVolume(percent) {
   temporaryVolume = true;
+  playingLevel = percent;
   player.setVolume(percent);
 }
 const AUDIBLE = ["loading", "reconnecting", "playing"];
@@ -183,7 +187,8 @@ if (typeof window !== "undefined") {
       update({ status });
       if (temporaryVolume && !AUDIBLE.includes(status)) {
         temporaryVolume = false;
-        player.setVolume(volumeStore.getSnapshot());
+        playingLevel = volumeStore.getSnapshot();
+        player.setVolume(playingLevel);
       }
     },
   );
@@ -244,23 +249,25 @@ export function togglePlayback() {
   window.dispatchEvent(new Event("wxpn:refresh-playlist"));
 }
 
-// Sleep timer. Playback fades out over the last 20 seconds and then pauses;
-// the saved volume comes back on its own once playback stops (see
-// setTemporaryVolume). Stopping playback any other way cancels the timer.
+// Sleep timer. Playback fades out over the last 20 seconds, from the level
+// playing (the alarm's, if it's on), and then pauses; the saved volume comes
+// back on its own once playback stops (see setTemporaryVolume). Stopping
+// playback any other way cancels the timer.
 const sleepStore = createStore(null); // when playback will stop (epoch ms)
 let sleepTick = null;
-let sleepFading = false;
+// While fading: the level it fades from, or null.
+let fadeFrom = null;
 export const subscribeSleep = sleepStore.subscribe;
 export const getSleepEndsAt = sleepStore.getSnapshot;
 
-// Stops the timer's clock. A timer stopped mid-fade brings the listener's
-// volume back: harmless when paused, and needed if the stream is
+// Stops the timer's clock. A timer stopped mid-fade brings back the level
+// it faded from: harmless when paused, and needed if the stream is
 // reconnecting (it would resume faded) or a new timer replaces it.
 function stopSleepTick() {
   clearInterval(sleepTick);
   sleepTick = null;
-  if (sleepFading) setVolume(volumeStore.getSnapshot());
-  sleepFading = false;
+  if (fadeFrom !== null) player.setVolume(playingLevel);
+  fadeFrom = null;
 }
 
 export function cancelSleepTimer() {
@@ -282,8 +289,8 @@ export function sleepUntil(endsAt) {
     }
     const level = fadeLevel(remaining);
     if (level < 1) {
-      sleepFading = true;
-      setTemporaryVolume(Math.round(volumeStore.getSnapshot() * level));
+      fadeFrom ??= playingLevel;
+      player.setVolume(Math.round(fadeFrom * level));
     }
   }, 1000);
 }

@@ -60,3 +60,14 @@ test("replacing or cancelling a timer mid-fade brings the volume back", async ()
   player.cancelSleepTimer();
   assert.equal(Math.round(audio.volume * 100), 70, "cancel mid-fade restores it too");
 });
+
+test("with the alarm's own volume on, the fade starts from it", async () => {
+  const audio = audios[0];
+  player.setTemporaryVolume(30);
+  player.startSleepTimer(1);
+  mock.timers.tick(50000); // halfway through the fade
+  assert.ok(audio.volume <= 0.16, `faded from 30, not 70 (${audio.volume})`);
+  player.cancelSleepTimer();
+  assert.equal(Math.round(audio.volume * 100), 30, "the alarm's level comes back");
+  assert.equal(memory.get("xpn.volume"), "70", "the saved volume is untouched");
+});
