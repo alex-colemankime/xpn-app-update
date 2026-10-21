@@ -26,6 +26,7 @@ import {
   sameSecret,
   serviceAccount,
   validateMessage,
+  routeOf,
   validateRegistration,
   wants,
 } from "./core.js";
@@ -76,9 +77,9 @@ async function register(request, env) {
 
   const body = await readJson(request, MAX_REGISTER_BYTES);
   if (body.error) return json({ error: body.error }, body.status, cors);
-  const checked = validateRegistration(body.value);
+  const checked = validateRegistration(body.value, { iosVia: env.IOS_VIA });
   if (!checked.ok) return json({ error: checked.error }, 400, cors);
-  const { token, platform, topics, version } = checked.value;
+  const { token, platform, via, topics, version } = checked.value;
   const key = PREFIX + token;
 
   // No topics: the listener turned notifications off, so the token goes.
@@ -89,10 +90,21 @@ async function register(request, env) {
   // The same again (a reinstall, a retry) isn't written twice: KV's free
   // plan allows 1,000 writes a day, and 100,000 reads.
   const known = await env.TOKENS.get(key, "json");
-  if (known?.platform === platform && sameList(known.topics, topics) && known.version === version) {
+  if (
+    known?.platform === platform &&
+    known.via === via &&
+    sameList(known.topics, topics) &&
+    known.version === version
+  ) {
     return json({ ok: true, subscribed: true }, 200, cors);
   }
-  const record = { platform, topics, version, updatedAt: new Date().toISOString() };
+  const record = {
+    platform,
+    ...(via ? { via } : {}),
+    topics,
+    version,
+    updatedAt: new Date().toISOString(),
+  };
   await env.TOKENS.put(key, JSON.stringify(record), { metadata: record });
   return json({ ok: true, subscribed: true }, 200, cors);
 }
@@ -180,28 +192,28 @@ async function sendApns(token, message, { env, jwt }) {
   return new Error(`APNs ${response.status} ${answer?.reason || ""}`.trim());
 }
 
-// How each platform's tokens are sent, set up once per request: a function
-// per platform, or the Error that stopped it being set up.
-async function senders(env, platforms) {
+// How tokens are sent, set up once per request for the routes needed
+// ("fcm", "apns"; routeOf): a function per route, or the Error that stopped
+// it being set up. Each token goes the way it was registered, so switching
+// IOS_VIA leaves the iOS tokens already stored on APNs until their phones
+// register again.
+async function senders(env, routes) {
   const out = {};
-  const viaFcm = (platform) => platform === "android" || env.IOS_VIA === "fcm";
-  if (platforms.some(viaFcm)) {
-    let fcm;
+  if (routes.includes("fcm")) {
     try {
       const account = serviceAccount(env.FCM_SERVICE_ACCOUNT);
       const accessToken = await googleToken(account);
-      fcm = (token, message) => sendFcm(token, message, { account, accessToken });
+      out.fcm = (token, message) => sendFcm(token, message, { account, accessToken });
     } catch (error) {
-      fcm = error;
+      out.fcm = error;
     }
-    for (const platform of platforms.filter(viaFcm)) out[platform] = fcm;
   }
-  if (platforms.includes("ios") && !viaFcm("ios")) {
+  if (routes.includes("apns")) {
     try {
       const jwt = await appleToken(env);
-      out.ios = (token, message) => sendApns(token, message, { env, jwt });
+      out.apns = (token, message) => sendApns(token, message, { env, jwt });
     } catch (error) {
-      out.ios = error;
+      out.apns = error;
     }
   }
   return out;
@@ -240,13 +252,13 @@ async function send(request, env) {
   const pageSize = Math.min(Number(env.PAGE_SIZE) || PAGE_SIZE, 1000);
   const page = await tokenPage(env, message.cursor, pageSize);
   const targets = page.tokens.filter((t) => wants(t.record.topics || [], message.kind));
-  const how = await senders(env, [...new Set(targets.map((t) => t.record.platform))]);
+  const how = await senders(env, [...new Set(targets.map((t) => routeOf(t.record)))]);
 
   const outcomes = await mapLimit(
     targets,
     Number(env.CONCURRENCY) || CONCURRENCY,
     async ({ token, record }) => {
-      const sender = how[record.platform];
+      const sender = how[routeOf(record)];
       if (typeof sender !== "function") return sender || new Error("Unknown platform");
       try {
         return await sender(token, message);

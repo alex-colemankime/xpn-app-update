@@ -35,7 +35,7 @@ The variables in `wrangler.toml` (`APNS_BUNDLE_ID`, `APNS_SANDBOX`, `IOS_VIA`, `
 
 Checked in the code: the app uses `@capacitor/push-notifications`. On iOS its plugin turns the device token Apple gives `AppDelegate` (`didRegisterForRemoteNotificationsWithDeviceToken`, forwarded in `ios/App/App/AppDelegate.swift`) into upper-case hex and reports that, so **iOS tokens are APNs device tokens**, sent as they are to `https://api.push.apple.com/3/device/<token>`. The Firebase iOS SDK isn't in the app, so there are no FCM tokens on iOS. On Android the plugin asks `FirebaseMessaging.getToken()`, so **Android tokens are FCM tokens**. The Worker checks each against its platform (hex for iOS, FCM's characters for Android).
 
-If the app later adds the Firebase iOS SDK (making iOS tokens FCM tokens), set `IOS_VIA = "fcm"` and everything goes through FCM.
+If the app later adds the Firebase iOS SDK (making iOS tokens FCM tokens), set `IOS_VIA = "fcm"`: iPhones then register FCM tokens, which are stored as such and sent through FCM. Tokens registered before the switch are APNs tokens, and keep going through APNs until each phone registers again (the app re-registers at least weekly), so keep the APNs key until they have.
 
 ## Sending
 

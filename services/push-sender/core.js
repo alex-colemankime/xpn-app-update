@@ -41,13 +41,22 @@ export function httpsUrl(value) {
   }
 }
 
-// The phone's token: an APNs device token on iOS (hex, which
+// The phone's token: an APNs device token (hex, which
 // @capacitor/push-notifications sends upper case; 64 characters today, and
-// Apple says it may grow), an FCM token on Android (letters, digits, - _ :).
+// Apple says it may grow), or an FCM token (letters, digits, - _ :). Android
+// sends FCM tokens; iOS sends APNs tokens, or FCM ones once the app has
+// Firebase Messaging on iOS and the sender is set to IOS_VIA="fcm".
 const TOKEN_SHAPES = {
-  ios: /^[0-9A-Fa-f]{64,200}$/,
-  android: /^[A-Za-z0-9_:-]{32,500}$/,
+  apns: /^[0-9A-Fa-f]{64,200}$/,
+  fcm: /^[A-Za-z0-9_:-]{32,500}$/,
 };
+const PLATFORMS = ["ios", "android"];
+
+// How a phone's notifications go: Android's always through FCM, iOS's
+// through APNs unless they were registered as FCM tokens. A record from
+// before this was kept is an APNs one.
+export const routeOf = (record) =>
+  record.platform === "android" || record.via === "fcm" ? "fcm" : "apns";
 
 const failure = (error) => ({ ok: false, error });
 
@@ -55,15 +64,17 @@ const failure = (error) => ({ ok: false, error });
 //   { token, platform: "ios" | "android", topics: ["station"], app, version }
 // The registration as stored, or why it was refused. Fields the app may add
 // later are ignored rather than refused, so a new app version still
-// registers.
-export function validateRegistration(body) {
+// registers. `iosVia` is the sender's IOS_VIA: "fcm" takes iOS's tokens as
+// FCM tokens, and they're stored that way (`via`).
+export function validateRegistration(body, { iosVia = "apns" } = {}) {
   if (!isRecord(body)) return failure("The body must be a JSON object.");
   const { token, platform, topics, app = "", version = "" } = body;
-  if (!Object.keys(TOKEN_SHAPES).includes(platform)) {
+  if (!PLATFORMS.includes(platform)) {
     return failure('platform must be "ios" or "android".');
   }
-  if (typeof token !== "string" || !TOKEN_SHAPES[platform].test(token)) {
-    return failure(`token isn't a ${platform === "ios" ? "APNs" : "FCM"} token.`);
+  const via = platform === "android" || iosVia === "fcm" ? "fcm" : "apns";
+  if (typeof token !== "string" || !TOKEN_SHAPES[via].test(token)) {
+    return failure(`token isn't a${via === "apns" ? "n APNs" : "n FCM"} token.`);
   }
   if (!Array.isArray(topics) || topics.length > TOPICS.length) {
     return failure("topics must be a list.");
@@ -77,7 +88,14 @@ export function validateRegistration(body) {
   }
   return {
     ok: true,
-    value: { token, platform, topics: [...new Set(topics)].sort(), app, version },
+    value: {
+      token,
+      platform,
+      ...(platform === "ios" ? { via } : {}),
+      topics: [...new Set(topics)].sort(),
+      app,
+      version,
+    },
   };
 }
 

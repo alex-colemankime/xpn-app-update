@@ -590,6 +590,27 @@ test("IOS_VIA=fcm sends iOS through FCM", async () => {
   assert.ok(!calls.some((c) => c.url.includes("push.apple.com")));
 });
 
+test("IOS_VIA=fcm takes iPhones' FCM tokens, and older APNs ones still go through APNs", async () => {
+  // Registered before the switch: an APNs token.
+  const e = setup();
+  await registered(e, [[iosToken(7), "ios"]]);
+  // After it: an FCM token from an iPhone, which APNs's shape would refuse.
+  e.IOS_VIA = "fcm";
+  const fcmIos = "cXpN-ios_1:APA91b" + "x".repeat(120);
+  const r = await call(e, "/register", { body: registration(fcmIos, "ios"), headers: fromApp });
+  assert.equal(r.status, 200, await r.clone().text());
+  const result = await (await call(e, "/send", { body: notice, headers: staff(e) })).json();
+  assert.equal(result.sent, 2);
+  assert.ok(
+    calls.some((c) => c.url.includes("fcm.googleapis.com")),
+    "the new one, through FCM",
+  );
+  assert.ok(
+    calls.some((c) => c.url.includes("push.apple.com")),
+    "the old one, through APNs",
+  );
+});
+
 test("the sending page: the form, locked down", async () => {
   const response = await call(setup(), "/", { method: "GET" });
   assert.equal(response.status, 200);
