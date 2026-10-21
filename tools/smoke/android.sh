@@ -21,7 +21,10 @@
 
 set -uo pipefail
 
-PKG=org.xpn.wxpn
+# The store identity (applicationId) and the source package its classes are
+# in (namespace), which differ (docs/store-identity.md).
+PKG=com.jacobsmedia.wxpn
+SRC=org.xpn.wxpn
 APK=${1:?usage: android.sh APP.apk [OUT]}
 OUT=${2:-smoke-out/android}
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -186,7 +189,7 @@ fi
 # --- 1. Launch -----------------------------------------------------------
 
 step "Opening the app"
-sh_ am start -W -n "$PKG/.MainActivity"
+sh_ am start -W -n "$PKG/$SRC.MainActivity"
 sleep 3
 pid=$(app_pid)
 [ -n "$pid" ] || fail "the app's process isn't running after launch"
@@ -271,7 +274,7 @@ elif ((played)); then
   fi
 fi
 shot home
-sh_ am start -W -n "$PKG/.MainActivity" >/dev/null
+sh_ am start -W -n "$PKG/$SRC.MainActivity" >/dev/null
 sleep 3
 # Android also ends an app when a system process it relies on dies (on a
 # loaded emulator, Play services and its font provider, which the WebView
@@ -299,7 +302,7 @@ fi
 # MainActivity.java), and that part can be tried.
 step "The widget's play key"
 before=$(session_states | tr '\n' ' ')
-sh_ am start -W -n "$PKG/.MainActivity" -a org.xpn.wxpn.WIDGET_TOGGLE >/dev/null
+sh_ am start -W -n "$PKG/$SRC.MainActivity" -a "$SRC.WIDGET_TOGGLE" >/dev/null
 sleep 8
 after=$(session_states | tr '\n' ' ')
 note "widget toggle: session states '${before% }' then '${after% }'"
@@ -334,13 +337,13 @@ fi
 # (its media session, station list), which is where it would crash.
 # It may stop again as soon as nothing is bound to it, so it counts as
 # started once Android has its media session or has connected to it.
-sh_ am startservice -n "$PKG/.WxpnCarService" || true
+sh_ am startservice -n "$PKG/$SRC.WxpnCarService" || true
 car_up=0
 for _ in $(seq 1 10); do
   if sh_ dumpsys activity services "$PKG" | grep -q "ServiceRecord.*WxpnCarService" ||
     sh_ dumpsys media_session | grep -q "$PKG/WxpnCar" ||
     # The whole run's log (the phone's own buffer rolls over).
-    grep -qE "Service connected for ComponentInfo\{$PKG/$PKG.WxpnCarService\}|addSession.*$PKG/WxpnCar" "$OUT/logcat.txt"; then
+    grep -qE "Service connected for ComponentInfo\{$PKG/$SRC.WxpnCarService\}|addSession.*$PKG/WxpnCar" "$OUT/logcat.txt"; then
     car_up=1
     break
   fi
@@ -352,13 +355,13 @@ if sh_ dumpsys media_session | grep -q "WxpnCar"; then
 else
   warn "the car's media session (WxpnCar) isn't listed"
 fi
-sh_ am stopservice -n "$PKG/.WxpnCarService" >/dev/null
+sh_ am stopservice -n "$PKG/$SRC.WxpnCarService" >/dev/null
 sleep 2
 [ -n "$(app_pid)" ] || fail "the app's process died after starting the Android Auto service"
 
 step "Home screen widget"
 if grep -q "android.appwidget.action.APPWIDGET_UPDATE" <<<"$pkg_dump" &&
-  sh_ dumpsys appwidget | grep -qF "$PKG.WxpnWidget"; then
+  sh_ dumpsys appwidget | grep -qF "$SRC.WxpnWidget"; then
   note "the widget is offered to home screens"
 else
   fail "the widget (WxpnWidget) isn't registered with Android's widget list"

@@ -491,3 +491,12 @@ test("removing a favorite by keyboard keeps focus in the list", async ({ page })
   await page.keyboard.press("Enter");
   await expect(page.getByRole("button", { name: "Undo" })).toBeFocused();
 });
+
+test("without the dialog API, a show still opens instead of the app failing", async ({ page }) => {
+  await page.addInitScript(() => {
+    delete HTMLDialogElement.prototype.showModal;
+  });
+  await page.goto("/#/shows/show/funky");
+  await expect(page.getByRole("heading", { name: "Funky Friday" }).first()).toBeVisible();
+  await expect(page.getByText("Something went wrong")).toHaveCount(0);
+});

@@ -1,5 +1,5 @@
 {
-  "appId": "org.xpn.wxpn",
+  "appId": "com.jacobsmedia.wxpn",
   "appName": "WXPN",
   "webDir": "dist",
   "backgroundColor": "#f5f5f3",

@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { Art, Icon, MoreButton } from "../ui.jsx";
+import { Art, Icon, MoreButton, openModal } from "../ui.jsx";
 import { SaveButton } from "./MusicRows.jsx";
 import { Toast, modalClosed, modalOpened } from "./Toast.jsx";
 import { SHOWS } from "../catalog.js";
@@ -185,14 +185,15 @@ export function WatchPage({ videoId, live, onPick, onClose }) {
   useEffect(() => {
     const el = ref.current;
     const previous = document.activeElement;
-    el.showModal();
+    openModal(el);
     modalOpened();
     // Focus starts at the title (read first by a screen reader), so the
     // close key doesn't open ringed as if reached by keyboard.
     el.querySelector(".watch-title")?.focus({ preventScroll: true });
     return () => {
       modalClosed();
-      el.close();
+      if (typeof el.close === "function") el.close();
+      else el.removeAttribute("open");
       previous?.focus?.();
     };
   }, []);

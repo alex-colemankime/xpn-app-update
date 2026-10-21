@@ -7,10 +7,13 @@ apply plugin: 'org.jetbrains.kotlin.android'
 def appVersion = new groovy.json.JsonSlurper().parse(file('../../package.json')).version
 
 android {
+    // The source package; the store identity is the applicationId below.
     namespace = "org.xpn.wxpn"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "org.xpn.wxpn"
+        // The existing WXPN listing on Google Play, so this installs as an
+        // update to it (docs/store-identity.md).
+        applicationId "com.jacobsmedia.wxpn"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode Integer.parseInt(System.getenv("VERSION_CODE") ?: "1")

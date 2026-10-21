@@ -33,7 +33,7 @@ test("only known features can be turned off; an update needs a version", () => {
   assert.deepEqual(config.off, ["videos", "push"]);
   assert.equal(config.update.minVersion, "1.2");
   assert.equal(config.update.required, true);
-  assert.match(config.update.android, /play\.google\.com.*org\.xpn\.wxpn/);
+  assert.match(config.update.android, /play\.google\.com.*com\.jacobsmedia\.wxpn/);
   assert.equal(normalizeConfig({ update: { minVersion: "soon" } }).update, null);
 });
 

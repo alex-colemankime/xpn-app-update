@@ -11,7 +11,7 @@
 //       "minVersion": "1.2.0",             below this, the app asks to update
 //       "required": false,                 true: it can't be dismissed
 //       "message": "This version can no longer play WXPN.",
-//       "ios": "https://apps.apple.com/app/id…"   the App Store page
+//       "ios": "https://apps.apple.com/app/id304658861"   the App Store page
 //     }
 //   }
 //
@@ -42,7 +42,7 @@ export const FEATURES = [
   "reviewPrompt",
 ];
 const STREAM_HOSTS = /(^|\.)(xpn\.org|streamguys1\.com|streamguys\.com)$/;
-const PLAY_STORE = "https://play.google.com/store/apps/details?id=org.xpn.wxpn";
+const PLAY_STORE = "https://play.google.com/store/apps/details?id=com.jacobsmedia.wxpn";
 // A store address on the store's own host, else "".
 const storeUrl = (value, hosts) => {
   const url = webUrl(value);

@@ -67,7 +67,7 @@ WXPN is a public media service of the University of Pennsylvania, supported by i
 
 - **Not collected** (stays on the phone, or goes only where the listener sends it): favorites, saved episodes and places, the alarm, reminders and settings; the Spotify or Apple Music sign-in and the songs added to the listener's own playlist (sent from the phone straight to that service, at the listener's request, never to WXPN); calendar events (written by the system's own New Event sheet).
 - **Embedded players:** World Cafe and WXPN videos play in Brightcove's player (NPR's Music Video Network account), which counts plays in its own analytics; live videos play in YouTube's privacy-enhanced (nocookie) player. Those are their services, under their policies; the privacy policy should name them.
-- **Required-reason APIs:** none in the app or its plugins (Capacitor's own privacy manifest declares none), so no app privacy manifest entries are needed today. Add one if a native SDK (Crashlytics, Firebase Messaging) goes in later.
+- **Required-reason APIs and privacy manifests:** the app and its widget each ship a `PrivacyInfo.xcprivacy` (`ios/App/App/`, `ios/App/WXPNWidget/`). Both declare UserDefaults with reason `1C8F.1`: the app writes what's playing to the app group the widget reads. The app's manifest also lists the data in the table above, with no tracking. Plugins and Firebase ship their own manifests. Check Xcode's privacy report on the signed archive before each submission.
 - **Encryption:** `ITSAppUsesNonExemptEncryption` is false in Info.plist (HTTPS only), so no export compliance questions per build.
 
 ## Google Play

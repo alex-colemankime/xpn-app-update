@@ -14,7 +14,8 @@ work.
 2. Choose **Audio** as the category and fill in the form with the answers
    below.
 3. Once Apple grants it, the entitlement appears for the app ID
-   `org.xpn.wxpn` in Certificates, Identifiers & Profiles. Then:
+   `com.jacobsmedia.WXPN` (the existing WXPN app's) in Certificates, Identifiers &
+   Profiles. Then:
    - add `com.apple.developer.carplay-audio` (Boolean, YES) to
      `ios/App/App/App.entitlements`;
    - let automatic signing refresh the profile (the Release workflow does,
@@ -29,7 +30,7 @@ never appears.
 
 **App name:** WXPN
 
-**Bundle ID:** org.xpn.wxpn
+**Bundle ID:** com.jacobsmedia.WXPN (the existing WXPN 88.5 app, Apple ID 304658861)
 
 **Category:** Audio
 

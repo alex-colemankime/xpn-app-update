@@ -35,7 +35,8 @@ import { featureOn } from "./features.js";
 import { ALERT_KINDS } from "./updates.js";
 
 const SENT_KEY = "xpn.push.sent";
-const APP_ID = "org.xpn.wxpn";
+// The app's store identity on each platform (docs/store-identity.md).
+const APP_ID = Capacitor.getPlatform() === "ios" ? "com.jacobsmedia.WXPN" : "com.jacobsmedia.wxpn";
 const VERSION = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "";
 
 export const pushIsOn = () => featureOn("push") && Capacitor.isNativePlatform();

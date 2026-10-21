@@ -160,7 +160,7 @@ const env = (extra = {}) => ({
   FCM_SERVICE_ACCOUNT: JSON.stringify(account),
   APNS_KEY_ID: "KEY1234567",
   APNS_TEAM_ID: "TEAM123456",
-  APNS_BUNDLE_ID: "org.xpn.wxpn",
+  APNS_BUNDLE_ID: "com.jacobsmedia.WXPN",
   ...extra,
 });
 const apnsKey = pemOf(await crypto.subtle.exportKey("pkcs8", ec.privateKey));
@@ -179,7 +179,7 @@ const registration = (token, platform, topics = ["station"]) => ({
   token,
   platform,
   topics,
-  app: "org.xpn.wxpn",
+  app: "com.jacobsmedia.wxpn",
   version: "1.0.0",
 });
 const fromApp = { Origin: "capacitor://localhost" };
@@ -508,7 +508,7 @@ test("send reaches every phone, through FCM and APNs, and forgets dead tokens", 
   assert.equal(fcm.headers.Authorization, "Bearer ya29.test");
   assert.deepEqual(JSON.parse(fcm.body).message.data, notice.data);
   const apns = calls.find((c) => c.url.startsWith(`https://api.push.apple.com/3/device/`));
-  assert.equal(apns.headers["apns-topic"], "org.xpn.wxpn");
+  assert.equal(apns.headers["apns-topic"], "com.jacobsmedia.WXPN");
   assert.equal(apns.headers["apns-push-type"], "alert");
   assert.match(apns.headers.authorization, /^bearer [\w-]+\.[\w-]+\.[\w-]+$/);
   assert.deepEqual(JSON.parse(apns.body), apnsPayload(notice));

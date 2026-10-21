@@ -28,7 +28,7 @@ The variables in `wrangler.toml` (`APNS_BUNDLE_ID`, `APNS_SANDBOX`, `IOS_VIA`, `
 ### Where the keys come from
 
 - **FCM service account (Android):** in the Firebase console, the same project whose `google-services.json` is in `android/app/`: Project settings › Service accounts › Generate new private key. That downloads the JSON this needs whole. The Firebase Cloud Messaging API (V1) must be enabled (Project settings › Cloud Messaging; it is for new projects). Keep the file out of the repository.
-- **APNs key (iOS):** developer.apple.com › Certificates, Identifiers & Profiles › Keys › +, tick Apple Push Notifications service (APNs); if asked for an environment, choose Sandbox & Production. Download the `.p8` (Apple offers it only once). One key works for all the team's apps. The App ID `org.xpn.wxpn` needs the Push Notifications capability (Xcode › Signing & Capabilities).
+- **APNs key (iOS):** developer.apple.com › Certificates, Identifiers & Profiles › Keys › +, tick Apple Push Notifications service (APNs); if asked for an environment, choose Sandbox & Production. Download the `.p8` (Apple offers it only once). One key works for all the team's apps. The App ID `com.jacobsmedia.WXPN` needs the Push Notifications capability (Xcode › Signing & Capabilities).
 - **Sandbox or production:** builds installed from Xcode get sandbox tokens; TestFlight and App Store builds get production tokens, and each works only with its own APNs server. The Worker sends to production unless `APNS_SANDBOX = "true"`. For testing from Xcode, deploy a second copy (`npx wrangler deploy --name wxpn-push-dev` with its own KV namespace) with sandbox on.
 
 ## iOS tokens: what the app sends

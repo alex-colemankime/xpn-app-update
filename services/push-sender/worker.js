@@ -168,7 +168,7 @@ async function sendFcm(token, message, { account, accessToken }) {
 async function sendApns(token, message, { env, jwt }) {
   const response = await fetch(`https://${apnsHost(env)}/3/device/${token}`, {
     method: "POST",
-    headers: apnsHeaders(jwt, env.APNS_BUNDLE_ID || "org.xpn.wxpn"),
+    headers: apnsHeaders(jwt, env.APNS_BUNDLE_ID || "com.jacobsmedia.WXPN"),
     body: JSON.stringify(apnsPayload(message)),
   });
   if (response.ok) return "sent";
