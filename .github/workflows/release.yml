@@ -24,6 +24,12 @@ name: Release
 # push that means the integration is left out of the build, so the run says so.
 on:
   workflow_dispatch:
+    inputs:
+      play_status:
+        description: "Play internal release: draft (required until the app's first release is out) or completed"
+        type: choice
+        options: [draft, completed]
+        default: draft
 
 permissions:
   contents: read
@@ -114,7 +120,8 @@ jobs:
           packageName: org.xpn.wxpn
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: internal
-          status: completed
+          # Play takes only drafts until the app's first release is out.
+          status: ${{ inputs.play_status || 'draft' }}
 
   ios:
     runs-on: macos-26
