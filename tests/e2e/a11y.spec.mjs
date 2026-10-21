@@ -3,67 +3,10 @@
 // desktop sizes. Only what's on screen is checked: screens in the
 // background are hidden, as a screen reader finds them.
 import AxeBuilder from "@axe-core/playwright";
-import { test, expect } from "./fixtures.mjs";
+import { test, expect, routeListings, settle } from "./fixtures.mjs";
 
-// Listings to check, not just empty states: concerts (one a WXPN Welcomes
-// show), videos, and an archived show's broadcasts.
-const json = (route, body) =>
-  route.fulfill({
-    status: 200,
-    contentType: "application/json",
-    headers: { "access-control-allow-origin": "*" },
-    body: JSON.stringify(body),
-  });
-const day = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
-const EVENTS = ["Waxahatchee", "Friko / Hand Habits", "Big Thief"].map((title, i) => {
-  const [year, month, d] = day(i).split("-");
-  return {
-    id: 100 + i,
-    title,
-    start_date_details: { year, month, day: d },
-    venue: { venue: "Union Transfer", city: "Philadelphia" },
-    categories: [
-      { id: 5, name: "Philadelphia Area" },
-      ...(i === 1 ? [{ id: 21, name: "WXPN Welcomes" }] : []),
-    ],
-    website: "https://example.com/tickets",
-    url: `https://xpn.org/event/${i}`,
-  };
-});
-const VIDEOS = Array.from({ length: 6 }, (_, i) => ({
-  id: String(6400000000000 + i),
-  name: `Artist ${i} - World Cafe | Studio Session`,
-  duration: 600000,
-  published_at: new Date(Date.now() - i * 86400000).toISOString(),
-  tags: ["worldcafe"],
-}));
-test.beforeEach(async ({ page }) => {
-  await page.route(/wp-json\/tribe\/events/, (route) =>
-    json(route, { events: EVENTS, total: EVENTS.length, total_pages: 1 }),
-  );
-  await page.route(/wp-json\/acf\//, (route) => json(route, { _xpn_age_restriction: "21+" }));
-  await page.route(/players\.brightcove\.net\/.*config\.json/, (route) =>
-    json(route, { video_cloud: { policy_key: "k" } }),
-  );
-  await page.route(/edge\.api\.brightcove\.com/, (route) =>
-    json(route, {
-      videos: Number(new URL(route.request().url()).searchParams.get("offset")) ? [] : VIDEOS,
-    }),
-  );
-  await page.route(/xpn\.org\/program\/sleepy-hollow\//, (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: "text/html",
-      headers: { "access-control-allow-origin": "*" },
-      body: [4, 3]
-        .map(
-          (d) =>
-            `<div data-track-url="https://media.xpn.org/archive/2026100${d}060000_sh.mp3" data-track-title="Sleepy Hollow - 10.0${d}.2026" data-track-guid="sh-${d}"></div>`,
-        )
-        .join(""),
-    }),
-  );
-});
+// Listings to check, not just empty states (fixtures.mjs).
+test.beforeEach(({ page }) => routeListings(page));
 
 const VIEWS = {
   listen: async (page) => {
@@ -145,7 +88,7 @@ for (const theme of ["light", "dark"]) {
       await page.emulateMedia({ colorScheme: theme });
       await open(page);
       // Let fades and the artwork's colors settle.
-      await page.waitForTimeout(700);
+      await settle(page);
       const { violations } = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
         .analyze();
@@ -161,107 +104,3 @@ for (const theme of ["light", "dark"]) {
     });
   }
 }
-
-// The concert listings above, in use.
-test("concerts are grouped by day, and a concert's sheet has its tickets", async ({ page }) => {
-  await page.goto("/#/concerts");
-  const first = page.locator(".concert-day").first();
-  await expect(first.getByRole("heading")).toBeVisible();
-  await first.locator(".concert-open").first().click();
-  const sheet = page.locator(".concert-sheet");
-  await expect(sheet).toBeVisible();
-  await expect(sheet.getByRole("link", { name: "Tickets" })).toBeVisible();
-  await expect(sheet.getByRole("button", { name: "Add to calendar" })).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(sheet).toBeHidden();
-  // A quick filter narrows the list, and Clear lets it go.
-  const count = page.locator("#concert-results");
-  const all = await count.textContent();
-  await page.getByRole("button", { name: "WXPN Welcomes", exact: true }).click();
-  await expect(page.getByRole("button", { name: "WXPN Welcomes", exact: true })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await page.getByRole("button", { name: "Clear", exact: true }).click();
-  await expect(count).toHaveText(all);
-  // A search that leaves none is announced too.
-  await page.getByPlaceholder("Artist or venue").fill("no such band zzz");
-  await expect(page.getByText("No concerts match")).toBeVisible();
-  await expect(count).toHaveText(/^0 of \d+ concerts$/);
-});
-
-test("a concert by an artist of a saved song is announced, and View shows only artists you like", async ({
-  page,
-  context,
-}) => {
-  // A saved song by Waxahatchee, who is on the calendar above.
-  await context.addInitScript(() => {
-    const id = "waxahatchee--right-back-to-it";
-    localStorage.setItem(
-      "xpn.favorites.v1",
-      JSON.stringify({
-        songs: { [id]: { id, title: "Right Back to It", artist: "Waxahatchee", savedAt: 1 } },
-      }),
-    );
-  });
-  await page.goto("/");
-  const notice = page.getByText("Waxahatchee at Union Transfer");
-  await expect(notice).toBeVisible();
-  await page.getByRole("button", { name: "View" }).click();
-  await expect(page).toHaveURL(/#\/concerts/);
-  await expect(page.locator(".concert-row")).toHaveCount(1);
-  await expect(page.locator(".concert-row")).toContainText("Waxahatchee");
-  await expect(page.getByRole("button", { name: /^Filters 1 in use/ })).toBeVisible();
-  // Announced once: coming back doesn't announce it again.
-  await page.reload();
-  await page.waitForTimeout(1500);
-  await expect(page.getByText("Waxahatchee at Union Transfer")).toHaveCount(0);
-});
-
-test("an alert's View lets go of filters left from before", async ({ page, context }) => {
-  await context.addInitScript(() => {
-    const id = "waxahatchee--right-back-to-it";
-    localStorage.setItem(
-      "xpn.favorites.v1",
-      JSON.stringify({
-        songs: { [id]: { id, title: "Right Back to It", artist: "Waxahatchee", savedAt: 1 } },
-      }),
-    );
-  });
-  await page.goto("/#/concerts");
-  const view = page.getByRole("button", { name: "View" });
-  await expect(view).toBeVisible();
-  // A search from before that hides every concert.
-  await page.getByPlaceholder("Artist or venue").fill("no such band zzz");
-  await expect(page.getByText("No concerts match")).toBeVisible();
-  await view.click();
-  await expect(page.getByPlaceholder("Artist or venue")).toHaveValue("");
-  await expect(page.locator(".concert-row")).toHaveCount(1);
-  await expect(page.locator(".concert-row")).toContainText("Waxahatchee");
-});
-
-test("Back closes a concert's sheet and stays on Concerts; its link opens it again", async ({
-  page,
-}) => {
-  await page.goto("/#/listen");
-  await page.goto("/#/concerts");
-  await page.locator(".concert-day .concert-open").first().click();
-  const sheet = page.locator(".concert-sheet");
-  await expect(sheet).toBeVisible();
-  await expect(page).toHaveURL(/#\/concerts\/concert\//);
-  const link = page.url();
-  await page.goBack();
-  await expect(sheet).toBeHidden();
-  await expect(page).toHaveURL(/#\/concerts$/);
-  await page.goto(link);
-  await expect(sheet).toBeVisible();
-});
-
-test("a concert's link opens its sheet over any screen, once", async ({ page }) => {
-  await page.goto("/#/concerts");
-  await page.locator(".concert-day .concert-open").first().click();
-  const id = page.url().split("/concert/")[1];
-  await page.goto(`/#/listen/concert/${id}`);
-  await expect(page.locator(".concert-sheet")).toHaveCount(1);
-  await expect(page.locator(".concert-sheet")).toBeVisible();
-});

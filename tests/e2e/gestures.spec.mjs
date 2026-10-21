@@ -1,6 +1,6 @@
 // Touch gestures on a phone: press and hold for a menu, pull a sheet down to
 // close it, pull down to refresh. Each has a button too; these check the gestures themselves.
-import { test, expect } from "./fixtures.mjs";
+import { test, expect, settle } from "./fixtures.mjs";
 
 test.skip(({ isMobile }) => !isMobile, "touch only");
 
@@ -40,6 +40,10 @@ const touch = (
     { selector, points, holdMs, stepMs, restMs, end },
   );
 
+// A sheet let go of springs back (useSheetDrag.js, frame by frame, not a CSS
+// animation) and is at rest once its inline translate is cleared.
+const atRest = (sheet) => expect.poll(() => sheet.evaluate((el) => el.style.translate)).toBe("");
+
 test("press and hold a show in the schedule for its menu", async ({ page }) => {
   await page.goto("/#/shows");
   await touch(page, ".schedule-row", [[200, 400]], { holdMs: 600 });
@@ -58,7 +62,7 @@ test("a show's sheet closes when pulled down, and stays for a nudge", async ({ p
   await page.goto("/#/shows/show/worldcafe");
   const sheet = page.getByRole("dialog", { name: "World Cafe" });
   await expect(sheet).toBeVisible();
-  await page.waitForTimeout(400);
+  await settle(page, sheet); // opened all the way
   const down = (by) =>
     touch(
       page,
@@ -67,7 +71,7 @@ test("a show's sheet closes when pulled down, and stays for a nudge", async ({ p
       { stepMs: 40 },
     );
   await down(30);
-  await page.waitForTimeout(500);
+  await atRest(sheet);
   await expect(sheet).toBeVisible();
   await down(320);
   await expect(sheet).toBeHidden();
@@ -78,14 +82,14 @@ test("a sheet pulled down whose touch is cancelled settles back open", async ({ 
   await page.goto("/#/shows/show/worldcafe");
   const sheet = page.getByRole("dialog", { name: "World Cafe" });
   await expect(sheet).toBeVisible();
-  await page.waitForTimeout(400);
+  await settle(page, sheet); // opened all the way
   await touch(
     page,
     ".detail-dialog .dialog-header",
     Array.from({ length: 8 }, (_, i) => [200, 300 + (320 * i) / 7]),
     { stepMs: 40, end: "touchcancel" },
   );
-  await page.waitForTimeout(600);
+  await atRest(sheet);
   await expect(sheet).toBeVisible();
   await expect(page).toHaveURL(/#\/shows\/show\/worldcafe$/);
   // Back in place, not left hanging partway down.
@@ -155,7 +159,7 @@ test("a sheet pulled down quickly, then held still before letting go, settles ba
   await page.goto("/#/shows/show/worldcafe");
   const sheet = page.getByRole("dialog", { name: "World Cafe" });
   await expect(sheet).toBeVisible();
-  await page.waitForTimeout(400);
+  await settle(page, sheet); // opened all the way
   // 100px in about 100ms (a throw, were it let go then), then a second still.
   await touch(
     page,
@@ -163,7 +167,7 @@ test("a sheet pulled down quickly, then held still before letting go, settles ba
     Array.from({ length: 7 }, (_, i) => [200, 300 + (100 * i) / 6]),
     { stepMs: 16, restMs: 1000 },
   );
-  await page.waitForTimeout(700);
+  await atRest(sheet);
   await expect(sheet).toBeVisible();
   await expect(page).toHaveURL(/#\/shows\/show\/worldcafe$/);
 });
@@ -181,7 +185,7 @@ test("a tap on a song sheet's shade closes it, and does nothing to what is under
     .click();
   const sheet = page.locator(".hold-menu");
   await expect(sheet).toBeVisible();
-  await page.waitForTimeout(400);
+  await settle(page, sheet); // opened all the way
   // XPN2, at the top of the screen, is under the shade: tapping there only
   // closes the sheet; the station stays as it was.
   const box = await xpn2.boundingBox();
@@ -189,7 +193,7 @@ test("a tap on a song sheet's shade closes it, and does nothing to what is under
   expect(box.y + box.height).toBeLessThan((await sheet.boundingBox()).y);
   await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
   await expect(sheet).toBeHidden();
-  await page.waitForTimeout(300);
+  await settle(page);
   await expect(xpn2).toHaveAttribute("aria-pressed", "false");
 });
 
@@ -202,6 +206,6 @@ test("holding a song again keeps its sheet open", async ({ page }) => {
   // Held again: holding means open, so it stays (a tap on it is what
   // closes it).
   await touch(page, ".recent-panel .track-open", [[200, 600]], { holdMs: 600 });
-  await page.waitForTimeout(300);
+  await settle(page, sheet);
   await expect(sheet).toBeVisible();
 });

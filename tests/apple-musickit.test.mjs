@@ -2,12 +2,9 @@
 // fetched afresh once Apple refuses it or the listener disconnects.
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { fakeWindow } from "./fake-window.mjs";
 
-globalThis.window = {
-  localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
-  addEventListener() {},
-  location: { origin: "https://app.test", pathname: "/" },
-};
+const memory = fakeWindow();
 const { createMusicKitLoader } = await import("../music-services.js");
 
 test("a refused developer token is fetched again and MusicKit configured with the new one", async () => {
@@ -46,14 +43,11 @@ test("a failed token fetch isn't kept either", async () => {
 });
 
 test("Apple refusing the token, or Disconnect, makes the next sign-in configure MusicKit afresh", async () => {
-  const memory = new Map([
-    ["xpn.music.auth", JSON.stringify({ service: "apple", userToken: "u", developerToken: "d" })],
-  ]);
-  globalThis.window.localStorage = {
-    getItem: (k) => (memory.has(k) ? memory.get(k) : null),
-    setItem: (k, v) => memory.set(k, String(v)),
-    removeItem: (k) => memory.delete(k),
-  };
+  memory.clear();
+  memory.set(
+    "xpn.music.auth",
+    JSON.stringify({ service: "apple", userToken: "u", developerToken: "d" }),
+  );
   let configures = 0;
   globalThis.window.MusicKit = {
     configure: async () => configures++,

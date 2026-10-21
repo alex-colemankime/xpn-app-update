@@ -2,18 +2,14 @@
 // others too, not only the app's own events.
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { fakeWindow } from "./fake-window.mjs";
 
-const memory = new Map();
 const listeners = [];
-globalThis.window = {
-  localStorage: {
-    getItem: (k) => (memory.has(k) ? memory.get(k) : null),
-    setItem: (k, v) => memory.set(k, String(v)),
-    removeItem: (k) => memory.delete(k),
-  },
+const memory = fakeWindow({
   addEventListener: (type, fn) => type === "storage" && listeners.push(fn),
   gtag: () => {},
-};
+});
+
 // Another tab writing the setting: the browser tells this one.
 const otherTab = (key, value) => {
   memory.set(key, JSON.stringify(value));

@@ -1,14 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { fakeWindow } from "./fake-window.mjs";
 
-const memory = new Map();
-globalThis.window = {
-  localStorage: {
-    getItem: (key) => memory.get(key) ?? null,
-    setItem: (key, value) => memory.set(key, value),
-  },
-  addEventListener() {},
-};
+const memory = fakeWindow();
 const { connect, disconnect, finishConnect } = await import("../playlist-sync.js");
 const { SERVICES } = await import("../music-services.js");
 const state = () => JSON.parse(memory.get("xpn.playlistSync"));

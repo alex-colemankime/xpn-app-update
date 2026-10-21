@@ -1,23 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { fakeWindow } from "./fake-window.mjs";
 
 // Spotify's Web API as changed in February 2026 (required for new apps and
 // apps in Development Mode). These pin the real request URLs and bodies.
-const memory = new Map([
-  [
-    "xpn.music.auth",
-    JSON.stringify({ service: "spotify", access: "tok", expires: Date.now() + 3600e3 }),
+const memory = fakeWindow({
+  storage: [
+    [
+      "xpn.music.auth",
+      JSON.stringify({ service: "spotify", access: "tok", expires: Date.now() + 3600e3 }),
+    ],
   ],
-]);
-globalThis.window = {
-  localStorage: {
-    getItem: (k) => (memory.has(k) ? memory.get(k) : null),
-    setItem: (k, v) => memory.set(k, String(v)),
-    removeItem: (k) => memory.delete(k),
-  },
-  addEventListener() {},
-  location: { origin: "https://app.test", pathname: "/" },
-};
+});
 const requests = [];
 let reply = () => new Response(JSON.stringify({}), { status: 200 });
 globalThis.fetch = async (url, init = {}) => {

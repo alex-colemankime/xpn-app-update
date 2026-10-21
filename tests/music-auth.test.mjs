@@ -1,14 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-const memory = new Map();
-globalThis.window = {
-  localStorage: {
-    getItem: (key) => memory.get(key) ?? null,
-    setItem: (key, value) => memory.set(key, value),
-  },
-  addEventListener() {},
-  location: { origin: "https://app.test", pathname: "/" },
-};
+import { fakeWindow } from "./fake-window.mjs";
+const memory = fakeWindow();
 const { SERVICES, forgetAuth } = await import("../music-services.js");
 
 test("a delayed token response does not undo Disconnect", async () => {

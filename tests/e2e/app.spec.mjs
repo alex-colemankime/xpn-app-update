@@ -1,6 +1,6 @@
 // The main journeys, in the built app: listen, change station, save a song
 // and find it again, open a show, change a setting, follow a link.
-import { test, expect, SONGS, eastern } from "./fixtures.mjs";
+import { test, expect, SONGS, eastern, settle } from "./fixtures.mjs";
 
 test("Listen plays the station and shows what played", async ({ page }) => {
   await page.goto("/");
@@ -217,9 +217,14 @@ test("concerts switched off by the station fetch no listings", async ({ page, co
   );
   let listings = 0;
   page.on("request", (r) => /wp-json\/tribe\/events/.test(r.url()) && listings++);
+  const songs = page.waitForResponse(/playlist\/json\//);
   await page.goto("/");
   await expect(page.getByRole("button", { name: /^Shows$/ }).first()).toBeVisible();
-  await page.waitForTimeout(1500);
+  // The launch's other reads have been made and answered, and the songs
+  // shown: the calendar, had it been asked for, would have been by now.
+  await songs;
+  await expect(page.locator(".recent-panel .track-open").first()).toBeVisible();
+  await settle(page);
   expect(listings).toBe(0);
   await expect(page.getByRole("button", { name: /^Concerts$/ })).toHaveCount(0);
 });

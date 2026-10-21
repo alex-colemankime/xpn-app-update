@@ -1,16 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { fakeWindow } from "./fake-window.mjs";
 
 // A minimal localStorage, so the stores behave as in the app.
-const memory = new Map([["xpn.playlistSync", JSON.stringify({ service: "spotify" })]]);
-globalThis.window = {
-  localStorage: {
-    getItem: (k) => (memory.has(k) ? memory.get(k) : null),
-    setItem: (k, v) => memory.set(k, String(v)),
-    removeItem: (k) => memory.delete(k),
-  },
-  addEventListener() {},
-};
+const memory = fakeWindow({
+  storage: [["xpn.playlistSync", JSON.stringify({ service: "spotify" })]],
+});
 
 const { songId, toggleFavorite, getSavedSongs } = await import("../favorites.js");
 const { syncPlan, syncNow, usePlaylistSync } = await import("../playlist-sync.js");

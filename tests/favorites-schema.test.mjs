@@ -4,59 +4,54 @@
 // wrong type.
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { fakeWindow } from "./fake-window.mjs";
 
-const memory = new Map([
-  [
-    "xpn.favorites.v1",
-    JSON.stringify({
-      concerts: {
-        bad: { id: "bad", artist: "Wilco", date: "zzzz" },
-        feb30: { id: "feb30", artist: "Wilco", date: "2026-02-30" },
-        good: {
-          id: "good",
-          artist: "Wilco",
-          date: "2026-11-02",
-          venue: { name: "not text" },
-          ticketUrl: "javascript:alert(1)",
-          pageUrl: "https://xpn.org/event/1/",
-          regions: "Philadelphia",
-          savedAt: 5,
+const memory = fakeWindow({
+  storage: [
+    [
+      "xpn.favorites.v1",
+      JSON.stringify({
+        concerts: {
+          bad: { id: "bad", artist: "Wilco", date: "zzzz" },
+          feb30: { id: "feb30", artist: "Wilco", date: "2026-02-30" },
+          good: {
+            id: "good",
+            artist: "Wilco",
+            date: "2026-11-02",
+            venue: { name: "not text" },
+            ticketUrl: "javascript:alert(1)",
+            pageUrl: "https://xpn.org/event/1/",
+            regions: "Philadelphia",
+            savedAt: 5,
+          },
         },
-      },
-      episodes: {
-        e1: {
-          id: "e1",
-          title: "Sunday, October 4",
-          show: "sleepyhollow",
-          audio: "https://dylan.streamguys1.com/a.mp3?key=secret&ttl=1",
-          duration: "long",
-          page: "not a url",
+        episodes: {
+          e1: {
+            id: "e1",
+            title: "Sunday, October 4",
+            show: "sleepyhollow",
+            audio: "https://dylan.streamguys1.com/a.mp3?key=secret&ttl=1",
+            duration: "long",
+            page: "not a url",
+          },
         },
-      },
-      videos: {
-        v1: { id: "not-digits", name: "x" },
-        123: { id: "123", name: "Session", tags: [1, "worldcafe"] },
-      },
-      songs: {
-        s: { title: "Coast", artist: "Kim Deal", img: { src: 1 }, time: "noon" },
-        // A World Cafe session hour, saved before the app knew the bars.
-        "world-cafe-the-womack-sisters-10-7-2026-hour-2-part-7": {
-          title: "The Womack Sisters 10-7-2026 Hour 2, Part 7",
-          artist: "|World Cafe|",
-          img: "https://i.scdn.co/image/bw",
+        videos: {
+          v1: { id: "not-digits", name: "x" },
+          123: { id: "123", name: "Session", tags: [1, "worldcafe"] },
         },
-      },
-    }),
+        songs: {
+          s: { title: "Coast", artist: "Kim Deal", img: { src: 1 }, time: "noon" },
+          // A World Cafe session hour, saved before the app knew the bars.
+          "world-cafe-the-womack-sisters-10-7-2026-hour-2-part-7": {
+            title: "The Womack Sisters 10-7-2026 Hour 2, Part 7",
+            artist: "|World Cafe|",
+            img: "https://i.scdn.co/image/bw",
+          },
+        },
+      }),
+    ],
   ],
-]);
-globalThis.window = {
-  localStorage: {
-    getItem: (k) => (memory.has(k) ? memory.get(k) : null),
-    setItem: (k, v) => memory.set(k, String(v)),
-    removeItem: (k) => memory.delete(k),
-  },
-  addEventListener() {},
-};
+});
 const { getFavorite, toggleFavorite } = await import("../favorites.js");
 const { calendarDay } = await import("../time.js");
 
