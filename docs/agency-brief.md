@@ -16,7 +16,7 @@ quotes can be compared and kept tight.
 - **Phone-only pieces, written and compiling:** CarPlay and Android Auto, a
   home screen widget (iOS and Android), crash reporting (Firebase
   Crashlytics), push registration, background audio and the lock screen.
-- **Tests and builds.** About 340 unit tests and 130 browser tests
+- **Tests and builds.** About 370 unit tests and 130 browser tests
   (phone and desktop, with automated accessibility checks). Every push
   runs them, builds both native apps, and publishes an Android test build.
   A Release workflow signs store builds once the accounts' keys are added.
@@ -26,8 +26,12 @@ quotes can be compared and kept tight.
   components and the decisions the station has made (please keep them
   unless WXPN agrees otherwise).
 - **Docs.** README (setup, every integration, known gaps),
-  `docs/device-testing.md` (the device test plan), and
-  `docs/carplay-entitlement-request.md`.
+  `docs/architecture.md` (how the code fits together),
+  `docs/device-testing.md` (the device test plan, with a results sheet per
+  device), and `docs/carplay-entitlement-request.md`.
+- **Ready to deploy:** a push sender (`services/push-sender/`), publishing
+  station updates from the composer, fastlane lanes for both stores, and a
+  CI smoke test that opens both apps in an emulator and a simulator.
 
 Nothing has been tested on a real phone yet. That is the main job.
 
@@ -51,9 +55,11 @@ Please quote each package separately, in hours, with your assumptions.
    - Apple's entitlement may already be granted by the time you start (see
      below).
 4. **Back-end services.** Most of these depend on decisions below.
-   - A push sender, to the contract in README › Push notifications.
-   - Hosting and an editing flow for station updates (README › Station
-     updates).
+   - The push sender: `services/push-sender/` is written and tested
+     against stand-ins; deploy it, add the Firebase and APNs keys, and
+     confirm real sends (or swap in a hosted service if WXPN prefers).
+   - Station updates: staff already publish from
+     `tools/updates-composer.html`; confirm the flow with them.
    - The Apple Music token endpoint (`services/apple-music-token.js`),
      deployed.
    - Spotify, if WXPN qualifies (see below).
@@ -66,8 +72,9 @@ Please quote each package separately, in hours, with your assumptions.
    within `docs/design-system.md`, and a VoiceOver and TalkBack pass. An
    automated audit has already been done and fixed; this pass is the
    human one.
-7. **Store submission.** Signing, the store listings (drafts are in
-   `store/`), screenshots, privacy answers (README › Known gaps), and
+7. **Store submission.** Signing, then the listings, screenshots and
+   privacy answers, already drafted in `store/` and sent by the fastlane
+   lanes in `fastlane/` (its README lists what stays manual), and
    handling review feedback until both apps are live.
 8. **Project management** across the above.
 
