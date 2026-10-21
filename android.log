@@ -1,0 +1,593 @@
+
+Welcome to Gradle 8.14.3!
+
+Here are the highlights of this release:
+ - Java 24 support
+ - GraalVM Native Image toolchain selection
+ - Enhancements to test reporting
+ - Build Authoring improvements
+
+For more details see https://docs.gradle.org/8.14.3/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :app
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Configure project :capacitor-cordova-android-plugins
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :capacitor-android:preBuild UP-TO-DATE
+> Task :capacitor-android:preDebugBuild UP-TO-DATE
+> Task :capacitor-app:preBuild UP-TO-DATE
+> Task :capacitor-app:preDebugBuild UP-TO-DATE
+> Task :capacitor-browser:preBuild UP-TO-DATE
+> Task :capacitor-browser:preDebugBuild UP-TO-DATE
+> Task :capacitor-community-in-app-review:preBuild UP-TO-DATE
+> Task :capacitor-community-in-app-review:preDebugBuild UP-TO-DATE
+> Task :capacitor-browser:writeDebugAarMetadata
+> Task :capacitor-cordova-android-plugins:preBuild UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:preDebugBuild UP-TO-DATE
+> Task :capacitor-android:writeDebugAarMetadata
+> Task :capacitor-community-in-app-review:writeDebugAarMetadata
+> Task :capacitor-app:writeDebugAarMetadata
+> Task :capacitor-firebase-crashlytics:preBuild UP-TO-DATE
+> Task :capacitor-firebase-crashlytics:preDebugBuild UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:writeDebugAarMetadata
+> Task :capacitor-haptics:preBuild UP-TO-DATE
+> Task :capacitor-haptics:preDebugBuild UP-TO-DATE
+> Task :capacitor-firebase-crashlytics:writeDebugAarMetadata
+> Task :capacitor-local-notifications:preBuild UP-TO-DATE
+> Task :capacitor-local-notifications:preDebugBuild UP-TO-DATE
+> Task :capacitor-haptics:writeDebugAarMetadata
+> Task :capacitor-local-notifications:writeDebugAarMetadata
+> Task :capacitor-push-notifications:preBuild UP-TO-DATE
+> Task :capacitor-push-notifications:preDebugBuild UP-TO-DATE
+> Task :capacitor-status-bar:preBuild UP-TO-DATE
+> Task :capacitor-status-bar:preDebugBuild UP-TO-DATE
+> Task :capacitor-push-notifications:writeDebugAarMetadata
+> Task :capacitor-text-zoom:preBuild UP-TO-DATE
+> Task :capacitor-text-zoom:preDebugBuild UP-TO-DATE
+> Task :capacitor-status-bar:writeDebugAarMetadata
+> Task :capgo-capacitor-media-session:preBuild UP-TO-DATE
+> Task :capgo-capacitor-media-session:preDebugBuild UP-TO-DATE
+> Task :capacitor-text-zoom:writeDebugAarMetadata
+> Task :ebarooni-capacitor-calendar:preBuild UP-TO-DATE
+> Task :ebarooni-capacitor-calendar:preDebugBuild UP-TO-DATE
+> Task :capgo-capacitor-media-session:writeDebugAarMetadata
+> Task :ebarooni-capacitor-calendar:writeDebugAarMetadata
+> Task :capacitor-android:processDebugNavigationResources
+> Task :capacitor-app:processDebugNavigationResources
+> Task :capacitor-browser:processDebugNavigationResources
+> Task :app:checkDebugAarMetadata
+> Task :capacitor-community-in-app-review:processDebugNavigationResources
+> Task :capacitor-cordova-android-plugins:processDebugNavigationResources
+> Task :capacitor-firebase-crashlytics:processDebugNavigationResources
+> Task :capacitor-haptics:processDebugNavigationResources
+> Task :capacitor-local-notifications:processDebugNavigationResources
+> Task :capacitor-push-notifications:processDebugNavigationResources
+> Task :capacitor-status-bar:processDebugNavigationResources
+> Task :capacitor-text-zoom:processDebugNavigationResources
+> Task :capgo-capacitor-media-session:processDebugNavigationResources
+> Task :ebarooni-capacitor-calendar:processDebugNavigationResources
+> Task :app:processDebugNavigationResources
+> Task :app:generateDebugResValues
+> Task :capacitor-android:generateDebugResValues
+> Task :app:compileDebugNavigationResources
+> Task :capacitor-android:generateDebugResources
+> Task :capacitor-android:packageDebugResources
+> Task :capacitor-app:generateDebugResValues
+> Task :capacitor-app:generateDebugResources
+> Task :capacitor-app:packageDebugResources
+> Task :capacitor-browser:generateDebugResValues
+> Task :capacitor-browser:generateDebugResources
+> Task :capacitor-browser:packageDebugResources
+> Task :capacitor-community-in-app-review:generateDebugResValues
+> Task :capacitor-community-in-app-review:generateDebugResources
+> Task :capacitor-community-in-app-review:packageDebugResources
+> Task :capacitor-cordova-android-plugins:generateDebugResValues
+> Task :capacitor-cordova-android-plugins:generateDebugResources
+> Task :capacitor-cordova-android-plugins:packageDebugResources
+> Task :capacitor-firebase-crashlytics:generateDebugResValues
+> Task :capacitor-firebase-crashlytics:generateDebugResources
+> Task :capacitor-firebase-crashlytics:packageDebugResources
+> Task :capacitor-haptics:generateDebugResValues
+> Task :capacitor-haptics:generateDebugResources
+> Task :capacitor-haptics:packageDebugResources
+> Task :capacitor-local-notifications:generateDebugResValues
+> Task :capacitor-local-notifications:generateDebugResources
+> Task :capacitor-local-notifications:packageDebugResources
+> Task :capacitor-push-notifications:generateDebugResValues
+> Task :capacitor-push-notifications:generateDebugResources
+> Task :capacitor-push-notifications:packageDebugResources
+> Task :capacitor-status-bar:generateDebugResValues
+> Task :capacitor-status-bar:generateDebugResources
+> Task :capacitor-status-bar:packageDebugResources
+> Task :capacitor-text-zoom:generateDebugResValues
+> Task :capacitor-text-zoom:generateDebugResources
+> Task :capacitor-text-zoom:packageDebugResources
+> Task :capgo-capacitor-media-session:generateDebugResValues
+> Task :capgo-capacitor-media-session:generateDebugResources
+> Task :capgo-capacitor-media-session:packageDebugResources
+> Task :ebarooni-capacitor-calendar:generateDebugResValues
+> Task :ebarooni-capacitor-calendar:generateDebugResources
+> Task :ebarooni-capacitor-calendar:packageDebugResources
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:mergeDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :capacitor-android:extractDeepLinksDebug
+> Task :capacitor-app:extractDeepLinksDebug
+> Task :capacitor-browser:extractDeepLinksDebug
+> Task :capacitor-android:processDebugManifest
+> Task :capacitor-app:processDebugManifest
+> Task :capacitor-browser:processDebugManifest
+> Task :app:parseDebugLocalResources
+> Task :capacitor-community-in-app-review:extractDeepLinksDebug
+> Task :capacitor-cordova-android-plugins:extractDeepLinksDebug
+> Task :capacitor-community-in-app-review:processDebugManifest
+> Task :capacitor-cordova-android-plugins:processDebugManifest
+> Task :capacitor-firebase-crashlytics:extractDeepLinksDebug
+> Task :capacitor-haptics:extractDeepLinksDebug
+> Task :capacitor-firebase-crashlytics:processDebugManifest
+> Task :capacitor-local-notifications:extractDeepLinksDebug
+> Task :capacitor-haptics:processDebugManifest
+> Task :capacitor-push-notifications:extractDeepLinksDebug
+> Task :capacitor-status-bar:extractDeepLinksDebug
+> Task :capacitor-local-notifications:processDebugManifest
+> Task :capacitor-text-zoom:extractDeepLinksDebug
+> Task :capacitor-push-notifications:processDebugManifest
+> Task :capacitor-status-bar:processDebugManifest
+> Task :capacitor-text-zoom:processDebugManifest
+> Task :capgo-capacitor-media-session:extractDeepLinksDebug
+> Task :capgo-capacitor-media-session:processDebugManifest
+> Task :ebarooni-capacitor-calendar:extractDeepLinksDebug
+> Task :ebarooni-capacitor-calendar:processDebugManifest
+> Task :capacitor-android:compileDebugLibraryResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :capacitor-app:compileDebugLibraryResources
+> Task :capacitor-android:parseDebugLocalResources
+> Task :capacitor-app:parseDebugLocalResources
+> Task :app:processDebugManifestForPackage
+> Task :capacitor-browser:compileDebugLibraryResources
+> Task :capacitor-browser:parseDebugLocalResources
+> Task :capacitor-community-in-app-review:compileDebugLibraryResources
+> Task :capacitor-android:generateDebugRFile
+> Task :capacitor-browser:generateDebugRFile
+> Task :capacitor-app:generateDebugRFile
+> Task :capacitor-community-in-app-review:parseDebugLocalResources
+> Task :capacitor-cordova-android-plugins:compileDebugLibraryResources
+> Task :capacitor-community-in-app-review:generateDebugRFile
+> Task :capacitor-firebase-crashlytics:compileDebugLibraryResources
+> Task :capacitor-cordova-android-plugins:parseDebugLocalResources
+> Task :capacitor-firebase-crashlytics:parseDebugLocalResources
+> Task :capacitor-cordova-android-plugins:generateDebugRFile
+> Task :capacitor-haptics:compileDebugLibraryResources
+> Task :capacitor-firebase-crashlytics:generateDebugRFile
+> Task :capacitor-haptics:parseDebugLocalResources
+> Task :capacitor-local-notifications:compileDebugLibraryResources
+> Task :capacitor-haptics:generateDebugRFile
+> Task :capacitor-local-notifications:parseDebugLocalResources
+> Task :capacitor-push-notifications:compileDebugLibraryResources
+> Task :capacitor-local-notifications:generateDebugRFile
+> Task :capacitor-push-notifications:parseDebugLocalResources
+> Task :capacitor-status-bar:compileDebugLibraryResources
+> Task :capacitor-push-notifications:generateDebugRFile
+> Task :capacitor-text-zoom:compileDebugLibraryResources
+> Task :capacitor-status-bar:parseDebugLocalResources
+> Task :capacitor-text-zoom:parseDebugLocalResources
+> Task :capacitor-status-bar:generateDebugRFile
+> Task :capacitor-text-zoom:generateDebugRFile
+> Task :capgo-capacitor-media-session:compileDebugLibraryResources
+> Task :ebarooni-capacitor-calendar:compileDebugLibraryResources
+> Task :capgo-capacitor-media-session:parseDebugLocalResources
+> Task :ebarooni-capacitor-calendar:parseDebugLocalResources
+> Task :ebarooni-capacitor-calendar:generateDebugRFile
+> Task :capgo-capacitor-media-session:generateDebugRFile
+> Task :capacitor-android:javaPreCompileDebug
+> Task :app:processDebugResources
+
+> Task :capacitor-android:compileDebugJavaWithJavac
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :capacitor-app:javaPreCompileDebug
+> Task :capacitor-browser:javaPreCompileDebug
+> Task :capacitor-community-in-app-review:javaPreCompileDebug
+> Task :capacitor-cordova-android-plugins:javaPreCompileDebug
+> Task :capacitor-cordova-android-plugins:compileDebugJavaWithJavac NO-SOURCE
+> Task :capacitor-firebase-crashlytics:javaPreCompileDebug
+> Task :capacitor-local-notifications:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :capacitor-android:bundleLibCompileToJarDebug
+> Task :capacitor-haptics:javaPreCompileDebug
+> Task :capacitor-cordova-android-plugins:bundleLibCompileToJarDebug
+> Task :capacitor-local-notifications:javaPreCompileDebug
+> Task :capacitor-app:compileDebugJavaWithJavac
+> Task :capacitor-app:bundleLibCompileToJarDebug
+> Task :capacitor-browser:compileDebugJavaWithJavac
+> Task :capacitor-browser:bundleLibCompileToJarDebug
+> Task :capacitor-community-in-app-review:compileDebugJavaWithJavac
+> Task :capacitor-community-in-app-review:bundleLibCompileToJarDebug
+
+> Task :capacitor-firebase-crashlytics:compileDebugJavaWithJavac
+Note: /home/runner/work/xpn-app-update/xpn-app-update/node_modules/@capacitor-firebase/crashlytics/android/src/main/java/io/capawesome/capacitorjs/plugins/firebase/crashlytics/FirebaseCrashlyticsPlugin.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :capacitor-firebase-crashlytics:bundleLibCompileToJarDebug
+> Task :capacitor-haptics:compileDebugJavaWithJavac
+> Task :capacitor-haptics:bundleLibCompileToJarDebug
+> Task :capacitor-push-notifications:javaPreCompileDebug
+> Task :capacitor-status-bar:javaPreCompileDebug
+
+> Task :capacitor-push-notifications:compileDebugJavaWithJavac
+Note: /home/runner/work/xpn-app-update/xpn-app-update/node_modules/@capacitor/push-notifications/android/src/main/java/com/capacitorjs/plugins/pushnotifications/PushNotificationsPlugin.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :capacitor-push-notifications:bundleLibCompileToJarDebug
+> Task :capacitor-status-bar:compileDebugJavaWithJavac
+> Task :capacitor-status-bar:bundleLibCompileToJarDebug
+> Task :ebarooni-capacitor-calendar:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :capacitor-text-zoom:javaPreCompileDebug
+> Task :capgo-capacitor-media-session:javaPreCompileDebug
+> Task :capacitor-text-zoom:compileDebugJavaWithJavac
+> Task :capacitor-text-zoom:bundleLibCompileToJarDebug
+
+> Task :capgo-capacitor-media-session:compileDebugJavaWithJavac
+Note: /home/runner/work/xpn-app-update/xpn-app-update/node_modules/@capgo/capacitor-media-session/android/src/main/java/com/capgo/mediasession/MediaSessionService.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :capgo-capacitor-media-session:bundleLibCompileToJarDebug
+> Task :ebarooni-capacitor-calendar:javaPreCompileDebug
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :capacitor-android:mergeDebugShaders
+> Task :capacitor-android:compileDebugShaders NO-SOURCE
+> Task :capacitor-android:generateDebugAssets UP-TO-DATE
+> Task :capacitor-android:mergeDebugAssets
+> Task :capacitor-app:mergeDebugShaders
+> Task :capacitor-app:compileDebugShaders NO-SOURCE
+> Task :capacitor-app:generateDebugAssets UP-TO-DATE
+> Task :capacitor-app:mergeDebugAssets
+> Task :capacitor-browser:mergeDebugShaders
+> Task :capacitor-browser:compileDebugShaders NO-SOURCE
+> Task :capacitor-browser:generateDebugAssets UP-TO-DATE
+> Task :capacitor-browser:mergeDebugAssets
+> Task :capacitor-community-in-app-review:mergeDebugShaders
+> Task :capacitor-community-in-app-review:compileDebugShaders NO-SOURCE
+> Task :capacitor-community-in-app-review:generateDebugAssets UP-TO-DATE
+> Task :capacitor-community-in-app-review:mergeDebugAssets
+> Task :capacitor-cordova-android-plugins:mergeDebugShaders
+> Task :capacitor-cordova-android-plugins:compileDebugShaders NO-SOURCE
+> Task :capacitor-cordova-android-plugins:generateDebugAssets UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:mergeDebugAssets
+> Task :capacitor-firebase-crashlytics:mergeDebugShaders
+> Task :capacitor-firebase-crashlytics:compileDebugShaders NO-SOURCE
+> Task :capacitor-firebase-crashlytics:generateDebugAssets UP-TO-DATE
+> Task :capacitor-firebase-crashlytics:mergeDebugAssets
+> Task :capacitor-haptics:mergeDebugShaders
+> Task :capacitor-haptics:compileDebugShaders NO-SOURCE
+> Task :capacitor-haptics:generateDebugAssets UP-TO-DATE
+> Task :capacitor-haptics:mergeDebugAssets
+> Task :capacitor-local-notifications:mergeDebugShaders
+> Task :capacitor-local-notifications:compileDebugShaders NO-SOURCE
+> Task :capacitor-local-notifications:generateDebugAssets UP-TO-DATE
+> Task :capacitor-local-notifications:mergeDebugAssets
+> Task :capacitor-push-notifications:mergeDebugShaders
+> Task :capacitor-push-notifications:compileDebugShaders NO-SOURCE
+> Task :capacitor-push-notifications:generateDebugAssets UP-TO-DATE
+> Task :capacitor-push-notifications:mergeDebugAssets
+> Task :capacitor-status-bar:mergeDebugShaders
+> Task :capacitor-status-bar:compileDebugShaders NO-SOURCE
+> Task :capacitor-status-bar:generateDebugAssets UP-TO-DATE
+> Task :capacitor-status-bar:mergeDebugAssets
+> Task :capacitor-text-zoom:mergeDebugShaders
+> Task :capacitor-text-zoom:compileDebugShaders NO-SOURCE
+> Task :capacitor-text-zoom:generateDebugAssets UP-TO-DATE
+> Task :capacitor-text-zoom:mergeDebugAssets
+> Task :capgo-capacitor-media-session:mergeDebugShaders
+> Task :capgo-capacitor-media-session:compileDebugShaders NO-SOURCE
+> Task :capgo-capacitor-media-session:generateDebugAssets UP-TO-DATE
+> Task :capgo-capacitor-media-session:mergeDebugAssets
+> Task :ebarooni-capacitor-calendar:mergeDebugShaders
+> Task :ebarooni-capacitor-calendar:compileDebugShaders NO-SOURCE
+> Task :ebarooni-capacitor-calendar:generateDebugAssets UP-TO-DATE
+> Task :ebarooni-capacitor-calendar:mergeDebugAssets
+> Task :app:mergeDebugAssets
+> Task :capacitor-community-in-app-review:bundleLibRuntimeToJarDebug
+> Task :app:compressDebugAssets
+> Task :capacitor-firebase-crashlytics:bundleLibRuntimeToJarDebug
+> Task :capacitor-app:bundleLibRuntimeToJarDebug
+> Task :capacitor-browser:bundleLibRuntimeToJarDebug
+> Task :capacitor-haptics:bundleLibRuntimeToJarDebug
+> Task :capacitor-push-notifications:bundleLibRuntimeToJarDebug
+> Task :capacitor-status-bar:bundleLibRuntimeToJarDebug
+> Task :capacitor-text-zoom:bundleLibRuntimeToJarDebug
+> Task :capgo-capacitor-media-session:bundleLibRuntimeToJarDebug
+> Task :capacitor-android:bundleLibRuntimeToJarDebug
+> Task :capacitor-cordova-android-plugins:bundleLibRuntimeToJarDebug
+> Task :app:desugarDebugFileDependencies
+> Task :capacitor-android:processDebugJavaRes NO-SOURCE
+> Task :capacitor-app:processDebugJavaRes NO-SOURCE
+> Task :capacitor-browser:processDebugJavaRes NO-SOURCE
+> Task :capacitor-community-in-app-review:processDebugJavaRes NO-SOURCE
+> Task :capacitor-cordova-android-plugins:processDebugJavaRes NO-SOURCE
+> Task :capacitor-firebase-crashlytics:processDebugJavaRes NO-SOURCE
+> Task :capacitor-haptics:processDebugJavaRes NO-SOURCE
+> Task :capacitor-push-notifications:processDebugJavaRes NO-SOURCE
+> Task :capacitor-status-bar:processDebugJavaRes NO-SOURCE
+> Task :capacitor-text-zoom:processDebugJavaRes NO-SOURCE
+> Task :capgo-capacitor-media-session:processDebugJavaRes NO-SOURCE
+> Task :app:checkDebugDuplicateClasses
+> Task :capacitor-community-in-app-review:bundleLibRuntimeToDirDebug
+> Task :app:mergeExtDexDebug
+> Task :capacitor-firebase-crashlytics:bundleLibRuntimeToDirDebug
+> Task :capacitor-app:bundleLibRuntimeToDirDebug
+> Task :capacitor-browser:bundleLibRuntimeToDirDebug
+> Task :capacitor-haptics:bundleLibRuntimeToDirDebug
+> Task :capacitor-push-notifications:bundleLibRuntimeToDirDebug
+> Task :capacitor-status-bar:bundleLibRuntimeToDirDebug
+> Task :capacitor-text-zoom:bundleLibRuntimeToDirDebug
+> Task :capgo-capacitor-media-session:bundleLibRuntimeToDirDebug
+> Task :capacitor-android:bundleLibRuntimeToDirDebug
+> Task :capacitor-cordova-android-plugins:bundleLibRuntimeToDirDebug
+> Task :app:mergeDebugJniLibFolders
+> Task :capacitor-android:mergeDebugJniLibFolders
+> Task :capacitor-android:mergeDebugNativeLibs NO-SOURCE
+> Task :capacitor-android:copyDebugJniLibsProjectOnly
+> Task :capacitor-app:mergeDebugJniLibFolders
+> Task :capacitor-app:mergeDebugNativeLibs NO-SOURCE
+> Task :capacitor-app:copyDebugJniLibsProjectOnly
+> Task :capacitor-browser:mergeDebugJniLibFolders
+> Task :capacitor-browser:mergeDebugNativeLibs NO-SOURCE
+> Task :capacitor-browser:copyDebugJniLibsProjectOnly
+> Task :capacitor-community-in-app-review:mergeDebugJniLibFolders
+> Task :capacitor-community-in-app-review:mergeDebugNativeLibs NO-SOURCE
+> Task :capacitor-community-in-app-review:copyDebugJniLibsProjectOnly
+> Task :capacitor-cordova-android-plugins:mergeDebugJniLibFolders
+> Task :capacitor-cordova-android-plugins:mergeDebugNativeLibs NO-SOURCE
+> Task :capacitor-cordova-android-plugins:copyDebugJniLibsProjectOnly
+> Task :capacitor-firebase-crashlytics:mergeDebugJniLibFolders
+> Task :capacitor-firebase-crashlytics:mergeDebugNativeLibs NO-SOURCE
+> Task :capacitor-firebase-crashlytics:copyDebugJniLibsProjectOnly
+> Task :capacitor-haptics:mergeDebugJniLibFolders
+> Task :capacitor-haptics:mergeDebugNativeLibs NO-SOURCE
+> Task :capacitor-haptics:copyDebugJniLibsProjectOnly
+> Task :capacitor-local-notifications:mergeDebugJniLibFolders
+> Task :capacitor-local-notifications:mergeDebugNativeLibs NO-SOURCE
+> Task :capacitor-local-notifications:copyDebugJniLibsProjectOnly
+> Task :capacitor-push-notifications:mergeDebugJniLibFolders
+> Task :capacitor-push-notifications:mergeDebugNativeLibs NO-SOURCE
+> Task :capacitor-push-notifications:copyDebugJniLibsProjectOnly
+> Task :capacitor-status-bar:mergeDebugJniLibFolders
+> Task :capacitor-status-bar:mergeDebugNativeLibs NO-SOURCE
+> Task :capacitor-status-bar:copyDebugJniLibsProjectOnly
+> Task :capacitor-text-zoom:mergeDebugJniLibFolders
+> Task :capacitor-text-zoom:mergeDebugNativeLibs NO-SOURCE
+> Task :capacitor-text-zoom:copyDebugJniLibsProjectOnly
+> Task :capgo-capacitor-media-session:mergeDebugJniLibFolders
+> Task :capgo-capacitor-media-session:mergeDebugNativeLibs NO-SOURCE
+> Task :capgo-capacitor-media-session:copyDebugJniLibsProjectOnly
+> Task :ebarooni-capacitor-calendar:mergeDebugJniLibFolders
+> Task :ebarooni-capacitor-calendar:mergeDebugNativeLibs NO-SOURCE
+> Task :ebarooni-capacitor-calendar:copyDebugJniLibsProjectOnly
+> Task :app:mergeDebugNativeLibs
+
+> Task :app:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libdatastore_shared_counter.so. Run with --info option to learn more.
+
+> Task :app:validateSigningDebug
+> Task :app:writeDebugAppMetadata
+> Task :app:writeDebugSigningConfigVersions
+> Task :capacitor-android:checkDebugAarMetadata
+> Task :capacitor-android:stripDebugDebugSymbols NO-SOURCE
+> Task :capacitor-android:copyDebugJniLibsProjectAndLocalJars
+> Task :capacitor-android:extractDebugAnnotations
+> Task :capacitor-android:extractDeepLinksForAarDebug
+> Task :capacitor-android:mergeDebugGeneratedProguardFiles
+> Task :capacitor-android:mergeDebugConsumerProguardFiles
+> Task :capacitor-android:prepareDebugArtProfile
+> Task :capacitor-android:prepareLintJarForPublish
+> Task :capacitor-app:checkDebugAarMetadata
+> Task :capacitor-app:stripDebugDebugSymbols NO-SOURCE
+> Task :capacitor-app:copyDebugJniLibsProjectAndLocalJars
+> Task :capacitor-app:extractDebugAnnotations
+> Task :capacitor-app:extractDeepLinksForAarDebug
+> Task :capacitor-app:mergeDebugGeneratedProguardFiles
+> Task :capacitor-app:mergeDebugConsumerProguardFiles
+> Task :capacitor-app:prepareDebugArtProfile
+> Task :capacitor-android:mergeDebugJavaResource
+> Task :capacitor-app:prepareLintJarForPublish
+> Task :capacitor-android:syncDebugLibJars
+> Task :capacitor-android:bundleDebugAar
+> Task :capacitor-android:assembleDebug
+> Task :capacitor-app:mergeDebugJavaResource
+> Task :capacitor-browser:checkDebugAarMetadata
+> Task :capacitor-app:syncDebugLibJars
+> Task :capacitor-app:bundleDebugAar
+> Task :capacitor-app:assembleDebug
+> Task :capacitor-browser:stripDebugDebugSymbols NO-SOURCE
+> Task :capacitor-browser:copyDebugJniLibsProjectAndLocalJars
+> Task :capacitor-browser:extractDebugAnnotations
+> Task :capacitor-browser:extractDeepLinksForAarDebug
+> Task :capacitor-browser:mergeDebugGeneratedProguardFiles
+> Task :capacitor-browser:mergeDebugConsumerProguardFiles
+> Task :capacitor-browser:prepareDebugArtProfile
+> Task :capacitor-browser:prepareLintJarForPublish
+> Task :capacitor-browser:mergeDebugJavaResource
+> Task :capacitor-community-in-app-review:checkDebugAarMetadata
+> Task :capacitor-browser:syncDebugLibJars
+> Task :capacitor-browser:bundleDebugAar
+> Task :capacitor-browser:assembleDebug
+> Task :capacitor-community-in-app-review:stripDebugDebugSymbols NO-SOURCE
+> Task :capacitor-community-in-app-review:copyDebugJniLibsProjectAndLocalJars
+> Task :capacitor-community-in-app-review:extractDebugAnnotations
+> Task :capacitor-community-in-app-review:extractDeepLinksForAarDebug
+> Task :capacitor-community-in-app-review:mergeDebugGeneratedProguardFiles
+> Task :capacitor-community-in-app-review:mergeDebugConsumerProguardFiles
+> Task :capacitor-community-in-app-review:prepareDebugArtProfile
+> Task :capacitor-community-in-app-review:prepareLintJarForPublish
+> Task :capacitor-community-in-app-review:mergeDebugJavaResource
+> Task :capacitor-cordova-android-plugins:checkDebugAarMetadata
+> Task :capacitor-community-in-app-review:syncDebugLibJars
+> Task :capacitor-community-in-app-review:bundleDebugAar
+> Task :capacitor-community-in-app-review:assembleDebug
+> Task :capacitor-cordova-android-plugins:stripDebugDebugSymbols NO-SOURCE
+> Task :capacitor-cordova-android-plugins:copyDebugJniLibsProjectAndLocalJars
+> Task :capacitor-cordova-android-plugins:extractDebugAnnotations
+> Task :capacitor-cordova-android-plugins:extractDeepLinksForAarDebug
+> Task :capacitor-cordova-android-plugins:mergeDebugGeneratedProguardFiles
+> Task :capacitor-cordova-android-plugins:mergeDebugConsumerProguardFiles
+> Task :capacitor-cordova-android-plugins:prepareDebugArtProfile
+> Task :capacitor-cordova-android-plugins:prepareLintJarForPublish
+> Task :capacitor-cordova-android-plugins:mergeDebugJavaResource
+> Task :capacitor-firebase-crashlytics:checkDebugAarMetadata
+> Task :capacitor-cordova-android-plugins:syncDebugLibJars
+> Task :capacitor-cordova-android-plugins:bundleDebugAar
+> Task :capacitor-cordova-android-plugins:assembleDebug
+> Task :capacitor-firebase-crashlytics:stripDebugDebugSymbols NO-SOURCE
+> Task :capacitor-firebase-crashlytics:copyDebugJniLibsProjectAndLocalJars
+> Task :capacitor-firebase-crashlytics:extractDebugAnnotations
+> Task :capacitor-firebase-crashlytics:extractDeepLinksForAarDebug
+> Task :capacitor-firebase-crashlytics:mergeDebugGeneratedProguardFiles
+> Task :capacitor-firebase-crashlytics:mergeDebugConsumerProguardFiles
+> Task :capacitor-firebase-crashlytics:prepareDebugArtProfile
+> Task :capacitor-firebase-crashlytics:prepareLintJarForPublish
+> Task :capacitor-firebase-crashlytics:mergeDebugJavaResource
+> Task :capacitor-haptics:checkDebugAarMetadata
+> Task :capacitor-firebase-crashlytics:syncDebugLibJars
+> Task :capacitor-firebase-crashlytics:bundleDebugAar
+> Task :capacitor-firebase-crashlytics:assembleDebug
+> Task :capacitor-haptics:stripDebugDebugSymbols NO-SOURCE
+> Task :capacitor-haptics:copyDebugJniLibsProjectAndLocalJars
+> Task :capacitor-haptics:extractDebugAnnotations
+> Task :capacitor-haptics:extractDeepLinksForAarDebug
+> Task :capacitor-haptics:mergeDebugGeneratedProguardFiles
+> Task :capacitor-haptics:mergeDebugConsumerProguardFiles
+> Task :capacitor-haptics:prepareDebugArtProfile
+> Task :capacitor-haptics:prepareLintJarForPublish
+> Task :capacitor-local-notifications:checkDebugAarMetadata
+> Task :capacitor-haptics:mergeDebugJavaResource
+> Task :capacitor-local-notifications:stripDebugDebugSymbols NO-SOURCE
+> Task :capacitor-haptics:syncDebugLibJars
+> Task :capacitor-haptics:bundleDebugAar
+> Task :capacitor-haptics:assembleDebug
+> Task :capacitor-local-notifications:copyDebugJniLibsProjectAndLocalJars
+> Task :capacitor-local-notifications:extractDeepLinksForAarDebug
+> Task :capacitor-local-notifications:prepareDebugArtProfile
+> Task :capacitor-local-notifications:prepareLintJarForPublish
+> Task :capacitor-push-notifications:checkDebugAarMetadata
+> Task :capacitor-push-notifications:stripDebugDebugSymbols NO-SOURCE
+> Task :capacitor-push-notifications:copyDebugJniLibsProjectAndLocalJars
+> Task :capacitor-push-notifications:extractDebugAnnotations
+> Task :capacitor-push-notifications:extractDeepLinksForAarDebug
+> Task :capacitor-push-notifications:mergeDebugGeneratedProguardFiles
+> Task :capacitor-push-notifications:mergeDebugConsumerProguardFiles
+> Task :capacitor-push-notifications:prepareDebugArtProfile
+> Task :capacitor-push-notifications:prepareLintJarForPublish
+> Task :capacitor-push-notifications:mergeDebugJavaResource
+> Task :capacitor-status-bar:checkDebugAarMetadata
+> Task :capacitor-push-notifications:syncDebugLibJars
+> Task :capacitor-push-notifications:bundleDebugAar
+> Task :capacitor-push-notifications:assembleDebug
+> Task :capacitor-status-bar:stripDebugDebugSymbols NO-SOURCE
+> Task :capacitor-status-bar:copyDebugJniLibsProjectAndLocalJars
+> Task :capacitor-status-bar:extractDebugAnnotations
+> Task :capacitor-status-bar:extractDeepLinksForAarDebug
+> Task :capacitor-status-bar:mergeDebugGeneratedProguardFiles
+> Task :capacitor-status-bar:mergeDebugConsumerProguardFiles
+> Task :capacitor-status-bar:prepareDebugArtProfile
+> Task :capacitor-status-bar:prepareLintJarForPublish
+> Task :capacitor-status-bar:mergeDebugJavaResource
+> Task :capacitor-text-zoom:checkDebugAarMetadata
+> Task :capacitor-status-bar:syncDebugLibJars
+> Task :capacitor-status-bar:bundleDebugAar
+> Task :capacitor-status-bar:assembleDebug
+> Task :capacitor-text-zoom:stripDebugDebugSymbols NO-SOURCE
+> Task :capacitor-text-zoom:copyDebugJniLibsProjectAndLocalJars
+> Task :capacitor-text-zoom:extractDebugAnnotations
+> Task :capacitor-text-zoom:extractDeepLinksForAarDebug
+> Task :capacitor-text-zoom:mergeDebugGeneratedProguardFiles
+> Task :capacitor-text-zoom:mergeDebugConsumerProguardFiles
+> Task :capacitor-text-zoom:prepareDebugArtProfile
+> Task :capacitor-text-zoom:prepareLintJarForPublish
+> Task :capacitor-text-zoom:mergeDebugJavaResource
+> Task :capgo-capacitor-media-session:checkDebugAarMetadata
+> Task :capacitor-text-zoom:syncDebugLibJars
+> Task :capacitor-text-zoom:bundleDebugAar
+> Task :capacitor-text-zoom:assembleDebug
+> Task :capgo-capacitor-media-session:stripDebugDebugSymbols NO-SOURCE
+> Task :capgo-capacitor-media-session:copyDebugJniLibsProjectAndLocalJars
+> Task :capgo-capacitor-media-session:extractDebugAnnotations
+> Task :capgo-capacitor-media-session:extractDeepLinksForAarDebug
+> Task :capgo-capacitor-media-session:mergeDebugGeneratedProguardFiles
+> Task :capgo-capacitor-media-session:mergeDebugConsumerProguardFiles
+> Task :capgo-capacitor-media-session:prepareDebugArtProfile
+> Task :capgo-capacitor-media-session:prepareLintJarForPublish
+> Task :capgo-capacitor-media-session:mergeDebugJavaResource
+> Task :ebarooni-capacitor-calendar:checkDebugAarMetadata
+> Task :capgo-capacitor-media-session:syncDebugLibJars
+> Task :capgo-capacitor-media-session:bundleDebugAar
+> Task :capgo-capacitor-media-session:assembleDebug
+> Task :ebarooni-capacitor-calendar:stripDebugDebugSymbols NO-SOURCE
+> Task :ebarooni-capacitor-calendar:copyDebugJniLibsProjectAndLocalJars
+> Task :ebarooni-capacitor-calendar:extractDeepLinksForAarDebug
+> Task :ebarooni-capacitor-calendar:prepareDebugArtProfile
+> Task :ebarooni-capacitor-calendar:prepareLintJarForPublish
+> Task :capacitor-local-notifications:compileDebugKotlin
+> Task :capacitor-local-notifications:compileDebugJavaWithJavac NO-SOURCE
+> Task :capacitor-local-notifications:bundleLibCompileToJarDebug
+> Task :capacitor-local-notifications:bundleLibRuntimeToJarDebug
+> Task :capacitor-local-notifications:processDebugJavaRes
+> Task :capacitor-local-notifications:bundleLibRuntimeToDirDebug
+> Task :capacitor-local-notifications:extractDebugAnnotations
+> Task :capacitor-local-notifications:mergeDebugGeneratedProguardFiles
+> Task :capacitor-local-notifications:mergeDebugConsumerProguardFiles
+> Task :capacitor-local-notifications:mergeDebugJavaResource
+> Task :capacitor-local-notifications:syncDebugLibJars
+> Task :capacitor-local-notifications:bundleDebugAar
+> Task :capacitor-local-notifications:assembleDebug
+> Task :ebarooni-capacitor-calendar:compileDebugKotlin
+> Task :ebarooni-capacitor-calendar:compileDebugJavaWithJavac NO-SOURCE
+> Task :ebarooni-capacitor-calendar:bundleLibCompileToJarDebug
+> Task :ebarooni-capacitor-calendar:bundleLibRuntimeToJarDebug
+> Task :ebarooni-capacitor-calendar:processDebugJavaRes
+> Task :ebarooni-capacitor-calendar:bundleLibRuntimeToDirDebug
+> Task :ebarooni-capacitor-calendar:extractDebugAnnotations
+> Task :ebarooni-capacitor-calendar:mergeDebugGeneratedProguardFiles
+> Task :ebarooni-capacitor-calendar:mergeDebugConsumerProguardFiles
+> Task :ebarooni-capacitor-calendar:mergeDebugJavaResource
+> Task :ebarooni-capacitor-calendar:syncDebugLibJars
+> Task :ebarooni-capacitor-calendar:bundleDebugAar
+> Task :ebarooni-capacitor-calendar:assembleDebug
+> Task :app:mergeLibDexDebug
+> Task :app:compileDebugKotlin
+> Task :app:compileDebugJavaWithJavac
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics
+> Task :app:processDebugJavaRes
+> Task :app:mergeProjectDexDebug
+> Task :app:mergeDebugJavaResource
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect
+> Task :app:assembleDebug
+
+[Incubating] Problems report is available at: file:///home/runner/work/xpn-app-update/xpn-app-update/android/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 51s
+429 actionable tasks: 429 executed

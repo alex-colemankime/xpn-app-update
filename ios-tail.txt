@@ -1,0 +1,200 @@
+    export RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY\=NO
+    export RUNTIME_EXCEPTION_DEBUGGING_TOOL\=NO
+    export RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION\=NO
+    export RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION\=NO
+    export SCANNING_PCM_KEEP_CACHE_DIRECTORY\=YES
+    export SCAN_ALL_SOURCE_FILES_FOR_INCLUDES\=NO
+    export SCRIPTS_FOLDER_PATH\=App.app/Scripts
+    export SCRIPT_INPUT_FILE_COUNT\=0
+    export SCRIPT_INPUT_FILE_LIST_COUNT\=0
+    export SCRIPT_OUTPUT_FILE_COUNT\=0
+    export SCRIPT_OUTPUT_FILE_LIST_COUNT\=0
+    export SDKROOT\=/Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk
+    export SDK_DIR\=/Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk
+    export SDK_DIR_iphonesimulator\=/Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk
+    export SDK_DIR_iphonesimulator26_5\=/Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk
+    export SDK_NAME\=iphonesimulator26.5
+    export SDK_NAMES\=iphonesimulator26.5
+    export SDK_PRODUCT_BUILD_VERSION\=23F81a
+    export SDK_STAT_CACHE_DIR\=/Users/runner/work/xpn-app-update/xpn-app-update/build
+    export SDK_STAT_CACHE_ENABLE\=YES
+    export SDK_STAT_CACHE_PATH\=/Users/runner/work/xpn-app-update/xpn-app-update/build/SDKStatCaches.noindex/iphonesimulator26.5-23F81a-688ef53f1462e2c8f657fdc38a81448ff45c64a1807a658693f2a61704f17a36.sdkstatcache
+    export SDK_VERSION\=26.5
+    export SDK_VERSION_ACTUAL\=260500
+    export SDK_VERSION_MAJOR\=260000
+    export SDK_VERSION_MINOR\=260500
+    export SED\=/usr/bin/sed
+    export SEPARATE_STRIP\=NO
+    export SEPARATE_SYMBOL_EDIT\=NO
+    export SET_DIR_MODE_OWNER_GROUP\=YES
+    export SET_FILE_MODE_OWNER_GROUP\=NO
+    export SHALLOW_BUNDLE\=YES
+    export SHALLOW_BUNDLE_TRIPLE\=ios-simulator
+    export SHALLOW_BUNDLE_ios_macabi\=NO
+    export SHALLOW_BUNDLE_macos\=NO
+    export SHARED_DERIVED_FILE_DIR\=/Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/DerivedSources
+    export SHARED_FRAMEWORKS_FOLDER_PATH\=App.app/SharedFrameworks
+    export SHARED_PRECOMPS_DIR\=/Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/PrecompiledHeaders
+    export SHARED_SUPPORT_FOLDER_PATH\=App.app/SharedSupport
+    export SKIP_INSTALL\=NO
+    export SKIP_MERGEABLE_LIBRARY_BUNDLE_HOOK\=NO
+    export SOURCE_ROOT\=/Users/runner/work/xpn-app-update/xpn-app-update/ios/App
+    export SRCROOT\=/Users/runner/work/xpn-app-update/xpn-app-update/ios/App
+    export STRINGSDATA_DIR\=/Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/Objects-normal/undefined_arch
+    export STRINGSDATA_ROOT\=/Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build
+    export STRINGS_FILE_INFOPLIST_RENAME\=YES
+    export STRINGS_FILE_OUTPUT_ENCODING\=binary
+    export STRING_CATALOG_GENERATE_SYMBOLS\=NO
+    export STRIP_BITCODE_FROM_COPIED_FILES\=NO
+    export STRIP_INSTALLED_PRODUCT\=NO
+    export STRIP_STYLE\=all
+    export STRIP_SWIFT_SYMBOLS\=YES
+    export SUPPORTED_DEVICE_FAMILIES\=1,2
+    export SUPPORTED_PLATFORMS\=iphoneos\ iphonesimulator
+    export SUPPORTS_MACCATALYST\=NO
+    export SUPPORTS_ON_DEMAND_RESOURCES\=YES
+    export SUPPORTS_TEXT_BASED_API\=NO
+    export SUPPRESS_WARNINGS\=NO
+    export SWIFT_ACTIVE_COMPILATION_CONDITIONS\=DEBUG
+    export SWIFT_EMIT_CONST_VALUE_PROTOCOLS\=AnyResolverProviding\ AppEntity\ AppEnum\ AppExtension\ AppIntent\ AppIntentsPackage\ AppShortcutProviding\ AppShortcutsProvider\ DynamicOptionsProvider\ EntityQuery\ ExtensionPointDefining\ IntentValueQuery\ Resolver\ TransientEntity\ _AssistantIntentsProvider\ _GenerativeFunctionExtractable\ _IntentValueRepresentable
+    export SWIFT_EMIT_LOC_STRINGS\=NO
+    export SWIFT_ENABLE_EXPLICIT_MODULES\=YES
+    export SWIFT_OPTIMIZATION_LEVEL\=-Onone
+    export SWIFT_PLATFORM_TARGET_PREFIX\=ios
+    export SWIFT_RESPONSE_FILE_PATH_normal_arm64\=/Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/Objects-normal/arm64/App.SwiftFileList
+    export SWIFT_RESPONSE_FILE_PATH_normal_x86_64\=/Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/Objects-normal/x86_64/App.SwiftFileList
+    export SWIFT_VERSION\=5.0
+    export SYMROOT\=/Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products
+    export SYSTEM_ADMIN_APPS_DIR\=/Applications/Utilities
+    export SYSTEM_APPS_DIR\=/Applications
+    export SYSTEM_CORE_SERVICES_DIR\=/System/Library/CoreServices
+    export SYSTEM_DEMOS_DIR\=/Applications/Extras
+    export SYSTEM_DEVELOPER_APPS_DIR\=/Applications/Xcode_26.6.app/Contents/Developer/Applications
+    export SYSTEM_DEVELOPER_BIN_DIR\=/Applications/Xcode_26.6.app/Contents/Developer/usr/bin
+    export SYSTEM_DEVELOPER_DEMOS_DIR\=/Applications/Xcode_26.6.app/Contents/Developer/Applications/Utilities/Built\ Examples
+    export SYSTEM_DEVELOPER_DIR\=/Applications/Xcode_26.6.app/Contents/Developer
+    export SYSTEM_DEVELOPER_DOC_DIR\=/Applications/Xcode_26.6.app/Contents/Developer/ADC\ Reference\ Library
+    export SYSTEM_DEVELOPER_GRAPHICS_TOOLS_DIR\=/Applications/Xcode_26.6.app/Contents/Developer/Applications/Graphics\ Tools
+    export SYSTEM_DEVELOPER_JAVA_TOOLS_DIR\=/Applications/Xcode_26.6.app/Contents/Developer/Applications/Java\ Tools
+    export SYSTEM_DEVELOPER_PERFORMANCE_TOOLS_DIR\=/Applications/Xcode_26.6.app/Contents/Developer/Applications/Performance\ Tools
+    export SYSTEM_DEVELOPER_RELEASENOTES_DIR\=/Applications/Xcode_26.6.app/Contents/Developer/ADC\ Reference\ Library/releasenotes
+    export SYSTEM_DEVELOPER_TOOLS\=/Applications/Xcode_26.6.app/Contents/Developer/Tools
+    export SYSTEM_DEVELOPER_TOOLS_DOC_DIR\=/Applications/Xcode_26.6.app/Contents/Developer/ADC\ Reference\ Library/documentation/DeveloperTools
+    export SYSTEM_DEVELOPER_TOOLS_RELEASENOTES_DIR\=/Applications/Xcode_26.6.app/Contents/Developer/ADC\ Reference\ Library/releasenotes/DeveloperTools
+    export SYSTEM_DEVELOPER_USR_DIR\=/Applications/Xcode_26.6.app/Contents/Developer/usr
+    export SYSTEM_DEVELOPER_UTILITIES_DIR\=/Applications/Xcode_26.6.app/Contents/Developer/Applications/Utilities
+    export SYSTEM_DEXT_INSTALL_PATH\=/System/Library/DriverExtensions
+    export SYSTEM_DOCUMENTATION_DIR\=/Library/Documentation
+    export SYSTEM_EXTENSIONS_FOLDER_PATH\=App.app/SystemExtensions
+    export SYSTEM_EXTENSIONS_FOLDER_PATH_SHALLOW_BUNDLE_NO\=App.app/Library/SystemExtensions
+    export SYSTEM_EXTENSIONS_FOLDER_PATH_SHALLOW_BUNDLE_YES\=App.app/SystemExtensions
+    export SYSTEM_KEXT_INSTALL_PATH\=/System/Library/Extensions
+    export SYSTEM_LIBRARY_DIR\=/System/Library
+    export TAPI_DEMANGLE\=YES
+    export TAPI_ENABLE_PROJECT_HEADERS\=NO
+    export TAPI_LANGUAGE\=objective-c
+    export TAPI_LANGUAGE_STANDARD\=compiler-default
+    export TAPI_USE_SRCROOT\=YES
+    export TAPI_VERIFY_MODE\=Pedantic
+    export TARGETED_DEVICE_FAMILY\=1,2
+    export TARGETNAME\=App
+    export TARGET_BUILD_DIR\=/Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator
+    export TARGET_NAME\=App
+    export TARGET_TEMP_DIR\=/Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build
+    export TEMP_DIR\=/Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build
+    export TEMP_FILES_DIR\=/Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build
+    export TEMP_FILE_DIR\=/Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build
+    export TEMP_ROOT\=/Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex
+    export TEMP_SANDBOX_DIR\=/Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/TemporaryTaskSandboxes
+    export TEST_FRAMEWORK_SEARCH_PATHS\=\ /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks\ /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk/Developer/Library/Frameworks
+    export TEST_LIBRARY_SEARCH_PATHS\=\ /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib
+    export TOOLCHAINS\=com.apple.dt.toolchain.Metal.32023.883\ com.apple.dt.toolchain.XcodeDefault
+    export TOOLCHAIN_DIR\=/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.6.109.0.dFV5hN/Metal.xctoolchain
+    export TOOLCHAIN_VERSION\=32023.883
+    export TREAT_MISSING_BASELINES_AS_TEST_FAILURES\=NO
+    export TREAT_MISSING_SCRIPT_PHASE_OUTPUTS_AS_ERRORS\=NO
+    export UID\=501
+    export UNINSTALLED_PRODUCTS_DIR\=/Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/UninstalledProducts
+    export UNLOCALIZED_RESOURCES_FOLDER_PATH\=App.app
+    export UNLOCALIZED_RESOURCES_FOLDER_PATH_SHALLOW_BUNDLE_NO\=App.app/Resources
+    export UNLOCALIZED_RESOURCES_FOLDER_PATH_SHALLOW_BUNDLE_YES\=App.app
+    export UNSTRIPPED_PRODUCT\=NO
+    export USER\=runner
+    export USER_APPS_DIR\=/Users/runner/Applications
+    export USER_LIBRARY_DIR\=/Users/runner/Library
+    export USE_DYNAMIC_NO_PIC\=YES
+    export USE_HEADERMAP\=YES
+    export USE_HEADER_SYMLINKS\=NO
+    export VALIDATE_DEVELOPMENT_ASSET_PATHS\=YES_ERROR
+    export VALIDATE_PRODUCT\=NO
+    export VALID_ARCHS\=arm64\ x86_64
+    export VERBOSE_PBXCP\=NO
+    export VERSIONPLIST_PATH\=App.app/version.plist
+    export VERSION_INFO_BUILDER\=runner
+    export VERSION_INFO_FILE\=App_vers.c
+    export VERSION_INFO_STRING\=\"@\(\#\)PROGRAM:App\ \ PROJECT:App-1\"
+    export WORKSPACE_DIR\=/Users/runner/work/xpn-app-update/xpn-app-update/ios/App/App.xcodeproj
+    export WRAPPER_EXTENSION\=app
+    export WRAPPER_NAME\=App.app
+    export WRAPPER_SUFFIX\=.app
+    export WRAP_ASSET_PACKS_IN_SEPARATE_DIRECTORIES\=NO
+    export XCODE_APP_SUPPORT_DIR\=/Applications/Xcode_26.6.app/Contents/Developer/Library/Xcode
+    export XCODE_PRODUCT_BUILD_VERSION\=17F113
+    export XCODE_VERSION_ACTUAL\=2660
+    export XCODE_VERSION_MAJOR\=2600
+    export XCODE_VERSION_MINOR\=2660
+    export XPCSERVICES_FOLDER_PATH\=App.app/XPCServices
+    export YACC\=yacc
+    export _DISCOVER_COMMAND_LINE_LINKER_INPUTS\=YES
+    export _DISCOVER_COMMAND_LINE_LINKER_INPUTS_INCLUDE_WL\=YES
+    export _LD_MULTIARCH\=YES
+    export _WRAPPER_CONTENTS_DIR_SHALLOW_BUNDLE_NO\=/Contents
+    export _WRAPPER_PARENT_PATH_SHALLOW_BUNDLE_NO\=/..
+    export _WRAPPER_RESOURCES_DIR_SHALLOW_BUNDLE_NO\=/Resources
+    export __DIAGNOSE_DEPRECATED_ARCHS\=YES
+    export __IS_NOT_MACOS\=YES
+    export __IS_NOT_MACOS_macosx\=NO
+    export __IS_NOT_SIMULATOR\=NO
+    export __IS_NOT_SIMULATOR_simulator\=NO
+    export __ORIGINAL_SDK_DEFINED_LLVM_TARGET_TRIPLE_SYS\=ios
+    export arch\=undefined_arch
+    export variant\=normal
+    /bin/sh -c /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/Script-7E1D6E000000000000000020.sh
+
+CopySwiftLibs /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app (in target 'App' from project 'App')
+    cd /Users/runner/work/xpn-app-update/xpn-app-update/ios/App
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/App.debug.dylib --scan-folder /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/Frameworks --scan-folder /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/PlugIns --scan-folder /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/SystemExtensions --scan-folder /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/Extensions --platform iphonesimulator --toolchain /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.6.109.0.dFV5hN/Metal.xctoolchain --toolchain /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os --back-deploy-swift-span
+Ignoring --strip-bitcode because --sign was not passed
+
+ExtractAppIntentsMetadata (in target 'App' from project 'App')
+    cd /Users/runner/work/xpn-app-update/xpn-app-update/ios/App
+    /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.6.109.0.dFV5hN/Metal.xctoolchain --module-name App --sdk-root /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk --xcode-version 17F113 --platform-family iOS --deployment-target 16.4 --bundle-identifier com.jacobsmedia.WXPN --output /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app --target-triple arm64-apple-ios16.4-simulator --target-triple x86_64-apple-ios16.4-simulator --binary-file /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/App --dependency-file /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/Objects-normal/arm64/App_dependency_info.dat --dependency-file /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/Objects-normal/x86_64/App_dependency_info.dat --stringsdata-file /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --stringsdata-file /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/Objects-normal/x86_64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/Objects-normal/arm64/App.SwiftFileList --source-file-list /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/Objects-normal/x86_64/App.SwiftFileList --metadata-file-list /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/App.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/App.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/Objects-normal/arm64/App.SwiftConstValuesFileList --swift-const-vals-list /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/Objects-normal/x86_64/App.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-10-21 17:49:39.008 appintentsmetadataprocessor[8941:29843] Starting appintentsmetadataprocessor export
+2026-10-21 17:49:39.034 appintentsmetadataprocessor[8941:29843] Extracted no relevant App Intents symbols, skipping writing output
+
+ValidateEmbeddedBinary /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/PlugIns/WXPNWidget.appex (in target 'App' from project 'App')
+    cd /Users/runner/work/xpn-app-update/xpn-app-update/ios/App
+    /Applications/Xcode_26.6.app/Contents/Developer/usr/bin/embeddedBinaryValidationUtility /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/PlugIns/WXPNWidget.appex -info-plist-path /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/Info.plist
+
+AppIntentsSSUTraining (in target 'App' from project 'App')
+    cd /Users/runner/work/xpn-app-update/xpn-app-update/ios/App
+    /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/Info.plist --temp-dir-path /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/ssu --bundle-id com.jacobsmedia.WXPN --product-path /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app --extracted-metadata-path /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/Metadata.appintents --metadata-file-list /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/App.DependencyMetadataFileList --source-file /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app/Info.plist --archive-ssu-assets
+2026-10-21 17:49:39.071 appintentsnltrainingprocessor[8943:29847] Parsing options for appintentsnltrainingprocessor
+2026-10-21 17:49:39.071 appintentsnltrainingprocessor[8943:29847] Starting AppIntents SSU YAML Generation
+2026-10-21 17:49:39.072 appintentsnltrainingprocessor[8943:29847] No AppShortcuts found - Skipping.
+
+RegisterExecutionPolicyException /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app (in target 'App' from project 'App')
+    cd /Users/runner/work/xpn-app-update/xpn-app-update/ios/App
+    builtin-RegisterExecutionPolicyException /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app
+
+Validate /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app (in target 'App' from project 'App')
+    cd /Users/runner/work/xpn-app-update/xpn-app-update/ios/App
+    builtin-validationUtility /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app -shallow-bundle -infoplist-subpath Info.plist
+
+Touch /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app (in target 'App' from project 'App')
+    cd /Users/runner/work/xpn-app-update/xpn-app-update/ios/App
+    /usr/bin/touch -c /Users/runner/work/xpn-app-update/xpn-app-update/build/Build/Products/Debug-iphonesimulator/App.app
+
+note: Run script build phase 'Upload Crashlytics symbols' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'App' from project 'App')
+** BUILD SUCCEEDED **
+
