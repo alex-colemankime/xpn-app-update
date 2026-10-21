@@ -33,6 +33,11 @@ jobs:
       - name: Security audit
         run: npm audit --omit=dev --audit-level=high
 
+      # The development tools too, except advisories listed (with why they
+      # don't apply) in audit-exceptions.json.
+      - name: Full dependency audit
+        run: node tools/audit.mjs
+
       - name: Lint
         run: npm run lint
 

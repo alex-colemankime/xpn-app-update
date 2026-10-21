@@ -37,6 +37,13 @@ jobs:
         # The preview still deploys; the failed step flags the advisory.
         continue-on-error: true
 
+      # The development tools too, except advisories listed (with why they
+      # don't apply) in audit-exceptions.json.
+      - name: Full dependency audit
+        run: node tools/audit.mjs
+        # The preview still deploys; the failed step flags the advisory.
+        continue-on-error: true
+
       - name: Lint
         run: npm run lint
 
