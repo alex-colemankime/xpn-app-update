@@ -1,0 +1,14 @@
+Android smoke test: passed
+- Android 14 (API 34), WebView Current WebView package (name, version): (com.google.android.webview, 113.0.5672.136)
+- app process 4042
+- the page drew
+- media session: playing (state 3)
+- still playing in the background
+- came back to the page
+- widget toggle: session states '3' then '2'
+- drew sideways
+- WxpnCarService is declared as a media browser
+- WxpnCarService started
+- the car's media session exists
+- the widget is offered to home screens
+- page errors in the log (Capacitor/Console): 2
