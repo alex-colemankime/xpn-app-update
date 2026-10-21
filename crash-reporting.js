@@ -6,7 +6,7 @@
 //
 // Off until Firebase is set up for the apps (android/app/google-services.json,
 // ios/App/App/GoogleService-Info.plist; see README › Usage and crash
-// reporting); until then every call here quietly does nothing. It follows
+// reporting); until then nothing is sent past the first call. It follows
 // Settings › Privacy as GA4 does: switched off there, nothing is collected
 // or sent, crashes included.
 
@@ -48,19 +48,27 @@ export function breadcrumb(name, params = {}) {
 }
 
 // At launch (phone apps only). `live` is the station player ({ subscribe,
-// getSnapshot }), for the station a report was made on.
+// getSnapshot }), for the station a report was made on. Firebase answers the
+// first call with an error until it is set up; then nothing more is sent,
+// rather than every event failing on the way.
 export function startCrashReporting({ live }) {
   if (!Capacitor.isNativePlatform()) return;
-  const quiet = (promise) => promise?.catch?.(() => {}); // not set up: nothing to do
-  const key = (name, value) =>
-    quiet(FirebaseCrashlytics.setCustomKey({ key: name, value: String(value), type: "string" }));
-
+  const quiet = (promise) => promise?.catch?.(() => {});
   // Collection follows the Privacy switch, and Crashlytics remembers it, so
   // a crash before the web app has loaded follows it too.
-  const follow = () =>
-    quiet(FirebaseCrashlytics.setEnabled({ enabled: reportingStore.getSnapshot().on }));
-  follow();
-  reportingStore.subscribe(follow);
+  const follow = () => FirebaseCrashlytics.setEnabled({ enabled: reportingStore.getSnapshot().on });
+  follow().then(
+    () => {
+      reportingStore.subscribe(() => quiet(follow()));
+      report({ live, quiet });
+    },
+    () => {}, // not set up: nothing to do
+  );
+}
+
+function report({ live, quiet }) {
+  const key = (name, value) =>
+    quiet(FirebaseCrashlytics.setCustomKey({ key: name, value: String(value), type: "string" }));
 
   key("version", typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "");
   let station = "";
