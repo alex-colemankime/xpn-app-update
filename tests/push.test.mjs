@@ -90,7 +90,9 @@ test("what was last sent survives a restart, so it isn't sent again", async () =
   const push = createPushClient({
     api,
     platform: "ios",
-    sent: { token: "token-1", key: "token-1|live" },
+    sent: { token: "token-1", key: "token-1|live", endpoint: "https://one.test/r", at: 5000 },
+    endpoint: "https://one.test/r",
+    now: () => 6000,
     post: async (b) => posts.push(b),
   });
   await push.setTopics(["live"]);
@@ -269,4 +271,81 @@ test("a kept per-kind choice sends that version's topics, never the station's", 
   assert.deepEqual(kindsPushed(["station"]), ["live", "drives"]);
   assert.deepEqual(kindsPushed(["live"]), ["live"]);
   assert.deepEqual(kindsPushed([]), []);
+});
+
+test("a new sender, or a week gone by, gets the registration again", async () => {
+  const day = 24 * 60 * 60 * 1000;
+  let clock = 1_000_000;
+  const now = () => clock;
+  const first = [];
+  const one = createPushClient({
+    api: phone(),
+    platform: "ios",
+    sent: null,
+    endpoint: "https://one.test/register",
+    now,
+    post: async (b) => first.push(b),
+    save: (value) => (saved = value),
+  });
+  let saved = null;
+  await one.setTopics(["station"]);
+  assert.equal(first.length, 1);
+
+  // The next launch, same sender, a day later: nothing to send.
+  clock += day;
+  const again = [];
+  const same = createPushClient({
+    api: phone(),
+    platform: "ios",
+    sent: saved,
+    endpoint: "https://one.test/register",
+    now,
+    post: async (b) => again.push(b),
+  });
+  await same.setTopics(["station"]);
+  assert.equal(again.length, 0, "unchanged and recent: no request");
+
+  // A build pointed at a new sender: registers there, and until then the
+  // old sender's topics don't count as covered.
+  const second = [];
+  const moved = createPushClient({
+    api: phone(),
+    platform: "ios",
+    sent: saved,
+    endpoint: "https://two.test/register",
+    now,
+    post: async (b) => second.push(b),
+  });
+  assert.deepEqual(moved.status().topics, [], "the new sender has nothing yet");
+  await moved.setTopics(["station"]);
+  assert.equal(second.length, 1, "the new sender is told");
+  assert.deepEqual(moved.status(), { topics: ["station"], failing: false });
+
+  // Eight days on, the same sender is told again (it may have lost it).
+  clock += 8 * day;
+  const later = [];
+  const stale = createPushClient({
+    api: phone(),
+    platform: "ios",
+    sent: saved,
+    endpoint: "https://one.test/register",
+    now,
+    post: async (b) => later.push(b),
+  });
+  await stale.setTopics(["station"]);
+  assert.equal(later.length, 1);
+});
+
+test("a registration kept by the earlier version is sent once more", async () => {
+  const posts = [];
+  const push = createPushClient({
+    api: phone(),
+    platform: "android",
+    sent: { token: "token-1", key: "token-1|station" },
+    endpoint: "https://one.test/register",
+    post: async (b) => posts.push(b),
+  });
+  assert.deepEqual(push.status().topics, ["station"], "still counts as covered meanwhile");
+  await push.setTopics(["station"]);
+  assert.equal(posts.length, 1);
 });

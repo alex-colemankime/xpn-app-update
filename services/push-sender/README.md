@@ -28,14 +28,14 @@ The variables in `wrangler.toml` (`APNS_BUNDLE_ID`, `APNS_SANDBOX`, `IOS_VIA`, `
 ### Where the keys come from
 
 - **FCM service account (Android):** in the Firebase console, the same project whose `google-services.json` is in `android/app/`: Project settings › Service accounts › Generate new private key. That downloads the JSON this needs whole. The Firebase Cloud Messaging API (V1) must be enabled (Project settings › Cloud Messaging; it is for new projects). Keep the file out of the repository.
-- **APNs key (iOS):** developer.apple.com › Certificates, Identifiers & Profiles › Keys › +, tick Apple Push Notifications service (APNs); if asked for an environment, choose Sandbox & Production. Download the `.p8` (Apple offers it only once). One key works for all the team's apps. The App ID `org.xpn.wxpn` needs the Push Notifications capability (Xcode › Signing & Capabilities).
+- **APNs key (iOS):** developer.apple.com › Certificates, Identifiers & Profiles › Keys › +, tick Apple Push Notifications service (APNs); if asked for an environment, choose Sandbox & Production. Download the `.p8` (Apple offers it only once). One key works for all the team's apps. The App ID `com.jacobsmedia.WXPN` needs the Push Notifications capability (Xcode › Signing & Capabilities).
 - **Sandbox or production:** builds installed from Xcode get sandbox tokens; TestFlight and App Store builds get production tokens, and each works only with its own APNs server. The Worker sends to production unless `APNS_SANDBOX = "true"`. For testing from Xcode, deploy a second copy (`npx wrangler deploy --name wxpn-push-dev` with its own KV namespace) with sandbox on.
 
 ## iOS tokens: what the app sends
 
 Checked in the code: the app uses `@capacitor/push-notifications`. On iOS its plugin turns the device token Apple gives `AppDelegate` (`didRegisterForRemoteNotificationsWithDeviceToken`, forwarded in `ios/App/App/AppDelegate.swift`) into upper-case hex and reports that, so **iOS tokens are APNs device tokens**, sent as they are to `https://api.push.apple.com/3/device/<token>`. The Firebase iOS SDK isn't in the app, so there are no FCM tokens on iOS. On Android the plugin asks `FirebaseMessaging.getToken()`, so **Android tokens are FCM tokens**. The Worker checks each against its platform (hex for iOS, FCM's characters for Android).
 
-If the app later adds the Firebase iOS SDK (making iOS tokens FCM tokens), set `IOS_VIA = "fcm"` and everything goes through FCM.
+If the app later adds the Firebase iOS SDK (making iOS tokens FCM tokens), set `IOS_VIA = "fcm"`: iPhones then register FCM tokens, which are stored as such and sent through FCM. Tokens registered before the switch are APNs tokens, and keep going through APNs until each phone registers again (the app re-registers at least weekly), so keep the APNs key until they have.
 
 ## Sending
 

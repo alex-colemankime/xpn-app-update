@@ -96,6 +96,13 @@ export function MoreButton({ children, onClick, expanded, className = "" }) {
   );
 }
 
+// Opens a <dialog> as a modal. A browser without showModal (older than the
+// app supports) gets it opened in place rather than the app failing.
+export function openModal(el) {
+  if (typeof el.showModal === "function") el.showModal();
+  else el.setAttribute("open", "");
+}
+
 // Native dialog provides focus containment, Escape dismissal, and a modal backdrop.
 // Without `onClose` it can't be dismissed (no Close key, Escape or backdrop).
 // `routed`: the address opened it (a show, a host), so Android's Back steps
@@ -107,7 +114,7 @@ export function Modal({ title, children, onClose, className = "", style, routed 
   useEffect(() => {
     const el = ref.current;
     const previous = document.activeElement;
-    el.showModal();
+    openModal(el);
     modalOpened();
     // Start at the title, so a screen reader reads the sheet from the top
     // and no button opens already outlined.
@@ -116,7 +123,8 @@ export function Modal({ title, children, onClose, className = "", style, routed 
     document.body.style.overflow = "hidden";
     return () => {
       modalClosed();
-      el.close();
+      if (typeof el.close === "function") el.close();
+      else el.removeAttribute("open");
       document.body.style.overflow = overflow;
       previous?.focus?.();
     };

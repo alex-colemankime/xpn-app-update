@@ -86,7 +86,7 @@ Once the by-hand steps below are done:
 
 **App Store Connect**
 
-- **The app record** (Apps › New App: platform, name WXPN, language, bundle ID `org.xpn.wxpn`, SKU). The API can't create apps.
+- **The app record** already exists: WXPN 88.5, Apple ID 304658861, bundle ID `com.jacobsmedia.WXPN`. This is an update to it, under the account that owns it ([docs/store-identity.md](../docs/store-identity.md)).
 - **Pricing and Availability:** free, and the countries.
 - **Age rating questionnaire.** Answer the unrestricted web access question carefully (see `listing.md`); fastlane's old age-rating file doesn't cover Apple's 2025 questions, so it's left to the form.
 - **App Privacy, without `ios privacy`.** The App Store Connect API (and so any API-key login) has no App Privacy endpoints at all. `ios privacy` sets every answer in the table (data types, purposes, not linked to the user, not used for tracking) through an Apple ID session instead. Either way, check them against the privacy policy before the first submission, as `listing.md` says. The privacy policy URL itself goes up with `ios metadata`.
@@ -98,7 +98,7 @@ Once the by-hand steps below are done:
 
 **Play Console**
 
-- **Creating the app** (name, default language, app, free) and, at the first upload, accepting Play App Signing. The API can't create apps.
+- **The app** already exists (`com.jacobsmedia.wxpn`); this is an update to it. Its upload key, or an upload key reset through App integrity, and a versionCode above the existing one ([docs/store-identity.md](../docs/store-identity.md)).
 - **App content, all of it** (the Play Developer API has no endpoints for any of these): **Data safety** (every question, from `listing.md` › Data safety; the form can export its answers as a CSV and import them again, which saves retyping them for a second app), privacy policy URL, app access (no sign-in), ads (none), content rating questionnaire, target audience (13 and over), news app, government app, financial and health features, and the **foreground service** declaration with its video.
 - **Store settings:** app category (Music & Audio), contact email and website. fastlane's supply doesn't set them.
 - **App icon** for the listing (512×512 PNG, from `brand/app-icon-1024.png`); the script doesn't make one.

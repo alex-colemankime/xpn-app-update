@@ -89,10 +89,23 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      # Play takes an update only with a higher versionCode than the existing
+      # WXPN app's (docs/store-identity.md): the repository variable
+      # ANDROID_VERSION_CODE_BASE is set above it, and each run adds its number.
+      - name: Work out the version code
+        if: env.SIGNED == 'true'
+        env:
+          BASE: ${{ vars.ANDROID_VERSION_CODE_BASE }}
+        run: |
+          if ! [[ "$BASE" =~ ^[0-9]+$ ]]; then
+            echo "::error::Set the repository variable ANDROID_VERSION_CODE_BASE above the existing Play app's highest versionCode (Play Console › App bundle explorer)."
+            exit 1
+          fi
+          echo "VERSION_CODE=$((BASE + ${{ github.run_number }}))" >> "$GITHUB_ENV"
+
       - name: Build the app bundle
         if: env.SIGNED == 'true'
         env:
-          VERSION_CODE: ${{ github.run_number }}
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -117,7 +130,7 @@ jobs:
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: org.xpn.wxpn
+          packageName: com.jacobsmedia.wxpn
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: internal
           # Play takes only drafts until the app's first release is out.

@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">WXPN</string>
     <string name="title_activity_main">WXPN</string>
-    <string name="package_name">org.xpn.wxpn</string>
+    <string name="package_name">com.jacobsmedia.wxpn</string>
     <string name="custom_url_scheme">org.xpn.wxpn</string>
     <!-- The home screen widget (WxpnWidget.kt). -->
     <string name="widget_description">What\'s playing on WXPN, XPN2 or Homegrown, with play</string>

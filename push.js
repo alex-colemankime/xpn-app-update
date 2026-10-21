@@ -35,7 +35,8 @@ import { featureOn } from "./features.js";
 import { ALERT_KINDS } from "./updates.js";
 
 const SENT_KEY = "xpn.push.sent";
-const APP_ID = "org.xpn.wxpn";
+// The app's store identity on each platform (docs/store-identity.md).
+const APP_ID = Capacitor.getPlatform() === "ios" ? "com.jacobsmedia.WXPN" : "com.jacobsmedia.wxpn";
 const VERSION = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "";
 
 export const pushIsOn = () => featureOn("push") && Capacitor.isNativePlatform();
@@ -56,9 +57,12 @@ export function pushTarget(data) {
   return null;
 }
 
-// The topics in what was last sent ("token|drives,live"), or none.
-const topicsIn = (sent) =>
-  sent?.token && typeof sent.key === "string"
+// The topics in what was last sent ("token|drives,live") to this sender,
+// or none. A record from before senders were noted counts for the one
+// there was; one for another sender (the address changed) counts for
+// nothing, so the phone covers the notices itself until it's registered.
+const topicsIn = (sent, endpoint = PUSH_REGISTER_URL) =>
+  sent?.token && typeof sent.key === "string" && (!sent.endpoint || sent.endpoint === endpoint)
     ? sent.key
         .slice(sent.key.indexOf("|") + 1)
         .split(",")
@@ -66,6 +70,9 @@ const topicsIn = (sent) =>
     : [];
 
 const REGISTER_TIMEOUT_MS = 15000;
+// A registration is sent again after this long, even unchanged, so a
+// sender that lost it (a new database, a restore) has it back.
+const RECONFIRM_MS = 7 * 24 * 60 * 60 * 1000;
 
 // The registration logic, with the phone's push API and the network passed
 // in so it can be tested with stand-ins. `api` is PushNotifications' shape.
@@ -75,6 +82,10 @@ export function createPushClient({
   platform,
   sent = readJson(SENT_KEY, null),
   save,
+  // The sender's address, kept with what was sent to it.
+  endpoint = PUSH_REGISTER_URL,
+  now = Date.now,
+  reconfirmAfter = RECONFIRM_MS,
   // Called whenever status() may have changed.
   onChange,
   // A phone that never answers (no connection to Apple's push service, say)
@@ -97,13 +108,16 @@ export function createPushClient({
   // on-then-off can't end with the older "on" arriving last.
   let queue = Promise.resolve();
 
-  // Tell the server, once per change of token or topics.
+  // Tell the server, once per change of token, topics or sender, and again
+  // once a week. (A record without a sender or a time, from before they were
+  // kept, is sent once more.)
   async function report() {
     if (!token) return;
     const key = `${token}|${topics.join(",")}`;
-    if (sent?.key === key) return;
+    const fresh = sent && now() - sent.at < reconfirmAfter;
+    if (sent?.key === key && sent.endpoint === endpoint && fresh) return;
     await post({ token, platform, topics, app: APP_ID, version: VERSION });
-    sent = { token, key };
+    sent = { token, key, endpoint, at: now() };
     save?.(sent);
   }
 
@@ -189,7 +203,7 @@ export function createPushClient({
 
   // The topics the sender has for this phone, as last confirmed, and
   // whether bringing it up to date last failed.
-  const status = () => ({ topics: topicsIn(sent), failing });
+  const status = () => ({ topics: topicsIn(sent, endpoint), failing });
 
   return { setTopics, status };
 }

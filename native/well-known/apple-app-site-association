@@ -2,7 +2,7 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["TEAMID.org.xpn.wxpn"],
+        "appIDs": ["TEAMID.com.jacobsmedia.WXPN"],
         "components": [
           { "/": "/donate*", "exclude": true, "comment": "giving stays on the website" },
           { "/": "/program/*", "comment": "a show" },

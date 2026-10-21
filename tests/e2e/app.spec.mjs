@@ -380,10 +380,25 @@ test("Favorites shows every saved song, and comes back where it was", async ({ p
     return Math.round(window.scrollY);
   });
   expect(place).toBeGreaterThan(0);
+  const marker = rows.nth(9);
+  const before = (await marker.boundingBox()).y;
   await tab("Shows").click();
   await tab("Favorites").click();
   await expect(rows).toHaveCount(12);
-  await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBe(place);
+  // The listener sees the same songs where they were. Within a few pixels:
+  // something above can settle a moment after the screen returns, and the
+  // browser's scroll anchoring then moves the page by that much to keep the
+  // same content in view, which is the point.
+  const TOLERANCE = 8;
+  await expect
+    .poll(async () => Math.abs((await marker.boundingBox()).y - before))
+    .toBeLessThanOrEqual(TOLERANCE);
+  await expect
+    .poll(() => page.evaluate(() => Math.round(window.scrollY)))
+    .toBeGreaterThanOrEqual(place - TOLERANCE);
+  expect(await page.evaluate(() => Math.round(window.scrollY))).toBeLessThanOrEqual(
+    place + TOLERANCE,
+  );
 });
 
 test("Listen's song has the whole width, and its keys fit one row on a narrow phone", async ({
@@ -490,4 +505,13 @@ test("removing a favorite by keyboard keeps focus in the list", async ({ page })
   await expect(heart(SONGS[1][0])).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.getByRole("button", { name: "Undo" })).toBeFocused();
+});
+
+test("without the dialog API, a show still opens instead of the app failing", async ({ page }) => {
+  await page.addInitScript(() => {
+    delete HTMLDialogElement.prototype.showModal;
+  });
+  await page.goto("/#/shows/show/funky");
+  await expect(page.getByRole("heading", { name: "Funky Friday" }).first()).toBeVisible();
+  await expect(page.getByText("Something went wrong")).toHaveCount(0);
 });

@@ -1,0 +1,9 @@
+{
+  "GHSA-vfj7-8cjw-p6xm": {
+    "package": "braces",
+    "through": "patch-package > find-yarn-workspace-root > micromatch > braces (development only)",
+    "why": "No patched version exists. Here braces only expands the workspace globs in this repository's own package.json, once, when patch-package runs after npm install; nothing from outside reaches it, and none of it ships in the app.",
+    "owner": "Whoever maintains the repository",
+    "review": "2027-01-31: drop patch-package's dependency on it if a fixed braces or patch-package appears"
+  }
+}

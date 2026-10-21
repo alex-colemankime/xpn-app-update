@@ -156,8 +156,11 @@ export default defineConfig(({ mode }) => {
       __DEVICE_PREVIEW__: JSON.stringify(env.VITE_DEVICE_PREVIEW === "true"),
       __APP_VERSION__: JSON.stringify(version),
     },
+    // The oldest browsers the app supports: iOS 16.4 (the iPhone app's
+    // minimum; color-mix() needs 16.2) and Android's WebView, which updates
+    // itself. Newer syntax is rewritten for them.
     build: {
-      target: "es2022",
+      target: ["es2022", "safari16.4"],
     },
     // The native projects hold copies of the built app (ios/App/App/public,
     // android/app/src/main/assets/public): the dev server neither scans
