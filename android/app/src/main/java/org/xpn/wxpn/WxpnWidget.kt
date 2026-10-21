@@ -32,12 +32,10 @@ class WxpnWidget : AppWidgetProvider() {
         const val ACTION_PLAY = "org.xpn.wxpn.WIDGET_PLAY"
         const val EXTRA_STATION = "stationId"
 
-        /** The streams in the widget's top row, as the app's tabs name them (streams.js). */
-        private val STATIONS = listOf(
-            Triple("xpn", "WXPN", R.id.widget_st_xpn),
-            Triple("xpn2", "XPN2", R.id.widget_st_xpn2),
-            Triple("homegrown", "Homegrown", R.id.widget_st_homegrown),
-        )
+        /** The streams in the widget's top row (Stations.kt), each with its view. */
+        private val STATIONS = Stations.all.zip(
+            listOf(R.id.widget_st_xpn, R.id.widget_st_xpn2, R.id.widget_st_homegrown),
+        ) { station, view -> Triple(station.id, station.label, view) }
         private const val ACTION_OPEN = "org.xpn.wxpn.WIDGET_OPEN"
 
         /** Redraws every WXPN widget on the home screen. */

@@ -28,7 +28,7 @@ object WidgetState {
         /** The stream playing ("" while an archived episode has the player). */
         val stationId: String = "xpn",
         val title: String = "WXPN",
-        val artist: String = "88.5 FM · Public Radio",
+        val artist: String = Stations.tagline,
         val show: String = "",
         val artwork: String = "",
         val playing: Boolean = false,

@@ -48,7 +48,7 @@ object CarBridge {
         val stationId: String = "xpn",
         val playing: Boolean = false,
         val title: String = "WXPN",
-        val artist: String = "88.5 FM · Public Radio",
+        val artist: String = Stations.tagline,
         /** The song's artwork (an https address), or "" for the station's tile. */
         val artwork: String = "",
     )

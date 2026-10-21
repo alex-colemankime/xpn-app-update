@@ -21,6 +21,8 @@
 		D6DFD9048EB27A3C4ADFD35E /* CarAudioPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32D015917C928FA39C7D7892 /* CarAudioPlugin.swift */; };
 		7E1D6E000000000000000002 /* HomeWidgetPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1D6E000000000000000001 /* HomeWidgetPlugin.swift */; };
 		7E1D6E000000000000000004 /* WXPNWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1D6E000000000000000003 /* WXPNWidget.swift */; };
+		7E1D6E000000000000000032 /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1D6E000000000000000031 /* Shared.swift */; };
+		7E1D6E000000000000000033 /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1D6E000000000000000031 /* Shared.swift */; };
 		7E1D6E000000000000000008 /* WXPNWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7E1D6E000000000000000007 /* WXPNWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -65,6 +67,7 @@
 		32D015917C928FA39C7D7892 /* CarAudioPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarAudioPlugin.swift; sourceTree = "<group>"; };
 		B4B44BD627FCB83831408C15 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		7E1D6E000000000000000001 /* HomeWidgetPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetPlugin.swift; sourceTree = "<group>"; };
+		7E1D6E000000000000000031 /* Shared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared.swift; sourceTree = "<group>"; };
 		7E1D6E000000000000000003 /* WXPNWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WXPNWidget.swift; sourceTree = "<group>"; };
 		7E1D6E000000000000000005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7E1D6E000000000000000006 /* WXPNWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WXPNWidget.entitlements; sourceTree = "<group>"; };
@@ -119,6 +122,7 @@
 				1734FDCB4A4A5EE79C6F5C65 /* CarPlaySceneDelegate.swift */,
 				32D015917C928FA39C7D7892 /* CarAudioPlugin.swift */,
 				7E1D6E000000000000000001 /* HomeWidgetPlugin.swift */,
+				7E1D6E000000000000000031 /* Shared.swift */,
 				B4B44BD627FCB83831408C15 /* App.entitlements */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
@@ -281,6 +285,7 @@
 				0AB6FD1A372B39810011B95D /* CarPlaySceneDelegate.swift in Sources */,
 				D6DFD9048EB27A3C4ADFD35E /* CarAudioPlugin.swift in Sources */,
 				7E1D6E000000000000000002 /* HomeWidgetPlugin.swift in Sources */,
+				7E1D6E000000000000000032 /* Shared.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -289,6 +294,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7E1D6E000000000000000004 /* WXPNWidget.swift in Sources */,
+				7E1D6E000000000000000033 /* Shared.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

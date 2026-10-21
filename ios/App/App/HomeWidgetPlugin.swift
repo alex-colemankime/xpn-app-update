@@ -10,19 +10,7 @@ import Foundation
 import UIKit
 import WidgetKit
 
-/// Shared with the widget extension (WXPNWidget.swift), which keeps its own
-/// copy of these names.
-enum WidgetShared {
-    static let group = "group.org.xpn.wxpn"
-    static let key = "nowPlaying"
-    static let artFile = "widget-art.jpg"
-
-    static var defaults: UserDefaults? { UserDefaults(suiteName: group) }
-    static var artURL: URL? {
-        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group)?
-            .appendingPathComponent(artFile)
-    }
-}
+// The names it shares with the widget are in Shared.swift (WidgetShared).
 
 @objc(HomeWidgetPlugin)
 public class HomeWidgetPlugin: CAPPlugin, CAPBridgedPlugin {
