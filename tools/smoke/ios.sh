@@ -79,8 +79,8 @@ launch() {
     sed -n 's/.*: *\([0-9][0-9]*\)$/\1/p' | tail -1)
   # Refused: what SpringBoard and the launch services said, for the reason.
   if [ -z "$pid" ]; then
-    limit 60 xcrun simctl spawn "$UDID" log show --last 2m --style compact \
-      --predicate 'eventMessage CONTAINS[c] "org.xpn.wxpn" AND (process == "SpringBoard" OR process == "runningboardd" OR process == "launchd_sim" OR process == "amfid")' \
+    limit 60 xcrun simctl spawn "$UDID" log show --last 45s --style compact \
+      --predicate '(process == "SpringBoard" OR process == "runningboardd" OR process == "launchd_sim" OR process == "amfid" OR process == "CoreSimulatorBridge") AND (eventMessage CONTAINS[c] "denied" OR eventMessage CONTAINS[c] "launch" OR eventMessage CONTAINS[c] "wxpn")' \
       >>"$OUT/launch-refused.txt" 2>&1 || true
   fi
   echo "$pid"
