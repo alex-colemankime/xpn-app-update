@@ -73,9 +73,17 @@ alive() { [ -n "${1:-}" ] && kill -0 "$1" 2>/dev/null; }
 launches=0
 launch() {
   launches=$((launches + 1))
-  limit 60 xcrun simctl launch --stdout="$OUT/console-$launches.txt" \
+  local pid
+  pid=$(limit 60 xcrun simctl launch --stdout="$OUT/console-$launches.txt" \
     --stderr="$OUT/console-$launches-err.txt" "$UDID" "$BUNDLE" 2>>"$OUT/simctl.txt" |
-    sed -n 's/.*: *\([0-9][0-9]*\)$/\1/p' | tail -1
+    sed -n 's/.*: *\([0-9][0-9]*\)$/\1/p' | tail -1)
+  # Refused: what SpringBoard and the launch services said, for the reason.
+  if [ -z "$pid" ]; then
+    limit 60 xcrun simctl spawn "$UDID" log show --last 2m --style compact \
+      --predicate 'eventMessage CONTAINS[c] "org.xpn.wxpn" AND (process == "SpringBoard" OR process == "runningboardd" OR process == "launchd_sim" OR process == "amfid")' \
+      >>"$OUT/launch-refused.txt" 2>&1 || true
+  fi
+  echo "$pid"
 }
 
 summary() {

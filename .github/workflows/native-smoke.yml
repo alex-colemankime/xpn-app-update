@@ -136,15 +136,15 @@ jobs:
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO build 2>&1 | tee -a smoke-out/ios/build.log
 
-      # The simulator (iOS 26) won't open an unsigned app: sign the widget,
-      # then the app, ad hoc (no account needed), keeping their entitlements.
+      # The simulator won't open an unsigned app: sign the widget, then the
+      # app, ad hoc (no account needed). Without their entitlements: push,
+      # associated domains and the app group need a real profile, and an ad
+      # hoc signature claiming them is refused too.
       - name: Sign the build ad hoc
         run: |
           APP=build/Build/Products/Debug-iphonesimulator/App.app
-          codesign --force --sign - --timestamp=none \
-            --entitlements ios/App/WXPNWidget/WXPNWidget.entitlements "$APP"/PlugIns/WXPNWidget.appex
-          codesign --force --sign - --timestamp=none \
-            --entitlements ios/App/App/App.entitlements "$APP"
+          codesign --force --sign - --timestamp=none "$APP"/PlugIns/WXPNWidget.appex
+          codesign --force --sign - --timestamp=none "$APP"
           codesign --verify --deep --verbose=1 "$APP"
 
       - name: Run the app in the simulator
