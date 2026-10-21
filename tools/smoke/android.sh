@@ -62,12 +62,20 @@ shot() {
 # The screen's elements, as uiautomator sees them, into $OUT/ui.xml. A dump
 # can fail while the screen is busy ("could not get idle state"), so it
 # tries a few times.
+# A slow emulator's own apps (the launcher) can stop answering and put an
+# "isn't responding" dialog over the app; that's waited out, not counted.
 dump() {
-  for _ in 1 2 3; do
+  for _ in 1 2 3 4; do
     rm -f "$OUT/ui.xml"
     if timeout 30 adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 &&
       timeout 30 adb exec-out cat /sdcard/ui.xml >"$OUT/ui.xml" 2>/dev/null &&
       grep -q "<hierarchy" "$OUT/ui.xml"; then
+      if grep -q "isn't responding" "$OUT/ui.xml"; then
+        note "a system dialog said another app isn't responding; waited"
+        tap '^Wait$' || sh_ am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null
+        sleep 2
+        continue
+      fi
       return 0
     fi
     sleep 2
@@ -143,6 +151,9 @@ done
 sh_ input keyevent KEYCODE_WAKEUP >/dev/null
 sh_ wm dismiss-keyguard >/dev/null
 note "Android $(sh_ getprop ro.build.version.release) (API $(sh_ getprop ro.build.version.sdk)), WebView $(sh_ dumpsys webviewupdate | grep -m1 -oE 'Current WebView package.*' || echo '?')"
+
+# No "isn't responding" dialogs for the emulator's own slow apps.
+sh_ settings put global hide_error_dialogs 1 || true
 
 step "Installing the app"
 if ! timeout 180 adb install -r -t "$APK"; then
@@ -309,13 +320,20 @@ else
 fi
 # A car binds to the service; starting it directly runs the same setup
 # (its media session, station list), which is where it would crash.
-sh_ am startservice -n "$PKG/.WxpnCarService"
-sleep 4
-if sh_ dumpsys activity services "$PKG" | grep -q "ServiceRecord.*WxpnCarService"; then
-  note "WxpnCarService started"
-else
-  fail "WxpnCarService didn't start"
-fi
+# It may stop again as soon as nothing is bound to it, so it counts as
+# started once Android has its media session or has connected to it.
+sh_ am startservice -n "$PKG/.WxpnCarService" || true
+car_up=0
+for _ in $(seq 1 10); do
+  if sh_ dumpsys activity services "$PKG" | grep -q "ServiceRecord.*WxpnCarService" ||
+    sh_ dumpsys media_session | grep -q "$PKG/WxpnCar" ||
+    sh_ logcat -d | grep -qE "Service connected for ComponentInfo\{$PKG/$PKG.WxpnCarService\}|addSession.*$PKG/WxpnCar"; then
+    car_up=1
+    break
+  fi
+  sleep 2
+done
+if ((car_up)); then note "WxpnCarService started"; else fail "WxpnCarService didn't start"; fi
 if sh_ dumpsys media_session | grep -q "WxpnCar"; then
   note "the car's media session exists"
 else
