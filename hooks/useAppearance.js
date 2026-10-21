@@ -32,6 +32,15 @@ export function useAppearance() {
       if (Capacitor.isNativePlatform()) {
         StatusBar.setStyle({ style: theme === "dark" ? Style.Dark : Style.Light }).catch(() => {});
       }
+      // On Android the page sits below the status bar, which takes the
+      // page's color. Drawn under it (the plugin's default), Android 14 and
+      // older with a WebView before 140 report no inset, and the header
+      // went under the clock (seen in the smoke test). Android 15 and later
+      // keep the page clear of it themselves either way.
+      if (Capacitor.getPlatform() === "android") {
+        StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+        StatusBar.setBackgroundColor({ color: BACKGROUND[theme] }).catch(() => {});
+      }
     };
     apply();
     media.addEventListener("change", apply);

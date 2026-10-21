@@ -178,6 +178,8 @@ Once Firebase is set up (README › Usage and crash reporting):
 - [ ] VoiceOver / TalkBack: play, a song's heart and menu, a show's page,
       and Settings can be reached and say what they do.
 - [ ] iPad, and the phone turned sideways.
+- [ ] Android 14 or older: the header (the logo, Donate) sits below the
+      status bar, never under the clock, in light and dark.
 - [ ] Android back button: closes an open menu (a song's, the sleep timer)
       or sheet first, then steps back through screens, and at the start puts
       the app in the background with the station still playing.
