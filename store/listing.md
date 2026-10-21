@@ -27,7 +27,7 @@ WXPN is Philadelphia's listener-supported public radio station and the home of N
 LISTEN
 • WXPN 88.5 FM, XPN2 and Homegrown, live, with what's playing and what just played
 • Keeps playing with the screen locked, with controls on the lock screen
-• A sleep timer, and a radio alarm that wakes you to the station
+• A sleep timer, and a radio alarm: an alarm that opens the station when you tap it
 
 SAVE WHAT YOU HEAR
 • Heart a song to keep it, and share it
@@ -45,7 +45,7 @@ VIDEOS AND CONCERTS
 
 WXPN is a public media service of the University of Pennsylvania, supported by its members. Become one at xpn.org.
 
-**What's new (1.0):** The new WXPN app.
+**What's new (4.0):** A new WXPN app, rebuilt from the ground up: WXPN, XPN2 and Homegrown live, with what's playing; the schedule, shows and hosts; the archive; videos; concerts; favorites; show reminders, a radio alarm and a sleep timer; CarPlay and Android Auto; and a home screen widget.
 
 **App Review notes:** No sign-in is needed. Listen live: the Listen tab's Listen live button. Notifications are off until turned on in Settings (show reminders, radio alarm, Notifications from WXPN). The radio alarm schedules a notification; tapping it starts the station (a notification can't start audio on its own). Donate opens xpn.org/donate in the browser view, as App Review 3.2.2 allows for nonprofits. Playlist sync signs in with Spotify or Apple Music only if the listener chooses to.
 

@@ -250,7 +250,7 @@ native/well-known/   the files xpn.org hosts so its links open the app
 services/            the push sender and the Apple Music token endpoint (Cloudflare Workers)
 fastlane/            store listings, screenshots and uploads (from store/listing.md)
 tools/               updates-composer.html, for writing and publishing station updates; screenshot, icon, store and smoke-test scripts
-docs/                architecture map, device tests and results sheet, design system, agency brief, CarPlay request, feed issues
+docs/                architecture map, engineering review, store identity, device tests and results sheet, design system, agency brief, CarPlay request, feed issues
 design/screens/      the screens page (every screen, light and dark)
 tests/               node:test suites, importing the real modules
 brand/               logo source files (not shipped with the app)
@@ -258,6 +258,7 @@ brand/               logo source files (not shipped with the app)
 
 ## Known gaps before a store release
 
+- **Engineering review** ([docs/engineering-review.md](docs/engineering-review.md)): the October 21 review's findings and where each stands, and [docs/store-identity.md](docs/store-identity.md) for shipping as an update to the existing apps.
 - **For an agency:** [docs/architecture.md](docs/architecture.md) maps the code; [docs/agency-brief.md](docs/agency-brief.md) is a brief to quote the remaining work against; [docs/design-system.md](docs/design-system.md) is the design handoff.
 - **Testing on phones** ([docs/device-testing.md](docs/device-testing.md)): both apps build, but neither has run on a real phone yet. Background audio, the lock screen, interruptions, notifications arriving with the app closed, links, the Android back button.
 - **CarPlay and Android Auto:** the native code compiles in both apps, with the stations' tiles and Android Auto's artwork; it needs Apple's CarPlay entitlement (request: [docs/carplay-entitlement-request.md](docs/carplay-entitlement-request.md)) and testing in the simulators and a car.

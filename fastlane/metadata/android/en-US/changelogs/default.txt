@@ -1,1 +1,1 @@
-The new WXPN app.
+A new WXPN app, rebuilt from the ground up: WXPN, XPN2 and Homegrown live, with what's playing; the schedule, shows and hosts; the archive; videos; concerts; favorites; show reminders, a radio alarm and a sleep timer; CarPlay and Android Auto; and a home screen widget.

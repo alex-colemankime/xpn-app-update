@@ -3,7 +3,7 @@ WXPN is Philadelphia's listener-supported public radio station and the home of N
 LISTEN
 • WXPN 88.5 FM, XPN2 and Homegrown, live, with what's playing and what just played
 • Keeps playing with the screen locked, with controls on the lock screen
-• A sleep timer, and a radio alarm that wakes you to the station
+• A sleep timer, and a radio alarm: an alarm that opens the station when you tap it
 
 SAVE WHAT YOU HEAR
 • Heart a song to keep it, and share it

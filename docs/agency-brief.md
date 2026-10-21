@@ -29,9 +29,20 @@ quotes can be compared and kept tight.
   `docs/architecture.md` (how the code fits together),
   `docs/device-testing.md` (the device test plan, with a results sheet per
   device), and `docs/carplay-entitlement-request.md`.
-- **Ready to deploy:** a push sender (`services/push-sender/`), publishing
-  station updates from the composer, fastlane lanes for both stores, and a
-  CI smoke test that opens both apps in an emulator and a simulator.
+- **Built, but not yet proven against the real services:**
+  - **A push sender** (`services/push-sender/`). It is tested against
+    stand-ins for Google and Apple only; sending to real phones on both
+    platforms is part of package 4.
+  - **Publishing station updates** from the composer, tested against a
+    stand-in for GitHub.
+  - **fastlane lanes** for both stores. They have been run only as far as
+    the login.
+  - **A CI smoke test** that opens both apps, in an emulator and a
+    simulator. These are not real phones.
+- **An engineering review** (October 21, 2026) and where each of its
+  findings stands: [docs/engineering-review.md](engineering-review.md).
+  Treat its open items, and the store identity work in
+  [docs/store-identity.md](store-identity.md), as acceptance criteria.
 
 Nothing has been tested on a real phone yet. That is the main job.
 
