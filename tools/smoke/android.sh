@@ -273,10 +273,22 @@ fi
 shot home
 sh_ am start -W -n "$PKG/.MainActivity" >/dev/null
 sleep 3
-if wait_for "$READY" 30; then note "came back to the page"; else fail "the page was blank on coming back"; fi
+# Android also ends an app when a system process it relies on dies (on a
+# loaded emulator, Play services and its font provider, which the WebView
+# uses): that's the emulator, not the app, so it's a warning.
+system_kill() {
+  grep -E "Killing $pid:$PKG/.*depends on provider .* in dying proc" "$OUT/logcat.txt" | head -1
+}
+if wait_for "$READY" 30 || { [ -n "$(system_kill)" ] && wait_for "$READY" 60; }; then
+  note "came back to the page"
+else
+  fail "the page was blank on coming back"
+fi
 shot back
 new_pid=$(app_pid)
-if [ -n "$pid" ] && [ -n "$new_pid" ] && [ "$new_pid" != "$pid" ]; then
+if [ -n "$pid" ] && [ -n "$new_pid" ] && [ "$new_pid" != "$pid" ] && [ -n "$(system_kill)" ]; then
+  warn "the app restarted (process $pid, now $new_pid): Android ended it when a system process it uses died ($(system_kill | sed 's/.*depends on/depends on/'))"
+elif [ -n "$pid" ] && [ -n "$new_pid" ] && [ "$new_pid" != "$pid" ]; then
   fail "the app restarted (process $pid, now $new_pid): it died while away"
 fi
 
