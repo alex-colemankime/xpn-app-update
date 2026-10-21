@@ -22,6 +22,10 @@ set -uo pipefail
 APP=${1:?usage: ios.sh App.app [OUT]}
 OUT=${2:-smoke-out/ios}
 mkdir -p "$OUT"
+# Absolute: the simulator writes the app's console to these paths itself,
+# and a relative one lands on its read-only root ("Launchd job spawn
+# failed", POSIX error 30), so the app never opens.
+OUT=$(cd "$OUT" && pwd)
 : >"$OUT/failures.txt"
 : >"$OUT/warnings.txt"
 : >"$OUT/notes.txt"
