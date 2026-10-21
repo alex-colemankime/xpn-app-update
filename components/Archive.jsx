@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Art, Empty, Icon, SkeletonList } from "../ui.jsx";
+import { Art, Empty, Icon, NoMatches, SkeletonList } from "../ui.jsx";
 import { MenuHead, MenuItem, MenuSave, SaveButton, shareFrom, showHold } from "./MusicRows.jsx";
 import { holdable, openHoldMenu } from "../hold.js";
 import { SHOWS } from "../catalog.js";
@@ -234,14 +234,9 @@ export function ArchiveList({ query, onOpenShow, onClearQuery }) {
   return (
     <div className="archive-list">
       {!list.length ? (
-        <Empty
-          icon="search"
-          title="No matching episodes"
-          action="Clear search"
-          onAction={onClearQuery}
-        >
+        <NoMatches title="No matching episodes" onClear={onClearQuery}>
           Try a show’s name, a date or a guest.
-        </Empty>
+        </NoMatches>
       ) : (
         [...shows].map(([id, episodes]) => {
           const show = SHOWS[id] || { id, name: showName(episodes[0]), img: showArt(episodes[0]) };

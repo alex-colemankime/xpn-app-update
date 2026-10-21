@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { counted } from "../text.js";
-import { Icon, Empty, Modal, PromptLink, SearchField, SkeletonList } from "../ui.jsx";
+import { Icon, Empty, Modal, MoreButton, PromptLink, SearchField, SkeletonList } from "../ui.jsx";
 import { useFavoriteItems } from "../favorites.js";
 import {
   concertsByLikedArtists,
@@ -233,12 +233,7 @@ export function ConcertsScreen({ result }) {
         />
         {filtered.length > shown && (
           <div className="list-more">
-            <button className="text-button" onClick={() => setShown(shown + PAGE)}>
-              Load more concerts
-              <span className="expand-chevron">
-                <Icon name="chevD" size={17} />
-              </span>
-            </button>
+            <MoreButton onClick={() => setShown(shown + PAGE)}>Load more concerts</MoreButton>
           </div>
         )}
         {/* xpn.org's own submission form (no account needed). */}

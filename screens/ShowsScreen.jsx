@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { counted } from "../text.js";
-import { Icon, Art, Segmented, Empty, SearchField } from "../ui.jsx";
+import { Icon, Art, Segmented, Empty, NoMatches, SearchField } from "../ui.jsx";
 import { SHOWS, SHOW_DIRECTORY, scheduleForDay, onAirAt, untilLabel } from "../catalog.js";
 import { DAYS, easternParts, clockLabel, stationClock } from "../time.js";
 import { ShowCard, showHold } from "../components/MusicRows.jsx";
@@ -160,14 +160,9 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
                 </section>
               ))
             ) : (
-              <Empty
-                icon="search"
-                title="No hosts found"
-                action="Clear search"
-                onAction={() => setQuery("")}
-              >
+              <NoMatches title="No hosts found" onClear={() => setQuery("")}>
                 Try a different host or show name.
-              </Empty>
+              </NoMatches>
             )
           ) : mode === "All shows" ? (
             shows.length ? (
@@ -177,14 +172,9 @@ export function ShowsScreen({ onOpen, onOpenHost }) {
                 ))}
               </div>
             ) : (
-              <Empty
-                icon="search"
-                title="No shows found"
-                action="Clear search"
-                onAction={() => setQuery("")}
-              >
+              <NoMatches title="No shows found" onClear={() => setQuery("")}>
                 Try a different show or host name.
-              </Empty>
+              </NoMatches>
             )
           ) : (
             <>

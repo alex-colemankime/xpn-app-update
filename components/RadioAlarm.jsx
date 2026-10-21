@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { ChoiceSetting, Icon, Switch } from "../ui.jsx";
+import { ChoiceSetting, Icon, Switch, VolumeSetting } from "../ui.jsx";
 import { DAY_LABELS, SNOOZE_OPTIONS, repeatPhrase } from "../alarm.js";
 import { notificationsAreNative } from "../notifications.js";
 import { VOLUME_SETTABLE } from "../player.js";
@@ -193,18 +193,11 @@ export function RadioAlarmPanel({ alarm, updateAlarm, onEnabled, onTest, testing
             options={SNOOZE_CHOICES}
           />
           {VOLUME_SETTABLE && (
-            <label className="setting-row">
-              <span>
-                Alarm volume <small className="setting-value">{alarm.volume}%</small>
-              </span>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={alarm.volume}
-                onChange={(e) => updateAlarm({ volume: +e.target.value })}
-              />
-            </label>
+            <VolumeSetting
+              label="Alarm volume"
+              value={alarm.volume}
+              onChange={(volume) => updateAlarm({ volume })}
+            />
           )}
           {/* A row like the others, with a small round key at its end. */}
           <button className="setting-row full-width alarm-test" onClick={onTest}>

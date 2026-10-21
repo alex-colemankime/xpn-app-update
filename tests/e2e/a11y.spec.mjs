@@ -256,3 +256,12 @@ test("Back closes a concert's sheet and stays on Concerts; its link opens it aga
   await page.goto(link);
   await expect(sheet).toBeVisible();
 });
+
+test("a concert's link opens its sheet over any screen, once", async ({ page }) => {
+  await page.goto("/#/concerts");
+  await page.locator(".concert-day .concert-open").first().click();
+  const id = page.url().split("/concert/")[1];
+  await page.goto(`/#/listen/concert/${id}`);
+  await expect(page.locator(".concert-sheet")).toHaveCount(1);
+  await expect(page.locator(".concert-sheet")).toBeVisible();
+});

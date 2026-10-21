@@ -59,6 +59,10 @@ const useStreamId = () => useSyncExternalStore(subscribePlayer, () => getPlayerS
 const lazyNamed = (load, name) =>
   lazy(() => retryImport(load)().then((m) => ({ default: m[name] })));
 const Concerts = lazyNamed(() => import("./screens/ConcertsScreen.jsx"), "ConcertsScreen");
+const RoutedConcertSheet = lazyNamed(
+  () => import("./components/ConcertRow.jsx"),
+  "RoutedConcertSheet",
+);
 const Videos = lazyNamed(() => import("./screens/VideosScreen.jsx"), "VideosScreen");
 const Settings = lazyNamed(() => import("./screens/SettingsScreen.jsx"), "SettingsScreen");
 const Welcome = lazyNamed(() => import("./components/Welcome.jsx"), "Welcome");
@@ -311,6 +315,13 @@ export default function App() {
           {welcome && !show && !host && <Welcome onDone={finishWelcome} />}
         </Suspense>
       </OverlayErrorBoundary>
+      {route.concertId && features.concerts && (
+        <OverlayErrorBoundary>
+          <Suspense fallback={null}>
+            <RoutedConcertSheet concertId={route.concertId} concerts={concerts.concerts} />
+          </Suspense>
+        </OverlayErrorBoundary>
+      )}
       <OverlayErrorBoundary
         key={watching.watching ? route.videoId || "live" : "closed"}
         onError={() => {

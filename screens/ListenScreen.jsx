@@ -5,7 +5,7 @@ import { STATION_OPTIONS } from "../streams.js";
 import { refreshPlaylist, useLiveSong } from "../nowplaying.js";
 import { onAirAt } from "../catalog.js";
 import { playbackText, statusLine } from "../playback-text.js";
-import { Icon, Art, Wordmark, Segmented, SkeletonList } from "../ui.jsx";
+import { Icon, Art, MoreButton, Wordmark, Segmented, SkeletonList } from "../ui.jsx";
 import { HeartBloom, heartSong, SaveSong, SongMenu, TrackRow } from "../components/MusicRows.jsx";
 import { OnAir, videoOfShow } from "../components/OnAir.jsx";
 import { SleepTimer } from "../components/SleepTimer.jsx";
@@ -231,16 +231,9 @@ function RecentlyPlayed({ playlist, station }) {
           </div>
           <div className="playlist-more">
             {earlier.length > preview && (
-              <button
-                className="text-button"
-                aria-expanded={expanded}
-                onClick={() => setExpanded(!expanded)}
-              >
+              <MoreButton expanded={expanded} onClick={() => setExpanded(!expanded)}>
                 {expanded ? "Show fewer songs" : "Show more songs"}
-                <span className={`expand-chevron ${expanded ? "up" : ""}`}>
-                  <Icon name="chevD" size={17} />
-                </span>
-              </button>
+              </MoreButton>
             )}
             {/* Earlier days, and searching what played, live on the website. */}
             {(expanded || earlier.length <= preview) && (

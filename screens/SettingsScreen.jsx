@@ -1,5 +1,5 @@
 import { Capacitor } from "@capacitor/core";
-import { Icon, Segmented, Switch } from "../ui.jsx";
+import { Icon, Segmented, Switch, VolumeSetting } from "../ui.jsx";
 import { setVolume, VOLUME_SETTABLE } from "../player.js";
 import { CAST_KIND, CAST_NAME } from "../cast.js";
 import { useVolume, chooseAudioOutput } from "../hooks/usePlayer.js";
@@ -121,18 +121,7 @@ export function SettingsScreen({
             <section className="settings-panel">
               <h2>Listening</h2>
               {VOLUME_SETTABLE && (
-                <label className="setting-row">
-                  <span>
-                    Volume <small className="setting-value">{volume}%</small>
-                  </span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={volume}
-                    onChange={(e) => setVolume(+e.target.value)}
-                  />
-                </label>
+                <VolumeSetting label="Volume" value={volume} onChange={setVolume} />
               )}
               {CAST_KIND && (
                 <button className="setting-row full-width" onClick={chooseAudioOutput}>

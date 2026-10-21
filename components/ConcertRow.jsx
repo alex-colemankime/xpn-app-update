@@ -1,6 +1,6 @@
 import { useEffect, useId, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { Icon, Modal, focusFirstItem, shareText } from "../ui.jsx";
+import { Icon, Modal, focusFirstItem, share } from "../ui.jsx";
 import {
   concertAge,
   concertPlace,
@@ -16,7 +16,8 @@ import { holdable, openHoldMenu } from "../hold.js";
 import { useSheetDrag } from "../hooks/useSheetDrag.js";
 import { CALENDAR_URL } from "../links.js";
 import { clockLabel, shiftDate } from "../time.js";
-import { closeConcert, openConcert, useConcertOpen } from "../hooks/useRoute.js";
+import { closeConcert, openConcert } from "../hooks/useRoute.js";
+import { useFavoriteItems } from "../favorites.js";
 
 // Age limits arrive one by one; each row listens for its own, so one arriving
 // re-renders one row, not the list.
@@ -188,10 +189,7 @@ function ConcertSheet({ concert: c, bill, age, onClose }) {
             </a>
           )}
           <AddToCalendar concert={c} className="secondary-button" />
-          <button
-            className="secondary-button"
-            onClick={async () => showToast(await shareText(...shareArgs(c)))}
-          >
+          <button className="secondary-button" onClick={() => share(...shareArgs(c))}>
             <Icon name="shareAlt" size={18} />
             Share<span className="sr-only"> {c.artist}</span>
           </button>
@@ -210,15 +208,25 @@ function ConcertSheet({ concert: c, bill, age, onClose }) {
   );
 }
 
+// The concert an address names (#/<screen>/concert/<id>), so Back closes
+// it and a link opens it: one sheet, drawn by App over whichever screen
+// opened it, from the calendar or (gone from there) Favorites.
+export function RoutedConcertSheet({ concertId, concerts }) {
+  const saved = useFavoriteItems("concerts");
+  const c = concerts.find((x) => x.id === concertId) || saved.find((x) => x.id === concertId);
+  return c ? <OpenConcert key={c.id} concert={c} /> : null;
+}
+function OpenConcert({ concert: c }) {
+  const age = useAge(c);
+  return <ConcertSheet concert={c} bill={splitBill(c.artist)} age={age} onClose={closeConcert} />;
+}
+
 // A concert in a list: the station's own shows credited over the
 // headliner, the acts supporting it, then where and who may come. The row
 // opens its sheet; press and hold opens its menu; the heart, at its end,
 // saves it.
 export function ConcertRow({ concert: c }) {
   const age = useAge(c);
-  // Open by address (#/concerts/concert/<id>), so Back closes it and a link
-  // opens it.
-  const open = useConcertOpen(c.id);
   const bill = splitBill(c.artist);
   const where = whereOf(c, age);
   const when = FULL_DATE.format(dateOf(c));
@@ -269,7 +277,6 @@ export function ConcertRow({ concert: c }) {
         <span className="sr-only">, {when}</span>
       </button>
       <SaveButton type="concerts" item={c} name={`${c.artist} concert`} />
-      {open && <ConcertSheet concert={c} bill={bill} age={age} onClose={closeConcert} />}
     </div>
   );
 }
