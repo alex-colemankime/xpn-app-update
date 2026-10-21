@@ -1,0 +1,27 @@
+diff --git a/node_modules/@capgo/capacitor-media-session/android/src/main/java/com/capgo/mediasession/MediaSessionPlugin.java b/node_modules/@capgo/capacitor-media-session/android/src/main/java/com/capgo/mediasession/MediaSessionPlugin.java
+index 3494303..98f9413 100644
+--- a/node_modules/@capgo/capacitor-media-session/android/src/main/java/com/capgo/mediasession/MediaSessionPlugin.java
++++ b/node_modules/@capgo/capacitor-media-session/android/src/main/java/com/capgo/mediasession/MediaSessionPlugin.java
+@@ -174,11 +174,19 @@ public class MediaSessionPlugin extends Plugin {
+ 
+         boolean httpUrl = url.startsWith("http");
+         if (httpUrl) {
++            // WXPN: bounded, since this runs on Capacitor's one plugin thread
++            // and a stalled art host would hold up every later plugin call.
+             HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
++            connection.setConnectTimeout(5000);
++            connection.setReadTimeout(5000);
+             connection.setDoInput(true);
+-            connection.connect();
+-            try (InputStream inputStream = connection.getInputStream()) {
+-                return BitmapFactory.decodeStream(inputStream);
++            try {
++                connection.connect();
++                try (InputStream inputStream = connection.getInputStream()) {
++                    return BitmapFactory.decodeStream(inputStream);
++                }
++            } finally {
++                connection.disconnect();
+             }
+         }
+ 
