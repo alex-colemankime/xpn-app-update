@@ -1,20 +1,11 @@
 import { test, mock } from "node:test";
 import assert from "node:assert/strict";
+import { fakeWindow } from "./fake-window.mjs";
 
 // player.js against a fake <audio>, so the sleep timer's volume handling can
 // be checked end to end.
-const memory = new Map([["xpn.volume", "70"]]);
+const memory = fakeWindow({ storage: [["xpn.volume", "70"]] });
 const audios = [];
-globalThis.window = {
-  localStorage: {
-    getItem: (k) => (memory.has(k) ? memory.get(k) : null),
-    setItem: (k, v) => memory.set(k, String(v)),
-    removeItem: (k) => memory.delete(k),
-  },
-  addEventListener() {},
-  dispatchEvent() {},
-  location: { href: "https://app.test/" },
-};
 globalThis.Audio = class {
   constructor() {
     this.volume = 1;
@@ -59,4 +50,15 @@ test("replacing or cancelling a timer mid-fade brings the volume back", async ()
   mock.timers.tick(55000);
   player.cancelSleepTimer();
   assert.equal(Math.round(audio.volume * 100), 70, "cancel mid-fade restores it too");
+});
+
+test("with the alarm's own volume on, the fade starts from it", async () => {
+  const audio = audios[0];
+  player.setTemporaryVolume(30);
+  player.startSleepTimer(1);
+  mock.timers.tick(50000); // halfway through the fade
+  assert.ok(audio.volume <= 0.16, `faded from 30, not 70 (${audio.volume})`);
+  player.cancelSleepTimer();
+  assert.equal(Math.round(audio.volume * 100), 30, "the alarm's level comes back");
+  assert.equal(memory.get("xpn.volume"), "70", "the saved volume is untouched");
 });

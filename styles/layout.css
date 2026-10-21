@@ -69,7 +69,7 @@
   color: var(--muted);
 }
 .nav-button.active {
-  background: var(--row-alt);
+  background: var(--select-fill);
   color: var(--select-ink);
 }
 .sidebar-bottom {
@@ -89,7 +89,7 @@
   color: var(--muted);
 }
 .settings-button[aria-current="page"] {
-  background: var(--row-alt);
+  background: var(--select-fill);
   color: var(--select-ink);
 }
 /* Forced colors drop the fill and the ink, so Settings, open, is outlined

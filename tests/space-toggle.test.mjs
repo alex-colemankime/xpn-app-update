@@ -1,21 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { fakeWindow } from "./fake-window.mjs";
 
 // The Space key plays and pauses whatever the player bar holds: an archive
 // episode while it has the bar, otherwise the station (episode-player.js,
 // togglePlayer). Before, Space always meant the station, so pressing it
 // during an episode started the radio instead of pausing the episode.
-const memory = new Map();
-globalThis.window = {
-  localStorage: {
-    getItem: (k) => (memory.has(k) ? memory.get(k) : null),
-    setItem: (k, v) => memory.set(k, String(v)),
-    removeItem: (k) => memory.delete(k),
-  },
-  addEventListener() {},
-  dispatchEvent() {},
-  location: { href: "https://app.test/" },
-};
+fakeWindow();
 globalThis.Audio = class {
   constructor() {
     this.attrs = {};

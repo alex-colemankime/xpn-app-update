@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { counted } from "../text.js";
-import { Icon, Segmented, Empty, SearchField, shareText } from "../ui.jsx";
+import { Icon, Segmented, Empty, SearchField, share } from "../ui.jsx";
 import { SHOWS } from "../catalog.js";
 import { useFavoriteItems } from "../favorites.js";
 import { easternToday, inShowOrder } from "../concerts.js";
 import { VideoCard } from "../components/VideoCard.jsx";
 import { EpisodeRow, ShowHead } from "../components/Archive.jsx";
 import { hasLeftArchive, useArchiveState } from "../archive.js";
-import { showToast } from "../toast.js";
 import { TrackRow, SaveButton } from "../components/MusicRows.jsx";
 import { ConcertList } from "../components/ConcertRow.jsx";
 import { PlaylistSyncPrompt, PlaylistSyncStatus } from "../components/PlaylistSync.jsx";
@@ -93,13 +92,8 @@ export function LibraryScreen({ visit = 0, onOpenShow, onOpenVideo, onNavigate }
     setType(next);
     setQuery("");
   };
-  const shareSongs = async () =>
-    showToast(
-      await shareText(
-        "My WXPN discoveries",
-        songs.map((t) => `${t.title} — ${t.artist}`).join("\n"),
-      ),
-    );
+  const shareSongs = () =>
+    share("My WXPN discoveries", songs.map((t) => `${t.title} — ${t.artist}`).join("\n"));
 
   return (
     <>

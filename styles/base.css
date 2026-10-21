@@ -216,6 +216,10 @@
   /* The bar at the top of a sheet that says it can be pulled down: plain
      enough to see on any sheet, in either theme. */
   --grabber: color-mix(in srgb, var(--text) 30%, transparent);
+  /* The shade over the page behind a sheet. */
+  --scrim: #0008;
+  /* Muted lines on an orange wash in dark, a step lighter for 4.5:1. */
+  --muted-on-wash-dark: #adaeab;
   /* Stacking, lowest to highest. */
   --z-sidebar: 20;
   --z-banner: 25;

@@ -3,33 +3,28 @@
 // over, and two songs the old ids ran together can both be saved.
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { fakeWindow } from "./fake-window.mjs";
 
-const memory = new Map([
-  [
-    "xpn.favorites.v1",
-    JSON.stringify({
-      songs: { "a-b-c": { title: "C", artist: "A-B", savedAt: 1 } },
-    }),
+const memory = fakeWindow({
+  storage: [
+    [
+      "xpn.favorites.v1",
+      JSON.stringify({
+        songs: { "a-b-c": { title: "C", artist: "A-B", savedAt: 1 } },
+      }),
+    ],
+    [
+      "xpn.playlistSync",
+      JSON.stringify({
+        service: "apple",
+        playlistId: "p1",
+        verified: true,
+        matched: { "a-b-c": "track:1" },
+        missing: ["gone-x"],
+      }),
+    ],
   ],
-  [
-    "xpn.playlistSync",
-    JSON.stringify({
-      service: "apple",
-      playlistId: "p1",
-      verified: true,
-      matched: { "a-b-c": "track:1" },
-      missing: ["gone-x"],
-    }),
-  ],
-]);
-globalThis.window = {
-  localStorage: {
-    getItem: (k) => (memory.has(k) ? memory.get(k) : null),
-    setItem: (k, v) => memory.set(k, String(v)),
-    removeItem: (k) => memory.delete(k),
-  },
-  addEventListener() {},
-};
+});
 
 const { getFavorite, getSavedSongs, songId, toggleFavorite } = await import("../favorites.js");
 const { migrateSongIds } = await import("../playlist-sync.js");

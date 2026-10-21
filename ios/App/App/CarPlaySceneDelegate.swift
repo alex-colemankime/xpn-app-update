@@ -15,13 +15,8 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
     private var interfaceController: CPInterfaceController?
     private var items: [String: CPListItem] = [:]
 
-    /// The stations, as in streams.js. Artwork: the image sets "car-<id>"
-    /// in Assets.xcassets, the stations' tiles (tools/car-art.mjs).
-    private let stations: [(id: String, label: String, detail: String)] = [
-        ("xpn", "WXPN", "88.5 FM · Public Radio"),
-        ("xpn2", "XPN2", "XPoNential Radio"),
-        ("homegrown", "Homegrown", "Philadelphia's local music"),
-    ]
+    /// The stations (Shared.swift), with their tiles (tools/car-art.mjs).
+    private let stations = Stations.all
 
     func templateApplicationScene(
         _ scene: CPTemplateApplicationScene,

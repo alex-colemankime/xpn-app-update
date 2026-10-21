@@ -238,19 +238,85 @@
         width: 100%;
         box-sizing: border-box;
       }
+      /* Publishing: settings, then a review of what changes before it goes. */
+      #publish details {
+        margin: 0 0 12px;
+      }
+      #publish summary {
+        cursor: pointer;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+      #publish input {
+        width: 100%;
+        box-sizing: border-box;
+      }
+      #publish .bar {
+        margin: 4px 0 0;
+      }
+      #status:empty,
+      #review[hidden] {
+        display: none;
+      }
+      #status {
+        margin: 12px 0 0;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        font-size: 14px;
+      }
+      #status.bad {
+        border-color: var(--accent);
+      }
+      #status p {
+        margin: 0 0 6px;
+      }
+      #status p:last-child,
+      #status ul:last-child {
+        margin-bottom: 0;
+      }
+      #review {
+        margin-top: 12px;
+        padding: 14px;
+        border-radius: 10px;
+        border: 1px solid color-mix(in srgb, var(--action) 32%, var(--bg));
+        background: var(--bg);
+      }
+      #review h3 {
+        margin: 0 0 8px;
+      }
+      #review h3:focus {
+        outline: none;
+      }
+      #review ul {
+        margin: 0 0 10px;
+        padding-left: 20px;
+      }
+      #review code {
+        font-size: 13px;
+      }
+      a {
+        color: var(--accent);
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
     </style>
   </head>
   <body>
     <main>
       <h1>WXPN app updates</h1>
       <p class="lede">
-        Write the banner and live-video messages the app shows, then publish the file below to the
-        address the app reads (<code>VITE_XPN_UPDATES_URL</code>). The app checks it every few
-        minutes, so changes appear without an app update.
+        Write the banner and live-video messages the app shows, then publish them with
+        <strong>Publish</strong> below: it saves the file the app reads to GitHub, and the app
+        checks it every few minutes, so changes appear without an app update.
       </p>
       <div class="bar">
         <button class="primary" data-add="banner">Add a banner</button>
         <button data-add="live">Add a live video</button>
+        <button class="load-live">Load what’s live</button>
         <button id="load">Load an existing file…</button>
       </div>
       <div id="items"></div>
@@ -277,6 +343,70 @@
           the request can't be set aside
         </label>
       </section>
+      <h2 id="publish-title">Publish</h2>
+      <p class="note">
+        Publishing saves the file to the app’s GitHub repository. You see what changes first, and
+        nothing goes out until you say so.
+      </p>
+      <section class="card" id="publish" aria-labelledby="publish-title">
+        <details id="gh-settings">
+          <summary>GitHub settings</summary>
+          <p class="note">
+            Publishing needs a <strong>token</strong>: a password made just for this, which can only
+            change files in the app’s repository. Make one on GitHub under
+            <a
+              href="https://github.com/settings/personal-access-tokens/new"
+              target="_blank"
+              rel="noopener"
+              >Settings › Developer settings › Fine-grained tokens</a
+            >: choose <em>Only select repositories</em> and pick the repository below, then under
+            <em>Repository permissions</em> set <em>Contents</em> to <em>Read and write</em>. Copy
+            the token and paste it here.
+          </p>
+          <p class="note">
+            The token is kept in this browser on this computer only, and sent only to GitHub. On a
+            shared computer, use <strong>Forget token</strong> when you’re done. If it stops working
+            (tokens expire), make a new one the same way.
+          </p>
+          <label
+            >Token
+            <small>Starts with github_pat_</small>
+            <input id="gh-token" type="password" autocomplete="off" spellcheck="false" />
+          </label>
+          <div class="row">
+            <label
+              >Repository <small>owner/name</small>
+              <input id="gh-repo" spellcheck="false" />
+            </label>
+            <label
+              >Branch <small>Usually main</small>
+              <input id="gh-branch" spellcheck="false" />
+            </label>
+          </div>
+          <label
+            >File in the repository
+            <small>The deploy publishes this one as updates.json</small>
+            <input id="gh-path" spellcheck="false" />
+          </label>
+          <div class="bar">
+            <button id="gh-forget">Forget token</button>
+            <button id="gh-defaults">Back to the usual settings</button>
+          </div>
+        </details>
+        <div class="bar">
+          <button class="primary" id="publish-start">Publish…</button>
+          <button class="load-live">Load what’s live</button>
+        </div>
+        <div id="review" hidden>
+          <h3 id="review-title" tabindex="-1">Check before publishing</h3>
+          <div id="review-body"></div>
+          <div class="bar">
+            <button class="primary" id="publish-now">Publish now</button>
+            <button id="publish-cancel">Cancel</button>
+          </div>
+        </div>
+        <div id="status" role="status" aria-live="polite"></div>
+      </section>
       <h2>The file</h2>
       <div class="bar">
         <button class="primary" id="copy">Copy</button>
@@ -296,6 +426,242 @@
         a plain message whose link is the button.
       </p>
     </main>
+    <script id="publish-rules">
+      // What a file must be to publish: the rules the app reads it by
+      // (updates.js normalizeUpdates, remote-config.js normalizeConfig) and
+      // CI's check of the control file (tests/control-file.test.mjs), so a
+      // file that publishes here also passes there and nothing in it is
+      // quietly dropped on phones. Kept here rather than imported because the
+      // composer opens straight from the file, where a browser won't load
+      // modules; tests/updates-composer.test.mjs runs this block against the
+      // real modules, so the two can't drift apart. Pure, like them.
+      const PublishRules = (() => {
+        const FEATURES = [
+          "videos",
+          "concerts",
+          "archive",
+          "playlistSync",
+          "push",
+          "liveVideo",
+          "reviewPrompt",
+        ];
+        const STREAM_HOSTS = /(^|\.)(xpn\.org|streamguys1\.com|streamguys\.com)$/;
+        const APP_STORE_HOSTS = /^(apps|itunes)\.apple\.com$/;
+
+        // As text.js has them.
+        const oneLine = (value, max = Infinity) =>
+          typeof value === "string" || typeof value === "number"
+            ? String(value).replace(/\s+/g, " ").trim().slice(0, max)
+            : "";
+        const webUrl = (value) => {
+          try {
+            const url = new URL(String(value ?? "").trim());
+            return url.protocol === "https:" ? url.href : "";
+          } catch {
+            return "";
+          }
+        };
+        const onHost = (value, hosts) => {
+          const url = webUrl(value);
+          return Boolean(url) && hosts.test(new URL(url).hostname);
+        };
+        const text = (value, max = 280) => (typeof value === "string" ? oneLine(value, max) : "");
+        const time = (value) => {
+          if (value == null || value === "") return null;
+          const t = Date.parse(value);
+          return Number.isNaN(t) ? undefined : t;
+        };
+
+        // The id the app would keep this update under, or null if it would
+        // skip the update (normalizeUpdate in updates.js).
+        function keptId(raw) {
+          if (!raw || typeof raw !== "object") return null;
+          const id = text(raw.id, 80);
+          const kind = raw.kind === "live" ? "live" : raw.kind === "banner" ? "banner" : null;
+          const starts = time(raw.starts);
+          const ends = time(raw.ends);
+          if (!id || !kind || starts === undefined || ends === undefined) return null;
+          if (kind === "banner") return text(raw.text) ? id : null;
+          return text(raw.title, 120) && webUrl(raw.watch) && starts !== null ? id : null;
+        }
+
+        // Everything that would stop the file publishing, in plain words.
+        function fileProblems(json) {
+          if (!json || typeof json !== "object" || Array.isArray(json))
+            return ["This isn’t an updates file."];
+          const out = [];
+          const raw = json.updates ?? [];
+          if (!Array.isArray(raw)) out.push("The file’s “updates” must be a list.");
+          else {
+            raw.forEach((u, i) => {
+              if (keptId(u) === null || keptId(u) !== u.id)
+                out.push(
+                  `Message ${i + 1}${u?.id ? ` (${u.id})` : ""} is incomplete, so the app would skip it.`,
+                );
+            });
+            const ids = raw.map((u) => u?.id);
+            const twice = ids.filter((id, i) => ids.indexOf(id) !== i);
+            for (const id of new Set(twice))
+              out.push(`Two messages have the id “${id}”. Each needs its own.`);
+          }
+          const c = json.config ?? {};
+          if (!c || typeof c !== "object" || Array.isArray(c))
+            return [...out, "The app switches (“config”) aren’t readable."];
+          if (c.off !== undefined && !Array.isArray(c.off))
+            out.push("The features turned off (“off”) must be a list.");
+          for (const f of Array.isArray(c.off) ? c.off : [])
+            if (!FEATURES.includes(f)) out.push(`The app has no feature called “${f}”.`);
+          for (const [id, s] of Object.entries(c.streams || {})) {
+            const given = ["url", "backupUrl"].filter((k) => s?.[k]);
+            if (!given.length || given.some((k) => !onHost(s[k], STREAM_HOSTS)))
+              out.push(`${id}’s stream address must be https:// on xpn.org or StreamGuys.`);
+          }
+          if (c.update) {
+            if (!/^\d+(\.\d+){0,2}$/.test(String(c.update.minVersion || "")))
+              out.push("Ask to update needs a minimum version like 1.2.0.");
+            if (c.update.ios && !onHost(c.update.ios, APP_STORE_HOSTS))
+              out.push("The App Store link must be an apps.apple.com address.");
+          }
+          return out;
+        }
+
+        // ---- What changes -------------------------------------------------
+        // Two files compared as the app would read them: the same moment
+        // written another way (Z or -04:00) is no change, nor is key order.
+        const TIMES = new Set(["starts", "ends", "at"]);
+        function canon(value, key) {
+          if (TIMES.has(key) && typeof value === "string") {
+            const t = Date.parse(value);
+            return Number.isNaN(t) ? value : t;
+          }
+          if (Array.isArray(value)) return value.map((v) => canon(v));
+          if (value && typeof value === "object")
+            return Object.fromEntries(
+              Object.keys(value)
+                .sort()
+                .map((k) => [k, canon(value[k], k)]),
+            );
+          return value;
+        }
+        const same = (a, b) => JSON.stringify(canon(a)) === JSON.stringify(canon(b));
+        const list = (json) =>
+          Array.isArray(json?.updates)
+            ? json.updates.filter((u) => u && typeof u === "object")
+            : [];
+
+        // { added, removed, changed } (the updates, by id), whether the order
+        // changed (the first running banner wins), and which app switches
+        // changed; `none` when publishing would change nothing.
+        function changes(before, after) {
+          const old = list(before);
+          const now = list(after);
+          const oldIds = new Map(old.map((u) => [String(u.id), u]));
+          const newIds = new Map(now.map((u) => [String(u.id), u]));
+          const added = now.filter((u) => !oldIds.has(String(u.id)));
+          const removed = old.filter((u) => !newIds.has(String(u.id)));
+          const changed = now.filter(
+            (u) => oldIds.has(String(u.id)) && !same(u, oldIds.get(String(u.id))),
+          );
+          const kept = (from, other) => from.map((u) => String(u.id)).filter((id) => other.has(id));
+          const reordered = kept(old, newIds).join("\n") !== kept(now, oldIds).join("\n");
+          const a = before?.config || {};
+          const b = after?.config || {};
+          const offA = Array.isArray(a.off) ? a.off : [];
+          const offB = Array.isArray(b.off) ? b.off : [];
+          const switches = [];
+          const turnedOff = offB.filter((f) => !offA.includes(f));
+          const turnedOn = offA.filter((f) => !offB.includes(f));
+          if (turnedOff.length) switches.push(`turns off ${turnedOff.join(", ")}`);
+          if (turnedOn.length) switches.push(`turns ${turnedOn.join(", ")} back on`);
+          if (!same(a.streams || {}, b.streams || {})) switches.push("changes stream addresses");
+          if (!same(a.update || null, b.update || null))
+            switches.push(b.update ? "changes the ask to update" : "stops asking to update");
+          const none =
+            !added.length && !removed.length && !changed.length && !reordered && !switches.length;
+          return { added, removed, changed, reordered, switches, none };
+        }
+
+        // "Station updates: add fall-drive; remove fan-2026-10-09" for the
+        // commit, short enough for GitHub's list, with every id in the body.
+        function commitMessage(ch) {
+          const ids = (us) => us.map((u) => u.id).join(", ");
+          const parts = [
+            ch.added.length && `add ${ids(ch.added)}`,
+            ch.changed.length && `change ${ids(ch.changed)}`,
+            ch.removed.length && `remove ${ids(ch.removed)}`,
+            ch.reordered && "reorder",
+            ch.switches.length && `app switches (${ch.switches.join(", ")})`,
+          ].filter(Boolean);
+          let subject = `Station updates: ${parts.join("; ")}`;
+          if (subject.length > 72) {
+            const counts = [
+              ch.added.length && `${ch.added.length} added`,
+              ch.changed.length && `${ch.changed.length} changed`,
+              ch.removed.length && `${ch.removed.length} removed`,
+              ch.reordered && "reordered",
+              ch.switches.length && "app switches",
+            ].filter(Boolean);
+            subject = `Station updates: ${counts.join(", ")}`;
+          }
+          return `${subject}\n\n${parts.map((p) => `- ${p}`).join("\n")}\n\nPublished from tools/updates-composer.html.`;
+        }
+
+        // ---- The file as the repository keeps it ---------------------------
+        // JSON laid out as Prettier lays it out (printWidth 100), because CI
+        // checks the formatting of every file, this one included: objects
+        // open, and a list of plain values on one line when it fits.
+        function prettyJson(value, width = 100) {
+          const out = (v, indent, used, after) => {
+            const inner = `${indent}  `;
+            if (Array.isArray(v)) {
+              if (!v.length) return "[]";
+              if (v.every((x) => x === null || typeof x !== "object")) {
+                const flat = `[${v.map((x) => JSON.stringify(x)).join(", ")}]`;
+                if (used + flat.length + after <= width) return flat;
+              }
+              const lines = v.map(
+                (x, i) => inner + out(x, inner, inner.length, i < v.length - 1 ? 1 : 0),
+              );
+              return `[\n${lines.join(",\n")}\n${indent}]`;
+            }
+            if (v && typeof v === "object") {
+              const keys = Object.keys(v).filter((k) => v[k] !== undefined);
+              if (!keys.length) return "{}";
+              const lines = keys.map((k, i) => {
+                const head = `${inner}${JSON.stringify(k)}: `;
+                return head + out(v[k], inner, head.length, i < keys.length - 1 ? 1 : 0);
+              });
+              return `{\n${lines.join(",\n")}\n${indent}}`;
+            }
+            return JSON.stringify(v);
+          };
+          return `${out(value, "", 0, 0)}\n`;
+        }
+
+        // GitHub sends and takes file contents as base64 of the UTF-8 bytes.
+        const toBase64 = (s) => {
+          let bin = "";
+          for (const byte of new TextEncoder().encode(s)) bin += String.fromCharCode(byte);
+          return btoa(bin);
+        };
+        const fromBase64 = (b64) =>
+          new TextDecoder().decode(
+            Uint8Array.from(atob(String(b64).replace(/\s/g, "")), (c) => c.charCodeAt(0)),
+          );
+
+        return {
+          FEATURES,
+          keptId,
+          fileProblems,
+          changes,
+          same,
+          commitMessage,
+          prettyJson,
+          toBase64,
+          fromBase64,
+        };
+      })();
+    </script>
     <script>
       const items = [];
       const $ = (s, el = document) => el.querySelector(s);
@@ -413,7 +779,7 @@
             </section>`;
           })
           .join("");
-        $("#json").textContent = JSON.stringify(file(), null, 2);
+        $("#json").textContent = PublishRules.prettyJson(file());
       }
 
       function problems(it) {
@@ -511,7 +877,7 @@
         } else if (t.dataset.c) {
           config[t.dataset.c] = t.type === "checkbox" ? t.checked : t.value;
         } else return;
-        $("#json").textContent = JSON.stringify(file(), null, 2);
+        $("#json").textContent = PublishRules.prettyJson(file());
       }
       document.addEventListener("input", onSwitch);
 
@@ -569,7 +935,7 @@
           p.textContent = text;
           remove.before(p);
         });
-        $("#json").textContent = JSON.stringify(file(), null, 2);
+        $("#json").textContent = PublishRules.prettyJson(file());
       }
       const onEdit = (e) => {
         const card = e.target.closest("[data-i]");
@@ -610,25 +976,430 @@
           const text = prompt("Paste the current updates.json:");
           if (!text) return;
           try {
-            items.length = 0;
-            const loaded = JSON.parse(text);
-            const c = loaded.config || {};
-            config.off = Array.isArray(c.off) ? c.off : [];
-            config.streams = c.streams || {};
-            config.minVersion = c.update?.minVersion || "";
-            config.message = c.update?.message || "";
-            config.ios = c.update?.ios || "";
-            config.required = c.update?.required === true;
-            renderSwitches();
-            (loaded.updates || []).forEach((u) => add(u.kind === "live" ? "live" : "banner", u));
-            render();
+            loadFile(JSON.parse(text));
           } catch {
             alert("That isn’t a valid updates file.");
           }
         }
       });
+
+      // A file (pasted, or what's live) into the editor, replacing what's there.
+      function loadFile(loaded) {
+        if (!loaded || typeof loaded !== "object") throw new Error("Not an updates file");
+        items.length = 0;
+        const c = loaded.config || {};
+        config.off = Array.isArray(c.off) ? c.off : [];
+        config.streams = c.streams || {};
+        config.minVersion = c.update?.minVersion || "";
+        config.message = c.update?.message || "";
+        config.ios = c.update?.ios || "";
+        config.required = c.update?.required === true;
+        renderSwitches();
+        (loaded.updates || []).forEach((u) => add(u.kind === "live" ? "live" : "banner", u));
+        render();
+      }
       renderSwitches();
       render();
+    </script>
+    <script>
+      // ---- Publishing ------------------------------------------------------
+      // Saves the file to GitHub (the contents API) as a commit, from this
+      // page alone: the deploy (.github/workflows/deploy-pages.yml) then puts
+      // control/updates.json at …/xpn-app-update/updates.json, which the
+      // phone apps read. The token stays in this browser (localStorage) and
+      // goes only to api.github.com.
+      const GH_DEFAULTS = {
+        repo: "alex-colemankime/xpn-app-update",
+        branch: "main",
+        path: "control/updates.json",
+      };
+      const GH_KEY = "xpn.composer.github";
+      const TOKEN_KEY = "xpn.composer.token";
+      // Storage can be off (a private window, blocked site data): the page
+      // still works, it just won't remember.
+      const remember = {
+        get: (key) => {
+          try {
+            return localStorage.getItem(key);
+          } catch {
+            return null;
+          }
+        },
+        set: (key, value) => {
+          try {
+            if (value) localStorage.setItem(key, value);
+            else localStorage.removeItem(key);
+          } catch {
+            /* not remembered */
+          }
+        },
+      };
+      const field = { repo: $("#gh-repo"), branch: $("#gh-branch"), path: $("#gh-path") };
+      function showSettings(saved) {
+        for (const k of Object.keys(field)) field[k].value = saved[k] || GH_DEFAULTS[k];
+      }
+      try {
+        showSettings(JSON.parse(remember.get(GH_KEY) || "{}") || {});
+      } catch {
+        showSettings({});
+      }
+      $("#gh-token").value = remember.get(TOKEN_KEY) || "";
+      for (const input of Object.values(field))
+        input.addEventListener("change", () =>
+          remember.set(
+            GH_KEY,
+            JSON.stringify(Object.fromEntries(Object.entries(field).map(([k, f]) => [k, f.value]))),
+          ),
+        );
+      $("#gh-token").addEventListener("change", (e) =>
+        remember.set(TOKEN_KEY, e.target.value.trim()),
+      );
+      $("#gh-forget").addEventListener("click", () => {
+        $("#gh-token").value = "";
+        remember.set(TOKEN_KEY, "");
+        say(
+          "The token is forgotten on this computer. To stop it working anywhere, delete it on GitHub too.",
+        );
+      });
+      $("#gh-defaults").addEventListener("click", () => {
+        showSettings({});
+        remember.set(GH_KEY, "");
+      });
+
+      const settings = () => ({
+        repo: field.repo.value.trim() || GH_DEFAULTS.repo,
+        branch: field.branch.value.trim() || GH_DEFAULTS.branch,
+        path: field.path.value.trim().replace(/^\/+/, "") || GH_DEFAULTS.path,
+        token: $("#gh-token").value.trim(),
+      });
+      const actionsUrl = (repo) => `https://github.com/${repo}/actions/workflows/deploy-pages.yml`;
+
+      // The status line under the buttons: plain text, or nodes (links).
+      function say(message, { bad = false, extra = [] } = {}) {
+        const box = $("#status");
+        box.classList.toggle("bad", bad);
+        box.replaceChildren();
+        if (!message) return;
+        const p = document.createElement("p");
+        p.textContent = message;
+        box.append(p, ...extra);
+      }
+      const link = (href, label) => {
+        const p = document.createElement("p");
+        const a = document.createElement("a");
+        a.href = href;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.textContent = label;
+        p.append(a);
+        return p;
+      };
+      const bullets = (lines) => {
+        const ul = document.createElement("ul");
+        for (const line of lines) {
+          const li = document.createElement("li");
+          li.textContent = line;
+          ul.append(li);
+        }
+        return ul;
+      };
+
+      class GitHubProblem extends Error {
+        constructor(message, kind) {
+          super(message);
+          this.kind = kind;
+        }
+      }
+
+      // One call to the contents API for the file; what went wrong in words
+      // staff can act on.
+      async function github(method, body) {
+        const s = settings();
+        if (!/^[\w.-]+\/[\w.-]+$/.test(s.repo))
+          throw new GitHubProblem("The repository should look like owner/name.", "settings");
+        const path = s.path.split("/").map(encodeURIComponent).join("/");
+        let url = `https://api.github.com/repos/${s.repo}/contents/${path}`;
+        if (method === "GET") url += `?ref=${encodeURIComponent(s.branch)}`;
+        const headers = {
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        };
+        if (s.token) headers.Authorization = `Bearer ${s.token}`;
+        if (body) headers["Content-Type"] = "application/json";
+        const offline = new GitHubProblem(
+          "Couldn’t reach GitHub. Check that this computer is online, then try again.",
+          "offline",
+        );
+        if (navigator.onLine === false) throw offline;
+        let res;
+        try {
+          // no-store: a cached copy would carry an old version id (sha), and
+          // the save would then be refused as a conflict.
+          res = await fetch(url, {
+            method,
+            headers,
+            cache: "no-store",
+            body: body && JSON.stringify(body),
+          });
+        } catch {
+          throw offline;
+        }
+        if (res.ok) return res.json();
+        let detail = "";
+        try {
+          detail = (await res.json()).message || "";
+        } catch {
+          /* no details */
+        }
+        const where = `${s.path} on the ${s.branch} branch of ${s.repo}`;
+        if (res.status === 401)
+          throw new GitHubProblem(
+            s.token
+              ? "GitHub didn’t accept the token. It may have expired, been deleted, or been pasted only in part. Make a new one (see GitHub settings) and paste it in."
+              : "Publishing needs a token. Open GitHub settings and paste one in.",
+            "token",
+          );
+        if (res.status === 403 && res.headers.get("x-ratelimit-remaining") === "0")
+          throw new GitHubProblem(
+            "GitHub is limiting requests from this computer for now. Add a token (it raises the limit), or try again in an hour.",
+            "limit",
+          );
+        if (res.status === 403)
+          throw new GitHubProblem(
+            method === "GET"
+              ? `The token isn’t allowed to read ${s.repo}. Make one for that repository with Contents: Read and write.`
+              : `The token can’t change files in ${s.repo}. It needs Contents set to Read and write, for that repository. Make a new one (see GitHub settings).`,
+            "token",
+          );
+        if (res.status === 404)
+          throw new GitHubProblem(
+            `GitHub couldn’t find ${where}. Check the GitHub settings${
+              s.token ? ", and that the token was made for that repository" : ""
+            }.`,
+            "missing",
+          );
+        if (res.status === 409 || res.status === 422)
+          throw new GitHubProblem(detail || "The file changed on GitHub.", "conflict");
+        throw new GitHubProblem(
+          `GitHub couldn’t do that (${res.status}${detail ? `: ${detail}` : ""}). Try again in a minute.`,
+          "other",
+        );
+      }
+
+      // The file as it is on GitHub now: { sha, json }.
+      async function fetchLive() {
+        const got = await github("GET");
+        let json;
+        try {
+          json = JSON.parse(PublishRules.fromBase64(got.content || ""));
+        } catch {
+          json = null;
+        }
+        return { sha: got.sha, json };
+      }
+
+      const failed = (err) =>
+        say(err instanceof GitHubProblem ? err.message : `Something went wrong: ${err.message}`, {
+          bad: true,
+        });
+      const busy = (on) =>
+        document.querySelectorAll("#publish button, .load-live").forEach((b) => (b.disabled = on));
+
+      // ---- Load what's live --------------------------------------------------
+      async function loadLive() {
+        const s = settings();
+        const editing = items.length > 0 || configJson() !== null;
+        if (editing && !confirm("Replace what’s in the editor with what’s live?")) return;
+        hideReview();
+        busy(true);
+        say("Loading what’s live…");
+        try {
+          const live = await fetchLive();
+          if (!live.json) throw new GitHubProblem(`${s.path} on GitHub isn’t readable JSON.`);
+          loadFile(live.json);
+          const n = items.length;
+          say(
+            `Loaded what’s live: ${n === 1 ? "1 message" : `${n} messages`}, from ${s.path} on ${s.branch}.`,
+          );
+        } catch (err) {
+          failed(err);
+        } finally {
+          busy(false);
+        }
+      }
+      document.querySelectorAll(".load-live").forEach((b) => b.addEventListener("click", loadLive));
+
+      // ---- Publish: check, review, then save -------------------------------
+      let pending = null; // { sha, before, after, message } while the review is open
+
+      const kindName = (u) => (u.kind === "live" ? "Live video" : "Banner");
+      const about = (u) => {
+        const words = String(u.kind === "live" ? u.title || "" : u.text || "");
+        return `${kindName(u)} “${words.length > 60 ? `${words.slice(0, 59)}…` : words}” (${u.id})`;
+      };
+      function describe(ch) {
+        return [
+          ...ch.added.map((u) => `Adds: ${about(u)}`),
+          ...ch.changed.map((u) => `Changes: ${about(u)}`),
+          ...ch.removed.map((u) => `Removes: ${about(u)}`),
+          ...(ch.reordered
+            ? ["Changes the order (the first running banner is the one shown)"]
+            : []),
+          ...ch.switches.map((s) => `App switches: ${s}`),
+        ];
+      }
+
+      // What the editor would publish, or the reasons it can't.
+      function checked() {
+        const json = file();
+        const blocking = [];
+        const warnings = [];
+        items.forEach((it, i) => {
+          for (const p of problems(it))
+            (/won’t be sent/.test(p) ? warnings : blocking).push(`Message ${i + 1}: ${p}`);
+        });
+        if (!blocking.length) blocking.push(...PublishRules.fileProblems(json));
+        return { json, blocking, warnings };
+      }
+
+      function showReview(live, after, warnings, note) {
+        const ch = PublishRules.changes(live.json, after);
+        if (ch.none) {
+          hideReview();
+          say("Nothing to publish: the editor already matches what’s live.");
+          return;
+        }
+        const message = PublishRules.commitMessage(ch);
+        pending = { sha: live.sha, before: live.json, after, message };
+        const body = $("#review-body");
+        body.replaceChildren();
+        if (note) {
+          const p = document.createElement("p");
+          p.className = "error";
+          p.textContent = note;
+          body.append(p);
+        }
+        const intro = document.createElement("p");
+        intro.textContent = "Compared with what’s live now, publishing:";
+        body.append(intro, bullets(describe(ch)));
+        if (warnings.length) body.append(bullets(warnings));
+        const commit = document.createElement("p");
+        commit.className = "note";
+        commit.append("Saved on GitHub as “");
+        const code = document.createElement("code");
+        code.textContent = message.split("\n")[0];
+        commit.append(code, "”.");
+        body.append(commit);
+        $("#review").hidden = false;
+        $("#review-title").focus();
+      }
+      function hideReview() {
+        pending = null;
+        $("#review").hidden = true;
+      }
+
+      $("#publish-start").addEventListener("click", async () => {
+        hideReview();
+        const s = settings();
+        if (!s.token) {
+          $("#gh-settings").open = true;
+          $("#gh-token").focus();
+          say("Publishing needs a token. Paste one in (how to make one is just above).", {
+            bad: true,
+          });
+          return;
+        }
+        const { json, blocking, warnings } = checked();
+        if (blocking.length) {
+          say("Not published yet. Fix these first:", { bad: true, extra: [bullets(blocking)] });
+          return;
+        }
+        busy(true);
+        say("Checking what’s live…");
+        try {
+          const live = await fetchLive();
+          say("");
+          showReview(live, json, warnings);
+        } catch (err) {
+          failed(err);
+        } finally {
+          busy(false);
+        }
+      });
+
+      $("#publish-cancel").addEventListener("click", () => {
+        hideReview();
+        say("Not published.");
+        $("#publish-start").focus();
+      });
+
+      const put = (sha, after, message) =>
+        github("PUT", {
+          message,
+          content: PublishRules.toBase64(PublishRules.prettyJson(after)),
+          ...(sha ? { sha } : {}),
+          branch: settings().branch,
+        });
+
+      $("#publish-now").addEventListener("click", async () => {
+        if (!pending) return;
+        const { sha, before, after, message } = pending;
+        busy(true);
+        say("Publishing…");
+        let note = "";
+        try {
+          let saved;
+          try {
+            saved = await put(sha, after, message);
+          } catch (err) {
+            if (err.kind !== "conflict") throw err;
+            // The file changed on GitHub since the review: look again. The
+            // same contents under a new version: save over it, once. Anything
+            // else is someone's change, which publishing would undo, so it
+            // goes back for review rather than out.
+            const fresh = await fetchLive();
+            if (!PublishRules.same(fresh.json, before)) {
+              hideReview();
+              say("");
+              showReview(
+                fresh,
+                after,
+                checked().warnings,
+                "Someone published a change while you were checking. This is what publishing would change now, compared with their version. Check it, then publish again.",
+              );
+              return;
+            }
+            try {
+              saved = await put(fresh.sha, after, message);
+            } catch (again) {
+              if (again.kind !== "conflict") throw again;
+              throw new GitHubProblem(
+                `GitHub still refused the save (${again.message}). Reload what’s live and try again.`,
+                "conflict",
+              );
+            }
+            note =
+              " (GitHub had a newer copy of the file with the same contents, so it was saved over that.)";
+          }
+          hideReview();
+          const s = settings();
+          say(
+            `Published. It goes live in about 3 minutes, when the site finishes updating, and phones pick it up within a few minutes after that.${note}`,
+            {
+              extra: [
+                link(actionsUrl(s.repo), "Watch the update on GitHub Actions"),
+                ...(saved?.commit?.html_url ? [link(saved.commit.html_url, "See the change")] : []),
+              ],
+            },
+          );
+        } catch (err) {
+          failed(err);
+        } finally {
+          busy(false);
+          // The button pressed is gone with the review: keep the keyboard here.
+          if ($("#review").hidden) $("#publish-start").focus();
+        }
+      });
     </script>
   </body>
 </html>

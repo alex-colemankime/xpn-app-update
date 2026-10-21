@@ -95,11 +95,11 @@
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
 }
 .welcome-show.followed > img {
-  outline-color: var(--accent);
+  outline-color: var(--select-ink);
 }
 .welcome-show.followed .welcome-check {
-  background: var(--action);
-  color: var(--action-ink);
+  background: var(--select-ink);
+  color: var(--bg);
 }
 /* Welcome step 2: a preview of the reminder itself, styled like a phone
    notification, with a notification's large corners. */

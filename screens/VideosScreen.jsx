@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Empty, Icon, SearchField } from "../ui.jsx";
+import { Empty, MoreButton, NoMatches, SearchField } from "../ui.jsx";
 import { loadMoreFeed, loadVideos, matchVideos, oneFeed, useVideos } from "../videos.js";
 import { VideoCard } from "../components/VideoCard.jsx";
 import { PullToRefresh } from "../components/PullToRefresh.jsx";
@@ -67,14 +67,9 @@ export function VideosScreen({ onWatch }) {
       );
   } else if (!found.length) {
     content = (
-      <Empty
-        icon="search"
-        title="No matching videos"
-        action="Clear search"
-        onAction={() => setQuery("")}
-      >
+      <NoMatches title="No matching videos" onClear={() => setQuery("")}>
         Try an artist, a song or a session.
-      </Empty>
+      </NoMatches>
     );
   } else {
     content = (
@@ -99,12 +94,9 @@ export function VideosScreen({ onWatch }) {
           </p>
         )}
         {more && (
-          <button className="text-button video-more" onClick={showMore}>
+          <MoreButton className="video-more" onClick={showMore}>
             {section.moreFailed ? "Try again" : "Show more videos"}
-            <span className="expand-chevron">
-              <Icon name="chevD" size={17} />
-            </span>
-          </button>
+          </MoreButton>
         )}
         {searching && section.more && (
           <p className="data-note">Searching the {videos.length} most recent videos.</p>

@@ -32,21 +32,9 @@ import java.util.concurrent.Executors
 class WxpnCarService : MediaBrowserServiceCompat() {
     private lateinit var session: MediaSessionCompat
 
-    private val stations = listOf(
-        Triple("xpn", "WXPN", "88.5 FM · Public Radio"),
-        Triple("xpn2", "XPN2", "XPoNential Radio"),
-        Triple("homegrown", "Homegrown", "Philadelphia's local music"),
-    )
-
     /** Each station's tile (tools/car-art.mjs), for the list and before a song's artwork. */
-    private fun tile(stationId: String): Bitmap? {
-        val id = when (stationId) {
-            "xpn2" -> R.drawable.car_xpn2
-            "homegrown" -> R.drawable.car_homegrown
-            else -> R.drawable.car_xpn
-        }
-        return BitmapFactory.decodeResource(resources, id)
-    }
+    private fun tile(stationId: String): Bitmap? =
+        BitmapFactory.decodeResource(resources, Stations.byId(stationId).tile)
 
     // The song's artwork, fetched off the main thread and kept for the song.
     private val fetcher = Executors.newSingleThreadExecutor()
@@ -140,7 +128,7 @@ class WxpnCarService : MediaBrowserServiceCompat() {
             return
         }
         result.sendResult(
-            stations.map { (id, label, detail) ->
+            Stations.all.map { (id, label, detail) ->
                 MediaItem(
                     MediaDescriptionCompat.Builder()
                         .setMediaId(id)

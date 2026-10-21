@@ -13,30 +13,21 @@
 import SwiftUI
 import WidgetKit
 
-/// The app's names for what it shares (HomeWidgetPlugin.swift, WidgetShared).
-private enum Shared {
-    static let group = "group.org.xpn.wxpn"
-    static let key = "nowPlaying"
-    static let artFile = "widget-art.jpg"
-    static let open = URL(string: "org.xpn.wxpn://widget/open")!
-    static let toggle = URL(string: "org.xpn.wxpn://widget/toggle")!
-    static func play(_ id: String) -> URL { URL(string: "org.xpn.wxpn://widget/play/\(id)")! }
-    /// The streams, as the app's tabs name them (streams.js).
-    static let stations = [("xpn", "WXPN"), ("xpn2", "XPN2"), ("homegrown", "Homegrown")]
-}
+// The stations and the names shared with the app: Shared.swift, compiled
+// into this extension too.
 
 struct NowPlaying {
     var stationId = "xpn"
     var station = "WXPN"
     var title = "WXPN"
-    var artist = "88.5 FM · Public Radio"
+    var artist = Stations.tagline
     var show = ""
     var playing = false
     var art: UIImage?
 
     static func load() -> NowPlaying {
         var now = NowPlaying()
-        guard let saved = UserDefaults(suiteName: Shared.group)?.dictionary(forKey: Shared.key) else {
+        guard let saved = UserDefaults(suiteName: WidgetShared.group)?.dictionary(forKey: WidgetShared.key) else {
             return now
         }
         now.stationId = saved["stationId"] as? String ?? ""
@@ -46,8 +37,8 @@ struct NowPlaying {
         now.show = saved["show"] as? String ?? ""
         now.playing = saved["playing"] as? Bool ?? false
         if let url = FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: Shared.group)?
-            .appendingPathComponent(Shared.artFile)
+            .containerURL(forSecurityApplicationGroupIdentifier: WidgetShared.group)?
+            .appendingPathComponent(WidgetShared.artFile)
         {
             now.art = UIImage(contentsOfFile: url.path)
         }
@@ -120,10 +111,10 @@ struct StationSwitcher: View {
     let now: NowPlaying
     var body: some View {
         HStack(spacing: 14) {
-            ForEach(Shared.stations, id: \.0) { station in
-                let (id, label) = station
+            ForEach(Stations.all, id: \.id) { station in
+                let (id, label) = (station.id, station.label)
                 let on = id == now.stationId
-                Link(destination: Shared.play(id)) {
+                Link(destination: WidgetShared.play(id)) {
                     Text(label)
                         .font(.system(size: 13, weight: on ? .bold : .regular))
                         .underline(on)
@@ -141,7 +132,7 @@ struct StationSwitcher: View {
 struct PlayKey: View {
     let now: NowPlaying
     var body: some View {
-        Link(destination: Shared.toggle) {
+        Link(destination: WidgetShared.toggle) {
             Image(systemName: now.playing ? "pause.fill" : "play.fill")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.donateInk)
@@ -174,7 +165,7 @@ struct WidgetView: View {
 
     var body: some View {
         content
-            .widgetURL(Shared.open)
+            .widgetURL(WidgetShared.open)
             .appBackground()
     }
 

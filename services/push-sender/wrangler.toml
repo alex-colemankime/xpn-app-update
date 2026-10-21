@@ -1,0 +1,40 @@
+# WXPN's push sender (see README.md beside this file).
+# Deploy from this folder:  npx wrangler deploy
+name = "wxpn-push"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+# The phones' tokens. Create the namespace with
+#   npx wrangler kv namespace create TOKENS
+# and put the id it prints here.
+[[kv_namespaces]]
+binding = "TOKENS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[vars]
+# The app's bundle id, which APNs needs as the topic.
+APNS_BUNDLE_ID = "org.xpn.wxpn"
+# Apple's production push service: App Store and TestFlight builds.
+APNS_HOST = "api.push.apple.com"
+# "true" sends to Apple's sandbox instead, for builds run from Xcode.
+# Tokens from one don't work on the other.
+APNS_SANDBOX = "false"
+# "apns" sends iOS straight to Apple. "fcm" sends iOS through Firebase, for
+# when the app has the Firebase iOS SDK and its iOS tokens are FCM tokens.
+IOS_VIA = "apns"
+# Phones per /send request. 40 fits the free plan's 50 outside requests per
+# request; on the paid plan, up to 900.
+PAGE_SIZE = "40"
+# Notifications under way at once.
+CONCURRENCY = "6"
+# Origins allowed to /register, comma separated. Unset: the phone apps and
+# the preview (capacitor://localhost, https://localhost,
+# https://alex-colemankime.github.io).
+# ALLOWED_ORIGINS = "capacitor://localhost,https://localhost"
+
+# Secrets (never in this file), set with  npx wrangler secret put NAME
+#   SEND_KEY             the password staff send with (a long random one)
+#   FCM_SERVICE_ACCOUNT  the Firebase service account's JSON, whole
+#   APNS_KEY_P8          the APNs key's .p8 file contents
+#   APNS_KEY_ID          its 10-character key id
+#   APNS_TEAM_ID         WXPN's Apple Team ID

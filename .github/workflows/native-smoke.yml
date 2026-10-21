@@ -1,0 +1,191 @@
+name: Native smoke test
+
+# Opens the real apps, Android on an emulator and iPhone in Xcode's
+# simulator, and uses them a little, so a crash on start, on play or in the
+# background shows here before anyone tries the build on a phone. Each job
+# builds its app the same way native.yml does, then runs a script from
+# tools/smoke/ that says what it checks:
+#   - Android (tools/smoke/android.sh): the page draws, play starts the
+#     station (Android's media session says playing), it keeps playing at
+#     the home screen and comes back, the widget's play key, turning the
+#     phone, the Android Auto service starts and the widget is registered,
+#     and no crash in the log.
+#   - iOS (tools/smoke/ios.sh): the widget and the CarPlay scene are in the
+#     build, the app opens and is still running after 30 seconds, after the
+#     background and after a second start, and no crash report.
+# The stream is on the internet, so if it can't be reached, playback is a
+# warning, not a failure. Screenshots and logs are in the run's artifacts,
+# and each summary on the smoke-out branch, to read without signing in.
+#
+# It runs on branches (main has native.yml's builds), and by hand from the
+# Actions tab. Changes to tools/ alone don't start it, as with native.yml,
+# so after changing the scripts run it by hand.
+on:
+  push:
+    branches-ignore: [main]
+    # As the native builds, but its own scripts (tools/smoke) start it too.
+    paths:
+      - "**"
+      - "!design/**"
+      - "!store/**"
+      - "!control/**"
+      - "!docs/**"
+      - "!tests/**"
+      - "!tools/**"
+      - "!**.md"
+      - "tools/smoke/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write # the smoke-out branch
+
+concurrency:
+  group: native-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the web app into the project
+        run: npm run build && npx cap sync android
+
+      - name: Build the test app
+        working-directory: android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: |
+          set -o pipefail
+          mkdir -p ../smoke-out/android
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee ../smoke-out/android/build.log
+
+      # The emulator needs the runner's hardware acceleration (KVM), which
+      # is off for ordinary users until this rule turns it on (from the
+      # emulator runner's instructions).
+      - name: Enable the emulator's acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # Android 14 on a Pixel 6 sized screen, with Google's system image (its
+      # WebView is closer to a phone's than the bare one). The script is one
+      # line because the runner runs each line of it separately.
+      - name: Run the app on an emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: bash tools/smoke/android.sh android/app/build/outputs/apk/debug/app-debug.apk smoke-out/android
+
+      - name: Keep the screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-android
+          path: smoke-out/android/
+          if-no-files-found: ignore
+
+  ios:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the web app into the project
+        run: npm run build && npx cap sync ios
+
+      - name: Build for the simulator
+        run: |
+          set -o pipefail
+          mkdir -p smoke-out/ios
+          xcodebuild -version | tee smoke-out/ios/build.log
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build 2>&1 | tee -a smoke-out/ios/build.log
+
+      # The simulator won't open an unsigned app: sign the widget, then the
+      # app, ad hoc (no account needed). Without their entitlements: push,
+      # associated domains and the app group need a real profile, and an ad
+      # hoc signature claiming them is refused too.
+      - name: Sign the build ad hoc
+        run: |
+          APP=build/Build/Products/Debug-iphonesimulator/App.app
+          codesign --force --sign - --timestamp=none "$APP"/PlugIns/WXPNWidget.appex
+          codesign --force --sign - --timestamp=none "$APP"
+          codesign --verify --deep --verbose=1 "$APP"
+
+      - name: Run the app in the simulator
+        run: bash tools/smoke/ios.sh build/Build/Products/Debug-iphonesimulator/App.app smoke-out/ios
+
+      - name: Keep the screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-ios
+          path: smoke-out/ios/
+          if-no-files-found: ignore
+
+  # Both summaries (and the logs' crash lines) on the smoke-out branch.
+  summary:
+    if: always()
+    needs: [android, ios]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gather the results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: smoke-*
+          path: smoke-out
+
+      - name: Publish them on the smoke-out branch
+        run: |
+          mkdir -p smoke-out
+          cd smoke-out
+          # Screenshots, summaries and crash excerpts only; the full logs
+          # stay in the run's artifacts.
+          find . -type f ! \( -name '*.png' -o -name 'summary.txt' -o -name 'crash-excerpt.txt' \) -delete
+          printf "android: %s\nios: %s\ncommit: %s\nbranch: %s\nrun: %s\n" \
+            "${{ needs.android.result }}" "${{ needs.ios.result }}" "$GITHUB_SHA" "$GITHUB_REF_NAME" \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" > result.txt
+          git init -q -b smoke-out
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Native smoke test from ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" smoke-out

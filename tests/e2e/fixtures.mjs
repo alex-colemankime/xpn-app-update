@@ -2,7 +2,7 @@
 // streams (a few seconds of silence), and every other service answered as
 // empty or unavailable, so tests are fast, repeatable and offline.
 import { readFileSync } from "node:fs";
-import { test as base } from "@playwright/test";
+import { test as base, expect } from "@playwright/test";
 
 const SILENCE = readFileSync(new URL("./fixtures/silence.mp3", import.meta.url));
 
@@ -31,13 +31,93 @@ export function eastern(ms) {
   return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`;
 }
 
-const json = (route, body) =>
+export const json = (route, body) =>
   route.fulfill({
     status: 200,
     contentType: "application/json",
     headers: { "access-control-allow-origin": "*" },
     body: JSON.stringify(body),
   });
+
+// Listings to show, not just empty states: concerts (one a WXPN Welcomes
+// show), videos, and an archived show's broadcasts.
+const day = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+export const EVENTS = ["Waxahatchee", "Friko / Hand Habits", "Big Thief"].map((title, i) => {
+  const [year, month, d] = day(i).split("-");
+  return {
+    id: 100 + i,
+    title,
+    start_date_details: { year, month, day: d },
+    venue: { venue: "Union Transfer", city: "Philadelphia" },
+    categories: [
+      { id: 5, name: "Philadelphia Area" },
+      ...(i === 1 ? [{ id: 21, name: "WXPN Welcomes" }] : []),
+    ],
+    website: "https://example.com/tickets",
+    url: `https://xpn.org/event/${i}`,
+  };
+});
+export const VIDEOS = Array.from({ length: 6 }, (_, i) => ({
+  id: String(6400000000000 + i),
+  name: `Artist ${i} - World Cafe | Studio Session`,
+  duration: 600000,
+  published_at: new Date(Date.now() - i * 86400000).toISOString(),
+  tags: ["worldcafe"],
+}));
+
+// Answers the concert calendar, videos and Sleepy Hollow's archive with the
+// listings above (in place of the empty answers every test gets).
+export async function routeListings(page) {
+  await page.route(/wp-json\/tribe\/events/, (route) =>
+    json(route, { events: EVENTS, total: EVENTS.length, total_pages: 1 }),
+  );
+  await page.route(/wp-json\/acf\//, (route) => json(route, { _xpn_age_restriction: "21+" }));
+  await page.route(/players\.brightcove\.net\/.*config\.json/, (route) =>
+    json(route, { video_cloud: { policy_key: "k" } }),
+  );
+  await page.route(/edge\.api\.brightcove\.com/, (route) =>
+    json(route, {
+      videos: Number(new URL(route.request().url()).searchParams.get("offset")) ? [] : VIDEOS,
+    }),
+  );
+  await page.route(/xpn\.org\/program\/sleepy-hollow\//, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "text/html",
+      headers: { "access-control-allow-origin": "*" },
+      body: [4, 3]
+        .map(
+          (d) =>
+            `<div data-track-url="https://media.xpn.org/archive/2026100${d}060000_sh.mp3" data-track-title="Sleepy Hollow - 10.0${d}.2026" data-track-guid="sh-${d}"></div>`,
+        )
+        .join(""),
+    }),
+  );
+}
+
+// Lets the page render what it has been given (two animation frames, so
+// React's effects have run), then waits until nothing in `locator` (by
+// default the whole page) is mid-animation or mid-transition. Endless
+// animations, such as a loading spinner, and finished ones held at their end
+// don't count.
+export async function settle(page, locator = page.locator("html")) {
+  await page.evaluate(
+    () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
+  );
+  await expect
+    .poll(() =>
+      locator.evaluate(
+        (el) =>
+          el
+            .getAnimations({ subtree: true })
+            .filter(
+              (a) =>
+                a.playState === "running" && a.effect?.getComputedTiming().endTime !== Infinity,
+            ).length,
+      ),
+    )
+    .toBe(0);
+}
 
 export const test = base.extend({
   page: async ({ page, context }, use) => {
@@ -77,4 +157,4 @@ export const test = base.extend({
     await use(page);
   },
 });
-export { expect } from "@playwright/test";
+export { expect };

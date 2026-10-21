@@ -42,9 +42,20 @@ jobs:
       - name: Test
         run: npm test
 
+      # Playwright's browser, kept between runs for the version installed
+      # (the install below then only adds the system libraries).
+      - name: Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright's browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
       # The main journeys in a real browser, against fixtures (tests/e2e).
+      # They build the app to run it, so that build is the check that it
+      # builds.
       - name: End-to-end tests
         run: npx playwright install --with-deps chromium && npm run e2e
-
-      - name: Build
-        run: npm run build

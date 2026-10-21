@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: write
+  actions: write # to start the deploy and native builds after a commit
 
 jobs:
   fetch:
@@ -43,12 +44,25 @@ jobs:
         continue-on-error: true
 
       - name: Commit show artwork and hosts
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/shows shows.json public/hosts hosts.json
-          git diff --cached --quiet || git commit -m "Bundle show artwork and hosts from xpn.org"
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Bundle show artwork and hosts from xpn.org"
           git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      # A push made with this workflow's token starts no other workflow, so
+      # the preview and the native builds are started here by hand.
+      - name: Rebuild the preview and the apps
+        if: steps.commit.outputs.changed == 'true'
+        run: |
+          gh workflow run deploy-pages.yml --ref "$GITHUB_REF_NAME"
+          gh workflow run native.yml --ref "$GITHUB_REF_NAME"
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Fetch video thumbnails for the screens page
         run: node tools/fetch-video-fixtures.mjs

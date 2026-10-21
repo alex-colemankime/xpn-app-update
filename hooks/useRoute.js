@@ -209,8 +209,6 @@ export const openShow = (showId) => actions.openShow(showId);
 // Whether the address has this concert's sheet open. Each concert row asks
 // only about itself, so a change of address re-renders the rows it opens
 // or closes, not every row in a long list.
-export const useConcertOpen = (concertId) =>
-  useSyncExternalStore(subscribe, () => parseRoute(getHash()).concertId === concertId);
 export const openConcert = (concertId) => actions.openConcert(concertId);
 export const closeConcert = () => actions.closeShow();
 

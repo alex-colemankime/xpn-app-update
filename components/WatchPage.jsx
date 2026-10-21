@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { Art, Icon } from "../ui.jsx";
+import { Art, Icon, MoreButton } from "../ui.jsx";
 import { SaveButton } from "./MusicRows.jsx";
 import { Toast, modalClosed, modalOpened } from "./Toast.jsx";
 import { SHOWS } from "../catalog.js";
@@ -135,12 +135,9 @@ function UpNext({ heading, videos, onPick }) {
         <NextCard key={v.id} video={v} onPick={onPick} />
       ))}
       {videos.length > UP_NEXT_FIRST && !all && (
-        <button className="text-button next-more" onClick={seeMore}>
+        <MoreButton className="next-more" onClick={seeMore}>
           Show more videos
-          <span className="expand-chevron">
-            <Icon name="chevD" size={17} />
-          </span>
-        </button>
+        </MoreButton>
       )}
     </section>
   );

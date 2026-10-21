@@ -10,19 +10,7 @@ import Foundation
 import UIKit
 import WidgetKit
 
-/// Shared with the widget extension (WXPNWidget.swift), which keeps its own
-/// copy of these names.
-enum WidgetShared {
-    static let group = "group.org.xpn.wxpn"
-    static let key = "nowPlaying"
-    static let artFile = "widget-art.jpg"
-
-    static var defaults: UserDefaults? { UserDefaults(suiteName: group) }
-    static var artURL: URL? {
-        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group)?
-            .appendingPathComponent(artFile)
-    }
-}
+// The names it shares with the widget are in Shared.swift (WidgetShared).
 
 @objc(HomeWidgetPlugin)
 public class HomeWidgetPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -72,6 +60,10 @@ public class HomeWidgetPlugin: CAPPlugin, CAPBridgedPlugin {
                 .image { _ in image.draw(in: CGRect(x: 0, y: 0, width: side, height: side)) }
             guard let jpeg = scaled.jpegData(compressionQuality: 0.85) else { return }
             try? jpeg.write(to: artURL, options: .atomic)
+            // A later song may have arrived while it was written: then it's
+            // not this song's picture to show.
+            let after = WidgetShared.defaults?.dictionary(forKey: WidgetShared.key)?["artwork"] as? String
+            if after != artwork { try? FileManager.default.removeItem(at: artURL) }
             WidgetCenter.shared.reloadAllTimelines()
         }.resume()
     }

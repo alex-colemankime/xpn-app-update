@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Icon, Art, Modal, shareText } from "../ui.jsx";
-import { showToast } from "../toast.js";
+import { Icon, Art, Modal, share } from "../ui.jsx";
 import { onAirAt, nextAiringOf, untilLabel } from "../catalog.js";
 import { deviceIsEastern } from "../time.js";
 import { useFavoriteItems } from "../favorites.js";
@@ -172,9 +171,7 @@ export function ShowDetail({
                   <button
                     className="icon-button show-share"
                     aria-label={`Share ${show.name}`}
-                    onClick={async () =>
-                      showToast(await shareText(show.name, `${show.name} on WXPN`, show.page))
-                    }
+                    onClick={() => share(show.name, `${show.name} on WXPN`, show.page)}
                   >
                     <Icon name="shareAlt" size={19} />
                   </button>

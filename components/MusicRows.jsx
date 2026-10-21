@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Icon, Art, shareText } from "../ui.jsx";
+import { Icon, Art, share } from "../ui.jsx";
 import { showToast } from "../toast.js";
 import { PlaylistStatus } from "./PlaylistSync.jsx";
 import { tap } from "../haptics.js";
@@ -223,7 +223,7 @@ export const shareFrom =
   (close, ...what) =>
   async () => {
     close();
-    showToast(await shareText(...what));
+    await share(...what);
   };
 
 // The song on the services listeners play it on: their search for it,
@@ -238,16 +238,12 @@ const ELSEWHERE = [
 // Cafe session hour) isn't a song on those services: it offers the show.
 function SongSheetItems({ track, stationLabel = "WXPN", close }) {
   const show = track.show && SHOWS[track.show];
-  const share = async () => {
-    close();
-    showToast(
-      await shareText(
-        track.title,
-        `${track.title} — ${track.artist}, heard on ${stationLabel}`,
-        PLAYLIST_URL,
-      ),
-    );
-  };
+  const shareSong = shareFrom(
+    close,
+    track.title,
+    `${track.title} — ${track.artist}, heard on ${stationLabel}`,
+    PLAYLIST_URL,
+  );
   const query = `${track.title} ${track.artist || ""}`.trim();
   return (
     <>
@@ -279,7 +275,7 @@ function SongSheetItems({ track, stationLabel = "WXPN", close }) {
           </a>
         ))
       )}
-      <button onClick={share}>
+      <button onClick={shareSong}>
         Share song
         <Icon name="shareAlt" size={16} />
       </button>

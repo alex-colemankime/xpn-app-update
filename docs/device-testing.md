@@ -15,8 +15,11 @@ Get the builds from:
   Native apps). Until then, Xcode on a Mac: open `ios/App/App.xcodeproj`,
   choose the team under Signing & Capabilities, and run on a connected phone.
 
-Note the phone, OS version and build for each pass. Anything that fails:
-what you did, what happened, and a screen recording if you can.
+Record each pass in [device-test-results.xlsx](device-test-results.xlsx): a
+column per device with its OS version and build, Pass / Fail / Blocked / N/A
+for each check, and a summary sheet that counts them (rebuilt from this list
+by `python3 tools/device-results.py`). Anything that fails: what you did,
+what happened, and a screen recording if you can.
 
 ## Listening
 
@@ -37,7 +40,7 @@ what you did, what happened, and a screen recording if you can.
 
 ## Archive
 
-- [ ] Tap an episode in Shows › Archive: it plays, its row turns orange;
+- [ ] Tap an episode in Shows › Archive: it plays, its row is tinted;
       tap it again: it pauses. Skip back 15 and ahead 30; the lock screen
       shows the episode with skip and the scrubber.
 - [ ] Pause, close the app fully, reopen: the episode resumes where it was.
@@ -175,6 +178,8 @@ Once Firebase is set up (README › Usage and crash reporting):
 - [ ] VoiceOver / TalkBack: play, a song's heart and menu, a show's page,
       and Settings can be reached and say what they do.
 - [ ] iPad, and the phone turned sideways.
+- [ ] Android 14 or older: the header (the logo, Donate) sits below the
+      status bar, never under the clock, in light and dark.
 - [ ] Android back button: closes an open menu (a song's, the sleep timer)
       or sheet first, then steps back through screens, and at the start puts
       the app in the background with the station still playing.

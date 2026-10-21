@@ -1,0 +1,9 @@
+# Screenshot copies: tools/store-metadata.mjs makes them from store/ (the
+# committed originals) every time a lane runs.
+/screenshots/
+/metadata/android/*/images/
+# fastlane's own run output.
+/report.xml
+/Preview.html
+/test_output/
+/README.md.tmp

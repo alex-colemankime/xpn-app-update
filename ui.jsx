@@ -5,6 +5,7 @@ import { Toast, modalClosed, modalOpened } from "./components/Toast.jsx";
 import { track } from "./analytics.js";
 import { useSheetDrag } from "./hooks/useSheetDrag.js";
 import { createStore } from "./storage.js";
+import { showToast } from "./toast.js";
 
 export { Icon };
 
@@ -75,6 +76,23 @@ export function Art({ src, alt = "", className = "", ...props }) {
       }}
       {...props}
     />
+  );
+}
+
+// A text button that shows more of a list, with a chevron that turns up
+// once it has (`expanded`).
+export function MoreButton({ children, onClick, expanded, className = "" }) {
+  return (
+    <button
+      className={`text-button ${className}`.trim()}
+      aria-expanded={expanded}
+      onClick={onClick}
+    >
+      {children}
+      <span className={`expand-chevron ${expanded ? "up" : ""}`.trim()}>
+        <Icon name="chevD" size={17} />
+      </span>
+    </button>
   );
 }
 
@@ -186,6 +204,13 @@ export function Empty({ icon, title, children, action, onAction, link = false })
     </div>
   );
 }
+
+// A search that found nothing: what wasn't found, a hint, and Clear search.
+export const NoMatches = ({ title, onClear, children }) => (
+  <Empty icon="search" title={title} action="Clear search" onAction={onClear}>
+    {children}
+  </Empty>
+);
 // Row-shaped placeholders while a list loads, so it appears in place rather
 // than replacing a line of text. `rowClass` and `artClass` give the rows the
 // shape of the list they stand in for.
@@ -285,7 +310,7 @@ export function ManualShare() {
   );
 }
 
-export async function shareText(title, text, url) {
+async function shareText(title, text, url) {
   const whole = url ? `${text}\n${url}` : text;
   try {
     if (navigator.share) {
@@ -313,6 +338,30 @@ export async function shareText(title, text, url) {
     setManual({ title, text: whole });
     return "";
   }
+}
+
+// Shares, and says how it went (nothing when the listener closed the share
+// sheet, or the words opened to copy by hand).
+export async function share(title, text, url) {
+  showToast(await shareText(title, text, url));
+}
+
+// A volume setting: its name and level in words, then the slider.
+export function VolumeSetting({ label, value, onChange }) {
+  return (
+    <label className="setting-row">
+      <span>
+        {label} <small className="setting-value">{value}%</small>
+      </span>
+      <input
+        type="range"
+        min="0"
+        max="100"
+        value={value}
+        onChange={(e) => onChange(+e.target.value)}
+      />
+    </label>
+  );
 }
 
 // A setting with a few choices: its name, then the choices side by side, so
