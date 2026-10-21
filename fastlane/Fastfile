@@ -1,0 +1,229 @@
+# Store submissions for the WXPN app: listing text, screenshots, builds and
+# review. See fastlane/README.md for the env vars, the lanes and the order
+# to run them in.
+#
+# The listing comes from store/listing.md: every lane that sends a listing
+# first runs tools/store-metadata.mjs, which writes fastlane/metadata and
+# copies the screenshots from store/ (failing if anything is over a store
+# limit). Builds come from the Release workflow (.github/workflows/release.yml)
+# or a local build; nothing here signs anything.
+
+require "json"
+
+# fastlane rewrites fastlane/README.md after each run unless told not to.
+skip_docs
+
+ROOT = File.expand_path("..", File.dirname(File.expand_path(__FILE__)))
+APP_ID = "org.xpn.wxpn"
+VERSION = JSON.parse(File.read(File.join(ROOT, "package.json")))["version"]
+METADATA = File.join(ROOT, "fastlane/metadata")
+SCREENSHOTS = File.join(ROOT, "fastlane/screenshots")
+PRIVACY = File.join(ROOT, "fastlane/app_privacy_details.json")
+# Where the Release workflow's Gradle step leaves the bundle (and the
+# "android-release" artifact holds it).
+AAB = "android/app/build/outputs/bundle/release/app-release.aab"
+# Where `xcodebuild -exportArchive` writes the app with ExportOptions.plist's
+# destination set to "export" (the workflow's is "upload": straight to
+# TestFlight, no file).
+IPA = "build/export/App.ipa"
+
+def store_metadata
+  sh("node", File.join(ROOT, "tools/store-metadata.mjs"))
+end
+
+def env(name)
+  value = ENV[name].to_s.strip
+  value.empty? ? nil : value
+end
+
+# Lane options from the command line arrive as strings.
+def flag(options, key)
+  options[key].to_s == "true"
+end
+
+def path_option(options, key, env_name, default)
+  File.expand_path(options[key] || env(env_name) || default, ROOT)
+end
+
+platform :ios do
+  # The App Store Connect API key, under the Release workflow's secret names.
+  def asc_api_key
+    key_id = env("ASC_KEY_ID")
+    issuer = env("ASC_ISSUER_ID")
+    p8 = env("ASC_KEY_P8")
+    p8_path = env("ASC_KEY_PATH")
+    unless key_id && issuer && (p8 || p8_path)
+      UI.user_error!("Set ASC_KEY_ID, ASC_ISSUER_ID and ASC_KEY_P8 (the .p8 file's text) " \
+                     "or ASC_KEY_PATH (its path): an App Store Connect API key with the " \
+                     "App Manager role (Users and Access › Integrations).")
+    end
+    key = { key_id: key_id, issuer_id: issuer, duration: 1200 }
+    p8_path ? key[:key_filepath] = p8_path : key[:key_content] = p8
+    app_store_connect_api_key(key)
+  end
+
+  # App Review's contact (required to submit), from the environment rather
+  # than the repository. The notes come from store/listing.md.
+  def review_contact
+    contact = {
+      first_name: env("ASC_REVIEW_FIRST_NAME"),
+      last_name: env("ASC_REVIEW_LAST_NAME"),
+      phone_number: env("ASC_REVIEW_PHONE"),
+      email_address: env("ASC_REVIEW_EMAIL")
+    }.compact
+    contact.merge(demo_required: false)
+  end
+
+  def deliver_options
+    {
+      api_key: asc_api_key,
+      app_identifier: APP_ID,
+      app_version: VERSION,
+      platform: "ios",
+      metadata_path: METADATA,
+      screenshots_path: SCREENSHOTS,
+      app_review_information: review_contact,
+      skip_binary_upload: true,
+      overwrite_screenshots: true,
+      force: true, # no HTML preview to confirm
+      # An API key can't read in-app purchases; the app has none.
+      precheck_include_in_app_purchases: false
+    }
+  end
+
+  desc "Listing text, categories, review notes and screenshots to App Store Connect (no build, no submission)"
+  lane :metadata do
+    store_metadata
+    deliver(deliver_options.merge(submit_for_review: false))
+  end
+
+  desc "Upload an existing .ipa to TestFlight. Options: ipa:<path> (or IPA=), changelog:<What to Test>"
+  lane :beta do |options|
+    ipa = path_option(options, :ipa, "IPA", IPA)
+    UI.user_error!("No .ipa at #{ipa}. Export one (ExportOptions.plist destination \"export\"), or run the Release workflow, which uploads to TestFlight itself.") unless File.exist?(ipa)
+    upload_to_testflight(
+      api_key: asc_api_key,
+      app_identifier: APP_ID,
+      ipa: ipa,
+      changelog: options[:changelog],
+      # "What to Test" can only be set once the build has processed.
+      skip_waiting_for_build_processing: options[:changelog].nil?,
+      distribute_external: false
+    )
+  end
+
+  desc "Send the listing and submit the version for review. Options: build:<number> (default: the latest build of package.json's version), automatic_release:true, phased_release:true"
+  lane :release do |options|
+    store_metadata
+    deliver(deliver_options.merge(
+      submit_for_review: true,
+      build_number: options[:build]&.to_s,
+      # Withdraw a submission still waiting for review, so this one replaces it.
+      reject_if_possible: true,
+      # Off by default: release by hand in App Store Connect once approved.
+      automatic_release: flag(options, :automatic_release),
+      phased_release: flag(options, :phased_release),
+      submission_information: {
+        # Info.plist has ITSAppUsesNonExemptEncryption false (HTTPS only);
+        # this answers for any build processed without it.
+        export_compliance_uses_encryption: false,
+        # No advertising identifier (Apple no longer asks; harmless if ignored).
+        add_id_info_uses_idfa: false,
+        # The app streams the station's broadcasts (music WXPN is licensed
+        # to air) and shows show art and videos from WXPN and NPR.
+        content_rights_contains_third_party_content: true
+      }
+    ))
+  end
+
+  desc "App Privacy answers (fastlane/app_privacy_details.json, from store/listing.md) to App Store Connect. Needs an Apple ID (FASTLANE_USER): Apple's API keys can't set them"
+  lane :privacy do |options|
+    store_metadata
+    user = env("FASTLANE_USER")
+    UI.user_error!("Set FASTLANE_USER to an Apple ID with the Admin or App Manager role (App Privacy can't be set with an API key).") unless user
+    upload_app_privacy_details_to_app_store(
+      username: user,
+      app_identifier: APP_ID,
+      json_path: PRIVACY,
+      # Publish unless asked to leave them for a look in App Store Connect first.
+      skip_publish: flag(options, :skip_publish)
+    )
+  end
+end
+
+platform :android do
+  # The Play service account, under the Release workflow's secret name.
+  def play_options
+    key = if env("PLAY_SERVICE_ACCOUNT_JSON_PATH")
+            { json_key: env("PLAY_SERVICE_ACCOUNT_JSON_PATH") }
+          elsif env("PLAY_SERVICE_ACCOUNT_JSON")
+            { json_key_data: env("PLAY_SERVICE_ACCOUNT_JSON") }
+          else
+            UI.user_error!("Set PLAY_SERVICE_ACCOUNT_JSON (the key's JSON) or PLAY_SERVICE_ACCOUNT_JSON_PATH: " \
+                           "a Google Cloud service account invited in Play Console › Users and permissions.")
+          end
+    key.merge(package_name: APP_ID, metadata_path: File.join(METADATA, "android"))
+  end
+
+  NO_LISTING = {
+    skip_upload_metadata: true,
+    skip_upload_images: true,
+    skip_upload_screenshots: true
+  }.freeze
+
+  desc "Listing text, feature graphic and screenshots to Google Play (no bundle). Needs a build on the internal track"
+  lane :metadata do
+    store_metadata
+    upload_to_play_store(play_options.merge(
+      # supply attaches a listing edit to a track's release; internal is the
+      # one that has a release from the first upload on.
+      track: "internal",
+      skip_upload_aab: true,
+      skip_upload_apk: true,
+      skip_upload_changelogs: true,
+      sync_image_upload: true
+    ))
+  end
+
+  desc "Upload a signed .aab to the internal testing track. Options: aab:<path> (or AAB=), draft:true (needed until the app's first release is out of draft)"
+  lane :internal do |options|
+    aab = path_option(options, :aab, "AAB", AAB)
+    UI.user_error!("No bundle at #{aab}. Download the Release workflow's \"android-release\" artifact, or build it.") unless File.exist?(aab)
+    store_metadata # for the release notes (changelogs/default.txt)
+    upload_to_play_store(play_options.merge(NO_LISTING).merge(
+      track: "internal",
+      aab: aab,
+      skip_upload_apk: true,
+      release_status: flag(options, :draft) ? "draft" : "completed"
+    ))
+  end
+
+  desc "Promote the internal release to production. Options: rollout:<fraction> (default 0.2; 1 for everyone), version_code:<n>, draft:true"
+  lane :promote do |options|
+    rollout = (options[:rollout] || "0.2").to_f
+    UI.user_error!("rollout is a fraction between 0 and 1, like 0.2") unless rollout > 0 && rollout <= 1
+    draft = flag(options, :draft)
+    upload_to_play_store(play_options.merge(NO_LISTING).merge(
+      track: "internal",
+      track_promote_to: "production",
+      version_code: options[:version_code]&.to_i,
+      rollout: draft || rollout >= 1 ? nil : rollout.to_s,
+      track_promote_release_status: draft ? "draft" : "completed",
+      skip_upload_aab: true,
+      skip_upload_apk: true,
+      skip_upload_changelogs: true
+    ))
+  end
+
+  desc "Change a staged production rollout. Options: rollout:<fraction> (1 completes it)"
+  lane :rollout do |options|
+    UI.user_error!("Give rollout:<fraction>, like rollout:0.5") unless options[:rollout]
+    upload_to_play_store(play_options.merge(NO_LISTING).merge(
+      track: "production",
+      rollout: options[:rollout].to_s,
+      skip_upload_aab: true,
+      skip_upload_apk: true,
+      skip_upload_changelogs: true
+    ))
+  end
+end

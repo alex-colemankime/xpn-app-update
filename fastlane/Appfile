@@ -1,0 +1,6 @@
+# The app's identity in both stores (capacitor.config.json's appId).
+app_identifier("org.xpn.wxpn") # App Store Connect bundle ID
+package_name("org.xpn.wxpn") # Google Play package name
+
+# Apple's developer team, from the Release workflow's APPLE_TEAM_ID secret.
+team_id(ENV["APPLE_TEAM_ID"]) if ENV["APPLE_TEAM_ID"].to_s != ""
