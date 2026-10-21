@@ -23,14 +23,17 @@ name: Native smoke test
 on:
   push:
     branches-ignore: [main]
-    paths-ignore:
-      - "design/**"
-      - "store/**"
-      - "control/**"
-      - "docs/**"
-      - "tests/**"
-      - "tools/**"
-      - "**.md"
+    # As the native builds, but its own scripts (tools/smoke) start it too.
+    paths:
+      - "**"
+      - "!design/**"
+      - "!store/**"
+      - "!control/**"
+      - "!docs/**"
+      - "!tests/**"
+      - "!tools/**"
+      - "!**.md"
+      - "tools/smoke/**"
   workflow_dispatch:
 
 permissions:
