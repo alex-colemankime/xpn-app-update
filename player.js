@@ -127,6 +127,8 @@ const player = createPlayer({
     { src: publicAsset("icons/icon-512.png"), sizes: "512x512", type: "image/png" },
   ],
   resolveUrl: (src) => new URL(src, window.location.href).href,
+  // With no connection at all, the station is waited for (player-core.js).
+  isOnline: () => typeof navigator === "undefined" || navigator.onLine !== false,
 });
 
 // React reads playback state through useSyncExternalStore (hooks/usePlayer.js),

@@ -1,6 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createPlayer, RETRY_DELAYS_MS, fadeLevel, SLEEP_FADE_MS } from "../player-core.js";
+import {
+  createPlayer,
+  OFFLINE_WAIT_MS,
+  RETRY_DELAYS_MS,
+  fadeLevel,
+  SLEEP_FADE_MS,
+} from "../player-core.js";
 import { STREAMS } from "../streams.js";
 
 // A minimal HTMLAudioElement: records the source, exposes pending play()
@@ -95,7 +101,7 @@ function fakeClock() {
   };
 }
 
-function harness(Audio = FakeAudio) {
+function harness(Audio = FakeAudio, options = {}) {
   const clock = fakeClock();
   const actions = {};
   const metadata = [];
@@ -110,6 +116,7 @@ function harness(Audio = FakeAudio) {
     initialStreamId: "xpn",
     setTimer: clock.setTimer,
     clearTimer: clock.clearTimer,
+    ...options,
   });
   const playing = [];
   const status = [];
@@ -313,6 +320,102 @@ test("coming back online skips the remaining backoff", () => {
   assert.equal(h.audio.pending.length, 2);
   h.player.resume();
   assert.equal(h.audio.pending.length, 3, "reconnected immediately");
+});
+
+test("with no connection, the station is waited for well past the backoff", async () => {
+  let online = false;
+  const h = harness(FakeAudio, { isOnline: () => online });
+  h.player.play();
+  h.audio.fire("playing");
+  // A tunnel: every try fails at once, for two minutes.
+  const slowest = RETRY_DELAYS_MS.at(-1);
+  for (let waited = 0; waited < 120000; waited += slowest) {
+    h.audio.pending.at(-1).reject(new Error("network"));
+    await h.flush();
+    assert.equal(h.last(h.status), "reconnecting");
+    h.clock.advance(slowest - 1);
+    assert.equal(h.last(h.status), "reconnecting", "waits at the slowest pace");
+    h.clock.advance(1);
+  }
+  // Out of the tunnel: at once, on the main mount, with every try ahead.
+  h.audio.pending.at(-1).reject(new Error("network"));
+  await h.flush();
+  const tries = h.audio.pending.length;
+  online = true;
+  h.player.resume();
+  assert.equal(h.audio.pending.length, tries + 1, "reconnected at once");
+  assert.equal(h.audio.src, STREAMS.xpn.url);
+  assert.equal(h.last(h.status), "reconnecting", "still read as a reconnect");
+  // The connection is back but not settled yet: the whole backoff is there.
+  for (let i = 0; i < RETRY_DELAYS_MS.length; i++) {
+    h.audio.pending.at(-1).reject(new Error("network"));
+    await h.flush();
+    assert.equal(h.last(h.status), "reconnecting");
+    h.clock.advance(RETRY_DELAYS_MS[i]);
+  }
+  h.audio.fire("playing");
+  assert.equal(h.last(h.status), "playing");
+  assert.equal(h.clock.pendingTimers, 0);
+});
+
+test("a connection that never returns ends in an error, after the offline wait", async () => {
+  const h = harness(FakeAudio, { isOnline: () => false });
+  h.player.play();
+  h.audio.fire("playing");
+  const slowest = RETRY_DELAYS_MS.at(-1);
+  let waited = 0;
+  while (h.last(h.status) !== "error" && waited < OFFLINE_WAIT_MS * 2) {
+    h.audio.pending.at(-1).reject(new Error("network"));
+    await h.flush();
+    h.clock.advance(slowest);
+    waited += slowest;
+  }
+  assert.equal(h.last(h.status), "error");
+  assert.ok(waited >= OFFLINE_WAIT_MS, "not before the wait is up");
+  assert.equal(h.audio.getAttribute("src"), null);
+  assert.equal(h.clock.pendingTimers, 0);
+  // Too late for the connection coming back to start it by itself.
+  const tries = h.audio.pending.length;
+  h.player.resume();
+  assert.equal(h.audio.pending.length, tries);
+});
+
+test("audio the phone starts again after an interruption rejoins live, and is watched", async () => {
+  const h = harness();
+  h.player.play();
+  h.audio.fire("playing");
+  h.audio.pause(); // a phone call
+  assert.equal(h.last(h.status), "paused");
+  // The call ends and the phone resumes the element itself.
+  h.audio.paused = false;
+  h.audio.fire("playing");
+  assert.equal(h.audio.pending.length, 2, "a fresh connection, not the one left behind");
+  assert.equal(h.last(h.status), "loading");
+  h.audio.fire("playing");
+  assert.equal(h.last(h.status), "playing");
+  assert.equal(h.last(h.playing), true);
+  // A drop afterwards is recovered from, as after any play.
+  h.audio.serverCloses();
+  assert.equal(h.last(h.status), "reconnecting");
+  h.clock.advance(RETRY_DELAYS_MS[0]);
+  assert.equal(h.audio.pending.length, 3);
+});
+
+test("a playing event arriving after the listener's pause starts nothing", () => {
+  const h = harness();
+  h.player.play();
+  h.player.pause();
+  h.audio.fire("playing"); // queued by the browser before the pause
+  assert.equal(h.last(h.status), "paused");
+  assert.equal(h.last(h.playing), false);
+  assert.equal(h.audio.pending.length, 1);
+  // The same after an outside pause, while the element is still paused.
+  h.player.play();
+  h.audio.fire("playing");
+  h.audio.pause();
+  h.audio.fire("playing");
+  assert.equal(h.last(h.status), "paused");
+  assert.equal(h.audio.pending.length, 2);
 });
 
 test("volume stays within audio limits", () => {

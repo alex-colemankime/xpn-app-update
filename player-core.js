@@ -27,6 +27,9 @@ export function volumeLevel(percent) {
 
 export const RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 15000];
 const STALL_TIMEOUT_MS = 15000;
+// How long the station is waited for while the device has no connection at
+// all (a tunnel, an elevator), before giving up.
+export const OFFLINE_WAIT_MS = 10 * 60000;
 
 export function createPlayer({
   createAudio,
@@ -40,6 +43,10 @@ export function createPlayer({
   isActive = () => true,
   retryDelays = RETRY_DELAYS_MS,
   stallTimeout = STALL_TIMEOUT_MS,
+  // Whether the device has a connection at all (navigator.onLine). Without
+  // one a try can only fail, so it isn't counted against the station.
+  isOnline = () => true,
+  offlineWait = OFFLINE_WAIT_MS,
   setTimer = (fn, ms) => setTimeout(fn, ms),
   clearTimer = (id) => clearTimeout(id),
 }) {
@@ -51,6 +58,8 @@ export function createPlayer({
   let wantPlaying = false;
   let request = 0;
   let attempt = 0;
+  // Tries put off while the device had no connection (see retry).
+  let offlineWaits = 0;
   let retryTimer = null;
   let stallTimer = null;
   let lastPlaying = false;
@@ -64,6 +73,14 @@ export function createPlayer({
     if (isActive())
       mediaSession.setPlaybackState({ playbackState: playing ? "playing" : "paused" });
   };
+
+  // A new start: every try is ahead again.
+  const startAfresh = () => {
+    attempt = 0;
+    offlineWaits = 0;
+  };
+  // Trying again after a drop, as opposed to connecting for the first time.
+  const recovering = () => attempt > 0 || offlineWaits > 0;
 
   const clearTimers = () => {
     if (retryTimer !== null) clearTimer(retryTimer);
@@ -96,7 +113,7 @@ export function createPlayer({
   function connect() {
     clearTimers();
     const current = ++request;
-    onStatus(attempt ? "reconnecting" : "loading");
+    onStatus(recovering() ? "reconnecting" : "loading");
     // Re-attach on every attempt so the listener rejoins "now" rather than
     // resuming a stale buffer. Retries alternate with the backup mount, so
     // one broken mount never keeps the station off the air.
@@ -120,14 +137,26 @@ export function createPlayer({
   function retry() {
     if (!wantPlaying) return;
     clearTimers();
-    if (attempt >= retryDelays.length) {
+    // With no connection at all, the station isn't what failed: the app
+    // keeps looking at the slowest pace, without using up its tries, and
+    // gives up only after `offlineWait`. Coming back online (resume) skips
+    // the wait. It still tries meanwhile, in case the device is wrong about
+    // being offline; a try without a connection fails at once and costs
+    // nothing.
+    const slowest = retryDelays[retryDelays.length - 1] ?? STALL_TIMEOUT_MS;
+    const offline = !isOnline();
+    const spent = offline
+      ? offlineWaits >= Math.ceil(offlineWait / slowest)
+      : attempt >= retryDelays.length;
+    if (spent) {
       wantPlaying = false;
-      attempt = 0;
+      startAfresh();
       detach();
       report(false, "error");
       return;
     }
-    const delay = retryDelays[attempt++];
+    const delay = offline ? slowest : retryDelays[attempt++];
+    if (offline) offlineWaits++;
     ++request; // invalidate the failed attempt's pending promise
     report(false, "reconnecting");
     retryTimer = setTimer(() => {
@@ -169,13 +198,24 @@ export function createPlayer({
     audio.preload = "none"; // never buffer a live stream before play is tapped
 
     audio.addEventListener("playing", () => {
-      attempt = 0;
+      if (!wantPlaying) {
+        // Late, from a play the listener has since paused: nothing plays.
+        if (audio.paused || !audio.getAttribute("src")) return;
+        // Something outside the app started audio again: the phone, once
+        // the call that paused it ended. That is the listener's radio back
+        // on, so it is treated as play: live again, on a fresh connection,
+        // instead of the minutes-old one the pause left behind (which would
+        // run dry with nothing watching for it).
+        play();
+        return;
+      }
+      startAfresh();
       clearTimers();
       report(true, "playing");
     });
     audio.addEventListener("waiting", () => {
       if (!wantPlaying) return;
-      onStatus(attempt ? "reconnecting" : "loading");
+      onStatus(recovering() ? "reconnecting" : "loading");
       watchForStall();
     });
     audio.addEventListener("stalled", () => {
@@ -235,22 +275,25 @@ export function createPlayer({
     if (!audio) init(onPlaying, onStatus);
     if (!audio || !stream?.url) return;
     wantPlaying = true;
-    attempt = 0;
+    startAfresh();
     connect();
   }
 
   function pause() {
     wantPlaying = false;
-    attempt = 0;
+    startAfresh();
     ++request;
     clearTimers();
     detach();
     report(false, "paused");
   }
 
-  // Called when connectivity returns: skip the rest of the backoff.
+  // Called when connectivity returns: skip the rest of the backoff. Tries
+  // that failed for want of a connection don't count against the new one.
   function resume() {
-    if (wantPlaying && retryTimer !== null) connect();
+    if (!wantPlaying || retryTimer === null) return;
+    if (offlineWaits) attempt = 0;
+    connect();
   }
 
   function setStream(id) {
@@ -260,7 +303,7 @@ export function createPlayer({
     stream = next;
     track = null;
     if (wantPlaying) {
-      attempt = 0;
+      startAfresh();
       connect();
     } else {
       report(false, "paused");
