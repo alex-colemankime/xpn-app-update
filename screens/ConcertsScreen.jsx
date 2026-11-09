@@ -100,7 +100,7 @@ export function ConcertsScreen({ result }) {
     setTags([]);
     setShown(PAGE);
   }
-  const { concerts, source, partial, through } = result;
+  const { concerts, source, partial, stale, through } = result;
   const today = easternToday();
 
   // Regions with the most concerts first.
@@ -202,6 +202,16 @@ export function ConcertsScreen({ result }) {
               Some concerts couldn’t load, so this list may be missing a few.
             </span>
             <button className="text-button" onClick={result.retry}>
+              Try again
+            </button>
+          </p>
+        )}
+        {stale && (
+          <p className="info-note concert-partial">
+            <span role="status">
+              The concert calendar couldn’t be reached, so this list may be out of date.
+            </span>
+            <button className="text-button" onClick={result.refresh}>
               Try again
             </button>
           </p>

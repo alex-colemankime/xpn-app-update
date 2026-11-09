@@ -54,13 +54,47 @@ test("a concert by an artist of a saved song is announced, and View shows only a
   await expect(page.locator(".concert-row")).toContainText("Waxahatchee");
   await expect(page.getByRole("button", { name: /^Filters 1 in use/ })).toBeVisible();
   // Announced once: coming back doesn't announce it again, even once the
-  // calendar has loaded and is on screen.
-  const calendar = page.waitForResponse(/wp-json\/tribe\/events/);
+  // calendar is on screen. It is there from the list kept on the device,
+  // without reading xpn.org's calendar a second time.
+  let reads = 0;
+  page.on("request", (request) => {
+    if (/wp-json\/tribe\/events/.test(request.url())) reads++;
+  });
   await page.reload();
-  await calendar;
   await expect(page.locator(".concert-row").first()).toBeVisible();
   await settle(page);
   await expect(page.getByText("Waxahatchee at Union Transfer")).toHaveCount(0);
+  expect(reads, "a calendar read moments ago is not read again").toBe(0);
+});
+
+test("a kept calendar that has gone stale is read again, and says so if that fails", async ({
+  page,
+}) => {
+  await page.goto("/#/concerts");
+  await expect(page.locator(".concert-row").first()).toBeVisible();
+  const rows = await page.locator(".concert-row").count();
+  // Four hours on, with the calendar unreachable.
+  await page.evaluate(() => {
+    const kept = JSON.parse(localStorage.getItem("xpn.concerts.cache"));
+    localStorage.setItem(
+      "xpn.concerts.cache",
+      JSON.stringify({ ...kept, at: kept.at - 4 * 3600000 }),
+    );
+  });
+  await page.route(/wp-json\/tribe\/events/, (route) => route.abort());
+  const failed = page.waitForEvent("requestfailed", (r) => /tribe\/events/.test(r.url()));
+  await page.reload();
+  await failed;
+  // The list stays, and says it may be out of date.
+  const note = page.getByText("this list may be out of date");
+  await expect(note).toBeVisible();
+  await expect(page.locator(".concert-row")).toHaveCount(rows);
+  // The calendar comes back: Try again reads it, and the note goes.
+  await page.unroute(/wp-json\/tribe\/events/);
+  await routeListings(page);
+  await page.getByRole("button", { name: "Try again" }).click();
+  await expect(note).toBeHidden();
+  await expect(page.locator(".concert-row")).toHaveCount(rows);
 });
 
 test("an alert's View lets go of filters left from before", async ({ page, context }) => {
