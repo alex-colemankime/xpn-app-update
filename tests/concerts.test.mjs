@@ -11,6 +11,7 @@ import {
   filterConcerts,
   rangeLabel,
   isoDate,
+  keptCalendar,
   normalizeEvent,
   upcomingConcerts,
 } from "../concerts.js";
@@ -367,4 +368,82 @@ test("a Free at Noon title loses the show's name, and a name in capitals is set 
     "Bright Eyes / Lullaby For The Working Class",
   );
   assert.equal(concertTitle("THE O'JAYS"), "The O'Jays");
+});
+
+test("the calendar kept on the device reads back as it was read, minus what has passed", () => {
+  const endpoint = "https://xpn.org/wp-json/tribe/events/v1/events";
+  const at = Date.parse("2026-11-09T15:00:00-05:00");
+  const concerts = upcomingConcerts(
+    [
+      tecEvent({ id: 1, start_date_details: { year: "2026", month: "11", day: "9" } }),
+      tecEvent({ id: 2, start_date_details: { year: "2026", month: "11", day: "12" } }),
+      tecEvent({ id: 3, start_date_details: { year: "2026", month: "12", day: "1" } }),
+    ],
+    "2026-11-09",
+  );
+  // As storage holds it: through JSON.
+  const stored = JSON.parse(JSON.stringify({ at, endpoint, through: "2026-12-01", concerts }));
+
+  // The same day: every concert, field for field as the calendar gave it.
+  const sameDay = keptCalendar(stored, { now: at + 3600000, endpoint });
+  assert.deepEqual(sameDay, { concerts, through: "2026-12-01", at });
+
+  // Days later: the concerts since passed are gone.
+  const later = keptCalendar(stored, { now: Date.parse("2026-11-12T09:00:00-05:00"), endpoint });
+  assert.deepEqual(
+    later.concerts.map((c) => c.id),
+    ["2", "3"],
+  );
+});
+
+test("a kept calendar that is damaged, too old or another calendar's is not used", () => {
+  const endpoint = "https://xpn.org/wp-json/tribe/events/v1/events";
+  const now = Date.parse("2026-11-09T15:00:00-05:00");
+  const good = { id: "1", artist: "Hop Along", date: "2026-11-20" };
+  const stored = (over) => ({ at: now - 60000, endpoint, concerts: [good], ...over });
+  const read = (raw) => keptCalendar(raw, { now, endpoint });
+
+  assert.equal(read(stored()).concerts.length, 1);
+  assert.equal(read(null), null);
+  assert.equal(read("[]"), null);
+  assert.equal(read(stored({ concerts: "none" })), null);
+  assert.equal(read(stored({ at: "yesterday" })), null);
+  assert.equal(read(stored({ at: now + 86400000 })), null, "a time ahead of the clock");
+  assert.equal(read(stored({ at: now - 15 * 86400000 })), null, "older than two weeks");
+  assert.equal(read(stored({ endpoint: "https://elsewhere.test/events" })), null);
+
+  // Damaged rows are dropped, and odd fields come back safe.
+  const mixed = read(
+    stored({
+      through: 7,
+      concerts: [
+        null,
+        "a concert",
+        { id: 2, artist: "No text id", date: "2026-11-20" },
+        { id: "3", artist: "Bad date", date: "tomorrow" },
+        { ...good, regions: ["Philadelphia", 4], ticketUrl: "javascript:alert(1)", time: "8pm" },
+      ],
+    }),
+  );
+  assert.equal(mixed.through, "");
+  assert.deepEqual(mixed.concerts, [
+    {
+      id: "1",
+      date: "2026-11-20",
+      artist: "Hop Along",
+      venue: "",
+      city: "",
+      region: "",
+      regions: ["Philadelphia"],
+      age: "",
+      xpnWelcomes: false,
+      freeAtNoon: false,
+      ticketUrl: "",
+      pageUrl: "",
+      image: "",
+      hidden: false,
+      time: null,
+      endTime: null,
+    },
+  ]);
 });

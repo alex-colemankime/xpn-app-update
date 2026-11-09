@@ -2,6 +2,7 @@ import { CONCERTS_ENDPOINT } from "./config.js";
 import { withTimeout } from "./net.js";
 import { plainText, webUrl } from "./text.js";
 import { apMonths, easternParts, shiftDate } from "./time.js";
+import { readJson, writeJson } from "./storage.js";
 
 // Feeds report local Eastern datetimes ("2026-06-12 20:00:00"). Parsing
 // those into a Date and taking toISOString() pushes evening events onto the
@@ -235,6 +236,68 @@ export async function fetchConcertResult(signal, endpoint = CONCERTS_ENDPOINT) {
   } catch {
     return { concerts: [], source: "error", partial: false, through: "" };
   }
+}
+
+// The calendar as last read, kept on the device: the app opens with it
+// instead of asking xpn.org for a year of events at every launch, reads the
+// calendar again only once the kept one is older than CONCERTS_FRESH_MS, and
+// still has a list (which says it may be out of date) when the calendar
+// can't be reached. Only a whole read is kept, never a partial one.
+const CACHE_KEY = "xpn.concerts.cache";
+export const CONCERTS_FRESH_MS = 3 * 3600000;
+// Older than this, a kept calendar is no better than none.
+const CACHE_MAX_AGE_MS = 14 * 86400000;
+
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+const CLOCK = /^\d{2}:\d{2}$/;
+const kept = (value) => (typeof value === "string" ? value : "");
+const keptLink = (value) => webUrl(kept(value), { http: true });
+const keptClock = (value) => (CLOCK.test(kept(value)) ? value : null);
+// One kept concert, checked as it is read back (in the shape normalizeEvent
+// makes), or null: damaged storage can't put a broken row on the screen.
+function keptConcert(c) {
+  if (!c || typeof c !== "object") return null;
+  if (!kept(c.id) || !kept(c.artist) || !DAY.test(kept(c.date))) return null;
+  return {
+    id: c.id,
+    date: c.date,
+    artist: c.artist,
+    venue: kept(c.venue),
+    city: kept(c.city),
+    region: kept(c.region),
+    regions: (Array.isArray(c.regions) ? c.regions : []).filter((r) => kept(r)),
+    age: kept(c.age),
+    xpnWelcomes: c.xpnWelcomes === true,
+    freeAtNoon: c.freeAtNoon === true,
+    ticketUrl: keptLink(c.ticketUrl),
+    pageUrl: keptLink(c.pageUrl),
+    image: keptLink(c.image),
+    hidden: false,
+    time: keptClock(c.time),
+    endTime: keptClock(c.endTime),
+  };
+}
+
+// What was kept, as it stands at `now`: { concerts, through, at }, with
+// concerts that have passed since left out, or null when there is nothing
+// usable (none kept, damaged, too old, or read from another calendar). Pure,
+// so it can be tested.
+export function keptCalendar(raw, { now = Date.now(), endpoint = CONCERTS_ENDPOINT } = {}) {
+  if (!raw || typeof raw !== "object" || !Array.isArray(raw.concerts)) return null;
+  const at = Number(raw.at);
+  if (!Number.isFinite(at) || at > now || now - at > CACHE_MAX_AGE_MS) return null;
+  if (raw.endpoint !== endpoint) return null;
+  const today = easternToday(new Date(now));
+  return {
+    concerts: raw.concerts.map(keptConcert).filter((c) => c && c.date >= today),
+    through: DAY.test(kept(raw.through)) ? raw.through : "",
+    at,
+  };
+}
+export const savedCalendar = (now = Date.now()) => keptCalendar(readJson(CACHE_KEY, null), { now });
+// Keeps a whole read of the calendar (a live result that isn't partial).
+export function saveCalendar({ concerts, through = "" }, at = Date.now()) {
+  writeJson(CACHE_KEY, { at, endpoint: CONCERTS_ENDPOINT, through, concerts });
 }
 
 // Age limits live in a separate field on the calendar, one request per event,
